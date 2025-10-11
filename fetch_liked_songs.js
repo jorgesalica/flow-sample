@@ -2,30 +2,60 @@
  * Quick instructions:
  * 1. Register a Spotify app at https://developer.spotify.com/dashboard and copy the client ID and client secret.
  * 2. Generate an authorization code by visiting the authorization URL in your browser after setting the redirect URI in your Spotify app, then copy the code parameter from the redirected URL.
- * 3. Install dependencies with `npm install node-fetch` if needed, then run this script with `node fetch_liked_songs.js`.
+ * 3. Install dependencies with `npm install node-fetch` if needed, copy `.env.example` to `.env` next to this script, then run it with
+ *    `node fetch_liked_songs.js`.
  *
- * Paste your credentials and authorization details below.
+ * Your `.env` file must define the following variables:
+ *   SPOTIFY_CLIENT_ID=...
+ *   SPOTIFY_CLIENT_SECRET=...
+ *   SPOTIFY_REDIRECT_URI=...
+ *   SPOTIFY_AUTHORIZATION_CODE=...
  */
 
 const fetch = require('node-fetch');
 const fs = require('fs');
 
-// TODO: Paste your Spotify Client ID between the quotes below.
-const CLIENT_ID = '';
-// TODO: Paste your Spotify Client Secret between the quotes below.
-const CLIENT_SECRET = '';
-// TODO: Paste your redirect URI (must match the one configured in your Spotify app) between the quotes below.
-const REDIRECT_URI = '';
-// TODO: Paste the one-time authorization code you obtained after authorizing the app between the quotes below.
-const AUTHORIZATION_CODE = '';
+const ENV_FILE = '.env';
+
+function loadEnvVariables(filePath) {
+  let raw = '';
+  try {
+    raw = fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    throw new Error(
+      `Unable to read ${filePath}. Make sure the file exists and includes SPOTIFY_CLIENT_ID, ` +
+        'SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, and SPOTIFY_AUTHORIZATION_CODE.'
+    );
+  }
+
+  const env = {};
+  raw.split(/\r?\n/).forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+
+    const [key, ...rest] = trimmed.split('=');
+    if (!key) return;
+    env[key] = rest.join('=').trim();
+  });
+
+  return env;
+}
+
+const env = loadEnvVariables(ENV_FILE);
+
+const CLIENT_ID = env.SPOTIFY_CLIENT_ID;
+const CLIENT_SECRET = env.SPOTIFY_CLIENT_SECRET;
+const REDIRECT_URI = env.SPOTIFY_REDIRECT_URI;
+const AUTHORIZATION_CODE = env.SPOTIFY_AUTHORIZATION_CODE;
 
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 const SAVED_TRACKS_ENDPOINT = 'https://api.spotify.com/v1/me/tracks';
 const AUDIO_FEATURES_ENDPOINT = 'https://api.spotify.com/v1/audio-features';
+const OUTPUT_FILE = 'my_liked_songs.json';
 
 async function exchangeAuthorizationCode() {
   if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI || !AUTHORIZATION_CODE) {
-    throw new Error('Please provide CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, and AUTHORIZATION_CODE at the top of the script.');
+    throw new Error('Please set SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, and SPOTIFY_AUTHORIZATION_CODE in your .env file.');
   }
 
   const body = new URLSearchParams({
@@ -155,8 +185,8 @@ async function main() {
       .map(item => formatTrackRecord(item, audioFeaturesMap))
       .filter(Boolean);
 
-    fs.writeFileSync('my_liked_songs.json', JSON.stringify(formatted, null, 2));
-    console.log(`Saved ${formatted.length} records to my_liked_songs.json`);
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(formatted, null, 2));
+    console.log(`Saved ${formatted.length} records to ${OUTPUT_FILE}`);
   } catch (error) {
     console.error('An error occurred:', error.message);
   }

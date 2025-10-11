@@ -60,3 +60,22 @@ Flow Sample is released under the Creative Commons Attribution-ShareAlike 4.0 In
 - You, for being curious enough to explore this repository.
 
 May your ideas ripple outward.
+
+---
+
+## Spotify Liked Songs Script – `.env` Checklist
+
+Before running `fetch_liked_songs.js`, copy `.env.example` to `.env` in the repository root (next to the script) and fill in the following values:
+
+```
+SPOTIFY_CLIENT_ID=your_client_id
+SPOTIFY_CLIENT_SECRET=your_client_secret
+SPOTIFY_REDIRECT_URI=https://your-redirect-uri
+SPOTIFY_AUTHORIZATION_CODE=the_one_time_code_from_the_authorize_step
+```
+
+You can obtain the credentials and authorization code by following Spotify's [Authorization Code Flow guide](https://developer.spotify.com/documentation/web-api/tutorials/code-flow).
+
+With the `.env` file in place, install `node-fetch` if you haven't already and run `node fetch_liked_songs.js`. The script will read the variables from `.env`, exchange the authorization code for an access token, fetch all of your liked tracks (handling pagination automatically), retrieve audio features, and save them to `my_liked_songs.json`.
+
+For a deeper walkthrough of the script's flow and the environment variables it expects, see [`docs/spotify/liked_songs_flow.md`](docs/spotify/liked_songs_flow.md).
