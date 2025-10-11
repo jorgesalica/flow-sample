@@ -23,6 +23,7 @@ const TOKENS_FILE = 'spotify_tokens.json';
 const SKIPPED_FEATURES_FILE = 'spotify_skipped_audio_features.json';
 const ENRICHED_JSON_FILE = 'enriched_likes.json';
 const ENRICHED_CSV_FILE = 'enriched_likes.csv';
+const ENRICHED_COMPACT_FILE = 'enriched_likes.compact.json';
 
 const SUPPORTED_AUDIO_FEATURE_MODES = new Set(['none', 'user', 'client']);
 
@@ -54,17 +55,30 @@ function loadJsonFile(filePath) {
 
 function parseArgs(argv) {
   const options = {
-    mode: 'export',
+    actions: {
+      export: false,
+      enrich: false,
+      compact: false,
+    },
     inputPath: OUTPUT_FILE,
     inputProvided: false,
+    help: false,
   };
+
+  let anyActionSpecified = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--enrich') {
-      options.mode = options.mode === 'export-and-enrich' ? 'export-and-enrich' : 'enrich';
+      options.actions.enrich = true;
+      anyActionSpecified = true;
     } else if (arg === '--export-and-enrich') {
-      options.mode = 'export-and-enrich';
+      options.actions.export = true;
+      options.actions.enrich = true;
+      anyActionSpecified = true;
+    } else if (arg === '--compact') {
+      options.actions.compact = true;
+      anyActionSpecified = true;
     } else if (arg === '--input') {
       const next = argv[i + 1];
       if (!next || next.startsWith('--')) {
@@ -74,10 +88,14 @@ function parseArgs(argv) {
       options.inputProvided = true;
       i += 1;
     } else if (arg === '--help' || arg === '-h') {
-      options.mode = 'help';
+      options.help = true;
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
+  }
+
+  if (!anyActionSpecified) {
+    options.actions.export = true;
   }
 
   return options;
@@ -90,7 +108,8 @@ function printHelp() {
 Options:
   --enrich                 Enrich an existing JSON export (defaults to ${OUTPUT_FILE}).
   --export-and-enrich      Export liked songs and enrich them in a single run.
-  --input <path>           Custom input JSON to enrich (requires --enrich).
+  --compact                Produce a compact JSON summary from an enriched export.
+  --input <path>           Custom input JSON (used with --enrich or --compact).
   --help                   Show this message.
 `);
 }
@@ -239,6 +258,48 @@ function buildCsvContent(records) {
   });
 
   return [headers.join(','), ...rows].join('\n');
+}
+
+function selectAlbumImageUrl(album, targetWidth = 300) {
+  if (!album || !Array.isArray(album.images) || album.images.length === 0) {
+    return null;
+  }
+
+  let selected = null;
+  let bestDiff = Infinity;
+
+  album.images.forEach(image => {
+    if (!image || !image.url) return;
+    const width = typeof image.width === 'number' ? image.width : targetWidth;
+    const diff = Math.abs(width - targetWidth);
+    if (diff < bestDiff || selected === null) {
+      selected = image;
+      bestDiff = diff;
+    }
+  });
+
+  return selected ? selected.url : null;
+}
+
+function buildVersionFlags(trackName) {
+  if (!trackName) return null;
+  const lower = trackName.toLowerCase();
+  const flags = {};
+
+  if (/\blive\b/.test(lower)) {
+    flags.is_live = true;
+  }
+  if (/\bremix\b/.test(lower)) {
+    flags.is_remix = true;
+  }
+  if (/\bextended\b/.test(lower)) {
+    flags.is_extended = true;
+  }
+  if (/\binstrumental\b/.test(lower)) {
+    flags.is_instrumental = true;
+  }
+
+  return Object.keys(flags).length > 0 ? flags : null;
 }
 
 async function authenticate(env, spotifyClient) {
@@ -478,7 +539,6 @@ async function enrichLikedSongs({
         };
       }),
       year: album?.release_date ? album.release_date.slice(0, 4) : null,
-      artist_genres_uniq: artistGenresJoined,
       artist_genres_joined: artistGenresJoined,
     };
 
@@ -493,62 +553,201 @@ async function enrichLikedSongs({
   console.log(`Saved enriched CSV to ${ENRICHED_CSV_FILE}`);
 }
 
+function buildCompactTrack(record) {
+  if (!record || !record.track_id) {
+    console.warn('Warning: skipping track without track_id in compact stage.');
+    return null;
+  }
+
+  if (!record.added_at) {
+    console.warn(`Warning: missing added_at value for track_id ${record.track_id}. Track will be skipped in compact output.`);
+    return null;
+  }
+
+  const compact = {
+    track_id: record.track_id,
+    track_name: record.track_name || '',
+    added_at: record.added_at,
+  };
+
+  const artistsArray = Array.isArray(record.artists)
+    ? record.artists
+        .map(artist => ({
+          id: artist?.id || undefined,
+          name: artist?.name || undefined,
+        }))
+        .filter(artist => artist.id || artist.name)
+    : [];
+
+  if (artistsArray.length === 0 && Array.isArray(record.artistas_enriquecidos)) {
+    record.artistas_enriquecidos.forEach(artist => {
+      if (!artist) return;
+      const id = artist.id || undefined;
+      const name = artist.name || undefined;
+      if (id || name) {
+        artistsArray.push({ id, name });
+      }
+    });
+  }
+
+  if (artistsArray.length === 0) {
+    console.warn(`Warning: no artists found for track_id ${record.track_id}. Track will be skipped in compact output.`);
+    return null;
+  }
+
+  compact.artists = artistsArray;
+
+  const trackSpotifyUrl = record.external_urls?.spotify || record.track_spotify_url || null;
+  if (trackSpotifyUrl) {
+    compact.track_spotify_url = trackSpotifyUrl;
+  }
+
+  const albumSource = record.album || null;
+  if (albumSource) {
+    const albumCompact = {};
+    if (albumSource.id) albumCompact.id = albumSource.id;
+    if (albumSource.name) albumCompact.name = albumSource.name;
+    if (albumSource.release_date) albumCompact.release_date = albumSource.release_date;
+    const albumSpotifyUrl = albumSource.external_urls?.spotify || albumSource.album_spotify_url;
+    if (albumSpotifyUrl) albumCompact.album_spotify_url = albumSpotifyUrl;
+    const albumImage = selectAlbumImageUrl(albumSource);
+    if (albumImage) albumCompact.image_300 = albumImage;
+
+    if (Object.keys(albumCompact).length > 0) {
+      compact.album = albumCompact;
+    }
+  }
+
+  if (!compact.album) {
+    console.warn(`Warning: no album data found for track_id ${record.track_id}. Track will be skipped in compact output.`);
+    return null;
+  }
+
+  if (!compact.track_spotify_url) {
+    console.warn(`Warning: no Spotify URL found for track_id ${record.track_id}. Track will be skipped in compact output.`);
+    return null;
+  }
+
+  const yearSource = compact.album?.release_date || record.year || null;
+  if (yearSource) {
+    const yearValue = String(yearSource).slice(0, 4);
+    if (yearValue) {
+      compact.year = yearValue;
+    }
+  }
+
+  const genresSet = new Set();
+  if (Array.isArray(record.artistas_enriquecidos)) {
+    record.artistas_enriquecidos.forEach(artist => {
+      if (!artist || !Array.isArray(artist.genres)) return;
+      artist.genres.forEach(genre => {
+        if (genre) genresSet.add(genre);
+      });
+    });
+  }
+  if (genresSet.size > 0) {
+    compact.artist_genres = Array.from(genresSet).sort((a, b) => a.localeCompare(b));
+  }
+
+  if (typeof record.popularity === 'number') {
+    compact.popularity = record.popularity;
+  }
+
+  if (record.explicit === true) {
+    compact.explicit = true;
+  }
+
+  const versionFlags = buildVersionFlags(compact.track_name);
+  if (versionFlags) {
+    compact.version_flags = versionFlags;
+  }
+
+  const isrc = record.external_ids?.isrc;
+  if (isrc) {
+    compact.isrc = isrc;
+  }
+
+  return compact;
+}
+
+async function compactLikedSongs({ inputPath, outputPath = ENRICHED_COMPACT_FILE }) {
+  console.log(`Loading enriched liked songs from ${inputPath}...`);
+  const enrichedRecords = loadJsonFile(inputPath);
+
+  const compactRecords = [];
+  for (let index = 0; index < enrichedRecords.length; index += 1) {
+    const record = enrichedRecords[index];
+    const compact = buildCompactTrack(record);
+    if (compact) {
+      compactRecords.push(compact);
+    }
+
+    if ((index + 1) % 100 === 0 || index + 1 === enrichedRecords.length) {
+      console.log(`Compacted ${index + 1}/${enrichedRecords.length} tracks...`);
+    }
+  }
+
+  writeJsonFile(outputPath, compactRecords);
+  console.log(`Saved compact enriched data to ${outputPath}`);
+}
+
 async function main() {
   try {
     const args = parseArgs(process.argv.slice(2));
-    if (args.mode === 'help') {
+    if (args.help) {
       printHelp();
       return;
     }
 
-    if (args.inputProvided && args.mode === 'export') {
-      throw new Error('--input can only be used together with --enrich or --export-and-enrich.');
+    const { actions } = args;
+
+    if (args.inputProvided && !actions.enrich && !actions.compact) {
+      throw new Error('--input can only be used together with --enrich or --compact.');
     }
 
-    const env = loadEnvVariables(ENV_FILE);
-    const audioMode = validateAudioMode(ensureTrimmed(env.SPOTIFY_AUDIO_FEATURES_MODE) || 'user');
-    const pageLimit = parsePageLimit(ensureTrimmed(env.SPOTIFY_PAGE_LIMIT));
+    let spotifyClient = null;
+    let accessToken = null;
+    let audioMode;
+    let pageLimit;
 
-    const spotifyClient = createSpotifyClient({
-      clientId: ensureTrimmed(env.SPOTIFY_CLIENT_ID),
-      clientSecret: ensureTrimmed(env.SPOTIFY_CLIENT_SECRET),
-      redirectUri: ensureTrimmed(env.SPOTIFY_REDIRECT_URI),
-    });
+    if (actions.export || actions.enrich) {
+      const env = loadEnvVariables(ENV_FILE);
+      audioMode = validateAudioMode(ensureTrimmed(env.SPOTIFY_AUDIO_FEATURES_MODE) || 'user');
+      pageLimit = parsePageLimit(ensureTrimmed(env.SPOTIFY_PAGE_LIMIT));
 
-    const { accessToken } = await authenticate(env, spotifyClient);
-
-    if (args.mode === 'export') {
-      await exportLikedSongs({
-        spotifyClient,
-        accessToken,
-        audioMode,
-        pageLimit,
+      spotifyClient = createSpotifyClient({
+        clientId: ensureTrimmed(env.SPOTIFY_CLIENT_ID),
+        clientSecret: ensureTrimmed(env.SPOTIFY_CLIENT_SECRET),
+        redirectUri: ensureTrimmed(env.SPOTIFY_REDIRECT_URI),
       });
-      return;
+
+      ({ accessToken } = await authenticate(env, spotifyClient));
+
+      if (actions.export) {
+        await exportLikedSongs({
+          spotifyClient,
+          accessToken,
+          audioMode,
+          pageLimit,
+        });
+      }
+
+      if (actions.enrich) {
+        const enrichInputPath = args.inputProvided ? args.inputPath : OUTPUT_FILE;
+        await enrichLikedSongs({
+          spotifyClient,
+          accessToken,
+          inputPath: enrichInputPath,
+        });
+      }
     }
 
-    if (args.mode === 'export-and-enrich') {
-      await exportLikedSongs({
-        spotifyClient,
-        accessToken,
-        audioMode,
-        pageLimit,
+    if (actions.compact) {
+      const compactInputPath = args.inputProvided && !actions.enrich ? args.inputPath : ENRICHED_JSON_FILE;
+      await compactLikedSongs({
+        inputPath: compactInputPath,
+        outputPath: ENRICHED_COMPACT_FILE,
       });
-      await enrichLikedSongs({
-        spotifyClient,
-        accessToken,
-        inputPath: args.inputPath || OUTPUT_FILE,
-      });
-      return;
-    }
-
-    if (args.mode === 'enrich') {
-      await enrichLikedSongs({
-        spotifyClient,
-        accessToken,
-        inputPath: args.inputPath || OUTPUT_FILE,
-      });
-      return;
     }
   } catch (error) {
     console.error('An error occurred:', error.message);

@@ -85,12 +85,16 @@ node fetch_liked_songs.js --enrich                 # enrich an existing my_liked
 node fetch_liked_songs.js --export-and-enrich      # export liked songs and enrich in one run
 node fetch_liked_songs.js --enrich --input ./file.json
                                                    # enrich a custom JSON file
+node fetch_liked_songs.js --compact                # compact an existing enriched_likes.json
+node fetch_liked_songs.js --compact --input ./enriched.json
+                                                   # compact a custom enriched export
 ```
 
-The enrichment pass produces two files:
+The enrichment pass produces the following files:
 
 * `enriched_likes.json` – per-track metadata including album details, artist stats, ISRC, markets count, etc.
 * `enriched_likes.csv` – the same data flattened for spreadsheets (`artists_joined` and `artist_genres_joined` use `; ` separators).
+* `enriched_likes.compact.json` – compact per-track summaries without large market lists or redundant fields, retaining key metadata for lightweight consumption.
 
 > **Important:** In November 2024 Spotify restricted several Web API endpoints for newly created apps, including `GET /v1/audio-features`. If your app was registered after that change and you have not requested extended access, every audio-features request will return `403 Forbidden`. Use one of these approaches:
 >
