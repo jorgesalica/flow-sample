@@ -2,7 +2,6 @@ import fetch from 'node-fetch';
 
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 const SAVED_TRACKS_ENDPOINT = 'https://api.spotify.com/v1/me/tracks';
-const AUDIO_FEATURES_ENDPOINT = 'https://api.spotify.com/v1/audio-features';
 const TRACKS_ENDPOINT = 'https://api.spotify.com/v1/tracks';
 const ARTISTS_ENDPOINT = 'https://api.spotify.com/v1/artists';
 const ALBUMS_ENDPOINT = 'https://api.spotify.com/v1/albums';
@@ -20,11 +19,6 @@ export interface SpotifyClientConfig {
 export interface SpotifyTokenPair {
   accessToken: string;
   refreshToken: string | null;
-}
-
-export interface AudioFeaturesResult {
-  featuresById: Map<string, any>;
-  skippedTracks: { track_id: string; status?: number; error: string }[];
 }
 
 interface FetchOptions {
@@ -119,7 +113,6 @@ export interface SpotifyClient {
   requestClientCredentialsToken(): Promise<string>;
   refreshAccessToken(refreshToken: string): Promise<SpotifyTokenPair>;
   fetchAllSavedTracks(accessToken: string, options?: { pageLimit?: number }): Promise<any[]>;
-  fetchAudioFeatures(trackIds: string[], tokens: { primary: string | null; fallback: string | null }): Promise<AudioFeaturesResult>;
   fetchTracksDetails(trackIds: string[], accessToken: string, logProgress: (processed: number, total: number) => void): Promise<Map<string, any>>;
   fetchArtistsDetails(artistIds: string[], accessToken: string, logProgress: (processed: number, total: number) => void): Promise<Map<string, any>>;
   fetchAlbumsDetails(albumIds: string[], accessToken: string, logProgress: (processed: number, total: number) => void): Promise<Map<string, any>>;
@@ -240,109 +233,6 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
     return savedTracks;
   }
 
-  async function fetchAudioFeatures(
-    trackIds: string[],
-    tokens: { primary: string | null; fallback: string | null }
-  ): Promise<AudioFeaturesResult> {
-    const featuresById = new Map<string, any>();
-    const skipped: { track_id: string; status?: number; error: string }[] = [];
-
-    const attemptRequest = async (ids: string[], token: string | null) => {
-      if (!token) {
-        const missingTokenError: any = new Error('No token provided for audio features request.');
-        missingTokenError.status = 401;
-        throw missingTokenError;
-      }
-      const idsParam = ids.join(',');
-      const url = `${AUDIO_FEATURES_ENDPOINT}?ids=${encodeURIComponent(idsParam)}`;
-      return fetchJsonWithRetry<any>(url, token, {}, { label: `${AUDIO_FEATURES_ENDPOINT}?ids` });
-    };
-
-    const tokensToUse = [tokens.primary, tokens.fallback].filter(Boolean) as string[];
-
-    const handleChunkFailure = async (chunk: string[], lastError: any) => {
-      if (chunk.length === 0) return;
-      if (chunk.length === 1) {
-        skipped.push({
-          track_id: chunk[0],
-          status: lastError?.status,
-          error: lastError?.body || lastError?.message || 'Unknown error',
-        });
-        return;
-      }
-
-      for (const trackId of chunk) {
-        let added = false;
-        let finalError: any = null;
-
-        for (const token of tokensToUse) {
-          try {
-            const singleData = await attemptRequest([trackId], token);
-            if (Array.isArray(singleData.audio_features)) {
-              singleData.audio_features.forEach((feature: any) => {
-                if (feature?.id) {
-                  featuresById.set(feature.id, feature);
-                }
-              });
-            }
-            added = true;
-            break;
-          } catch (error) {
-            finalError = error;
-            const status = (error as any).status as number | undefined;
-            if (!status || (status !== 403 && status !== 404 && status !== 400)) {
-              throw error;
-            }
-          }
-        }
-
-        if (!added) {
-          skipped.push({
-            track_id: trackId,
-            status: finalError?.status,
-            error: finalError?.body || finalError?.message || 'Unknown error',
-          });
-        }
-      }
-    };
-
-    for (let i = 0; i < trackIds.length; i += 100) {
-      const chunk = trackIds.slice(i, i + 100).filter(Boolean);
-      if (chunk.length === 0) continue;
-
-      let chunkHandled = false;
-      let lastError: any = null;
-
-      for (const token of tokensToUse) {
-        try {
-          const data = await attemptRequest(chunk, token);
-          if (Array.isArray(data.audio_features)) {
-            data.audio_features.forEach((feature: any) => {
-              if (feature?.id) {
-                featuresById.set(feature.id, feature);
-              }
-            });
-          }
-          chunkHandled = true;
-          break;
-        } catch (error) {
-          const status = (error as any).status as number | undefined;
-          if (status && [403, 404, 400].includes(status)) {
-            lastError = error;
-            continue;
-          }
-          throw error;
-        }
-      }
-
-      if (!chunkHandled) {
-        await handleChunkFailure(chunk, lastError);
-      }
-    }
-
-    return { featuresById, skippedTracks: skipped };
-  }
-
   async function fetchTracksDetails(
     trackIds: string[],
     accessToken: string,
@@ -429,7 +319,6 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
     requestClientCredentialsToken,
     refreshAccessToken,
     fetchAllSavedTracks,
-    fetchAudioFeatures,
     fetchTracksDetails,
     fetchArtistsDetails,
     fetchAlbumsDetails,

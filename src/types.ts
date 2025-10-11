@@ -11,10 +11,6 @@ export interface LikedTrackRecord {
   artists: ArtistRef[];
   added_at: string;
   artist_ids?: string[];
-  valence?: number | null;
-  energy?: number | null;
-  danceability?: number | null;
-  tempo?: number | null;
 }
 
 export interface EnrichedArtist {
@@ -24,6 +20,8 @@ export interface EnrichedArtist {
   popularity: number | null;
   followersTotal: number | null;
   spotifyUrl: string | null;
+  followers?: { total: number | null };
+  external_urls?: { spotify?: string };
 }
 
 export interface EnrichedAlbum {
@@ -44,9 +42,6 @@ export interface EnrichedTrackRecord extends LikedTrackRecord {
   duration_ms: number | null;
   explicit: boolean | null;
   popularity: number | null;
-  preview_url: string | null;
-  available_markets?: string[];
-  markets_count?: number | null;
   external_ids?: { isrc?: string };
   external_urls?: { spotify?: string };
   album: EnrichedAlbum | null;

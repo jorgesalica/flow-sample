@@ -90,14 +90,11 @@ npm start -- --compact --input ./enriched.json       # compact a custom enriched
 
 The enrichment pass produces the following files:
 
-* `outputs/spotify/enriched_likes.json` â€“ per-track metadata including album details, artist stats, ISRC, markets count, etc.
-* `outputs/spotify/enriched_likes.csv` â€“ the same data flattened for spreadsheets (`artists_joined` and `artist_genres_joined` use `; ` separators).
-* `outputs/spotify/enriched_likes.compact.json` â€“ compact per-track summaries without large market lists or redundant fields, retaining key metadata for lightweight consumption.
+* `outputs/spotify/enriched_likes.json` – per-track metadata including album details, artist stats, ISRC, and more.
+* `outputs/spotify/enriched_likes.csv` – the same data flattened for spreadsheets (`artists_joined` and `artist_genres_joined` use `; ` separators).
+* `outputs/spotify/enriched_likes.compact.json` – compact per-track summaries without large market lists or redundant fields, retaining key metadata for lightweight consumption.
+* `outputs/spotify/my_liked_songs.json` – the compact view is also written here for compatibility with earlier workflows.
 
-> **Important:** In November 2024 Spotify restricted several Web API endpoints for newly created apps, including `GET /v1/audio-features`. If your app was registered after that change and you have not requested extended access, every audio-features request will return `403 Forbidden`. Use one of these approaches:
->
-> - Apply for extended mode access through the Spotify developer portal.
-> - Set `SPOTIFY_AUDIO_FEATURES_MODE=none` in your `.env` so the script skips those requests and simply exports the liked tracks (feature fields remain `null`).
-> - Leave the default (`user`) to try with your user token; any tracks Spotify refuses will be listed in `spotify_skipped_audio_features.json`.
+Audio features are no longer requested (Spotify deprecated the required endpoint for new apps), so the exporter focuses on track/album/artist metadata only.
 
 For a deeper walkthrough of the script's flow and the environment variables it expects, see [`docs/spotify/liked_songs_flow.md`](docs/spotify/liked_songs_flow.md).

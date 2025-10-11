@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { FILES } from './config';
 import { parseArgs, printHelp } from './cli';
-import { createClientFromEnv, authenticate, exportLikedSongs, runEnrichment, compactLikedSongs, validateAudioMode, parsePageLimit } from './exporter';
+import { createClientFromEnv, authenticate, exportLikedSongs, runEnrichment, compactLikedSongs, parsePageLimit } from './exporter';
 import { ensureTrimmed } from './utils';
 
 async function main(): Promise<void> {
@@ -18,7 +18,6 @@ async function main(): Promise<void> {
     throw new Error('--input can only be used together with --enrich or --compact.');
   }
 
-  let audioMode: ReturnType<typeof validateAudioMode> | undefined;
   let pageLimit: number | undefined;
   let accessToken: string | null = null;
   let client: ReturnType<typeof createClientFromEnv>['client'] | null = null;
@@ -29,7 +28,6 @@ async function main(): Promise<void> {
     client = setup.client;
     env = setup.env;
 
-    audioMode = validateAudioMode(ensureTrimmed(env.SPOTIFY_AUDIO_FEATURES_MODE));
     pageLimit = parsePageLimit(ensureTrimmed(env.SPOTIFY_PAGE_LIMIT));
 
     const auth = await authenticate(client, env);
@@ -39,7 +37,6 @@ async function main(): Promise<void> {
       await exportLikedSongs({
         client,
         accessToken,
-        audioMode,
         pageLimit,
       });
     }

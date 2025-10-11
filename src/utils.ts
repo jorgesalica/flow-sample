@@ -152,7 +152,7 @@ export function buildCsvContent(records: EnrichedTrackRecord[]): string {
           case 'popularity':
             return buildValue(record.popularity ?? '');
           case 'preview_url':
-            return buildValue(record.preview_url || '');
+            return buildValue('');
           case 'album_name':
             return buildValue(record.album?.name || '');
           case 'album_release_date':
@@ -162,7 +162,7 @@ export function buildCsvContent(records: EnrichedTrackRecord[]): string {
           case 'artist_genres_joined':
             return buildValue(record.artist_genres_joined || '');
           case 'markets_count':
-            return buildValue(record.markets_count ?? '');
+            return buildValue('');
           case 'isrc':
             return buildValue(record.external_ids?.isrc || '');
           case 'track_spotify_url':

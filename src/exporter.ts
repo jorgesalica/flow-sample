@@ -1,7 +1,7 @@
 import fs from 'fs';
 
-import { FILES, SPOTIFY_OUTPUT_DIR, SUPPORTED_AUDIO_FEATURE_MODES } from './config';
-import type { AudioFeaturesMode, EnrichedTrackRecord, LikedTrackRecord } from './types';
+import { FILES, SPOTIFY_OUTPUT_DIR } from './config';
+import type { EnrichedTrackRecord, LikedTrackRecord } from './types';
 import { loadStoredRefreshToken, persistRefreshToken } from './tokenStore';
 import type { SpotifyClient } from './spotifyClient';
 import { createSpotifyClient } from './spotifyClient';
@@ -21,16 +21,6 @@ import {
 interface AuthenticateResult {
   accessToken: string;
   refreshToken: string | null;
-}
-
-export function validateAudioMode(rawMode: string | undefined): AudioFeaturesMode {
-  const normalized = (rawMode ?? 'user').toLowerCase();
-  if (!SUPPORTED_AUDIO_FEATURE_MODES.has(normalized)) {
-    throw new Error(
-      `Unsupported SPOTIFY_AUDIO_FEATURES_MODE value "${rawMode}". Valid options: none, user, client.`
-    );
-  }
-  return normalized as AudioFeaturesMode;
 }
 
 export function parsePageLimit(rawPageLimit: string | undefined): number | undefined {
@@ -103,7 +93,7 @@ export async function authenticate(client: SpotifyClient, env: RawEnv): Promise<
   return authTokens;
 }
 
-function formatTrackRecord(item: any, audioFeaturesMap: Map<string, any>): LikedTrackRecord | null {
+function formatTrackRecord(item: any): LikedTrackRecord | null {
   const track = item?.track;
   if (!track || !track.id) return null;
 
@@ -118,83 +108,33 @@ function formatTrackRecord(item: any, audioFeaturesMap: Map<string, any>): Liked
     .map(entry => entry.id)
     .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
-  const features = audioFeaturesMap.get(track.id) || {};
-
   return {
     track_id: track.id,
     track_name: track.name ?? '',
     artists: artistEntries,
     artist_ids: artistIds,
     added_at: item.added_at ?? '',
-    valence: features.valence ?? null,
-    energy: features.energy ?? null,
-    danceability: features.danceability ?? null,
-    tempo: features.tempo ?? null,
   };
 }
 
 export async function exportLikedSongs(options: {
   client: SpotifyClient;
   accessToken: string;
-  audioMode: AudioFeaturesMode;
   pageLimit?: number;
 }): Promise<void> {
   ensureDirectoryExists(SPOTIFY_OUTPUT_DIR);
 
   const savedTracks = await options.client.fetchAllSavedTracks(options.accessToken, options.pageLimit ? { pageLimit: options.pageLimit } : {});
-  const trackIds = savedTracks
-    .map((item: any) => (item?.track?.id ? String(item.track.id) : null))
-    .filter((id: string | null): id is string => Boolean(id));
-
-  let featuresById = new Map<string, any>();
-  const skippedTracks: { track_id: string; status?: number; error: string }[] = [];
-
-  if (options.audioMode === 'none') {
-    trackIds.forEach(trackId => {
-      skippedTracks.push({
-        track_id: trackId,
-        status: 0,
-        error: 'Audio features intentionally skipped (SPOTIFY_AUDIO_FEATURES_MODE=none)',
-      });
-    });
-  } else {
-    let primaryToken: string | null = options.accessToken;
-    let fallbackToken: string | null = null;
-
-    if (options.audioMode === 'client') {
-      console.log('Audio features mode set to client. Requesting client credentials token...');
-      primaryToken = await options.client.requestClientCredentialsToken();
-      fallbackToken = options.accessToken;
-    } else {
-      console.log('Audio features mode set to user. Using user access token for audio features.');
-    }
-
-    const response = await options.client.fetchAudioFeatures(trackIds, {
-      primary: primaryToken,
-      fallback: fallbackToken,
-    });
-    featuresById = response.featuresById;
-    skippedTracks.push(...response.skippedTracks);
-  }
-
-  console.log('Mapping saved tracks into export format...');
   const formatted: LikedTrackRecord[] = savedTracks
-    .map((item: any) => formatTrackRecord(item, featuresById))
+    .map((item: any) => formatTrackRecord(item))
     .filter((record): record is LikedTrackRecord => record !== null);
 
   writeJsonFile(FILES.likedJson, formatted);
   console.log(`Saved ${formatted.length} records to ${FILES.likedJson}`);
 
-  if (skippedTracks.length > 0) {
-    writeJsonFile(FILES.skippedFeatures, {
-      generated_at: new Date().toISOString(),
-      skipped: skippedTracks,
-    });
-    console.warn(
-      `Warning: audio features were unavailable or skipped for ${skippedTracks.length} tracks. See ${FILES.skippedFeatures} for details.`
-    );
-  } else if (fs.existsSync(FILES.skippedFeatures)) {
-    fs.unlinkSync(FILES.skippedFeatures);
+  const skippedFeaturesPath = FILES.skippedFeatures;
+  if (fs.existsSync(skippedFeaturesPath)) {
+    fs.unlinkSync(skippedFeaturesPath);
   }
 }
 
@@ -285,8 +225,10 @@ export async function enrichLikedSongs(options: {
           name: fallbackName,
           genres: [] as string[],
           popularity: null,
+          followersTotal: null,
           followers: { total: null },
           external_urls: {},
+          spotifyUrl: null,
         };
       }
 
@@ -295,8 +237,10 @@ export async function enrichLikedSongs(options: {
         name: artist.name ?? '',
         genres: Array.isArray(artist.genres) ? artist.genres.filter(Boolean) : [],
         popularity: typeof artist.popularity === 'number' ? artist.popularity : null,
+        followersTotal: typeof artist.followers?.total === 'number' ? artist.followers.total : null,
         followers: artist.followers ?? { total: null },
         external_urls: artist.external_urls ?? {},
+        spotifyUrl: artist.external_urls?.spotify ?? null,
       };
     });
 
@@ -334,9 +278,6 @@ export async function enrichLikedSongs(options: {
       duration_ms: typeof track?.duration_ms === 'number' ? track.duration_ms : null,
       explicit: typeof track?.explicit === 'boolean' ? track.explicit : null,
       popularity: typeof track?.popularity === 'number' ? track.popularity : null,
-      preview_url: track?.preview_url ?? null,
-      available_markets: Array.isArray(track?.available_markets) ? track.available_markets : undefined,
-      markets_count: Array.isArray(track?.available_markets) ? track.available_markets.length : undefined,
       external_ids: track?.external_ids ?? {},
       external_urls: track?.external_urls ?? {},
       album,

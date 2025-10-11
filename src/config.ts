@@ -13,5 +13,3 @@ export const FILES = {
   enrichedCsv: path.join(SPOTIFY_OUTPUT_DIR, 'enriched_likes.csv'),
   compactJson: path.join(SPOTIFY_OUTPUT_DIR, 'enriched_likes.compact.json'),
 };
-
-export const SUPPORTED_AUDIO_FEATURE_MODES = new Set(['none', 'user', 'client']);
