@@ -1,26 +1,26 @@
 # Spotify Liked Songs Export Flow
 
-This document explains how the `fetch_liked_songs.js` script authenticates with the Spotify Web API using the Authorization Code Flow, gathers your saved tracks ("Liked Songs"), and stores the results locally. It also walks through the environment variables you must define before running the script.
+This document walks through the TypeScript CLI that powers the Spotify liked songs workflow in this repository. The entrypoint at `src/index.ts` coordinates exporting your saved tracks, enriching them with additional metadata, and producing a compact representation that is easy to share.
 
-## Overview of the Script
+## Workflow Overview
 
-1. **Load credentials from `.env`** – The script reads Spotify credentials and the one-time authorization code from environment variables defined in a `.env` file that lives next to the script.
-2. **Exchange the authorization code** – Using the `https://accounts.spotify.com/api/token` endpoint, the script swaps the authorization code for an access token (and, if provided by Spotify, a refresh token).
-3. **Fetch saved tracks with pagination** – It repeatedly calls `https://api.spotify.com/v1/me/tracks` with a limit of 50 items per request until all saved tracks are retrieved.
-4. **Request audio features in batches** – Track IDs are grouped into batches of up to 100 and sent to `https://api.spotify.com/v1/audio-features?ids={ids}` to obtain valence, energy, danceability, and tempo for each track.
-5. **Combine and save** – Metadata from the saved tracks endpoint and audio features are merged and written to `my_liked_songs.json`.
+1. **Load credentials from `.env`** – The CLI reads Spotify credentials, page-limit hints, and optional refresh tokens from environment variables defined in `.env`.
+2. **Create an authenticated client** – `createClientFromEnv` validates the configuration and sets up a Spotify Web API client that can refresh access tokens when a stored refresh token is available.
+3. **Export liked songs** – The `--export` stage (which runs by default) pages through your saved tracks and writes a normalized JSON file to `outputs/spotify/my_liked_songs.json`.
+4. **Enrich metadata** – When run with `--enrich` or `--export-and-enrich`, the CLI fetches album, artist, and track details, then writes both enriched JSON and CSV outputs.
+5. **Compact the dataset** – The `--compact` action distills the enriched data into a lightweight JSON summary that keeps core identifiers, genres, release information, and Spotify URLs without redundant fields.
 
-Throughout the run, the script logs progress updates to the console so you can monitor pagination and audio feature downloads.
+Unlike earlier iterations of this project, the current workflow does not download audio features; Spotify has deprecated that endpoint for new applications, so the exporter focuses on descriptive metadata instead.
 
-## Preparing the Environment Variables
+## Preparing Environment Variables
 
-Copy `.env.example` to `.env` and fill in the required values:
+Copy `.env.example` to `.env` and populate the required values:
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env` with the following entries:
+Fill in the following entries:
 
 | Variable | Description |
 | --- | --- |
@@ -28,20 +28,54 @@ Then edit `.env` with the following entries:
 | `SPOTIFY_CLIENT_SECRET` | The Client Secret of the same Spotify app. Keep this value private. |
 | `SPOTIFY_REDIRECT_URI` | A redirect URI registered in your Spotify app settings. It must match exactly. |
 | `SPOTIFY_AUTHORIZATION_CODE` | The short-lived code returned to your redirect URI after authorizing the app. Use it promptly; it expires quickly. |
+| `SPOTIFY_REFRESH_TOKEN` (optional) | A reusable refresh token that the CLI stores locally after the first successful run. |
+| `SPOTIFY_PAGE_LIMIT` (optional) | A positive number that limits how many pages of liked songs to request during the export step. |
 
 > **Tip:** If you need a fresh authorization code, repeat the manual Authorization Code Flow: visit the authorization URL in your browser, log into Spotify, accept the permissions, and copy the `code` query parameter from the redirected URL.
 
-## Running the Script End-to-End
+## Installing Dependencies
 
-1. Install dependencies if you have not already:
-   ```bash
-   npm install node-fetch
-   ```
-2. Ensure `.env` is populated with the values listed above.
-3. Run the script:
-   ```bash
-   node fetch_liked_songs.js
-   ```
-4. Inspect the generated `my_liked_songs.json` file for the combined track metadata and audio features.
+Install project dependencies before running the CLI:
 
-If the script reports missing environment variables or an error exchanging the authorization code, confirm that the `.env` values are present, spelled correctly, and correspond to the same Spotify app and redirect URI you used when generating the authorization code.
+```bash
+npm install
+```
+
+The repository already includes TypeScript, ESLint, and other tooling. No additional packages are required beyond those listed in `package.json`.
+
+## Running the CLI
+
+Use `npm start` to execute the CLI with different combinations of actions:
+
+```bash
+# Export liked songs to outputs/spotify/my_liked_songs.json (default action)
+npm start
+
+# Export and enrich liked songs in a single run
+npm start -- --export-and-enrich
+
+# Enrich an existing liked songs JSON file
+npm start -- --enrich
+
+# Enrich a custom liked songs JSON file
+npm start -- --enrich --input ./path/to/liked.json
+
+# Compact an enriched export into a lightweight summary
+npm start -- --compact
+
+# Compact a specific enriched JSON file
+npm start -- --compact --input ./path/to/enriched.json
+```
+
+If you provide `--input`, pair it with either `--enrich` or `--compact`. The CLI validates this combination and throws an error when `--input` is supplied by itself.
+
+## Output Files
+
+After enrichment runs, the CLI writes multiple files under `outputs/spotify/`:
+
+- `enriched_likes.json` – Detailed per-track metadata including artists, albums, and Spotify URLs.
+- `enriched_likes.csv` – A tabular view of the enriched data, with semicolon-delimited artist and genre fields.
+- `enriched_likes.compact.json` – The compact representation that retains essential identifiers, release information, genres, and Spotify links.
+- `my_liked_songs.json` – Updated with the compact view for compatibility with prior workflows.
+
+Use the `--compact` flag to regenerate the compact JSON whenever you tweak or review the enriched dataset.
