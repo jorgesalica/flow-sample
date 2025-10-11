@@ -166,9 +166,9 @@ export function buildCsvContent(records: EnrichedTrackRecord[]): string {
           case 'isrc':
             return buildValue(record.external_ids?.isrc || '');
           case 'track_spotify_url':
-            return buildValue(record.external_urls?.spotify || '');
+            return buildValue(record.track_spotify_url || record.external_urls?.spotify || '');
           case 'album_spotify_url':
-            return buildValue(record.album?.spotifyUrl || '');
+            return buildValue(record.album?.album_spotify_url || record.album?.spotifyUrl || '');
           default:
             return '';
         }

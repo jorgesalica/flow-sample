@@ -35,6 +35,8 @@ export interface EnrichedAlbum {
   album_type: string | null;
   images: { url: string; width?: number; height?: number }[];
   spotifyUrl: string | null;
+  image_300?: string;
+  album_spotify_url?: string | null;
 }
 
 export interface EnrichedTrackRecord extends LikedTrackRecord {
@@ -50,7 +52,15 @@ export interface EnrichedTrackRecord extends LikedTrackRecord {
   album: EnrichedAlbum | null;
   artistas_enriquecidos: EnrichedArtist[];
   year: string | null;
+  track_spotify_url?: string | null;
+  artist_genres?: string[];
   artist_genres_joined?: string;
+  version_flags?: {
+    is_live?: boolean;
+    is_remix?: boolean;
+    is_extended?: boolean;
+    is_instrumental?: boolean;
+  };
 }
 
 export interface CompactTrackRecord {

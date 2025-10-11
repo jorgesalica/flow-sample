@@ -303,6 +303,8 @@ export async function enrichLikedSongs(options: {
     const artistGenres = buildArtistGenresUnion(genresByArtist, artistIds);
     const artistGenresJoined = artistGenres.join('; ');
 
+    const albumImage = selectAlbumImageUrl(Array.isArray(albumDetails?.images) ? albumDetails.images : undefined, 300);
+
     const album = albumDetails
       ? {
           id: albumDetails.id ?? null,
@@ -313,10 +315,16 @@ export async function enrichLikedSongs(options: {
           album_type: albumDetails.album_type ?? null,
           images: Array.isArray(albumDetails.images) ? albumDetails.images : [],
           spotifyUrl: albumDetails.external_urls?.spotify ?? null,
+          album_spotify_url: albumDetails.external_urls?.spotify ?? null,
+          image_300: albumImage ?? undefined,
         }
       : null;
 
     const year = album?.release_date ? String(album.release_date).slice(0, 4) : track?.year ?? null;
+
+    const trackSpotifyUrl = track?.external_urls?.spotify ?? null;
+
+    const versionFlags = buildVersionFlags(track?.name ?? baseRecord.track_name);
 
     const enrichedRecord: EnrichedTrackRecord = {
       ...baseRecord,
@@ -334,7 +342,10 @@ export async function enrichLikedSongs(options: {
       album,
       artistas_enriquecidos: enrichedArtists,
       year,
+      track_spotify_url: trackSpotifyUrl,
+      artist_genres: artistGenres,
       artist_genres_joined: artistGenresJoined,
+      version_flags: versionFlags ?? undefined,
     };
 
     return enrichedRecord;
@@ -354,6 +365,14 @@ export async function runEnrichment(options: {
   const csvContent = buildCsvContent(enrichedRecords);
   writeTextFile(FILES.enrichedCsv, csvContent);
   console.log(`Saved enriched CSV to ${FILES.enrichedCsv}`);
+
+  const compactRecords = buildCompactTracks(enrichedRecords);
+  writeJsonFile(FILES.compactJson, compactRecords);
+  console.log(`Saved compact enriched data to ${FILES.compactJson}`);
+
+  // Maintain backwards compatibility: overwrite the base liked songs file with the compact view
+  writeJsonFile(FILES.likedJson, compactRecords);
+  console.log(`Saved compact liked songs to ${FILES.likedJson}`);
 }
 
 export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
@@ -383,7 +402,7 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
       return;
     }
 
-    const trackSpotifyUrl = record.external_urls?.spotify ?? null;
+    const trackSpotifyUrl = record.track_spotify_url ?? record.external_urls?.spotify ?? null;
     if (!trackSpotifyUrl) {
       console.warn(`Warning: no Spotify URL found for track_id ${record.track_id}. Track will be skipped in compact output.`);
       return;
@@ -417,12 +436,12 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
         ...(album.id ? { id: album.id } : {}),
         name: album.name ?? '',
         ...(album.release_date ? { release_date: album.release_date } : {}),
-        ...(album.spotifyUrl ? { album_spotify_url: album.spotifyUrl } : {}),
+        ...(album.album_spotify_url ? { album_spotify_url: album.album_spotify_url } : {}),
       },
       track_spotify_url: trackSpotifyUrl,
     };
 
-    const albumImage = selectAlbumImageUrl(album.images, 300);
+    const albumImage = album.image_300 ?? selectAlbumImageUrl(album.images, 300);
     if (albumImage) {
       compact.album.image_300 = albumImage;
     }
@@ -432,8 +451,9 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
       compact.year = String(yearSource).slice(0, 4);
     }
 
-    if (artistGenres.length > 0) {
-      compact.artist_genres = artistGenres;
+    const combinedGenres = Array.isArray(record.artist_genres) && record.artist_genres.length > 0 ? record.artist_genres : artistGenres;
+    if (combinedGenres.length > 0) {
+      compact.artist_genres = combinedGenres;
     }
 
     if (typeof record.popularity === 'number') {
@@ -444,7 +464,7 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
       compact.explicit = true;
     }
 
-    const versionFlags = buildVersionFlags(compact.track_name);
+    const versionFlags = record.version_flags ?? buildVersionFlags(compact.track_name ?? record.track_name);
     if (versionFlags) {
       compact.version_flags = versionFlags;
     }
