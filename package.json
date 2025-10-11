@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "Spotify liked songs export script with TS/ESLint/Prettier tooling",
-  "main": "fetch_liked_songs.js",
+  "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node fetch_liked_songs.js",
+    "start": "ts-node src/index.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint . --ext .js,.ts",
@@ -23,7 +23,8 @@
     "eslint-plugin-prettier": "^5.2.1",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "@types/node-fetch": "^2.6.12"
   },
   "dependencies": {
     "node-fetch": "^2.7.0"

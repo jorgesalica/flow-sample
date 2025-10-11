@@ -138,9 +138,5 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Spotify tokens cache
-spotify_tokens.json
-spotify_skipped_audio_features.json
-enriched_likes.json
-enriched_likes.csv
-enriched_likes.compact.json
+# Project outputs
+outputs/

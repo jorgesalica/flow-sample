@@ -65,7 +65,7 @@ May your ideas ripple outward.
 
 ## Spotify Liked Songs Script – `.env` Checklist
 
-Before running `fetch_liked_songs.js`, copy `.env.example` to `.env` in the repository root (next to the script) and fill in the following values:
+Before running the CLI, copy `.env.example` to `.env` in the repository root and fill in the following values:
 
 ```
 SPOTIFY_CLIENT_ID=your_client_id
@@ -76,25 +76,23 @@ SPOTIFY_AUTHORIZATION_CODE=the_one_time_code_from_the_authorize_step
 
 You can obtain the credentials and authorization code by following Spotify's [Authorization Code Flow guide](https://developer.spotify.com/documentation/web-api/tutorials/code-flow).
 
-With the `.env` file in place, install the dependencies (`npm install`) and run `npm start` or `node fetch_liked_songs.js`. The script will read the variables from `.env`, exchange the authorization code for an access token, fetch all of your liked tracks (handling pagination automatically), attempt to retrieve audio features, and save them to `my_liked_songs.json`.
+With the `.env` file in place, install the dependencies (`npm install`) and run `npm start`. The TypeScript CLI reads the variables from `.env`, exchanges the authorization code for an access token, fetches your liked tracks (handling pagination automatically), and writes all outputs under `outputs/spotify/` (for example, `outputs/spotify/my_liked_songs.json`).
 
 Additional CLI options are available when you want to enrich the export with extra metadata (no audio features involved):
 
 ```
-node fetch_liked_songs.js --enrich                 # enrich an existing my_liked_songs.json
-node fetch_liked_songs.js --export-and-enrich      # export liked songs and enrich in one run
-node fetch_liked_songs.js --enrich --input ./file.json
-                                                   # enrich a custom JSON file
-node fetch_liked_songs.js --compact                # compact an existing enriched_likes.json
-node fetch_liked_songs.js --compact --input ./enriched.json
-                                                   # compact a custom enriched export
+npm start -- --enrich                               # enrich an existing outputs/spotify/my_liked_songs.json
+npm start -- --export-and-enrich                    # export liked songs and enrich in one run
+npm start -- --enrich --input ./file.json            # enrich a custom JSON file
+npm start -- --compact                              # compact an existing outputs/spotify/enriched_likes.json
+npm start -- --compact --input ./enriched.json       # compact a custom enriched export
 ```
 
 The enrichment pass produces the following files:
 
-* `enriched_likes.json` – per-track metadata including album details, artist stats, ISRC, markets count, etc.
-* `enriched_likes.csv` – the same data flattened for spreadsheets (`artists_joined` and `artist_genres_joined` use `; ` separators).
-* `enriched_likes.compact.json` – compact per-track summaries without large market lists or redundant fields, retaining key metadata for lightweight consumption.
+* `outputs/spotify/enriched_likes.json` – per-track metadata including album details, artist stats, ISRC, markets count, etc.
+* `outputs/spotify/enriched_likes.csv` – the same data flattened for spreadsheets (`artists_joined` and `artist_genres_joined` use `; ` separators).
+* `outputs/spotify/enriched_likes.compact.json` – compact per-track summaries without large market lists or redundant fields, retaining key metadata for lightweight consumption.
 
 > **Important:** In November 2024 Spotify restricted several Web API endpoints for newly created apps, including `GET /v1/audio-features`. If your app was registered after that change and you have not requested extended access, every audio-features request will return `403 Forbidden`. Use one of these approaches:
 >
