@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 import { FILES } from './config';
 import { parseArgs, printHelp } from './cli';
-import { createClientFromEnv, authenticate, exportLikedSongs, runEnrichment, compactLikedSongs, parsePageLimit } from './exporter';
+import {
+  createClientFromEnv,
+  authenticate,
+  exportLikedSongs,
+  runEnrichment,
+  compactLikedSongs,
+  parsePageLimit,
+} from './exporter';
 import { ensureTrimmed } from './utils';
 
 async function main(): Promise<void> {
@@ -52,7 +59,8 @@ async function main(): Promise<void> {
   }
 
   if (actions.compact) {
-    const compactInputPath = args.inputProvided && !actions.enrich ? args.inputPath : FILES.enrichedJson;
+    const compactInputPath =
+      args.inputProvided && !actions.enrich ? args.inputPath : FILES.enrichedJson;
     await compactLikedSongs({
       inputPath: compactInputPath,
       outputPath: FILES.compactJson,
@@ -60,7 +68,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
   console.error('An error occurred:', message);
   process.exitCode = 1;

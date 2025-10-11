@@ -42,14 +42,19 @@ export function createClientFromEnv(): {
   const redirectUri = ensureTrimmed(env.SPOTIFY_REDIRECT_URI);
 
   if (!clientId || !clientSecret || !redirectUri) {
-    throw new Error('Please set SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, and SPOTIFY_REDIRECT_URI in your .env file.');
+    throw new Error(
+      'Please set SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, and SPOTIFY_REDIRECT_URI in your .env file.',
+    );
   }
 
   const client = createSpotifyClient({ clientId, clientSecret, redirectUri });
   return { client, env };
 }
 
-export async function authenticate(client: SpotifyClient, env: RawEnv): Promise<AuthenticateResult> {
+export async function authenticate(
+  client: SpotifyClient,
+  env: RawEnv,
+): Promise<AuthenticateResult> {
   const authorizationCode = ensureTrimmed(env.SPOTIFY_AUTHORIZATION_CODE);
   const envRefreshToken = ensureTrimmed(env.SPOTIFY_REFRESH_TOKEN);
 
@@ -66,13 +71,17 @@ export async function authenticate(client: SpotifyClient, env: RawEnv): Promise<
       };
     } catch (refreshError) {
       const message = refreshError instanceof Error ? refreshError.message : String(refreshError);
-      console.warn(`Warning: refresh flow failed (${message}). Falling back to authorization code.`);
+      console.warn(
+        `Warning: refresh flow failed (${message}). Falling back to authorization code.`,
+      );
     }
   }
 
   if (!authTokens) {
     if (!authorizationCode) {
-      throw new Error('No stored refresh token found. Please set SPOTIFY_AUTHORIZATION_CODE with a fresh authorization code.');
+      throw new Error(
+        'No stored refresh token found. Please set SPOTIFY_AUTHORIZATION_CODE with a fresh authorization code.',
+      );
     }
 
     console.log('Exchanging authorization code for access token...');
@@ -87,7 +96,9 @@ export async function authenticate(client: SpotifyClient, env: RawEnv): Promise<
   if (authTokens.refreshToken) {
     persistRefreshToken(authTokens.refreshToken);
   } else {
-    console.warn('Warning: no refresh token returned by Spotify. You may need a new authorization code next time.');
+    console.warn(
+      'Warning: no refresh token returned by Spotify. You may need a new authorization code next time.',
+    );
   }
 
   return authTokens;
@@ -98,14 +109,17 @@ function formatTrackRecord(item: any): LikedTrackRecord | null {
   if (!track || !track.id) return null;
 
   const artistEntries = Array.isArray(track.artists)
-    ? (track.artists.map((artist: any) => ({ id: artist?.id ?? null, name: artist?.name ?? '' })) as {
+    ? (track.artists.map((artist: any) => ({
+        id: artist?.id ?? null,
+        name: artist?.name ?? '',
+      })) as {
         id: string | null;
         name: string;
       }[])
     : [];
 
   const artistIds = artistEntries
-    .map(entry => entry.id)
+    .map((entry) => entry.id)
     .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
   return {
@@ -124,7 +138,10 @@ export async function exportLikedSongs(options: {
 }): Promise<void> {
   ensureDirectoryExists(SPOTIFY_OUTPUT_DIR);
 
-  const savedTracks = await options.client.fetchAllSavedTracks(options.accessToken, options.pageLimit ? { pageLimit: options.pageLimit } : {});
+  const savedTracks = await options.client.fetchAllSavedTracks(
+    options.accessToken,
+    options.pageLimit ? { pageLimit: options.pageLimit } : {},
+  );
   const formatted: LikedTrackRecord[] = savedTracks
     .map((item: any) => formatTrackRecord(item))
     .filter((record): record is LikedTrackRecord => record !== null);
@@ -139,9 +156,11 @@ export async function exportLikedSongs(options: {
 }
 
 function ensureTrackIds(records: LikedTrackRecord[]): void {
-  const missingIds = records.filter(record => !record.track_id);
+  const missingIds = records.filter((record) => !record.track_id);
   if (missingIds.length > 0) {
-    throw new Error('Input JSON is missing track_id values. Please re-export liked songs with the latest script before enriching.');
+    throw new Error(
+      'Input JSON is missing track_id values. Please re-export liked songs with the latest script before enriching.',
+    );
   }
 }
 
@@ -154,19 +173,23 @@ export async function enrichLikedSongs(options: {
   const baseRecords = loadJsonFile<LikedTrackRecord[]>(options.inputPath);
   ensureTrackIds(baseRecords);
 
-  const trackIds = baseRecords.map(record => record.track_id);
+  const trackIds = baseRecords.map((record) => record.track_id);
   console.log(`Enriching ${trackIds.length} tracks...`);
 
-  const trackDetailsMap = await options.client.fetchTracksDetails(trackIds, options.accessToken, (processed, total) => {
-    if (processed === total || processed % 50 === 0) {
-      console.log(`Fetched track details for ${processed}/${total} tracks...`);
-    }
-  });
+  const trackDetailsMap = await options.client.fetchTracksDetails(
+    trackIds,
+    options.accessToken,
+    (processed, total) => {
+      if (processed === total || processed % 50 === 0) {
+        console.log(`Fetched track details for ${processed}/${total} tracks...`);
+      }
+    },
+  );
 
   const artistIdSet = new Set<string>();
   const albumIdsNeedingDetails = new Set<string>();
 
-  trackIds.forEach(trackId => {
+  trackIds.forEach((trackId) => {
     const track = trackDetailsMap.get(trackId);
     if (track?.artists) {
       track.artists.forEach((artist: any) => {
@@ -183,38 +206,51 @@ export async function enrichLikedSongs(options: {
     }
   });
 
-  const artistDetailsMap = await options.client.fetchArtistsDetails(Array.from(artistIdSet), options.accessToken, (processed, total) => {
-    if (processed === total || processed % 50 === 0) {
-      console.log(`Fetched artist details for ${processed}/${total} artists...`);
-    }
-  });
+  const artistDetailsMap = await options.client.fetchArtistsDetails(
+    Array.from(artistIdSet),
+    options.accessToken,
+    (processed, total) => {
+      if (processed === total || processed % 50 === 0) {
+        console.log(`Fetched artist details for ${processed}/${total} artists...`);
+      }
+    },
+  );
 
-  const albumDetailsMap = await options.client.fetchAlbumsDetails(Array.from(albumIdsNeedingDetails), options.accessToken, (processed, total) => {
-    if (processed === total || processed % 50 === 0) {
-      console.log(`Fetched album details for ${processed}/${total} albums...`);
-    }
-  });
+  const albumDetailsMap = await options.client.fetchAlbumsDetails(
+    Array.from(albumIdsNeedingDetails),
+    options.accessToken,
+    (processed, total) => {
+      if (processed === total || processed % 50 === 0) {
+        console.log(`Fetched album details for ${processed}/${total} albums...`);
+      }
+    },
+  );
 
   const genresByArtist = new Map<string, string[]>();
   artistDetailsMap.forEach((artist: any, id: string) => {
     genresByArtist.set(id, Array.isArray(artist.genres) ? artist.genres.filter(Boolean) : []);
   });
 
-  const enrichedRecords: EnrichedTrackRecord[] = baseRecords.map(baseRecord => {
+  const enrichedRecords: EnrichedTrackRecord[] = baseRecords.map((baseRecord) => {
     const track = trackDetailsMap.get(baseRecord.track_id);
     if (!track) {
-      console.warn(`Warning: track details not found for track_id ${baseRecord.track_id}. Using fallback data from JSON.`);
+      console.warn(
+        `Warning: track details not found for track_id ${baseRecord.track_id}. Using fallback data from JSON.`,
+      );
     }
 
     const artists = Array.isArray(track?.artists) ? track.artists : baseRecord.artists;
     const artistIds = artists
       .map((artist: any) => artist?.id)
-      .filter((id: string | undefined | null): id is string => typeof id === 'string' && id.length > 0);
+      .filter(
+        (id: string | undefined | null): id is string => typeof id === 'string' && id.length > 0,
+      );
 
     const albumFromTrack = track?.album ?? null;
-    const albumDetails = albumFromTrack?.id && albumDetailsMap.has(albumFromTrack.id)
-      ? albumDetailsMap.get(albumFromTrack.id)
-      : albumFromTrack;
+    const albumDetails =
+      albumFromTrack?.id && albumDetailsMap.has(albumFromTrack.id)
+        ? albumDetailsMap.get(albumFromTrack.id)
+        : albumFromTrack;
 
     const enrichedArtists = artistIds.map((id: string) => {
       const artist = artistDetailsMap.get(id);
@@ -247,7 +283,10 @@ export async function enrichLikedSongs(options: {
     const artistGenres = buildArtistGenresUnion(genresByArtist, artistIds);
     const artistGenresJoined = artistGenres.join('; ');
 
-    const albumImage = selectAlbumImageUrl(Array.isArray(albumDetails?.images) ? albumDetails.images : undefined, 300);
+    const albumImage = selectAlbumImageUrl(
+      Array.isArray(albumDetails?.images) ? albumDetails.images : undefined,
+      300,
+    );
 
     const album = albumDetails
       ? {
@@ -255,7 +294,8 @@ export async function enrichLikedSongs(options: {
           name: albumDetails.name ?? '',
           release_date: albumDetails.release_date ?? null,
           release_date_precision: albumDetails.release_date_precision ?? null,
-          total_tracks: typeof albumDetails.total_tracks === 'number' ? albumDetails.total_tracks : null,
+          total_tracks:
+            typeof albumDetails.total_tracks === 'number' ? albumDetails.total_tracks : null,
           album_type: albumDetails.album_type ?? null,
           images: Array.isArray(albumDetails.images) ? albumDetails.images : [],
           spotifyUrl: albumDetails.external_urls?.spotify ?? null,
@@ -264,7 +304,9 @@ export async function enrichLikedSongs(options: {
         }
       : null;
 
-    const year = album?.release_date ? String(album.release_date).slice(0, 4) : track?.year ?? null;
+    const year = album?.release_date
+      ? String(album.release_date).slice(0, 4)
+      : (track?.year ?? null);
 
     const trackSpotifyUrl = track?.external_urls?.spotify ?? null;
 
@@ -274,7 +316,10 @@ export async function enrichLikedSongs(options: {
       ...baseRecord,
       track_name: track?.name ?? baseRecord.track_name,
       artists: artists.map((artist: any) => ({ id: artist?.id ?? null, name: artist?.name ?? '' })),
-      artists_joined: artists.map((artist: any) => artist?.name ?? '').filter(Boolean).join('; '),
+      artists_joined: artists
+        .map((artist: any) => artist?.name ?? '')
+        .filter(Boolean)
+        .join('; '),
       duration_ms: typeof track?.duration_ms === 'number' ? track.duration_ms : null,
       explicit: typeof track?.explicit === 'boolean' ? track.explicit : null,
       popularity: typeof track?.popularity === 'number' ? track.popularity : null,
@@ -319,33 +364,41 @@ export async function runEnrichment(options: {
 export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
   const compactRecords: any[] = [];
 
-  records.forEach(record => {
+  records.forEach((record) => {
     if (!record.track_id) {
       console.warn('Warning: skipping track without track_id in compact stage.');
       return;
     }
     if (!record.added_at) {
-      console.warn(`Warning: missing added_at value for track_id ${record.track_id}. Track will be skipped in compact output.`);
+      console.warn(
+        `Warning: missing added_at value for track_id ${record.track_id}. Track will be skipped in compact output.`,
+      );
       return;
     }
 
     const artists = Array.isArray(record.artists)
-      ? record.artists.filter(artist => artist && (artist.id || artist.name))
+      ? record.artists.filter((artist) => artist && (artist.id || artist.name))
       : [];
     if (artists.length === 0) {
-      console.warn(`Warning: no artists found for track_id ${record.track_id}. Track will be skipped in compact output.`);
+      console.warn(
+        `Warning: no artists found for track_id ${record.track_id}. Track will be skipped in compact output.`,
+      );
       return;
     }
 
     const album = record.album;
     if (!album) {
-      console.warn(`Warning: no album data found for track_id ${record.track_id}. Track will be skipped in compact output.`);
+      console.warn(
+        `Warning: no album data found for track_id ${record.track_id}. Track will be skipped in compact output.`,
+      );
       return;
     }
 
     const trackSpotifyUrl = record.track_spotify_url ?? record.external_urls?.spotify ?? null;
     if (!trackSpotifyUrl) {
-      console.warn(`Warning: no Spotify URL found for track_id ${record.track_id}. Track will be skipped in compact output.`);
+      console.warn(
+        `Warning: no Spotify URL found for track_id ${record.track_id}. Track will be skipped in compact output.`,
+      );
       return;
     }
 
@@ -353,9 +406,9 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
       ? Array.from(
           new Set(
             record.artistas_enriquecidos
-              .flatMap(artist => (Array.isArray(artist.genres) ? artist.genres : []))
-              .filter((genre): genre is string => Boolean(genre))
-          )
+              .flatMap((artist) => (Array.isArray(artist.genres) ? artist.genres : []))
+              .filter((genre): genre is string => Boolean(genre)),
+          ),
         ).sort((a, b) => a.localeCompare(b))
       : [];
 
@@ -363,7 +416,7 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
       track_id: record.track_id,
       track_name: record.track_name ?? '',
       added_at: record.added_at,
-      artists: artists.map(artist => {
+      artists: artists.map((artist) => {
         const artistEntry: { id?: string; name: string } = {
           name: artist.name ?? '',
         };
@@ -392,7 +445,10 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
       compact.year = String(yearSource).slice(0, 4);
     }
 
-    const combinedGenres = Array.isArray(record.artist_genres) && record.artist_genres.length > 0 ? record.artist_genres : artistGenres;
+    const combinedGenres =
+      Array.isArray(record.artist_genres) && record.artist_genres.length > 0
+        ? record.artist_genres
+        : artistGenres;
     if (combinedGenres.length > 0) {
       compact.artist_genres = combinedGenres;
     }
@@ -405,7 +461,8 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
       compact.explicit = true;
     }
 
-    const versionFlags = record.version_flags ?? buildVersionFlags(compact.track_name ?? record.track_name);
+    const versionFlags =
+      record.version_flags ?? buildVersionFlags(compact.track_name ?? record.track_name);
     if (versionFlags) {
       compact.version_flags = versionFlags;
     }
@@ -421,7 +478,10 @@ export function buildCompactTracks(records: EnrichedTrackRecord[]): any[] {
   return compactRecords;
 }
 
-export async function compactLikedSongs(options: { inputPath: string; outputPath?: string }): Promise<void> {
+export async function compactLikedSongs(options: {
+  inputPath: string;
+  outputPath?: string;
+}): Promise<void> {
   const inputPath = options.inputPath;
   console.log(`Loading enriched liked songs from ${inputPath}...`);
   const enrichedRecords = loadJsonFile<EnrichedTrackRecord[]>(inputPath);

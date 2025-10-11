@@ -40,12 +40,15 @@ export function loadJsonFile<T>(filePath: string): T {
   }
 }
 
-export function buildArtistGenresUnion(genresByArtist: Map<string, string[]>, artistIds: string[]): string[] {
+export function buildArtistGenresUnion(
+  genresByArtist: Map<string, string[]>,
+  artistIds: string[],
+): string[] {
   const genres = new Set<string>();
-  artistIds.forEach(id => {
+  artistIds.forEach((id) => {
     const artistGenres = genresByArtist.get(id);
     if (!artistGenres) return;
-    artistGenres.forEach(genre => {
+    artistGenres.forEach((genre) => {
       if (genre) genres.add(genre);
     });
   });
@@ -54,7 +57,7 @@ export function buildArtistGenresUnion(genresByArtist: Map<string, string[]>, ar
 
 export function selectAlbumImageUrl(
   images: { url: string; width?: number; height?: number }[] | undefined,
-  targetWidth = 300
+  targetWidth = 300,
 ): string | null {
   if (!images || images.length === 0) return null;
 
@@ -62,7 +65,7 @@ export function selectAlbumImageUrl(
 
   const candidates: AlbumImage[] = images
     .filter((image): image is AlbumImage => Boolean(image?.url))
-    .map(image => ({ url: image.url, width: image.width, height: image.height }));
+    .map((image) => ({ url: image.url, width: image.width, height: image.height }));
 
   if (candidates.length === 0) return null;
 
@@ -81,14 +84,12 @@ export function selectAlbumImageUrl(
   return selected.url;
 }
 
-export function buildVersionFlags(trackName: string | undefined):
-  | {
-      is_live?: boolean;
-      is_remix?: boolean;
-      is_extended?: boolean;
-      is_instrumental?: boolean;
-    }
-  | null {
+export function buildVersionFlags(trackName: string | undefined): {
+  is_live?: boolean;
+  is_remix?: boolean;
+  is_extended?: boolean;
+  is_instrumental?: boolean;
+} | null {
   if (!trackName) return null;
   const lower = trackName.toLowerCase();
   const flags: Record<string, boolean> = {};
@@ -131,9 +132,9 @@ export function buildCsvContent(records: EnrichedTrackRecord[]): string {
     return stringValue;
   };
 
-  const rows = records.map(record =>
+  const rows = records.map((record) =>
     headers
-      .map(header => {
+      .map((header) => {
         switch (header) {
           case 'track_id':
             return buildValue(record.track_id);
@@ -173,7 +174,7 @@ export function buildCsvContent(records: EnrichedTrackRecord[]): string {
             return '';
         }
       })
-      .join(',')
+      .join(','),
   );
 
   return [headers.join(','), ...rows].join('\n');

@@ -33,14 +33,14 @@ interface RetryOptions {
 }
 
 async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function fetchJsonWithRetry<T = any>(
   url: string,
   token: string | null,
   options: FetchOptions = {},
-  retryOptions: RetryOptions = {}
+  retryOptions: RetryOptions = {},
 ): Promise<T> {
   const { maxAttempts = DEFAULT_MAX_ATTEMPTS, label = url } = retryOptions;
   let attempt = 1;
@@ -70,7 +70,8 @@ async function fetchJsonWithRetry<T = any>(
       }
 
       if (response.status >= 500 && response.status < 600) {
-        const backoffMs = BASE_BACKOFF_MS * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 300);
+        const backoffMs =
+          BASE_BACKOFF_MS * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 300);
         await sleep(backoffMs);
         attempt += 1;
         continue;
@@ -78,7 +79,9 @@ async function fetchJsonWithRetry<T = any>(
 
       if (!response.ok) {
         const errorBody = await response.text();
-        const error = new Error(`Request failed (${label}). Status: ${response.status}. Body: ${errorBody}`);
+        const error = new Error(
+          `Request failed (${label}). Status: ${response.status}. Body: ${errorBody}`,
+        );
         (error as any).status = response.status;
         (error as any).body = errorBody;
         throw error;
@@ -91,7 +94,8 @@ async function fetchJsonWithRetry<T = any>(
       if (attempt >= maxAttempts || (status && status >= 400 && status !== 429)) {
         throw error;
       }
-      const fallbackDelay = BASE_BACKOFF_MS * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 300);
+      const fallbackDelay =
+        BASE_BACKOFF_MS * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 300);
       await sleep(fallbackDelay);
       attempt += 1;
     }
@@ -113,9 +117,21 @@ export interface SpotifyClient {
   requestClientCredentialsToken(): Promise<string>;
   refreshAccessToken(refreshToken: string): Promise<SpotifyTokenPair>;
   fetchAllSavedTracks(accessToken: string, options?: { pageLimit?: number }): Promise<any[]>;
-  fetchTracksDetails(trackIds: string[], accessToken: string, logProgress: (processed: number, total: number) => void): Promise<Map<string, any>>;
-  fetchArtistsDetails(artistIds: string[], accessToken: string, logProgress: (processed: number, total: number) => void): Promise<Map<string, any>>;
-  fetchAlbumsDetails(albumIds: string[], accessToken: string, logProgress: (processed: number, total: number) => void): Promise<Map<string, any>>;
+  fetchTracksDetails(
+    trackIds: string[],
+    accessToken: string,
+    logProgress: (processed: number, total: number) => void,
+  ): Promise<Map<string, any>>;
+  fetchArtistsDetails(
+    artistIds: string[],
+    accessToken: string,
+    logProgress: (processed: number, total: number) => void,
+  ): Promise<Map<string, any>>;
+  fetchAlbumsDetails(
+    albumIds: string[],
+    accessToken: string,
+    logProgress: (processed: number, total: number) => void,
+  ): Promise<Map<string, any>>;
 }
 
 export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient {
@@ -139,7 +155,9 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`Failed to exchange authorization code. Status: ${response.status}. Body: ${errorBody}`);
+      throw new Error(
+        `Failed to exchange authorization code. Status: ${response.status}. Body: ${errorBody}`,
+      );
     }
 
     const tokenData = (await response.json()) as any;
@@ -167,7 +185,9 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`Failed to request client credentials token. Status: ${response.status}. Body: ${errorBody}`);
+      throw new Error(
+        `Failed to request client credentials token. Status: ${response.status}. Body: ${errorBody}`,
+      );
     }
 
     const tokenData = (await response.json()) as any;
@@ -195,7 +215,9 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`Failed to refresh access token. Status: ${response.status}. Body: ${errorBody}`);
+      throw new Error(
+        `Failed to refresh access token. Status: ${response.status}. Body: ${errorBody}`,
+      );
     }
 
     const tokenData = (await response.json()) as any;
@@ -209,7 +231,10 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
     };
   }
 
-  async function fetchAllSavedTracks(accessToken: string, options: { pageLimit?: number } = {}): Promise<any[]> {
+  async function fetchAllSavedTracks(
+    accessToken: string,
+    options: { pageLimit?: number } = {},
+  ): Promise<any[]> {
     const { pageLimit = Number.POSITIVE_INFINITY } = options;
     let nextUrl: string | null = `${SAVED_TRACKS_ENDPOINT}?limit=50&offset=0`;
     const savedTracks: any[] = [];
@@ -217,7 +242,12 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
 
     while (nextUrl) {
       console.log(`Fetching saved tracks page ${page}...`);
-      const data: any = await fetchJsonWithRetry<any>(nextUrl, accessToken, {}, { label: `${SAVED_TRACKS_ENDPOINT} page ${page}` });
+      const data: any = await fetchJsonWithRetry<any>(
+        nextUrl,
+        accessToken,
+        {},
+        { label: `${SAVED_TRACKS_ENDPOINT} page ${page}` },
+      );
       savedTracks.push(...(Array.isArray(data.items) ? data.items : []));
 
       nextUrl = data.next ?? null;
@@ -236,7 +266,7 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
   async function fetchTracksDetails(
     trackIds: string[],
     accessToken: string,
-    logProgress: (processed: number, total: number) => void
+    logProgress: (processed: number, total: number) => void,
   ): Promise<Map<string, any>> {
     const uniqueIds = Array.from(new Set(trackIds.filter(Boolean)));
     const chunks = chunkArray(uniqueIds, MAX_BATCH_SIZE);
@@ -245,7 +275,12 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
 
     for (const chunk of chunks) {
       const url = `${TRACKS_ENDPOINT}?ids=${chunk.join(',')}`;
-      const data: any = await fetchJsonWithRetry<any>(url, accessToken, {}, { label: `${TRACKS_ENDPOINT}?ids` });
+      const data: any = await fetchJsonWithRetry<any>(
+        url,
+        accessToken,
+        {},
+        { label: `${TRACKS_ENDPOINT}?ids` },
+      );
       if (Array.isArray(data.tracks)) {
         data.tracks.forEach((track: any) => {
           if (track?.id) {
@@ -263,7 +298,7 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
   async function fetchArtistsDetails(
     artistIds: string[],
     accessToken: string,
-    logProgress: (processed: number, total: number) => void
+    logProgress: (processed: number, total: number) => void,
   ): Promise<Map<string, any>> {
     const uniqueIds = Array.from(new Set(artistIds.filter(Boolean)));
     const chunks = chunkArray(uniqueIds, MAX_BATCH_SIZE);
@@ -272,7 +307,12 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
 
     for (const chunk of chunks) {
       const url = `${ARTISTS_ENDPOINT}?ids=${chunk.join(',')}`;
-      const data: any = await fetchJsonWithRetry<any>(url, accessToken, {}, { label: `${ARTISTS_ENDPOINT}?ids` });
+      const data: any = await fetchJsonWithRetry<any>(
+        url,
+        accessToken,
+        {},
+        { label: `${ARTISTS_ENDPOINT}?ids` },
+      );
       if (Array.isArray(data.artists)) {
         data.artists.forEach((artist: any) => {
           if (artist?.id) {
@@ -290,7 +330,7 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
   async function fetchAlbumsDetails(
     albumIds: string[],
     accessToken: string,
-    logProgress: (processed: number, total: number) => void
+    logProgress: (processed: number, total: number) => void,
   ): Promise<Map<string, any>> {
     const uniqueIds = Array.from(new Set(albumIds.filter(Boolean)));
     const chunks = chunkArray(uniqueIds, MAX_BATCH_SIZE);
@@ -299,7 +339,12 @@ export function createSpotifyClient(config: SpotifyClientConfig): SpotifyClient 
 
     for (const chunk of chunks) {
       const url = `${ALBUMS_ENDPOINT}?ids=${chunk.join(',')}`;
-      const data: any = await fetchJsonWithRetry<any>(url, accessToken, {}, { label: `${ALBUMS_ENDPOINT}?ids` });
+      const data: any = await fetchJsonWithRetry<any>(
+        url,
+        accessToken,
+        {},
+        { label: `${ALBUMS_ENDPOINT}?ids` },
+      );
       if (Array.isArray(data.albums)) {
         data.albums.forEach((album: any) => {
           if (album?.id) {

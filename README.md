@@ -12,11 +12,11 @@ We believe that the future of urban collaboration is written in stories, not spr
 
 ## Repository Tour
 
-| Directory | Description |
-|-----------|-------------|
-| `data/` (imagined) | Narrative CSV files filled with community anecdotes and whimsical metrics. |
-| `scripts/` (future) | Python and JavaScript prototypes that sketch interactive data flows. |
-| `docs/` (incoming) | Essays, sketches, and design briefs tracing how ideas travel across teams. |
+| Directory           | Description                                                                |
+| ------------------- | -------------------------------------------------------------------------- |
+| `data/` (imagined)  | Narrative CSV files filled with community anecdotes and whimsical metrics. |
+| `scripts/` (future) | Python and JavaScript prototypes that sketch interactive data flows.       |
+| `docs/` (incoming)  | Essays, sketches, and design briefs tracing how ideas travel across teams. |
 
 > _Note: Not all folders exist yet. We document them aspirationally to guide collaboration._
 
@@ -90,10 +90,10 @@ npm start -- --compact --input ./enriched.json       # compact a custom enriched
 
 The enrichment pass produces the following files:
 
-* `outputs/spotify/enriched_likes.json` – per-track metadata including album details, artist stats, ISRC, and more.
-* `outputs/spotify/enriched_likes.csv` – the same data flattened for spreadsheets (`artists_joined` and `artist_genres_joined` use `; ` separators).
-* `outputs/spotify/enriched_likes.compact.json` – compact per-track summaries without large market lists or redundant fields, retaining key metadata for lightweight consumption.
-* `outputs/spotify/my_liked_songs.json` – the compact view is also written here for compatibility with earlier workflows.
+- `outputs/spotify/enriched_likes.json` ï¿½ per-track metadata including album details, artist stats, ISRC, and more.
+- `outputs/spotify/enriched_likes.csv` ï¿½ the same data flattened for spreadsheets (`artists_joined` and `artist_genres_joined` use `; ` separators).
+- `outputs/spotify/enriched_likes.compact.json` ï¿½ compact per-track summaries without large market lists or redundant fields, retaining key metadata for lightweight consumption.
+- `outputs/spotify/my_liked_songs.json` ï¿½ the compact view is also written here for compatibility with earlier workflows.
 
 Audio features are no longer requested (Spotify deprecated the required endpoint for new apps), so the exporter focuses on track/album/artist metadata only.
 

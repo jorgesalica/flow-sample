@@ -19,12 +19,12 @@ export function loadEnvVariables(filePath: string = ENV_FILE): RawEnv {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `Unable to read ${filePath}. Make sure the file exists and includes the required Spotify credentials. (${message})`
+      `Unable to read ${filePath}. Make sure the file exists and includes the required Spotify credentials. (${message})`,
     );
   }
 
   const env: RawEnv = {};
-  contents.split(/\r?\n/).forEach(line => {
+  contents.split(/\r?\n/).forEach((line) => {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) return;
 
