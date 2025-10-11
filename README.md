@@ -35,6 +35,18 @@ git checkout -b feat/my-flow-idea
 
 From there, craft prototypes, write stories, or add datasets that explore the metaphor of flow. When ready, open a pull request describing your experiment.
 
+### Opening a Pull Request
+
+Whether you are sharing code or a narrative vignette, the process for opening a pull request from your feature branch to `main` is straightforward:
+
+1. Make sure all of your changes are committed on your working branch.
+2. Push the branch to the remote repository: `git push origin <your-branch-name>`.
+3. In the repository interface (GitHub, GitLab, etc.), choose **New pull request**.
+4. Select your branch as the source and `main` as the target, then add a descriptive title and summary.
+5. Submit the pull request and invite feedback from collaborators.
+
+> Consejo rápido en español: «Asegúrate de que todos tus commits estén en tu rama antes de abrir el PR contra `main`. Luego describe claramente qué aporta tu contribución».
+
 ## Contribution Guidelines
 
 1. **Honor the narrative** – treat data points as characters with agency and respect.
