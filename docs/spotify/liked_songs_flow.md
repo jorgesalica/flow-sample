@@ -1,6 +1,6 @@
 # Spotify Liked Songs Export Flow
 
-This document walks through the TypeScript CLI that powers the Spotify liked songs workflow in this repository. The entrypoint at `src/scripts/spotify-flow/index.ts` coordinates exporting your saved tracks, enriching them with additional metadata, and producing a compact representation that is easy to share.
+This document walks through the TypeScript CLI that powers the Spotify liked songs workflow in this repository. The entrypoint at `src/spotify-flow/scripts/index.ts` coordinates exporting your saved tracks, enriching them with additional metadata, and producing a compact representation that is easy to share.
 
 ## Workflow Overview
 
