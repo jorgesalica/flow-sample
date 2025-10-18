@@ -12,7 +12,7 @@ Welcome to the stream where playlists and curiosity meet. This corner of Flow Sa
 ## How to Approach It
 
 1. **Set the stage:** Copy `.env.example` to `.env`, fill in your Spotify credentials, and keep them close. They are simply keys to your own archive.
-2. **Follow the script (or don’t):** `npm start` runs the default export. Add `--export-and-enrich`, `--enrich`, or `--compact` when you want a different cadence. Mix and match to taste.
+2. **Follow the script (or don’t):** `npm start` runs the default export. Add `--export-and-enrich`, `--enrich`, or `--compact` when you want a different cadence—or launch the UI with `npm run spotify:server` and let the browser trigger the flow for you.
 3. **Read the artifacts:** Explore the outputs. Notice which fields feel resonant, which seem redundant, and which might hint at a story you want to chase later.
 
 This documentation doesn’t prescribe the experience; it frames an attitude. Treat the CLI as a traveling companion—curious, respectful, and ready to drift with whatever music you’ve been gathering. When you find a new narrative, document it, remix it, or simply let it flow back into the repository for someone else to encounter.

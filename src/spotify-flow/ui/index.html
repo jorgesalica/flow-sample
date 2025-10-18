@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spotify Flow Explorer</title>
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="app-header__inner">
+        <h1>Spotify Flow Explorer</h1>
+        <p class="tagline">A gentle interface for drifting through liked tracks.</p>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="control-panel" aria-label="Controls">
+        <div class="control-group">
+          <span class="control-label">Latest exports</span>
+          <select id="sample-select" title="Select a sample to load" aria-label="Select a sample to load">
+            <option value="">Select a sample...</option>
+            <option value="auto">Auto-detect latest export</option>
+            <option value="compact">Liked songs (compact)</option>
+            <option value="enriched">Enriched liked songs</option>
+            <option value="compact-enriched">Compact enriched (if available)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Quick actions</span>
+          <div class="control-actions">
+            <button id="btn-auto-load" type="button">Load latest export</button>
+            <button id="btn-run-flow" type="button" data-label="Run export + enrich">
+              Run export + enrich
+            </button>
+            <button id="btn-cli-hint" type="button">Copy CLI command</button>
+          </div>
+        </div>
+        <div class="control-group control-group--inline">
+          <span class="control-label">Current source:</span>
+          <span id="source-label" class="pill">None</span>
+        </div>
+      </section>
+
+      <p id="status-banner" class="status-banner" data-tone="info">Ready to explore.</p>
+
+      <section class="metrics-panel" aria-label="Collection metrics">
+        <article class="metric-card">
+          <h2>Total tracks</h2>
+          <p id="metric-total">0</p>
+        </article>
+        <article class="metric-card">
+          <h2>Unique artists</h2>
+          <p id="metric-artists">0</p>
+        </article>
+        <article class="metric-card">
+          <h2>Top genre</h2>
+          <p id="metric-genre">&mdash;</p>
+        </article>
+      </section>
+
+      <section class="grid-panel" aria-label="Track grid">
+        <div id="track-grid" class="track-grid" role="list"></div>
+        <div id="empty-state" class="empty-state" hidden>
+          <p>No tracks loaded yet. Use the quick actions to pull one in.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>
+        Built inside Flow Sample as an improvisational data vignette. Run <code>npm start -- --export-and-enrich</code>
+        to refresh the exports in <code>outputs/spotify/</code> when you need new data.
+      </p>
+    </footer>
+
+    <script src="scripts/app.js" type="module"></script>
+  </body>
+</html>

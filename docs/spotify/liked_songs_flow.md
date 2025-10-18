@@ -69,6 +69,8 @@ npm start -- --compact --input ./path/to/enriched.json
 
 If you provide `--input`, pair it with either `--enrich` or `--compact`. The CLI validates this combination and throws an error when `--input` is supplied by itself.
 
+Prefer a visual pass? Run `npm run spotify:server` and open the served URL. The browser UI exposes the same export, enrich, and compact actions, then refreshes the metrics and track grid automatically once the flow finishes.
+
 ## Output Files
 
 After enrichment runs, the CLI writes multiple files under `outputs/spotify/`:
