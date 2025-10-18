@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import type { EnrichedTrackRecord } from './types';
+import type { EnrichedTrackRecord } from '../types';
 
 export function ensureTrimmed(value?: string | null): string | undefined {
   if (typeof value !== 'string') return undefined;

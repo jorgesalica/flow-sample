@@ -1,14 +1,14 @@
 # Spotify Liked Songs Export Flow
 
-This document walks through the TypeScript CLI that powers the Spotify liked songs workflow in this repository. The entrypoint at `src/index.ts` coordinates exporting your saved tracks, enriching them with additional metadata, and producing a compact representation that is easy to share.
+This document walks through the TypeScript CLI that powers the Spotify liked songs workflow in this repository. The entrypoint at `src/scripts/spotify-flow/index.ts` coordinates exporting your saved tracks, enriching them with additional metadata, and producing a compact representation that is easy to share.
 
 ## Workflow Overview
 
-1. **Load credentials from `.env`** – The CLI reads Spotify credentials, page-limit hints, and optional refresh tokens from environment variables defined in `.env`.
-2. **Create an authenticated client** – `createClientFromEnv` validates the configuration and sets up a Spotify Web API client that can refresh access tokens when a stored refresh token is available.
-3. **Export liked songs** – The `--export` stage (which runs by default) pages through your saved tracks and writes a normalized JSON file to `outputs/spotify/my_liked_songs.json`.
-4. **Enrich metadata** – When run with `--enrich` or `--export-and-enrich`, the CLI fetches album, artist, and track details, then writes both enriched JSON and CSV outputs.
-5. **Compact the dataset** – The `--compact` action distills the enriched data into a lightweight JSON summary that keeps core identifiers, genres, release information, and Spotify URLs without redundant fields.
+1. **Load credentials from `.env`** -- The CLI reads Spotify credentials, page-limit hints, and optional refresh tokens from environment variables defined in `.env`.
+2. **Create an authenticated client** -- `createClientFromEnv` validates the configuration and sets up a Spotify Web API client that can refresh access tokens when a stored refresh token is available.
+3. **Export liked songs** -- The `--export` stage (which runs by default) pages through your saved tracks and writes a normalized JSON file to `outputs/spotify/my_liked_songs.json`.
+4. **Enrich metadata** -- When run with `--enrich` or `--export-and-enrich`, the CLI fetches album, artist, and track details, then writes both enriched JSON and CSV outputs.
+5. **Compact the dataset** -- The `--compact` action distills the enriched data into a lightweight JSON summary that keeps core identifiers, genres, release information, and Spotify URLs without redundant fields.
 
 Unlike earlier iterations of this project, the current workflow does not download audio features; Spotify has deprecated that endpoint for new applications, so the exporter focuses on descriptive metadata instead.
 
@@ -73,9 +73,9 @@ If you provide `--input`, pair it with either `--enrich` or `--compact`. The CLI
 
 After enrichment runs, the CLI writes multiple files under `outputs/spotify/`:
 
-- `enriched_likes.json` – Detailed per-track metadata including artists, albums, and Spotify URLs.
-- `enriched_likes.csv` – A tabular view of the enriched data, with semicolon-delimited artist and genre fields.
-- `enriched_likes.compact.json` – The compact representation that retains essential identifiers, release information, genres, and Spotify links.
-- `my_liked_songs.json` – Updated with the compact view for compatibility with prior workflows.
+- `enriched_likes.json` -- Detailed per-track metadata including artists, albums, and Spotify URLs.
+- `enriched_likes.csv` -- A tabular view of the enriched data, with semicolon-delimited artist and genre fields.
+- `enriched_likes.compact.json` -- The compact representation that retains essential identifiers, release information, genres, and Spotify links.
+- `my_liked_songs.json` -- Updated with the compact view for compatibility with prior workflows.
 
 Use the `--compact` flag to regenerate the compact JSON whenever you tweak or review the enriched dataset.

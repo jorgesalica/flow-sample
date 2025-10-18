@@ -1,5 +1,5 @@
-import { FILES } from './config';
-import type { CliOptions } from './types';
+import { FILES } from '../config';
+import type { CliOptions } from '../types';
 
 export function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {

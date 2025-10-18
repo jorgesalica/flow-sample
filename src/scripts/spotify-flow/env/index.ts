@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { ENV_FILE } from './config';
+import { ENV_FILE } from '../config';
 
 export interface RawEnv {
   SPOTIFY_CLIENT_ID?: string;

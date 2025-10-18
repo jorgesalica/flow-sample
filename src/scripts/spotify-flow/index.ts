@@ -8,7 +8,7 @@ import {
   runEnrichment,
   compactLikedSongs,
   parsePageLimit,
-} from './exporter';
+} from './core/exporter';
 import { ensureTrimmed } from './utils';
 
 async function main(): Promise<void> {

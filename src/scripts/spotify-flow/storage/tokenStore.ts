@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { FILES } from './config';
-import { ensureDirectoryExists } from './utils';
+import { FILES } from '../config';
+import { ensureDirectoryExists } from '../utils';
 
 export interface StoredRefreshToken {
   refresh_token: string;

@@ -1,11 +1,11 @@
 import fs from 'fs';
 
-import { FILES, SPOTIFY_OUTPUT_DIR } from './config';
-import type { EnrichedTrackRecord, LikedTrackRecord } from './types';
-import { loadStoredRefreshToken, persistRefreshToken } from './tokenStore';
-import type { SpotifyClient } from './spotifyClient';
-import { createSpotifyClient } from './spotifyClient';
-import { loadEnvVariables, RawEnv } from './env';
+import { FILES, SPOTIFY_OUTPUT_DIR } from '../config';
+import type { EnrichedTrackRecord, LikedTrackRecord } from '../types';
+import { loadStoredRefreshToken, persistRefreshToken } from '../storage/tokenStore';
+import type { SpotifyClient } from '../clients/spotifyClient';
+import { createSpotifyClient } from '../clients/spotifyClient';
+import { loadEnvVariables, RawEnv } from '../env';
 import {
   buildArtistGenresUnion,
   buildCsvContent,
@@ -16,7 +16,7 @@ import {
   selectAlbumImageUrl,
   writeJsonFile,
   writeTextFile,
-} from './utils';
+} from '../utils';
 
 interface AuthenticateResult {
   accessToken: string;
