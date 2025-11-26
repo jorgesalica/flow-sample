@@ -1,18 +1,26 @@
-# Spotify Flow Introduction
+# The Observer's Toolkit: What You Can Do
 
-Welcome to the stream where playlists and curiosity meet. This corner of Flow Sample is a small field lab for living with your saved tracks—listening beyond the play count to notice how songs cluster, evolve, and return as companions. Nothing here aims to be definitive. Instead, the script moves in waves, trusting the process more than the outcome.
+This application is not just a script; it is a set of lenses designed to observe your musical history without altering it. Here is how you can interact with your flow:
 
-## The Drift
+## 1. Capture the Echo (Export)
+You can cast a net into the Spotify API to retrieve your "Liked Songs".
+*   **What it does**: It travels back in time, page by page, collecting every track you've ever saved.
+*   **The Result**: A raw, unfiltered archive of your listening history. The foundation of your emotional trail.
 
-- **Gather the whispers:** Start by inviting the CLI to peek at your liked songs. It moves gently through your library, page by page, collecting titles like found objects on a shoreline.
-- **Ask the rivers:** With that list in hand, the flow turns outward—checking in with albums, artists, and dates. It’s less about proving anything and more about understanding who surrounds each song.
-- **Bottle the tide:** Every pass leaves a few gifts in `outputs/spotify/`: a richly detailed JSON, a spreadsheet-ready CSV, and a compact bundle that keeps only what matters most for retelling the story elsewhere.
-- **Let it settle:** No dashboards, no mandates. Just artifacts ready for the next improvisation—maybe a zine, maybe a map, maybe a question you haven’t framed yet.
+## 2. Deepen the Context (Enrich)
+You can ask the system to listen closer. It doesn't just see a song title; it looks for the connections.
+*   **What it does**: It fetches the album details, the artist's genres, and the release dates. It asks "Where did this come from?" and "Who made this?".
+*   **The Result**: A rich dataset where every song is anchored in its era and style. The "Pop" song becomes "Synth-pop from 1984".
 
-## How to Approach It
+## 3. Distill the Essence (Compact)
+You can strip away the noise of the industry (markets, available codes, external URLs) to keep only what matters to the memory.
+*   **What it does**: It creates a lightweight version of your data, perfect for quick reading or sharing.
+*   **The Result**: A `compact.json` that holds the soul of the track without the weight of the metadata.
 
-1. **Set the stage:** Copy `.env.example` to `.env`, fill in your Spotify credentials, and keep them close. They are simply keys to your own archive.
-2. **Follow the script (or don’t):** `npm start` runs the default export. Add `--export-and-enrich`, `--enrich`, or `--compact` when you want a different cadence—or launch the UI with `npm run spotify:server` and let the browser trigger the flow for you.
-3. **Read the artifacts:** Explore the outputs. Notice which fields feel resonant, which seem redundant, and which might hint at a story you want to chase later.
-
-This documentation doesn’t prescribe the experience; it frames an attitude. Treat the CLI as a traveling companion—curious, respectful, and ready to drift with whatever music you’ve been gathering. When you find a new narrative, document it, remix it, or simply let it flow back into the repository for someone else to encounter.
+## 4. Navigate the Landscape (UI)
+You can stop looking at a spreadsheet and start walking through the terrain.
+*   **What it does**: The local interface (`npm run spotify:server`) renders your data as a visual grid.
+*   **The Result**:
+    *   **See the Eras**: visual tags tell you if a song is from the "90s" or a "Fresh wave".
+    *   **Feel the Weight**: Metrics show you the total volume of your collection and your top genres.
+    *   **Drift**: Scroll through your history not as a list of files, but as a gallery of moments.
