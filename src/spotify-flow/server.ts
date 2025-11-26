@@ -169,7 +169,12 @@ async function serveStatic(urlPath: string, res: http.ServerResponse): Promise<v
     relativePath = `${relativePath}index.html`;
   }
 
-  let candidatePath = path.join(projectRoot, relativePath);
+  let candidatePath: string;
+  if (relativePath.startsWith('/outputs/')) {
+    candidatePath = path.join(projectRoot, relativePath);
+  } else {
+    candidatePath = path.join(uiRoot, relativePath);
+  }
   candidatePath = path.normalize(candidatePath);
 
   if (!isInside(projectRoot, candidatePath)) {
