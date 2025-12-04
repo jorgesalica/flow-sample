@@ -1,7 +1,8 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import { SourcePort } from '../../core/ports';
 import { Track } from '../../core/types';
 import { Config } from '../../config/schema';
+import { SpotifyAuthError, SpotifyRateLimitError } from '../../core/errors';
 import { SpotifySavedTrack, SpotifyPaging, SpotifyTokenResponse } from './types';
 
 export class SpotifyAdapter implements SourcePort {
@@ -15,14 +16,35 @@ export class SpotifyAdapter implements SourcePort {
 
         this.client.interceptors.response.use(
             (response) => response,
-            async (error) => {
-                const originalRequest = error.config;
-                if (error.response?.status === 401 && !originalRequest._retry) {
-                    originalRequest._retry = true;
-                    await this.refreshAccessToken();
-                    originalRequest.headers['Authorization'] = `Bearer ${this.accessToken}`;
-                    return this.client(originalRequest);
+            async (error: AxiosError) => {
+                const status = error.response?.status;
+                const originalRequest = error.config as (typeof error.config & { _retry?: boolean });
+
+                // Rate limit (429)
+                if (status === 429) {
+                    const retryAfter = parseInt(error.response?.headers?.['retry-after'] as string || '60');
+                    throw new SpotifyRateLimitError(retryAfter);
                 }
+
+                // Auth error on first try - attempt refresh
+                if (status === 401 && originalRequest && !originalRequest._retry) {
+                    originalRequest._retry = true;
+                    try {
+                        await this.refreshAccessToken();
+                        if (originalRequest.headers) {
+                            originalRequest.headers['Authorization'] = `Bearer ${this.accessToken}`;
+                        }
+                        return this.client(originalRequest);
+                    } catch {
+                        throw new SpotifyAuthError('Token refresh failed');
+                    }
+                }
+
+                // Auth error after retry
+                if (status === 401) {
+                    throw new SpotifyAuthError('Unauthorized');
+                }
+
                 return Promise.reject(error);
             }
         );
@@ -30,27 +52,32 @@ export class SpotifyAdapter implements SourcePort {
 
     private async refreshAccessToken(): Promise<void> {
         if (!this.config.refreshToken) {
-            throw new Error('No refresh token provided. Cannot authenticate.');
+            throw new SpotifyAuthError('No refresh token provided');
         }
 
         const basicAuth = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
 
-        const response: AxiosResponse<SpotifyTokenResponse> = await axios.post(
-            'https://accounts.spotify.com/api/token',
-            new URLSearchParams({
-                grant_type: 'refresh_token',
-                refresh_token: this.config.refreshToken,
-            }),
-            {
-                headers: {
-                    'Authorization': `Basic ${basicAuth}`,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            }
-        );
+        try {
+            const response: AxiosResponse<SpotifyTokenResponse> = await axios.post(
+                'https://accounts.spotify.com/api/token',
+                new URLSearchParams({
+                    grant_type: 'refresh_token',
+                    refresh_token: this.config.refreshToken,
+                }),
+                {
+                    headers: {
+                        'Authorization': `Basic ${basicAuth}`,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                }
+            );
 
-        this.accessToken = response.data.access_token;
-        this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
+            this.accessToken = response.data.access_token;
+            this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
+        } catch (error) {
+            if (error instanceof SpotifyAuthError) throw error;
+            throw new SpotifyAuthError('Failed to refresh access token');
+        }
     }
 
     async fetchTracks(limit: number = 20): Promise<Track[]> {
