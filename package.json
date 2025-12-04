@@ -17,19 +17,26 @@
     "spotify:server": "ts-node src/spotify-flow/server.ts"
   },
   "devDependencies": {
-    "@types/node": "^22.7.4",
-    "@typescript-eslint/eslint-plugin": "^8.13.0",
-    "@typescript-eslint/parser": "^8.13.0",
-    "eslint": "^9.11.1",
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^22.19.1",
+    "@types/node-fetch": "^2.6.12",
+    "@types/pino": "^7.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
+    "eslint": "^9.39.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.9.0",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3",
-    "@types/node-fetch": "^2.6.12"
+    "typescript": "^5.6.3"
   },
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "axios": "^1.13.2",
+    "commander": "^14.0.2",
+    "dotenv": "^17.2.3",
+    "node-fetch": "^2.7.0",
+    "pino": "^10.1.0",
+    "zod": "^4.1.13"
   }
 }

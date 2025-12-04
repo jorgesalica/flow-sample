@@ -83,25 +83,19 @@ SPOTIFY_AUTHORIZATION_CODE=the_one_time_code_from_the_authorize_step
 
 You can obtain the credentials and authorization code by following Spotify's [Authorization Code Flow guide](https://developer.spotify.com/documentation/web-api/tutorials/code-flow).
 
-With the `.env` file in place, install the dependencies (`npm install`) and run `npm start`. The TypeScript CLI reads the variables from `.env`, exchanges the authorization code for an access token, fetches your liked tracks (handling pagination automatically), and writes all outputs under `outputs/spotify/` (for example, `outputs/spotify/my_liked_songs.json`).
+With the `.env` file in place, install the dependencies (`npm install`) and run the CLI:
 
-Additional CLI options are available when you want to enrich the export with extra metadata (no audio features involved):
+```bash
+# Run the full flow (Export -> Enrich -> Save)
+npx ts-node src/spotify-flow/cli/index.ts run
 
-```
-npm start -- --enrich                               # enrich an existing outputs/spotify/my_liked_songs.json
-npm start -- --export-and-enrich                    # export liked songs and enrich in one run
-npm start -- --enrich --input ./file.json            # enrich a custom JSON file
-npm start -- --compact                              # compact an existing outputs/spotify/enriched_likes.json
-npm start -- --compact --input ./enriched.json       # compact a custom enriched export
+# Limit pages fetched (default: 20, ~1000 tracks)
+npx ts-node src/spotify-flow/cli/index.ts run --limit 5
 ```
 
-The enrichment pass produces the following files:
+The flow fetches your liked tracks, enriches them with album and artist metadata, and saves a single output file:
 
-- `outputs/spotify/enriched_likes.json` - per-track metadata including album details, artist stats, ISRC, and more.
-- `outputs/spotify/enriched_likes.csv` - the same data flattened for spreadsheets (`artists_joined` and `artist_genres_joined` use `; ` separators).
-- `outputs/spotify/enriched_likes.compact.json` - compact per-track summaries without large market lists or redundant fields, retaining key metadata for lightweight consumption.
-- `outputs/spotify/my_liked_songs.json` - the compact view is also written here for compatibility with earlier workflows.
+- `outputs/spotify/enriched_likes.json` — Full track data with all metadata.
 
-Audio features are no longer requested (Spotify deprecated the required endpoint for new apps), so the exporter focuses on track/album/artist metadata only.
+For a deeper walkthrough, see [`docs/spotify/liked_songs_flow.md`](docs/spotify/liked_songs_flow.md).
 
-For a deeper walkthrough of the script's flow and the environment variables it expects, see [`docs/spotify/liked_songs_flow.md`](docs/spotify/liked_songs_flow.md).
