@@ -1,21 +1,24 @@
 import { SourcePort, StoragePort } from './ports';
 import { FlowOptions } from './types';
+import { logger } from './logger';
 
 export class FlowEngine {
+    private log = logger.child({ module: 'FlowEngine' });
+
     constructor(
         private source: SourcePort,
         private storage: StoragePort
     ) { }
 
     async run(options: FlowOptions): Promise<void> {
-        console.log('[FlowEngine] Starting flow...');
+        this.log.info({ limit: options.limit }, 'Starting flow');
 
         const tracks = await this.source.fetchTracks(options.limit);
-        console.log(`[FlowEngine] Fetched ${tracks.length} tracks.`);
+        this.log.info({ count: tracks.length }, 'Fetched tracks');
 
         await this.storage.saveTracks(tracks);
-        console.log('[FlowEngine] Saved tracks.');
+        this.log.info('Saved tracks');
 
-        console.log('[FlowEngine] Flow completed.');
+        this.log.info('Flow completed');
     }
 }

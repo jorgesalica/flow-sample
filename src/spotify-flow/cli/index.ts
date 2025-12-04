@@ -4,8 +4,11 @@ import { loadConfig } from '../config/schema';
 import { SpotifyAdapter } from '../adapters/spotify';
 import { FileSystemAdapter } from '../adapters/filesystem';
 import { FlowEngine } from '../core/engine';
+import { logger } from '../core/logger';
+import { FlowError, SpotifyAuthError, SpotifyRateLimitError, StorageError } from '../core/errors';
 
 const program = new Command();
+const log = logger.child({ module: 'CLI' });
 
 program
     .name('spotify-flow')
@@ -28,7 +31,17 @@ program
                 limit: parseInt(options.limit),
             });
         } catch (error) {
-            console.error('Error:', error instanceof Error ? error.message : error);
+            if (error instanceof SpotifyAuthError) {
+                log.error({ error: error.message }, 'Authentication failed');
+            } else if (error instanceof SpotifyRateLimitError) {
+                log.error({ retryAfter: error.retryAfterSeconds }, 'Rate limited');
+            } else if (error instanceof StorageError) {
+                log.error({ path: error.path, error: error.message }, 'Storage error');
+            } else if (error instanceof FlowError) {
+                log.error({ error: error.message }, 'Flow error');
+            } else {
+                log.error({ error: error instanceof Error ? error.message : error }, 'Unexpected error');
+            }
             process.exit(1);
         }
     });
