@@ -8,6 +8,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "ts-node src/spotify-flow/cli/index.ts run",
+    "server": "ts-node src/server/index.ts",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "build": "tsc -p tsconfig.json",
@@ -15,8 +16,7 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "spotify:server": "ts-node src/spotify-flow/server.ts"
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
