@@ -9,31 +9,26 @@ const program = new Command();
 
 program
     .name('spotify-flow')
-    .description('CLI to export and process Spotify data')
+    .description('Export your Spotify liked songs')
     .version('2.0.0');
 
 program
     .command('run')
-    .description('Run the full flow (Export -> Enrich -> Save)')
-    .option('-l, --limit <number>', 'Limit number of pages to fetch', '20')
+    .description('Fetch and save liked songs')
+    .option('-l, --limit <number>', 'Number of pages to fetch (50 tracks/page)', '20')
     .action(async (options) => {
         try {
             const config = loadConfig();
 
             const spotify = new SpotifyAdapter(config.spotify);
-            const fs = new FileSystemAdapter(config.paths.output);
-            const engine = new FlowEngine(spotify, fs);
+            const storage = new FileSystemAdapter(config.paths.output);
+            const engine = new FlowEngine(spotify, storage);
 
             await engine.run({
                 limit: parseInt(options.limit),
-                actions: {
-                    export: true,
-                    enrich: true,
-                    compact: false, // Deprecated
-                }
             });
         } catch (error) {
-            console.error('Fatal Error:', error instanceof Error ? error.message : error);
+            console.error('Error:', error instanceof Error ? error.message : error);
             process.exit(1);
         }
     });

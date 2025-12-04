@@ -19,15 +19,8 @@ export interface Track {
     addedAt: string;
     durationMs: number;
     popularity?: number;
-    // Raw data for debugging or specific adapters
-    raw?: any;
 }
 
 export interface FlowOptions {
     limit?: number;
-    actions: {
-        export: boolean;
-        enrich: boolean;
-        compact: boolean;
-    };
 }

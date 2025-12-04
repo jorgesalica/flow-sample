@@ -13,7 +13,6 @@ export class SpotifyAdapter implements SourcePort {
             baseURL: 'https://api.spotify.com/v1',
         });
 
-        // Add interceptor for 401 retry (token refresh)
         this.client.interceptors.response.use(
             (response) => response,
             async (error) => {
@@ -36,27 +35,22 @@ export class SpotifyAdapter implements SourcePort {
 
         const basicAuth = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
 
-        try {
-            const response: AxiosResponse<SpotifyTokenResponse> = await axios.post(
-                'https://accounts.spotify.com/api/token',
-                new URLSearchParams({
-                    grant_type: 'refresh_token',
-                    refresh_token: this.config.refreshToken,
-                }),
-                {
-                    headers: {
-                        'Authorization': `Basic ${basicAuth}`,
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                }
-            );
+        const response: AxiosResponse<SpotifyTokenResponse> = await axios.post(
+            'https://accounts.spotify.com/api/token',
+            new URLSearchParams({
+                grant_type: 'refresh_token',
+                refresh_token: this.config.refreshToken,
+            }),
+            {
+                headers: {
+                    'Authorization': `Basic ${basicAuth}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            }
+        );
 
-            this.accessToken = response.data.access_token;
-            this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
-        } catch (error) {
-            console.error('Failed to refresh token:', error);
-            throw error;
-        }
+        this.accessToken = response.data.access_token;
+        this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
     async fetchTracks(limit: number = 20): Promise<Track[]> {
@@ -80,11 +74,6 @@ export class SpotifyAdapter implements SourcePort {
         return tracks;
     }
 
-    async enrichTracks(tracks: Track[]): Promise<Track[]> {
-        // For now, simple pass-through or basic enrichment
-        return tracks;
-    }
-
     private mapToTrack(item: SpotifySavedTrack): Track {
         const t = item.track;
         return {
@@ -100,7 +89,6 @@ export class SpotifyAdapter implements SourcePort {
             addedAt: item.added_at,
             durationMs: t.duration_ms,
             popularity: t.popularity,
-            raw: item
         };
     }
 }

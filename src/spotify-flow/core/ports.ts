@@ -3,33 +3,19 @@ import { Track } from './types';
 export interface SourcePort {
     /**
      * Fetches tracks from the source.
-     * @param limit Optional limit on number of tracks to fetch.
+     * @param limit Number of pages to fetch.
      */
     fetchTracks(limit?: number): Promise<Track[]>;
-
-    /**
-     * Enriches tracks with additional metadata (e.g. genres).
-     * @param tracks The tracks to enrich.
-     */
-    enrichTracks(tracks: Track[]): Promise<Track[]>;
 }
 
 export interface StoragePort {
     /**
-     * Saves data to the storage.
-     * @param key Unique key for the data (e.g. 'raw_tracks').
-     * @param data The data to save.
+     * Saves tracks to storage.
      */
-    save(key: string, data: unknown): Promise<void>;
+    saveTracks(tracks: Track[]): Promise<void>;
 
     /**
-     * Loads data from the storage.
-     * @param key Unique key for the data.
+     * Loads tracks from storage.
      */
-    load<T>(key: string): Promise<T | null>;
-
-    /**
-     * Checks if data exists.
-     */
-    exists(key: string): Promise<boolean>;
+    loadTracks(): Promise<Track[] | null>;
 }
