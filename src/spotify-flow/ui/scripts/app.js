@@ -36,6 +36,8 @@ const state = {
   statusMessage: "Ready to explore.",
   statusTone: "info",
   isRunningFlow: false,
+  currentSource: null, // 'auto' | 'compact' | 'enriched' | 'compact-enriched'
+  currentFilter: 'all', // 'all' | 'this_month' | 'last_month' | 'this_year' | 'last_year'
 };
 
 const elements = {
@@ -50,6 +52,7 @@ const elements = {
   autoLoadButton: document.getElementById("btn-auto-load"),
   runFlowButton: document.getElementById("btn-run-flow"),
   cliHintButton: document.getElementById("btn-cli-hint"),
+  timeFilter: document.getElementById("time-filter"),
 };
 
 function logDebug(message, payload) {
@@ -58,6 +61,10 @@ function logDebug(message, payload) {
 
 function updateState(partial) {
   Object.assign(state, partial);
+  renderApp();
+}
+
+function renderApp() {
   renderMetrics();
   renderGrid();
   renderStatus();
@@ -313,24 +320,71 @@ function capitalize(value) {
 }
 
 function renderMetrics() {
-  elements.metricTotal.textContent = String(state.metrics.totalTracks);
-  elements.metricArtists.textContent = String(state.metrics.uniqueArtists);
-  elements.metricGenre.textContent = state.metrics.topGenre || EMPTY_GLYPH;
+  const totalEl = elements.metricTotal;
+  const artistsEl = elements.metricArtists;
+  const genreEl = elements.metricGenre;
+
+  const filteredTracks = filterTracks(state.tracks, state.currentFilter);
+
+  // 1. Total tracks
+  totalEl.textContent = filteredTracks.length;
+  if (state.tracks.length > 0 && filteredTracks.length !== state.tracks.length) {
+    totalEl.textContent += ` (of ${state.tracks.length})`;
+    totalEl.style.fontSize = "1.8rem"; // Slightly smaller to fit
+  } else {
+    totalEl.style.fontSize = "";
+  }
+
+  // 2. Unique artists
+  const uniqueArtists = new Set();
+  filteredTracks.forEach((t) => {
+    t.artists.forEach((artist) => uniqueArtists.add(artist));
+  });
+  artistsEl.textContent = uniqueArtists.size;
+
+  // 3. Top genre
+  const genreCounts = {};
+  filteredTracks.forEach((t) => {
+    t.genres.forEach((genre) => {
+      genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+    });
+  });
+
+  let topGenre = EMPTY_GLYPH;
+  if (Object.keys(genreCounts).length > 0) {
+    const sortedGenres = Object.entries(genreCounts).sort((a, b) => {
+      if (b[1] === a[1]) return a[0].localeCompare(b[0]);
+      return b[1] - a[1];
+    });
+    topGenre = capitalize(sortedGenres[0][0]);
+  }
+  genreEl.textContent = topGenre;
+
   elements.sourceLabel.textContent = state.sourceLabel;
 }
 
 function renderGrid() {
-  const { tracks } = state;
-  if (tracks.length === 0) {
-    elements.trackGrid.innerHTML = "";
-    elements.emptyState.hidden = false;
+  const grid = elements.trackGrid;
+  const emptyState = elements.emptyState;
+
+  grid.innerHTML = "";
+
+  const filteredTracks = filterTracks(state.tracks, state.currentFilter);
+
+  if (filteredTracks.length === 0) {
+    emptyState.hidden = false;
+    if (state.tracks.length > 0) {
+      emptyState.querySelector("p").textContent = "No tracks match the selected filter.";
+    } else {
+      emptyState.querySelector("p").textContent = "No tracks loaded yet. Let the flow begin.";
+    }
     return;
   }
 
-  elements.emptyState.hidden = true;
+  emptyState.hidden = true;
   const fragment = document.createDocumentFragment();
 
-  tracks.forEach((track) => {
+  filteredTracks.forEach((track) => {
     const card = document.createElement("article");
     card.className = "track-card";
     card.setAttribute("role", "listitem");
@@ -412,8 +466,10 @@ function formatAddedAt(value) {
 function handleHydratedData(tracks, sourceLabel, options = {}) {
   const { announce = true } = options;
   logDebug(`Handling hydrated data from ${sourceLabel}`, { count: tracks.length });
+
+  // Calculate metrics for state (so status message is correct)
   const metrics = calculateMetrics(tracks);
-  updateState({ tracks, metrics, sourceLabel });
+  updateState({ tracks, metrics, sourceLabel, currentSource: options.key || null });
 
   if (!announce) return;
 
@@ -435,10 +491,10 @@ async function fetchTracks(url) {
   return hydrateTracks(data);
 }
 
-async function loadFromDefinition(definition, { announce = true } = {}) {
+async function loadFromDefinition(definition, { announce = true, key = null } = {}) {
   logDebug("Loading definition", definition);
   const tracks = await fetchTracks(definition.url);
-  handleHydratedData(tracks, definition.label || definition.url.replace(/^.*\//, ""), { announce });
+  handleHydratedData(tracks, definition.label || definition.url.replace(/^.*\//, ""), { announce, key });
   return tracks;
 }
 
@@ -448,7 +504,7 @@ async function loadSampleByKey(key, options = {}) {
   if (!definition) {
     throw new Error(`Unknown sample key: ${key}`);
   }
-  const tracks = await loadFromDefinition(definition, options);
+  const tracks = await loadFromDefinition(definition, { ...options, key });
   elements.sampleSelect.value = key;
   return tracks;
 }
@@ -457,7 +513,7 @@ async function attemptAutoLoad({ announce = true } = {}) {
   logDebug("attemptAutoLoad", SAMPLE_CANDIDATES);
   for (const candidate of SAMPLE_CANDIDATES) {
     try {
-      const tracks = await loadFromDefinition(candidate, { announce: false });
+      const tracks = await loadFromDefinition(candidate, { announce: false, key: candidate.key });
       if (announce) {
         setStatus(`Loaded ${tracks.length} tracks from ${candidate.label}.`, "success");
       }
@@ -543,12 +599,12 @@ async function runFlowViaApi() {
 
           setStatus(
             "Flow completed via " +
-              apiBase +
-              ". Loaded " +
-              state.metrics.totalTracks +
-              " tracks from " +
-              state.sourceLabel +
-              ".",
+            apiBase +
+            ". Loaded " +
+            state.metrics.totalTracks +
+            " tracks from " +
+            state.sourceLabel +
+            ".",
             "success",
           );
 
@@ -674,3 +730,35 @@ init();
 
 
 
+
+function filterTracks(tracks, filter) {
+  if (filter === 'all') return tracks;
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed
+
+  return tracks.filter(track => {
+    if (!track.added_at) return false;
+    const date = new Date(track.added_at);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    switch (filter) {
+      case 'this_month':
+        return year === currentYear && month === currentMonth;
+      case 'last_month':
+        // Handle January edge case
+        if (currentMonth === 0) {
+          return year === currentYear - 1 && month === 11;
+        }
+        return year === currentYear && month === currentMonth - 1;
+      case 'this_year':
+        return year === currentYear;
+      case 'last_year':
+        return year === currentYear - 1;
+      default:
+        return true;
+    }
+  });
+}

@@ -12,11 +12,11 @@ import { ensureTrimmed } from '../utils';
 
 export interface FlowStep {
   name:
-    | 'loadEnv'
-    | 'authenticate'
-    | 'exportLikedSongs'
-    | 'enrichLikedSongs'
-    | 'compactLikedSongs';
+  | 'loadEnv'
+  | 'authenticate'
+  | 'exportLikedSongs'
+  | 'enrichLikedSongs'
+  | 'compactLikedSongs';
   status: 'started' | 'completed' | 'skipped';
   timestamp: string;
   meta?: Record<string, unknown>;
