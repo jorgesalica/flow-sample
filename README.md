@@ -25,6 +25,7 @@ We believe that the future of urban collaboration is written in stories, not spr
 ## Currents in Motion
 
 - **Spotify Liked Songs Exporter:** A TypeScript CLI that leans on Spotify's Authorization Code Flow to capture your saved tracks, enrich them with album and artist metadata, and leave a trail of outputs in `outputs/spotify/`. Its backstory and setup ritual live in [`docs/spotify/liked_songs_flow.md`](docs/spotify/liked_songs_flow.md).
+- **Spotify Flow UI:** Run `npm run spotify:server` to serve a minimal HTML interface that can trigger the export/enrich flow and explore the resulting tracks without leaving the browser. See [`docs/spotify/flow_ui_walkthrough.md`](docs/spotify/flow_ui_walkthrough.md) for a tour of the controls and API endpoint.
 
 ## Getting Started
 

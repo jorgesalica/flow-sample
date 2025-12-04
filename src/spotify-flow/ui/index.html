@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spotify Flow Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+
+<body>
+  <div class="flow-background"></div>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="app-header__inner">
+        <h1>Spotify Flow Explorer</h1>
+        <p class="tagline">Drifting through your musical history.</p>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="control-panel glass-panel" aria-label="Controls">
+        <div class="control-group">
+          <span class="control-label">Latest exports</span>
+          <div class="select-wrapper">
+            <select id="sample-select" title="Select a sample to load" aria-label="Select a sample to load">
+              <option value="">Select a sample...</option>
+              <option value="auto">Auto-detect latest export</option>
+              <option value="compact">Liked songs (compact)</option>
+              <option value="enriched">Enriched liked songs</option>
+              <option value="compact-enriched">Compact enriched (if available)</option>
+            </select>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Time Filter</span>
+          <div class="select-wrapper">
+            <select id="time-filter" title="Filter by date added" aria-label="Filter by date added">
+              <option value="all">All Time</option>
+              <option value="this_month">This Month</option>
+              <option value="last_month">Last Month</option>
+              <option value="this_year">This Year</option>
+              <option value="last_year">Last Year</option>
+            </select>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Quick actions</span>
+          <div class="control-actions">
+            <button id="btn-auto-load" type="button" class="btn-secondary">Load latest</button>
+            <button id="btn-run-flow" type="button" class="btn-primary" data-label="Run export + enrich">
+              Run export + enrich
+            </button>
+            <button id="btn-cli-hint" type="button" class="btn-icon" title="Copy CLI command">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="control-group control-group--inline">
+          <span class="control-label">Source:</span>
+          <span id="source-label" class="pill">None</span>
+        </div>
+      </section>
+
+      <p id="status-banner" class="status-banner glass-panel" data-tone="info">Ready to explore.</p>
+
+      <section class="metrics-panel" aria-label="Collection metrics">
+        <article class="metric-card glass-panel">
+          <h2>Total tracks</h2>
+          <p id="metric-total">0</p>
+        </article>
+        <article class="metric-card glass-panel">
+          <h2>Unique artists</h2>
+          <p id="metric-artists">0</p>
+        </article>
+        <article class="metric-card glass-panel">
+          <h2>Top genre</h2>
+          <p id="metric-genre">&mdash;</p>
+        </article>
+      </section>
+
+      <section class="grid-panel" aria-label="Track grid">
+        <div id="track-grid" class="track-grid" role="list"></div>
+        <div id="empty-state" class="empty-state glass-panel" hidden>
+          <p>No tracks loaded yet. Let the flow begin.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>
+        Flow Sample &mdash; An improvisational data vignette.
+      </p>
+    </footer>
+  </div>
+
+  <script src="scripts/app.js" type="module"></script>
+</body>
+
+</html>
