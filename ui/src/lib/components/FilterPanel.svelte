@@ -112,7 +112,7 @@
           bind:value={selectedGenre}
         >
           <option value="" class="bg-slate-800">All Genres</option>
-          {#each genres as g}
+          {#each genres as g (g.genre)}
             <option value={g.genre} class="bg-slate-800">{g.genre} ({g.count})</option>
           {/each}
         </select>
@@ -126,7 +126,7 @@
           bind:value={selectedYear}
         >
           <option value="" class="bg-slate-800">All Years</option>
-          {#each years as y}
+          {#each years as y (y.year)}
             <option value={y.year.toString()} class="bg-slate-800">{y.year} ({y.count})</option>
           {/each}
         </select>

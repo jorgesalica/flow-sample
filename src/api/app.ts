@@ -71,4 +71,6 @@ app.listen({ port, hostname: host }, ({ hostname, port }) => {
   }
 });
 
+// Export for Eden client type inference
+export type App = typeof app;
 export default app;

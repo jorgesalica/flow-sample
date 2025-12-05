@@ -161,19 +161,23 @@ export class SQLiteTrackRepository implements TrackRepository {
       params.push(options.minPopularity);
     }
 
-    // Search query (simple LIKE for now, FTS later)
+    // Search query using FTS5
     if (options.query) {
-      whereClause += ` AND (
-        t.title LIKE ? OR
-        t.album_name LIKE ? OR
-        t.id IN (
-          SELECT ta.track_id FROM track_artists ta
-          JOIN artists a ON a.id = ta.artist_id
-          WHERE a.name LIKE ?
-        )
-      )`;
-      const searchTerm = `%${options.query}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
+      // Escape special FTS5 characters and add prefix matching
+      const ftsQuery = options.query
+        .replace(/['"(){}[\]^~*?:\\]/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter((w) => w.length > 0)
+        .map((w) => `${w}*`)
+        .join(' ');
+
+      if (ftsQuery) {
+        whereClause += ` AND t.id IN (
+          SELECT track_id FROM tracks_fts WHERE tracks_fts MATCH ?
+        )`;
+        params.push(ftsQuery);
+      }
     }
 
     // Count total

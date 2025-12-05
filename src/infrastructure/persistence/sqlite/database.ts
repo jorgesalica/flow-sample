@@ -90,4 +90,61 @@ try {
   // Column already exists
 }
 
+// FTS5 Full-text search (standalone table, manually synced)
+// Drop old table to ensure correct schema
+try {
+  db.exec(`DROP TABLE IF EXISTS tracks_fts`);
+} catch {
+  // Table might not exist, that's ok
+}
+db.exec(`
+  CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
+    track_id,
+    title,
+    album_name,
+    artist_names
+  );
+`);
+
+// Function to rebuild FTS index (call after bulk inserts)
+export function rebuildFtsIndex() {
+  // Get all tracks with their artist names
+  const tracks = db
+    .prepare(
+      `
+    SELECT t.rowid, t.id, t.title, t.album_name,
+           GROUP_CONCAT(a.name, ' ') as artist_names
+    FROM tracks t
+    LEFT JOIN track_artists ta ON ta.track_id = t.id
+    LEFT JOIN artists a ON a.id = ta.artist_id
+    GROUP BY t.id
+  `,
+    )
+    .all() as { rowid: number; id: string; title: string; album_name: string; artist_names: string }[];
+
+  // Clear and rebuild
+  db.exec(`DELETE FROM tracks_fts`);
+
+  const insertFts = db.prepare(`
+    INSERT INTO tracks_fts(track_id, title, album_name, artist_names)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  const transaction = db.transaction(() => {
+    for (const t of tracks) {
+      insertFts.run(t.id, t.title, t.album_name || '', t.artist_names || '');
+    }
+  });
+
+  transaction();
+}
+
+// Build FTS index on startup if empty
+const ftsCount = db.prepare('SELECT COUNT(*) as c FROM tracks_fts').get() as { c: number };
+const tracksCount = db.prepare('SELECT COUNT(*) as c FROM tracks').get() as { c: number };
+if (ftsCount.c === 0 && tracksCount.c > 0) {
+  rebuildFtsIndex();
+}
+
 export default db;
+
