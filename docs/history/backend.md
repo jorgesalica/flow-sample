@@ -4,6 +4,31 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2025-12-05 (Later) — pnpm Workspaces Monorepo
+
+Restructured project to pnpm workspaces:
+
+```
+Before: src/              → After: packages/backend/src/
+Before: ui/               → After: packages/ui/
+New:    packages/shared/  → Shared types
+```
+
+**Package Names:**
+- `@flows/backend` - API + domain
+- `@flows/ui` - Svelte frontend
+- `@flows/shared` - Track, Artist, Album, SearchOptions
+
+**Key Commands:**
+```bash
+pnpm install                       # All packages
+pnpm --filter @flows/backend dev   # Run backend
+pnpm --filter @flows/ui dev        # Run UI
+pnpm -r run lint                   # Lint all
+```
+
+---
+
 ## 2025-12-05 — Data Enrichment & Bug Fixes
 
 ### New API Fields

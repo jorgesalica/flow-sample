@@ -4,6 +4,29 @@ Changelog for the frontend (Svelte) application.
 
 ---
 
+## 2025-12-05 (Later) — pnpm Workspaces & Fixes
+
+### Monorepo Migration
+
+Moved to `packages/ui/` with workspace dependencies:
+
+```json
+{
+  "dependencies": {
+    "@flows/shared": "workspace:*",
+    "@flows/backend": "workspace:*"
+  }
+}
+```
+
+### Fixes
+
+- **moduleResolution: bundler** in tsconfig
+- **a11y labels** - Added id/for to all FilterPanel controls
+- **Types from shared** - `import { Track } from '@flows/shared'`
+
+---
+
 ## 2025-12-05 — UI Overhaul & Data Enrichment
 
 ### Landing Page & Routing

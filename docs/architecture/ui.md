@@ -20,7 +20,7 @@ ui/
 │   └── lib/
 │       ├── config.ts           # API endpoints
 │       ├── api.ts              # API client (loadTracks, fetchFromSpotify)
-│       ├── types.ts            # TypeScript interfaces
+│       ├── types.ts            # TypeScript interfaces imported from @flows/shared
 │       ├── stores.ts           # Svelte stores (server-side pagination)
 │       ├── utils.ts            # Utilities (debounce)
 │       ├── pages/
@@ -32,7 +32,9 @@ ui/
 │           ├── Controls.svelte     # Refresh/Sync buttons
 │           ├── FilterPanel.svelte  # Expandable filter panel
 │           ├── MetricCard.svelte
-│           ├── Pagination.svelte
+│           ├── InfiniteScroll.svelte # IntersectionObserver loader
+│           ├── GenreChart.svelte   # Doughnut chart (Chart.js)
+│           ├── DecadeChart.svelte  # Bar chart (Chart.js)
 │           ├── SearchBar.svelte
 │           ├── StatusBanner.svelte
 │           └── TrackCard.svelte    # With album art, artist avatar, Spotify link
@@ -47,26 +49,32 @@ ui/
 | Page | Route | Description |
 |------|-------|-------------|
 | **Landing** | `#/` | Flow selection (toolbox) |
-| **SpotifyFlow** | `#/spotify` | Track explorer with filters |
+| **SpotifyFlow** | `#/spotify` | Track explorer with filters, infinite scroll, and charts |
 
 ## State Management
 
-Uses Svelte stores with **server-side pagination**:
+Uses Svelte stores with **server-side pagination** and **charts data**:
 
 ```typescript
 // stores.ts
 export const tracks = writable<Track[]>([]);
 export const totalTracks = writable(0);
 export const searchOptions = writable<SearchOptions>({});
-export const topStats = writable({ total: 0, artists: 0, topGenre: '—' });
+export const topStats = writable({
+    total: 0,
+    artists: 0,
+    topGenre: '—',
+    genres: [],
+    decadeDistribution: {}
+});
 ```
 
 ## API Client
 
 | Function | Purpose |
 |----------|---------|
-| `loadTracks(options)` | Fetch paginated tracks with filters |
-| `updateStats()` | Fetch summary statistics |
+| `loadTracks(options, append)` | Fetch tracks (append=true for infinite scroll) |
+| `updateStats()` | Fetch summary statistics and chart data |
 | `fetchFromSpotify()` | Trigger sync from Spotify API |
 
 ## Filter Panel Features
@@ -78,7 +86,7 @@ The `FilterPanel` component provides:
 - **Sort By** (Date Added, Popularity, Title)
 - **Sort Order** (Asc/Desc)
 - **Min Popularity** slider (0-100)
-- **Has Preview** checkbox
+- **(Removed)** Audio Preview toggle (functionality deprecated)
 
 ## TrackCard Features
 
@@ -91,7 +99,6 @@ Each track card displays:
 - Popularity bar
 - Added date
 - **Spotify link** (green button on hover)
-- **Preview button** (if available)
 
 ## Data Flow
 
@@ -115,8 +122,7 @@ sequenceDiagram
 
 | Script | Command | Purpose |
 |--------|---------|---------|
-| `dev` | `npm run dev` | Start dev server (port 5173) |
-| `build` | `npm run build` | Production build |
-| `lint` | `npm run lint` | ESLint check |
-| `format` | `npm run format` | Prettier format |
-| `check` | `npm run check` | Svelte + TypeScript check |
+| `dev` | `pnpm --filter @flows/ui run dev` | Start dev server (port 5173) |
+| `build` | `pnpm --filter @flows/ui run build` | Production build |
+| `lint` | `pnpm --filter @flows/ui run lint` | ESLint check |
+| `check` | `pnpm --filter @flows/ui run check` | Svelte + TypeScript check |
