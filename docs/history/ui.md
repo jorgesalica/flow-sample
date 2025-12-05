@@ -44,10 +44,35 @@ Track cards now display:
 - **Preview button** (if available)
 - Genre badges, popularity bar, added date
 
+### Flow Registry
+
+New dynamic flow registration system:
+
+```
+ui/src/lib/flows/
+├── registry.ts   ← FlowDefinition, registerFlow, getFlows
+├── spotify.ts    ← Auto-registers Spotify Flow
+└── index.ts      ← Exports + imports flows
+```
+
+Landing page now loads flows dynamically from the registry.
+
+### Eden Type-safe Client
+
+Added `@elysiajs/eden` for type-safe API calls:
+
+```typescript
+import { api } from './client';
+const { data } = await api.spotify.tracks.search.get({ query: { q: 'rock' } });
+// data is fully typed!
+```
+
 ### Improvements
 
 - Fixed dropdown styling (dark theme)
 - Svelte 5 syntax updates (`$state`, `$derived`)
+- Fixed all lint errors (each-block keys, unused vars)
+- Fixed a11y labels (form control associations)
 
 ---
 

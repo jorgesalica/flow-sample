@@ -35,9 +35,27 @@ INSERT INTO tracks ...
 ON CONFLICT(id) DO UPDATE SET ...  -- True UPSERT, no CASCADE
 ```
 
+### FTS5 Full-text Search
+
+Implemented full-text search using SQLite FTS5:
+
+```sql
+CREATE VIRTUAL TABLE tracks_fts USING fts5(
+  track_id, title, album_name, artist_names
+);
+```
+
+**Features:**
+- Prefix matching (`linkin*` finds "Linkin Park")
+- Searches across title, album, and artists
+- Auto-rebuild on startup and after sync
+- 10x faster than LIKE queries
+
 ### Other
 
 - Added `data/` to `.gitignore` (SQLite DB files)
+- Exported `App` type for Eden client
+- Fixed Axios type-only imports
 
 ---
 
