@@ -19,8 +19,8 @@ You can strip away the noise of the industry (markets, available codes, external
 
 ## 4. Navigate the Landscape (UI)
 You can stop looking at a spreadsheet and start walking through the terrain.
-*   **What it does**: The local interface (`npm run spotify:server`) renders your data as a visual grid.
+*   **What it does**: The local interface (`pnpm dev`) renders your data as a visual grid.
 *   **The Result**:
-    *   **See the Eras**: visual tags tell you if a song is from the "90s" or a "Fresh wave".
-    *   **Feel the Weight**: Metrics show you the total volume of your collection and your top genres.
-    *   **Drift**: Scroll through your history not as a list of files, but as a gallery of moments.
+    *   **See the Eras**: Visual tags and charts tell you if a song is from the "90s" or a "Fresh wave".
+    *   **Feel the Weight**: Metrics, Infinite Scroll, and Charts show your total volume and top genres.
+    *   **Drift**: Scroll infinitely through your history, filter by genre or year, and explore your musical eras.

@@ -22,18 +22,18 @@ graph TD
 
 ## Layered Architecture
 
-| Layer | Location | Responsibility |
-|-------|----------|----------------|
-| **API** | `src/api/` | HTTP routes, validation, serialization |
-| **Application** | `src/application/` | Use cases, orchestration |
-| **Domain** | `src/domain/` | Entities, ports, business rules |
-| **Infrastructure** | `src/infrastructure/` | External integrations (DB, APIs) |
+| Location | Responsibility |
+|----------|----------------|
+| **API** | `packages/backend/src/api/` | HTTP routes, validation, serialization |
+| **Application** | `packages/backend/src/application/` | Use cases, orchestration |
+| **Domain** | `packages/backend/src/domain/` | Entities, ports, business rules |
+| **Infrastructure** | `packages/backend/src/infrastructure/` | External integrations (DB, APIs) |
 
 ## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| **UI** | Svelte 5, Vite 7, Tailwind CSS 4 |
+| **UI** | Svelte 5, Vite 7, Tailwind CSS 4, Chart.js |
 | **Server** | Elysia (Node.js adapter) |
 | **Database** | SQLite (better-sqlite3) |
 | **Validation** | Zod, TypeBox |
@@ -43,22 +43,15 @@ graph TD
 
 ```
 flow-sample/
-├── ui/                         # Frontend (Svelte)
-├── src/
-│   ├── api/                    # HTTP Layer (Elysia)
-│   │   ├── app.ts              # Server entry point
-│   │   ├── spotify.routes.ts   # Spotify endpoints
-│   │   └── config.ts           # Zod config loader
-│   ├── application/            # Use Cases
-│   │   └── spotify.usecase.ts
-│   ├── domain/                 # Pure Business Logic
-│   │   ├── flows/spotify/      # Spotify entities
-│   │   └── shared/             # Ports, errors
-│   ├── infrastructure/         # External Integrations
-│   │   ├── adapters/           # API clients
-│   │   ├── persistence/        # SQLite
-│   │   └── repositories/       # Repository implementations
-│   └── cli/                    # CLI entry point
+├── packages/
+│   ├── backend/
+│   │   ├── src/
+│   │   │   ├── api/                    # HTTP Layer (Elysia)
+│   │   │   ├── application/            # Use Cases
+│   │   │   ├── domain/                 # Pure Business Logic
+│   │   │   └── infrastructure/         # External Integrations
+│   ├── ui/                             # Frontend (Svelte)
+│   └── shared/                         # Shared Types
 ├── data/                       # SQLite database
 ├── outputs/                    # Generated data
 └── docs/

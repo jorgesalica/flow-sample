@@ -6,12 +6,11 @@ A playground for data flows — extract, transform, and visualize data from vari
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  UI (Svelte 5 + Vite + Tailwind)     → http://localhost:5173 │
+│  @flows/ui (Svelte 5 + Charts)       → http://localhost:5173 │
 │       ↓                                                      │
-│  Server (Elysia)                      → http://localhost:4173 │
-│       ↓                                                      │
-│  Backend (Layered Architecture)                              │
-│       ├── API → Application → Domain                         │
+│  @flows/shared (Types)                                       │
+│       ↑                                                      │
+│  @flows/backend (Elysia)             → http://localhost:4173 │
 │       └── Infrastructure (SQLite, Spotify API)               │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -19,44 +18,41 @@ A playground for data flows — extract, transform, and visualize data from vari
 ## Quick Start
 
 ```bash
-# 1. Install dependencies
-npm install
-cd ui && npm install && cd ..
+# 1. Install dependencies (requires pnpm)
+pnpm install
 
 # 2. Configure environment
-cp .env.example .env
-# Fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, etc.
+# Copy example to backend package (where it's needed)
+cp .env.example packages/backend/.env
+# Fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, etc. in packages/backend/.env
 
-# 3. Run
-npm run server          # Backend API on :4173
-cd ui && npm run dev    # UI on :5173
+# 3. Development
+pnpm dev                # Runs backend (:4173) and UI (:5173) in parallel
 ```
 
 ## Project Structure
 
 ```
 flow-sample/
-├── ui/                         # Frontend (Svelte 5)
-├── src/
-│   ├── api/                    # HTTP Layer (Elysia)
-│   ├── application/            # Use Cases
-│   ├── domain/                 # Entities, Ports
-│   ├── infrastructure/         # Adapters, SQLite, Repositories
-│   └── cli/                    # CLI entry point
-├── data/                       # SQLite database
-├── tests/                      # Vitest tests
-└── docs/                       # Documentation
+├── packages/
+│   ├── backend/        # API, Infrastructure, Domain (@flows/backend)
+│   ├── ui/             # Svelte 5 Frontend (@flows/ui)
+│   └── shared/         # Shared Types/Interfaces (@flows/shared)
+├── data/               # SQLite database
+├── docs/               # Documentation
+└── package.json        # Root Workspace configuration
 ```
 
 ## Available Scripts
 
-| Script        | Command             | Description                      |
-| ------------- | ------------------- | -------------------------------- |
-| **Server**    | `npm run server`    | Start Elysia backend (port 4173) |
-| **CLI**       | `npm start`         | Run Spotify flow via CLI         |
-| **Tests**     | `npm test`          | Run Vitest                       |
-| **Typecheck** | `npm run typecheck` | TypeScript check                 |
-| **Lint**      | `npm run lint`      | ESLint check                     |
+| Script | Command | Description |
+| :--- | :--- | :--- |
+| **Dev** | `pnpm dev` | Start Backend + UI in parallel |
+| **Backend** | `pnpm --filter @flows/backend run dev` | Start only Backend |
+| **UI** | `pnpm --filter @flows/ui run dev` | Start only UI |
+| **Build Shared**| `pnpm build:shared` | Build shared types (required for TS) |
+| **Check** | `pnpm -r run check` | Run type checking in all packages |
+| **Lint** | `pnpm -r run lint` | Run ESLint in all packages |
 
 ## Tech Stack
 
