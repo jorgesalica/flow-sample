@@ -9,18 +9,28 @@ export interface SpotifyUseCaseOptions {
 }
 
 /**
- * Interface for Spotify source that can also fetch artist genres
+ * Artist details returned from Spotify API enrichment
+ */
+export interface ArtistDetails {
+  genres: string[];
+  imageUrl?: string;
+}
+
+/**
+ * Interface for Spotify source that can fetch tracks and artist details
  */
 export interface SpotifySourcePort {
   fetchTracks(limit?: number): Promise<Track[]>;
-  fetchArtistGenres(artistIds: string[]): Promise<Map<string, string[]>>;
+  fetchArtistDetails(artistIds: string[]): Promise<Map<string, ArtistDetails>>;
+  // Legacy method for backwards compatibility
+  fetchArtistGenres?(artistIds: string[]): Promise<Map<string, string[]>>;
 }
 
 export class SpotifyUseCase {
   constructor(
     private source: SpotifySourcePort,
     private repository: TrackRepository,
-  ) {}
+  ) { }
 
   async fetchAndSave(options: SpotifyUseCaseOptions = {}): Promise<{ count: number }> {
     const limit = options.limit ?? 20;
@@ -31,7 +41,7 @@ export class SpotifyUseCase {
     let tracks = await this.source.fetchTracks(limit);
     log.info({ count: tracks.length }, 'Fetched tracks');
 
-    // Enrich with genres if requested
+    // Enrich with artist details (genres + images) if requested
     if (enrichGenres && tracks.length > 0) {
       tracks = await this.enrichTracksWithArtistDetails(tracks);
     }
@@ -48,17 +58,20 @@ export class SpotifyUseCase {
     log.info({ artistCount: artistIds.length }, 'Enriching artist details (genres + images)');
 
     // Fetch details from Spotify (genres + images)
-    // Note: fetchArtistGenres internally calls fetchArtistDetails for backwards compat
-    const genreMap = await this.source.fetchArtistGenres(artistIds);
-    log.info({ enrichedCount: genreMap.size }, 'Fetched artist details');
+    const detailsMap = await this.source.fetchArtistDetails(artistIds);
+    log.info({ enrichedCount: detailsMap.size }, 'Fetched artist details');
 
     // Map details back to tracks
     return tracks.map((track) => ({
       ...track,
-      artists: track.artists.map((artist) => ({
-        ...artist,
-        genres: genreMap.get(artist.id) || [],
-      })),
+      artists: track.artists.map((artist) => {
+        const details = detailsMap.get(artist.id);
+        return {
+          ...artist,
+          genres: details?.genres || [],
+          imageUrl: details?.imageUrl,
+        };
+      }),
     }));
   }
 

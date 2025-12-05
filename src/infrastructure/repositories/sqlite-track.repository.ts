@@ -49,13 +49,31 @@ export interface PaginatedResult<T> {
 
 export class SQLiteTrackRepository implements TrackRepository {
   async save(tracks: Track[]): Promise<void> {
+    // Use UPSERT (ON CONFLICT DO UPDATE) instead of INSERT OR REPLACE
+    // INSERT OR REPLACE does DELETE + INSERT which triggers ON DELETE CASCADE
+    // and removes track_artists relationships
     const insertTrack = db.prepare(`
-      INSERT OR REPLACE INTO tracks (id, title, added_at, duration_ms, popularity, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
+      INSERT INTO tracks (id, title, added_at, duration_ms, popularity, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        title = excluded.title,
+        added_at = excluded.added_at,
+        duration_ms = excluded.duration_ms,
+        popularity = excluded.popularity,
+        album_id = excluded.album_id,
+        album_name = excluded.album_name,
+        album_release_date = excluded.album_release_date,
+        album_release_year = excluded.album_release_year,
+        album_image_url = excluded.album_image_url,
+        preview_url = excluded.preview_url,
+        spotify_url = excluded.spotify_url
     `);
 
     const insertArtist = db.prepare(`
-      INSERT OR REPLACE INTO artists (id, name, image_url) VALUES (?, ?, ?)
+      INSERT INTO artists (id, name, image_url) VALUES (?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        name = excluded.name,
+        image_url = COALESCE(excluded.image_url, artists.image_url)
     `);
 
     const insertTrackArtist = db.prepare(`
