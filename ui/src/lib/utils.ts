@@ -1,14 +1,15 @@
-export function debounce<T extends (...args: any[]) => any>(
+type AnyFunction = (...args: unknown[]) => unknown;
+
+export function debounce<T extends AnyFunction>(
     func: T,
-    wait: number
+    wait: number,
 ): (...args: Parameters<T>) => void {
     let timeout: ReturnType<typeof setTimeout> | null = null;
 
-    return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
-        const context = this;
+    return function (...args: Parameters<T>) {
         const later = function () {
             timeout = null;
-            func.apply(context, args);
+            func(...args);
         };
         if (timeout !== null) {
             clearTimeout(timeout);

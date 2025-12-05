@@ -141,7 +141,7 @@
     <!-- Genres Badges -->
     {#if mainArtist?.genres && mainArtist.genres.length > 0}
       <div class="flex flex-wrap gap-1 mt-3">
-        {#each mainArtist.genres.slice(0, 2) as genre}
+        {#each mainArtist.genres.slice(0, 2) as genre (genre)}
           <span
             class="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-semibold
                    bg-purple-500/20 text-purple-300/80 border border-purple-500/20"

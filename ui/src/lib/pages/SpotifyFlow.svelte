@@ -75,7 +75,7 @@
     >
       {#if $isLoading && $tracks.length === 0}
         <!-- Loading Skeleton -->
-        {#each Array(8) as _}
+        {#each [0, 1, 2, 3, 4, 5, 6, 7] as i (i)}
           <div class="glass h-40 rounded-xl animate-pulse"></div>
         {/each}
       {:else}

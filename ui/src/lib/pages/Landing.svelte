@@ -1,67 +1,83 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { getFlows, type FlowDefinition, type FlowStats } from '../flows';
 
-  interface FlowInfo {
-    id: string;
-    name: string;
-    icon: string;
-    description: string;
-    status: 'ready' | 'coming' | 'disabled';
-    stats?: { label: string; value: string | number }[];
-    route: string;
+  interface FlowCard extends FlowDefinition {
+    stats?: FlowStats;
   }
 
-  let flows: FlowInfo[] = $state([
-    {
-      id: 'spotify',
-      name: 'Spotify Flow',
-      icon: '🎵',
-      description: 'Explore your liked songs, genres, and listening patterns',
-      status: 'ready',
-      stats: [],
-      route: '#/spotify',
-    },
+  // Placeholder flows for "coming soon" features
+  const placeholderFlows: FlowCard[] = [
     {
       id: 'lyrics',
       name: 'Lyrics Flow',
       icon: '📝',
       description: 'Analyze song lyrics and discover themes',
-      status: 'coming',
       route: '#/lyrics',
+      color: 'from-blue-400 to-cyan-500',
+      stats: { count: 0, status: 'disabled', statusMessage: 'Coming Soon' },
+      getStats: async () => ({ count: 0, status: 'disabled' }),
     },
     {
       id: 'youtube',
       name: 'YouTube Flow',
       icon: '📺',
       description: 'Import and explore YouTube Music library',
-      status: 'coming',
       route: '#/youtube',
+      color: 'from-red-400 to-pink-500',
+      stats: { count: 0, status: 'disabled', statusMessage: 'Coming Soon' },
+      getStats: async () => ({ count: 0, status: 'disabled' }),
     },
-  ]);
+  ];
+
+  let flows: FlowCard[] = $state([]);
 
   onMount(async () => {
-    // Fetch Spotify stats if available
-    try {
-      const res = await fetch('/api/spotify/stats');
-      if (res.ok) {
-        const stats = await res.json();
-        flows = flows.map((f) =>
-          f.id === 'spotify'
-            ? {
-                ...f,
-                stats: [
-                  { label: 'Tracks', value: stats.totalTracks },
-                  { label: 'Genres', value: stats.totalGenres },
-                  { label: 'Top', value: stats.topGenres?.[0]?.genre || '—' },
-                ],
-              }
-            : f,
-        );
-      }
-    } catch {
-      // API not available, that's ok
-    }
+    // Get registered flows
+    const registeredFlows = getFlows();
+
+    // Load stats for each registered flow
+    const flowsWithStats = await Promise.all(
+      registeredFlows.map(async (flow) => {
+        try {
+          const stats = await flow.getStats();
+          return { ...flow, stats };
+        } catch {
+          return { ...flow, stats: { count: 0, status: 'error' as const } };
+        }
+      }),
+    );
+
+    // Combine with placeholder flows
+    flows = [...flowsWithStats, ...placeholderFlows];
   });
+
+  function getStatusClass(status: FlowStats['status']): string {
+    switch (status) {
+      case 'active':
+        return 'text-green-400 bg-green-400/10';
+      case 'configured':
+        return 'text-blue-400 bg-blue-400/10';
+      case 'error':
+        return 'text-red-400 bg-red-400/10';
+      default:
+        return 'text-white/40 bg-white/5';
+    }
+  }
+
+  function getStatusLabel(stats: FlowStats): string {
+    if (stats.statusMessage) return stats.statusMessage;
+    switch (stats.status) {
+      case 'active':
+        return 'Open →';
+      case 'configured':
+        return 'Configured';
+      case 'error':
+        return 'Error';
+      default:
+        return 'Coming Soon';
+    }
+  }
 </script>
 
 <div class="min-h-screen p-4 md:p-8">
@@ -79,39 +95,44 @@
     <!-- Flow Cards -->
     <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {#each flows as flow (flow.id)}
+        {@const isActive = flow.stats?.status === 'active'}
         <a
-          href={flow.status === 'ready' ? flow.route : undefined}
+          href={isActive ? flow.route : undefined}
           class="glass p-6 rounded-xl transition-all duration-300
-                 {flow.status === 'ready'
+                 {isActive
             ? 'hover:scale-105 hover:ring-2 hover:ring-white/20 cursor-pointer'
             : 'opacity-50 cursor-not-allowed'}"
         >
-          <div class="text-4xl mb-3">{flow.icon}</div>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-4xl">{flow.icon}</span>
+            <div
+              class="w-2 h-2 rounded-full {flow.stats?.status === 'active'
+                ? 'bg-green-400 animate-pulse'
+                : 'bg-white/20'}"
+            ></div>
+          </div>
+
           <h2 class="text-xl font-semibold text-white">{flow.name}</h2>
           <p class="text-white/50 text-sm mt-1">{flow.description}</p>
 
-          {#if flow.stats && flow.stats.length > 0}
+          {#if flow.stats && flow.stats.count > 0}
             <div class="flex gap-4 mt-4 pt-4 border-t border-white/10">
-              {#each flow.stats as stat}
+              <div class="text-center">
+                <div class="text-lg font-bold text-white">{flow.stats.count}</div>
+                <div class="text-xs text-white/40">Items</div>
+              </div>
+              {#if flow.stats.statusMessage}
                 <div class="text-center">
-                  <div class="text-lg font-bold text-white">{stat.value}</div>
-                  <div class="text-xs text-white/40">{stat.label}</div>
+                  <div class="text-lg font-bold text-white/80">{flow.stats.statusMessage}</div>
+                  <div class="text-xs text-white/40">Info</div>
                 </div>
-              {/each}
+              {/if}
             </div>
           {/if}
 
-          {#if flow.status === 'coming'}
-            <div
-              class="mt-4 text-xs text-white/40 bg-white/5 rounded px-2 py-1 inline-block"
-            >
-              Coming Soon
-            </div>
-          {:else if flow.status === 'ready'}
-            <div
-              class="mt-4 text-xs text-green-400 bg-green-400/10 rounded px-2 py-1 inline-block"
-            >
-              Open →
+          {#if flow.stats}
+            <div class="mt-4 text-xs {getStatusClass(flow.stats.status)} rounded px-2 py-1 inline-block">
+              {getStatusLabel(flow.stats)}
             </div>
           {/if}
         </a>

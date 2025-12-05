@@ -31,7 +31,7 @@
   onchange={handleChange}
 >
   <option value="" class="bg-slate-800 text-white">All Genres</option>
-  {#each genres as g}
+  {#each genres as g (g.genre)}
     <option value={g.genre} class="bg-slate-800 text-white">{g.genre} ({g.count})</option>
   {/each}
 </select>

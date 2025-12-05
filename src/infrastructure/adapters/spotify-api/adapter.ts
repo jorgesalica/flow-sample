@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
+import type { AxiosInstance, AxiosResponse } from 'axios';
 import type { SourcePort } from '../../../domain/shared';
 import type { Track } from '../../../domain/flows/spotify';
 import { SpotifyAuthError, SpotifyRateLimitError } from '../../../domain/shared';

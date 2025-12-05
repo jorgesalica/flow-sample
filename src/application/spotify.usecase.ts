@@ -49,6 +49,11 @@ export class SpotifyUseCase {
     await this.repository.save(tracks);
     log.info('Saved tracks to repository');
 
+    // Rebuild FTS index for search
+    const { rebuildFtsIndex } = await import('../infrastructure/persistence/sqlite/database');
+    rebuildFtsIndex();
+    log.info('Rebuilt FTS search index');
+
     return { count: tracks.length };
   }
 

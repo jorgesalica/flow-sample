@@ -32,7 +32,7 @@
   onchange={handleChange}
 >
   <option value="" class="bg-slate-800 text-white">All Years</option>
-  {#each years as y}
+  {#each years as y (y.year)}
     <option value={y.year.toString()} class="bg-slate-800 text-white">{y.year} ({y.count})</option>
   {/each}
 </select>

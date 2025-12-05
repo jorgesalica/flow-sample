@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { Track, SearchOptions } from '../types';
+import type { Track, SearchOptions } from './types';
 
 // Track Data
 export const tracks = writable<Track[]>([]);
