@@ -1,5 +1,5 @@
 import { treaty } from '@elysiajs/eden';
-import type { App } from '../../../src/api/app';
+import type { App } from '@flows/backend/src/api/app';
 
 // Type-safe API client using Eden
 // This provides autocompletion and type checking for all API calls

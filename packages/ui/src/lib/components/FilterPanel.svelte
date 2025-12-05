@@ -106,8 +106,9 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- Genre Filter -->
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-white/50 uppercase tracking-wide">Genre</label>
+        <label for="filter-genre" class="text-xs text-white/50 uppercase tracking-wide">Genre</label>
         <select
+          id="filter-genre"
           class="glass px-3 py-2 rounded-lg border border-white/10 bg-slate-800 text-white outline-none cursor-pointer text-sm"
           bind:value={selectedGenre}
         >
@@ -120,8 +121,9 @@
 
       <!-- Year Filter -->
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-white/50 uppercase tracking-wide">Year</label>
+        <label for="filter-year" class="text-xs text-white/50 uppercase tracking-wide">Year</label>
         <select
+          id="filter-year"
           class="glass px-3 py-2 rounded-lg border border-white/10 bg-slate-800 text-white outline-none cursor-pointer text-sm"
           bind:value={selectedYear}
         >
@@ -134,8 +136,9 @@
 
       <!-- Sort By -->
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-white/50 uppercase tracking-wide">Sort By</label>
+        <label for="filter-sortby" class="text-xs text-white/50 uppercase tracking-wide">Sort By</label>
         <select
+          id="filter-sortby"
           class="glass px-3 py-2 rounded-lg border border-white/10 bg-slate-800 text-white outline-none cursor-pointer text-sm"
           bind:value={sortBy}
         >
@@ -147,8 +150,9 @@
 
       <!-- Sort Order -->
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-white/50 uppercase tracking-wide">Order</label>
+        <label for="filter-order" class="text-xs text-white/50 uppercase tracking-wide">Order</label>
         <select
+          id="filter-order"
           class="glass px-3 py-2 rounded-lg border border-white/10 bg-slate-800 text-white outline-none cursor-pointer text-sm"
           bind:value={sortOrder}
         >
@@ -159,10 +163,11 @@
 
       <!-- Min Popularity -->
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-white/50 uppercase tracking-wide"
+        <label for="filter-popularity" class="text-xs text-white/50 uppercase tracking-wide"
           >Min Popularity: {minPopularity}</label
         >
         <input
+          id="filter-popularity"
           type="range"
           min="0"
           max="100"

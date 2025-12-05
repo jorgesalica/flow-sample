@@ -1,7 +1,7 @@
 {
-  "name": "ui",
+  "name": "@flows/ui",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -36,6 +36,8 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
+    "@flows/shared": "workspace:*",
+    "@flows/backend": "workspace:*",
     "@elysiajs/eden": "^1.4.5"
   }
 }
