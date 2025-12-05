@@ -1,6 +1,6 @@
 # Flow Sample
 
-Flow Sample is a freeform research playground where creativity and data drift together just to see what surfaces. Every folder captures an idea midstream — some polished, others shimmering as sketches — but all of them celebrate the art of letting information flow without forcing it into tidy containers.
+A playground for data flows — extract, transform, and visualize data from various sources.
 
 ## Current Architecture
 
@@ -8,16 +8,13 @@ Flow Sample is a freeform research playground where creativity and data drift to
 ┌─────────────────────────────────────────────────────────────┐
 │  UI (Svelte 5 + Vite + Tailwind)     → http://localhost:5173 │
 │       ↓                                                      │
-│  Server (Hono)                        → http://localhost:4173 │
+│  Server (Elysia)                      → http://localhost:4173 │
 │       ↓                                                      │
-│  Backend (Hexagonal Architecture)                            │
-│       ├── FlowEngine (orchestrator)                          │
-│       ├── SpotifyAdapter (Spotify API)                       │
-│       └── FileSystemAdapter (JSON storage)                   │
+│  Backend (Layered Architecture)                              │
+│       ├── API → Application → Domain                         │
+│       └── Infrastructure (SQLite, Spotify API)               │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-For detailed documentation, see [`docs/architecture/`](docs/architecture/README.md).
 
 ## Quick Start
 
@@ -30,77 +27,55 @@ cd ui && npm install && cd ..
 cp .env.example .env
 # Fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, etc.
 
-# 3. Run (development)
+# 3. Run
 npm run server          # Backend API on :4173
-cd ui && npm run dev    # UI on :5173 (proxies to :4173)
-
-# 3b. Run (production)
-cd ui && npm run build  # Build UI
-npm run server          # Serves everything on :4173
+cd ui && npm run dev    # UI on :5173
 ```
 
-## Repository Structure
+## Project Structure
 
-| Directory | Description |
-|-----------|-------------|
-| `ui/` | Svelte 5 frontend with Tailwind CSS |
-| `src/server/` | Hono HTTP server |
-| `src/spotify-flow/` | Core business logic (Hexagonal Architecture) |
-| `outputs/` | Generated data files |
-| `docs/` | Documentation |
-| `docs/architecture/` | Technical architecture docs |
+```
+flow-sample/
+├── ui/                         # Frontend (Svelte 5)
+├── src/
+│   ├── api/                    # HTTP Layer (Elysia)
+│   ├── application/            # Use Cases
+│   ├── domain/                 # Entities, Ports
+│   ├── infrastructure/         # Adapters, SQLite, Repositories
+│   └── cli/                    # CLI entry point
+├── data/                       # SQLite database
+├── tests/                      # Vitest tests
+└── docs/                       # Documentation
+```
 
 ## Available Scripts
 
 | Script | Command | Description |
 |--------|---------|-------------|
-| **Server** | `npm run server` | Start backend (port 4173) |
+| **Server** | `npm run server` | Start Elysia backend (port 4173) |
 | **CLI** | `npm start` | Run Spotify flow via CLI |
-| **CLI (limit)** | `npm start -- --limit 50` | Limit tracks fetched |
 | **Tests** | `npm test` | Run Vitest |
 | **Typecheck** | `npm run typecheck` | TypeScript check |
-
-### UI Scripts (run from `ui/` directory)
-
-| Script | Command | Description |
-|--------|---------|-------------|
-| **Dev** | `npm run dev` | Vite dev server (port 5173) |
-| **Build** | `npm run build` | Production build |
 | **Lint** | `npm run lint` | ESLint check |
-| **Format** | `npm run format` | Prettier format |
 
-## Environment Variables
+## Tech Stack
 
-Copy `.env.example` to `.env` and configure:
-
-```env
-SPOTIFY_CLIENT_ID=your_client_id
-SPOTIFY_CLIENT_SECRET=your_client_secret
-SPOTIFY_REFRESH_TOKEN=your_refresh_token
-```
-
-See [Spotify Authorization Guide](https://developer.spotify.com/documentation/web-api/tutorials/code-flow) for obtaining credentials.
+| Layer | Technology |
+|-------|------------|
+| **UI** | Svelte 5, Vite 7, Tailwind CSS 4 |
+| **Server** | Elysia (with Node.js adapter) |
+| **Database** | SQLite (better-sqlite3) |
+| **Validation** | Zod, TypeBox |
+| **Testing** | Vitest |
 
 ## Documentation
 
 - [Architecture Overview](docs/architecture/README.md)
-- [UI Architecture](docs/architecture/ui.md)
 - [Server Architecture](docs/architecture/server.md)
 - [Backend Architecture](docs/architecture/backend.md)
+- [UI Architecture](docs/architecture/ui.md)
 - [Project History](HISTORY.md)
-
-## Flows
-
-Currently implemented:
-
-- **Spotify Liked Songs**: Fetch, enrich, and visualize your saved tracks
-
-Future plans:
-
-- YouTube Music
-- Apple Music
-- More visualization options
 
 ## License
 
-CC BY-SA 4.0 — See LICENSE for details.
+CC BY-SA 4.0
