@@ -7,13 +7,19 @@
     Pagination,
     SearchBar,
     FilterPanel,
+    InfiniteScroll,
   } from '../components';
-  import { tracks, topStats, isLoading } from '../stores';
+  import { tracks, topStats, isLoading, totalTracks, searchOptions } from '../stores';
   import { loadTracks } from '../api';
 
   onMount(() => {
     loadTracks({ page: 1 });
   });
+
+  function handleLoadMore() {
+    const nextPage = ($searchOptions.page || 1) + 1;
+    loadTracks({ page: nextPage }, true);
+  }
 </script>
 
 <div class="min-h-screen p-4 md:p-8">
@@ -74,7 +80,7 @@
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-h-[50vh]"
     >
       {#if $isLoading && $tracks.length === 0}
-        <!-- Loading Skeleton -->
+        <!-- Loading Skeleton (only on initial load) -->
         {#each [0, 1, 2, 3, 4, 5, 6, 7] as i (i)}
           <div class="glass h-40 rounded-xl animate-pulse"></div>
         {/each}
@@ -98,8 +104,14 @@
       {/if}
     </section>
 
-    <!-- Pagination -->
-    <Pagination />
+    <!-- Infinite Scroll Trigger -->
+    {#if $tracks.length > 0}
+      <InfiniteScroll
+        hasMore={$tracks.length < $totalTracks}
+        isLoading={$isLoading}
+        onLoadMore={handleLoadMore}
+      />
+    {/if}
 
     <!-- Footer -->
     <footer class="text-center text-white/30 text-sm mt-8 pb-8">

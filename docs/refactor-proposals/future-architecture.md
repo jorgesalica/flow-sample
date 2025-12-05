@@ -24,7 +24,8 @@ packages/
 | Flow Registry | ✅ Done |
 | Server-side Pagination | ✅ Done |
 | Filter Panel | ✅ Done |
-| Audio Previews | ⚠️ May be deprecated by Spotify |
+| Audio Previews | ✅ Removed (Deprecated) |
+| Infinite Scroll | ✅ Done |
 
 ---
 
@@ -35,9 +36,8 @@ packages/
 | # | Item | Descripción |
 |---|------|-------------|
 | 1 | **Charts/Visualizations** | Genre pie chart, timeline, decade distribution |
-| 2 | **Infinite Scroll** | Reemplazar paginación en SpotifyFlow |
-| 3 | **Tests** | Más cobertura en usecases y repository |
-| 4 | **Logs** | Structured logging mejorado |
+| 2 | **Tests** | Más cobertura en usecases y repository |
+| 3 | **Logs** | Structured logging mejorado |
 
 ### 🟡 Prioridad Media (después)
 

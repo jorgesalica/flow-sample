@@ -3,7 +3,7 @@ import { tracks, totalTracks, status, isLoading, searchOptions, topStats } from 
 import { get } from 'svelte/store';
 import { ENDPOINTS } from './config';
 
-export async function loadTracks(options?: Partial<SearchOptions>): Promise<void> {
+export async function loadTracks(options?: Partial<SearchOptions>, append: boolean = false): Promise<void> {
     isLoading.set(true);
 
     // Merge current options with new ones
@@ -18,7 +18,6 @@ export async function loadTracks(options?: Partial<SearchOptions>): Promise<void
     if (newOptions.q) params.set('q', newOptions.q);
     if (newOptions.genre) params.set('genre', newOptions.genre);
     if (newOptions.year) params.set('year', newOptions.year.toString());
-    if (newOptions.hasPreview) params.set('hasPreview', 'true');
     if (newOptions.minPopularity) params.set('minPopularity', newOptions.minPopularity.toString());
     if (newOptions.sortBy) params.set('sortBy', newOptions.sortBy);
     if (newOptions.sortOrder) params.set('sortOrder', newOptions.sortOrder);
@@ -29,7 +28,11 @@ export async function loadTracks(options?: Partial<SearchOptions>): Promise<void
 
         const data: PaginatedResult<Track> = await res.json();
 
-        tracks.set(data.data);
+        if (append) {
+            tracks.update(current => [...current, ...data.data]);
+        } else {
+            tracks.set(data.data);
+        }
         totalTracks.set(data.total);
 
         // Also update stats if we're on the first page and no filters are active (initial load)
