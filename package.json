@@ -36,9 +36,11 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
+    "@hono/node-server": "^1.19.6",
     "axios": "^1.13.2",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",
+    "hono": "^4.10.7",
     "node-fetch": "^2.7.0",
     "pino": "^10.1.0",
     "pino-pretty": "^13.1.3",

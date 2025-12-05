@@ -1,11 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import Controls from './lib/components/Controls.svelte';
-  import StatusBanner from './lib/components/StatusBanner.svelte';
-  import MetricCard from './lib/components/MetricCard.svelte';
-  import TrackCard from './lib/components/TrackCard.svelte';
+  import { Controls, StatusBanner, MetricCard, TrackCard } from './lib/components';
   import { filteredTracks, metrics } from './lib/stores';
   import { loadSavedData } from './lib/api';
+  import { APP_CONFIG } from './lib/config';
 
   onMount(() => {
     loadSavedData();
@@ -19,9 +17,9 @@
       <h1
         class="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
       >
-        Spotify Flow Explorer
+        {APP_CONFIG.title}
       </h1>
-      <p class="text-white/50 mt-2">Drifting through your musical history.</p>
+      <p class="text-white/50 mt-2">{APP_CONFIG.tagline}</p>
     </header>
 
     <!-- Controls -->
