@@ -14,42 +14,84 @@
 ```
 ui/
 ├── src/
-│   ├── App.svelte          # Main application component
-│   ├── main.ts             # Entry point
-│   ├── app.css             # Global styles + Tailwind
+│   ├── App.svelte              # Router (hash-based)
+│   ├── main.ts                 # Entry point
+│   ├── app.css                 # Global styles + Tailwind
 │   └── lib/
-│       ├── config.ts       # Constants (endpoints, app config)
-│       ├── api.ts          # API client functions
-│       ├── types.ts        # TypeScript interfaces
-│       ├── stores/
-│       │   └── index.ts    # Svelte stores (state management)
+│       ├── config.ts           # API endpoints
+│       ├── api.ts              # API client (loadTracks, fetchFromSpotify)
+│       ├── types.ts            # TypeScript interfaces
+│       ├── stores.ts           # Svelte stores (server-side pagination)
+│       ├── utils.ts            # Utilities (debounce)
+│       ├── pages/
+│       │   ├── index.ts
+│       │   ├── Landing.svelte  # Home page with flow cards
+│       │   └── SpotifyFlow.svelte
 │       └── components/
-│           ├── index.ts    # Barrel exports
-│           ├── Controls.svelte
+│           ├── index.ts
+│           ├── Controls.svelte     # Refresh/Sync buttons
+│           ├── FilterPanel.svelte  # Expandable filter panel
 │           ├── MetricCard.svelte
+│           ├── Pagination.svelte
+│           ├── SearchBar.svelte
 │           ├── StatusBanner.svelte
-│           └── TrackCard.svelte
-├── vite.config.ts          # Vite configuration
-├── tailwind.config.js      # Tailwind configuration
-├── eslint.config.js        # ESLint (flat config)
-└── .prettierrc             # Prettier configuration
+│           └── TrackCard.svelte    # With album art, artist avatar, Spotify link
+├── vite.config.ts
+├── tailwind.config.js
+├── eslint.config.js
+└── .prettierrc
 ```
+
+## Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| **Landing** | `#/` | Flow selection (toolbox) |
+| **SpotifyFlow** | `#/spotify` | Track explorer with filters |
 
 ## State Management
 
-Uses Svelte's built-in stores:
+Uses Svelte stores with **server-side pagination**:
 
 ```typescript
-// stores/index.ts
+// stores.ts
 export const tracks = writable<Track[]>([]);
-export const filter = writable<TimeFilter>('all');
-export const status = writable<StatusState>({ message: '...', tone: 'info' });
-export const isLoading = writable(false);
-
-// Derived stores
-export const filteredTracks = derived([tracks, filter], ...);
-export const metrics = derived(filteredTracks, ...);
+export const totalTracks = writable(0);
+export const searchOptions = writable<SearchOptions>({});
+export const topStats = writable({ total: 0, artists: 0, topGenre: '—' });
 ```
+
+## API Client
+
+| Function | Purpose |
+|----------|---------|
+| `loadTracks(options)` | Fetch paginated tracks with filters |
+| `updateStats()` | Fetch summary statistics |
+| `fetchFromSpotify()` | Trigger sync from Spotify API |
+
+## Filter Panel Features
+
+The `FilterPanel` component provides:
+
+- **Genre** dropdown
+- **Year** dropdown
+- **Sort By** (Date Added, Popularity, Title)
+- **Sort Order** (Asc/Desc)
+- **Min Popularity** slider (0-100)
+- **Has Preview** checkbox
+
+## TrackCard Features
+
+Each track card displays:
+
+- Album art (300px)
+- **Artist avatar** (circular, 160px) or initials fallback
+- Title, artists, album name
+- Genre badges (top 2)
+- Popularity bar
+- Added date
+- **Spotify link** (green button on hover)
+- **Preview button** (if available)
 
 ## Data Flow
 
@@ -61,16 +103,12 @@ sequenceDiagram
     participant API
     participant Server
 
-    User->>UI: Click "Fetch"
-    UI->>Store: isLoading = true
-    UI->>API: fetchFromSpotify()
-    API->>Server: POST /api/spotify/run
-    Server-->>API: { success: true }
-    API->>API: loadSavedData()
-    API->>Server: GET /outputs/spotify/liked_songs.json
-    Server-->>API: Track[]
+    User->>UI: Apply filters
+    UI->>API: loadTracks({ genre, year, ... })
+    API->>Server: GET /api/spotify/tracks/search?...
+    Server-->>API: { data, total, page, totalPages }
     API->>Store: tracks.set(data)
-    Store-->>UI: Re-render
+    Store-->>UI: Re-render grid
 ```
 
 ## Tooling
