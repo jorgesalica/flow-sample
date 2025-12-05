@@ -36,41 +36,130 @@ Today, it's a **modern Svelte 5 application** with reactive stores:
 - 📝 TypeScript for type safety
 - 🧹 ESLint + Prettier for code quality
 
-### Server: Vanilla HTTP → Hono
+### Server: Vanilla HTTP → Hono → Elysia
 
-The server was **~200 lines of raw Node.js HTTP**:
+The server evolved through multiple stages:
 
+**Stage 1: Vanilla Node.js HTTP** (~200 lines)
 ```javascript
-// The old way
 const server = http.createServer(async (req, res) => {
-  if (req.url === '/api/status' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true }));
-  }
-  // ...50 more if statements
+  if (req.url === '/api/status') { ... }
 });
 ```
 
-Now it's **~95 lines with Hono**:
-
+**Stage 2: Hono** (~95 lines)
 ```typescript
-// The new way
 app.get('/api/status', (c) => c.json({ success: true }));
-app.post('/api/spotify/run', async (c) => { /* ... */ });
 ```
 
-**What changed:**
-- 🔥 Hono framework (~14kb, TypeScript-first)
-- 🔌 Built-in CORS and logging middleware
-- 📂 Clean separation of API routes and static serving
+**Stage 3: Elysia + Layered Architecture** (current)
+```typescript
+const app = new Elysia({ adapter: node() })
+  .use(createSpotifyRoutes(config))
+  .listen({ port: 4173 });
+```
 
-### Architecture: Documented
+### Persistence: JSON → SQLite
 
-Created `docs/architecture/` with detailed documentation:
-- `README.md` — High-level overview
-- `ui.md` — Frontend architecture (Svelte, stores, tooling)
-- `server.md` — Server architecture (Hono, endpoints)
-- `backend.md` — Backend architecture (Hexagonal, ports/adapters)
+Data storage migrated from flat JSON files to **SQLite**:
+
+```
+Before: outputs/spotify/liked_songs.json
+After:  data/flow.db (SQLite with proper schema)
+```
+
+**Schema includes:**
+- `tracks` — Main track data
+- `artists` — Artist information
+- `track_artists` — Many-to-many relationship
+- `artist_genres` — Genre tags
+
+### Architecture: Layered
+
+Restructured from monolithic to **Layered Architecture**:
+
+```
+src/
+├── api/            # HTTP layer (Elysia routes)
+├── application/    # Use cases
+├── domain/         # Entities, ports
+└── infrastructure/ # Adapters, repositories, SQLite
+```
+
+### Documentation
+
+Updated `docs/architecture/`:
+- `README.md` — Layered architecture overview
+- `server.md` — Elysia server details
+- `backend.md` — Domain/infra layer docs
+
+---
+
+## 2025-12-04 (Late Night) — Genre Enrichment & API Improvements
+
+### Genre Enrichment
+
+Implemented automatic enrichment of artist genres from Spotify:
+
+```typescript
+// SpotifyApiAdapter now fetches artist details
+async fetchArtistGenres(artistIds: string[]): Promise<Map<string, string[]>>
+```
+
+**Process:**
+1. Extract unique artist IDs from fetched tracks (753 artists)
+2. Batch requests to Spotify `/artists?ids=...` (50 per request)
+3. Map genres back to tracks
+4. Store in `artist_genres` table
+
+**Result:** 272 unique genres across 1000 tracks.
+
+### New API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/spotify/tracks/search` | Paginated, filterable search |
+| `GET /api/spotify/tracks/:id` | Single track by ID |
+| `GET /api/spotify/genres` | All genres with counts |
+| `GET /api/spotify/years` | All years with counts |
+| `GET /api/spotify/stats` | Summary statistics |
+
+**Search supports:**
+- `?page=1&limit=50` — Pagination
+- `?q=linkin` — Text search
+- `?genre=rock` — Filter by genre
+- `?year=2020` — Filter by year
+- `?sortBy=popularity&sortOrder=desc` — Sorting
+
+### SQLite Improvements
+
+Added new indexes and FTS5 virtual table:
+
+```sql
+CREATE INDEX idx_tracks_album_year ON tracks(album_release_year DESC);
+CREATE INDEX idx_artists_name ON artists(name);
+CREATE INDEX idx_artist_genres_genre ON artist_genres(genre);
+
+CREATE VIRTUAL TABLE tracks_fts USING fts5(...);
+CREATE TABLE token_cache (...);  -- For future OAuth caching
+```
+
+### Stats Endpoint Example
+
+```json
+{
+  "totalTracks": 1000,
+  "totalGenres": 272,
+  "topGenres": [
+    { "genre": "ambient", "count": 123 },
+    { "genre": "argentine rock", "count": 123 }
+  ],
+  "decadeDistribution": {
+    "2020s": 331, "2010s": 272, "2000s": 169
+  },
+  "yearRange": { "oldest": 1964, "newest": 2025 }
+}
+```
 
 ---
 
