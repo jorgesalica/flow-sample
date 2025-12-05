@@ -55,8 +55,10 @@ export async function updateStats(): Promise<void> {
             const data = await res.json();
             topStats.set({
                 total: data.totalTracks,
-                artists: 0, // Not provided directly in summary stats object
-                topGenre: data.topGenres?.[0]?.genre || '—'
+                artists: 0,
+                topGenre: data.topGenres?.[0]?.genre || '—',
+                genres: data.topGenres || [],
+                decadeDistribution: data.decadeDistribution || {},
             });
         }
     } catch {

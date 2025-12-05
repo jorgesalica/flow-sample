@@ -26,6 +26,7 @@ packages/
 | Filter Panel | ✅ Done |
 | Audio Previews | ✅ Removed (Deprecated) |
 | Infinite Scroll | ✅ Done |
+| Charts/Visualizations | ✅ Done |
 
 ---
 
@@ -35,8 +36,8 @@ packages/
 
 | # | Item | Descripción |
 |---|------|-------------|
-| 1 | **Charts/Visualizations** | Genre pie chart, timeline, decade distribution |
-| 2 | **Tests** | Más cobertura en usecases y repository |
+| 1 | **Tests** | Más cobertura en usecases y repository |
+| 2 | **Logs** | Structured logging mejorado |
 | 3 | **Logs** | Structured logging mejorado |
 
 ### 🟡 Prioridad Media (después)

@@ -8,3 +8,5 @@ export { default as GenreFilter } from './GenreFilter.svelte';
 export { default as YearFilter } from './YearFilter.svelte';
 export { default as FilterPanel } from './FilterPanel.svelte';
 export { default as InfiniteScroll } from './InfiniteScroll.svelte';
+export { default as GenreChart } from './GenreChart.svelte';
+export { default as DecadeChart } from './DecadeChart.svelte';

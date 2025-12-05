@@ -8,6 +8,8 @@
     SearchBar,
     FilterPanel,
     InfiniteScroll,
+    GenreChart,
+    DecadeChart,
   } from '../components';
   import { tracks, topStats, isLoading, totalTracks, searchOptions } from '../stores';
   import { loadTracks } from '../api';
@@ -54,6 +56,23 @@
         </div>
       </div>
     </header>
+
+    <!-- Insights Section -->
+    {#if $topStats.genres.length > 0}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Genre Chart -->
+        <div class="glass p-6 rounded-2xl border border-white/10">
+          <h3 class="text-lg font-bold text-white mb-4">Top Genres</h3>
+          <GenreChart data={$topStats.genres.slice(0, 6)} />
+        </div>
+
+        <!-- Decade/Timeline Chart -->
+        <div class="glass p-6 rounded-2xl border border-white/10">
+          <h3 class="text-lg font-bold text-white mb-4">Eras (Decades)</h3>
+          <DecadeChart data={$topStats.decadeDistribution} />
+        </div>
+      </div>
+    {/if}
 
     <!-- Controls & Status -->
     <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -114,8 +133,6 @@
     {/if}
 
     <!-- Footer -->
-    <footer class="text-center text-white/30 text-sm mt-8 pb-8">
-      Flow Sample — Spotify Flow
-    </footer>
+    <footer class="text-center text-white/30 text-sm mt-8 pb-8">Flow Sample — Spotify Flow</footer>
   </div>
 </div>
