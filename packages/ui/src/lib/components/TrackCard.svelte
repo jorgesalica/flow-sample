@@ -9,30 +9,6 @@
 
   // Get the first artist for the avatar
   let mainArtist = $derived(track.artists[0]);
-
-  // Audio preview state
-  let audioElement: HTMLAudioElement | null = $state(null);
-  let isPlaying = $state(false);
-
-  function togglePreview() {
-    if (!track.previewUrl) return;
-
-    if (!audioElement) {
-      audioElement = new Audio(track.previewUrl);
-      audioElement.volume = 0.5;
-      audioElement.onended = () => {
-        isPlaying = false;
-      };
-    }
-
-    if (isPlaying) {
-      audioElement.pause();
-      isPlaying = false;
-    } else {
-      audioElement.play();
-      isPlaying = true;
-    }
-  }
 </script>
 
 <article
@@ -56,32 +32,7 @@
           .padStart(2, '0')}
       </span>
 
-      <!-- Overlay buttons (on hover) -->
-      <div
-        class="absolute inset-0 flex items-center justify-center gap-3 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <!-- Preview Play Button -->
-        {#if track.previewUrl}
-          <button
-            onclick={togglePreview}
-            class="p-3 bg-white rounded-full shadow-xl hover:scale-110 transition-transform"
-            title={isPlaying ? 'Pause preview' : 'Play 30s preview'}
-          >
-            {#if isPlaying}
-              <svg class="w-6 h-6 text-black" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="4" width="4" height="16" />
-                <rect x="14" y="4" width="4" height="16" />
-              </svg>
-            {:else}
-              <svg class="w-6 h-6 text-black" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            {/if}
-          </button>
-        {/if}
-      </div>
-
-      <!-- Spotify Link (top-right) -->
+      <!-- Spotify Link (on hover) -->
       {#if track.spotifyUrl}
         <a
           href={track.spotifyUrl}

@@ -4,185 +4,95 @@ This document outlines the planned evolution of Flow Sample's architecture.
 
 ---
 
-## Current State (2025-12-04)
+## Current State (2025-12-05) ✅
+
+### What's Done
 
 ```
-src/
-├── server/              # Hono (lightweight HTTP)
-└── spotify-flow/        # Monolithic flow
-    ├── core/            # Domain + Ports
-    ├── adapters/        # Spotify, FileSystem
-    ├── config/
-    └── cli/
+packages/
+├── backend/         @flows/backend (Elysia + SQLite)
+├── ui/              @flows/ui (Svelte 5 + Tailwind)
+└── shared/          @flows/shared (Shared types)
 ```
 
-- **Server:** Hono (~95 lines)
-- **Persistence:** JSON files
-- **UI:** Svelte 5 (single flow view)
+| Feature | Status |
+|---------|--------|
+| pnpm Workspaces Monorepo | ✅ Done |
+| Elysia API | ✅ Done |
+| SQLite + FTS5 | ✅ Done |
+| Eden Type-safe Client | ✅ Done |
+| Flow Registry | ✅ Done |
+| Server-side Pagination | ✅ Done |
+| Filter Panel | ✅ Done |
+| Audio Previews | ⚠️ May be deprecated by Spotify |
 
 ---
 
-## Target Architecture
+## 📋 Priority List
 
-### Backend: Elysia + Layered Architecture
+### 🔴 Prioridad Alta (próximos pasos)
 
-```
-src/
-├── domain/                     # Pure business logic
-│   ├── flows/
-│   │   ├── spotify/
-│   │   │   ├── entities.ts     # Track, Artist, Album
-│   │   │   ├── repository.ts   # Interface
-│   │   │   └── service.ts      # SpotifyFlowService
-│   │   └── lyrics/             # Future flow
-│   │       ├── entities.ts
-│   │       └── service.ts
-│   └── shared/
-│       ├── ports.ts            # Generic interfaces
-│       └── errors.ts           # Domain errors
-│
-├── infrastructure/             # External integrations
-│   ├── adapters/
-│   │   ├── spotify-api/        # Spotify Web API
-│   │   ├── genius-api/         # Lyrics (future)
-│   │   └── llm/                # LLM agents (future)
-│   ├── persistence/
-│   │   └── sqlite/             # SQLite via better-sqlite3
-│   └── repositories/           # Repository implementations
-│
-├── application/                # Use cases / orchestration
-│   ├── spotify.usecase.ts
-│   └── lyrics.usecase.ts
-│
-└── api/                        # Elysia routes
-    ├── app.ts                  # Main Elysia app
-    ├── spotify.routes.ts
-    └── lyrics.routes.ts
-```
+| # | Item | Descripción |
+|---|------|-------------|
+| 1 | **Charts/Visualizations** | Genre pie chart, timeline, decade distribution |
+| 2 | **Infinite Scroll** | Reemplazar paginación en SpotifyFlow |
+| 3 | **Tests** | Más cobertura en usecases y repository |
+| 4 | **Logs** | Structured logging mejorado |
 
-### Why Elysia?
+### 🟡 Prioridad Media (después)
 
-| Feature | Benefit |
-|---------|---------|
-| Plugin system | Dependency injection without decorators |
-| TypeBox validation | Runtime validation with compile-time types |
-| Eden client | Type-safe API client for Svelte UI |
-| Route groups | Clean separation by domain |
-| Bun-first | Fast cold starts, native TypeScript |
+| # | Item | Descripción |
+|---|------|-------------|
+| 5 | **Cache endpoints** | genres, years, stats con TTL corto (5 min) |
+| 6 | **Responsive polish** | Mobile optimization |
+| 7 | **Rate limit retry** | Auto-retry cuando Spotify devuelve 429 |
+| 8 | **Limpiar preview si roto** | Verificar si funciona, si no, quitar UI |
 
-### Persistence: SQLite
+### 🟢 Bucket (no perder de vista)
 
-Migrate from JSON files to SQLite for:
-- Complex queries (aggregations, joins)
-- Better performance with large datasets
-- ACID transactions
-- Easy backup/restore
-
-```sql
--- Schema sketch
-CREATE TABLE tracks (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    added_at DATETIME,
-    duration_ms INTEGER,
-    popularity INTEGER
-);
-
-CREATE TABLE artists (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL
-);
-
-CREATE TABLE track_artists (
-    track_id TEXT,
-    artist_id TEXT,
-    FOREIGN KEY (track_id) REFERENCES tracks(id),
-    FOREIGN KEY (artist_id) REFERENCES artists(id)
-);
-```
+| Item | Notas |
+|------|-------|
+| **Lyrics Flow** | Data source para LLM futuro |
+| **LLM Integration** | Después de tener más data |
+| **Docker** | Si necesitás deployar |
+| **GitHub Actions** | Si trabajás con otros |
+| **PWA** | Si querés instalable |
+| **OAuth Flow** | Reemplazar refresh token manual |
+| **WebSockets** | Sync en tiempo real |
+| **Background Jobs** | Syncs pesados |
+| **Social Features** | Comparar con amigos |
 
 ---
 
-## UI Evolution
+## Notes
 
-### Current: Single Flow View
+### Rate Limiting
 
-The UI currently shows only the Spotify flow.
+**Existe:**
+- Error handling para 429 en CLI
 
-### Target: Flow Toolkit
+**Falta:**
+- Rate limiting en propia API
+- Auto-retry cuando Spotify limita
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Flow Toolkit                              [+ New]  │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │
-│  │  🎵         │  │  📝         │  │  🤖         │  │
-│  │  Spotify    │  │  Lyrics     │  │  AI         │  │
-│  │  Explorer   │  │  Scraper    │  │  Insights   │  │
-│  │             │  │             │  │             │  │
-│  │  1,247      │  │  Not        │  │  Coming     │  │
-│  │  tracks     │  │  configured │  │  soon       │  │
-│  └─────────────┘  └─────────────┘  └─────────────┘  │
-│                                                     │
-└─────────────────────────────────────────────────────┘
-```
+### Cache Strategy
 
-Each flow registers itself with:
-- Name, icon, description
-- Status (configured, active, disabled)
-- Entry point component
+| Endpoint | Cachear | TTL |
+|----------|---------|-----|
+| `/genres` | ✅ Sí | 5 min |
+| `/years` | ✅ Sí | 5 min |
+| `/stats` | ✅ Sí | 5 min |
+| `/tracks/search` | ❌ No | - |
+| Sync | ❌ No | On-demand |
 
----
+### Spotify API Deprecations (Nov 2024)
 
-## LLM Integration (Future)
-
-### Location
-
-```
-src/infrastructure/adapters/llm/
-├── mastra/                 # Mastra integration
-│   ├── client.ts
-│   └── agents/
-│       └── music-analyst.ts
-└── prompts/
-    ├── describe-taste.txt
-    └── analyze-lyrics.txt
-```
-
-### Use Cases
-
-| Flow | Agent Capability |
-|------|------------------|
-| Spotify | "Analyze my listening evolution in 2024" |
-| Lyrics | "Find songs about [theme]" |
-| Cross-flow | "Compare my Spotify taste with my lyric preferences" |
-
----
-
-## Migration Path
-
-### Phase 1: SQLite
-- [ ] Add `better-sqlite3` dependency
-- [ ] Create schema migrations
-- [ ] Implement SQLite repository
-- [ ] Migrate data from JSON
-
-### Phase 2: Elysia
-- [ ] Replace Hono with Elysia
-- [ ] Restructure to layered architecture
-- [ ] Add route groups per flow
-- [ ] Generate Eden client for UI
-
-### Phase 3: Multi-Flow UI
-- [ ] Create flow registry
-- [ ] Build toolkit dashboard
-- [ ] Make flows pluggable
-
-### Phase 4: LLM Agents
-- [ ] Choose provider (Mastra, LangChain, etc.)
-- [ ] Create first agent (music taste analyzer)
-- [ ] Integrate with UI
+Deprecado para nuevas apps:
+- ❌ Audio Features (danceability, energy)
+- ❌ Audio Analysis
+- ❌ Recommendations
+- ❌ Related Artists
+- ⚠️ 30-second previews (verificar si funciona)
 
 ---
 
@@ -190,6 +100,7 @@ src/infrastructure/adapters/llm/
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2025-12-04 | Elysia over NestJS | Right balance of structure without boilerplate |
-| 2025-12-04 | SQLite over Postgres | Local-first, no server needed |
-| 2025-12-04 | Mastra for LLM | TypeScript-first, agentic framework |
+| 2025-12-05 | Skip Docker | Solo dev, no lo necesita aún |
+| 2025-12-05 | Skip GitHub Actions | Workflow personal, merge directo a main |
+| 2025-12-05 | Skip Audio Features | Deprecado por Spotify Nov 2024 |
+| 2025-12-05 | Charts first | Alta demanda, usa datos existentes |

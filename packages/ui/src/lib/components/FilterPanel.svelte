@@ -12,7 +12,6 @@
   // Local filter values (synced with store)
   let selectedGenre = $state($searchOptions.genre || '');
   let selectedYear = $state($searchOptions.year?.toString() || '');
-  let hasPreview = $state($searchOptions.hasPreview || false);
   let minPopularity = $state($searchOptions.minPopularity || 0);
   let sortBy = $state($searchOptions.sortBy || 'added_at');
   let sortOrder = $state($searchOptions.sortOrder || 'desc');
@@ -21,7 +20,6 @@
   let activeFilterCount = $derived(
     (selectedGenre ? 1 : 0) +
       (selectedYear ? 1 : 0) +
-      (hasPreview ? 1 : 0) +
       (minPopularity > 0 ? 1 : 0) +
       (sortBy !== 'added_at' || sortOrder !== 'desc' ? 1 : 0),
   );
@@ -43,7 +41,6 @@
     loadTracks({
       genre: selectedGenre || undefined,
       year: selectedYear ? parseInt(selectedYear) : undefined,
-      hasPreview: hasPreview || undefined,
       minPopularity: minPopularity > 0 ? minPopularity : undefined,
       sortBy: sortBy as 'added_at' | 'popularity' | 'title',
       sortOrder: sortOrder as 'asc' | 'desc',
@@ -55,7 +52,6 @@
   function clearFilters() {
     selectedGenre = '';
     selectedYear = '';
-    hasPreview = false;
     minPopularity = 0;
     sortBy = 'added_at';
     sortOrder = 'desc';
@@ -177,18 +173,7 @@
         />
       </div>
 
-      <!-- Has Preview Checkbox -->
-      <div class="flex items-center gap-2 pt-5">
-        <input
-          type="checkbox"
-          id="hasPreview"
-          bind:checked={hasPreview}
-          class="w-4 h-4 accent-purple-500 cursor-pointer"
-        />
-        <label for="hasPreview" class="text-sm text-white/80 cursor-pointer">
-          Only with preview ▶️
-        </label>
-      </div>
+
     </div>
 
     <!-- Action Buttons -->

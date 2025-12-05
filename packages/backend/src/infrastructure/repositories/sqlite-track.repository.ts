@@ -35,7 +35,6 @@ export interface SearchOptions extends PaginationOptions {
   query?: string;
   genre?: string;
   year?: number;
-  hasPreview?: boolean;
   minPopularity?: number;
   sortBy?: 'added_at' | 'popularity' | 'title';
   sortOrder?: 'asc' | 'desc';
@@ -55,8 +54,8 @@ export class SQLiteTrackRepository implements TrackRepository {
     // INSERT OR REPLACE does DELETE + INSERT which triggers ON DELETE CASCADE
     // and removes track_artists relationships
     const insertTrack = db.prepare(`
-      INSERT INTO tracks (id, title, added_at, duration_ms, popularity, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tracks (id, title, added_at, duration_ms, popularity, album_id, album_name, album_release_date, album_release_year, album_image_url, spotify_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
         added_at = excluded.added_at,
@@ -67,7 +66,6 @@ export class SQLiteTrackRepository implements TrackRepository {
         album_release_date = excluded.album_release_date,
         album_release_year = excluded.album_release_year,
         album_image_url = excluded.album_image_url,
-        preview_url = excluded.preview_url,
         spotify_url = excluded.spotify_url
     `);
 
@@ -99,7 +97,6 @@ export class SQLiteTrackRepository implements TrackRepository {
           track.album.releaseDate,
           track.album.releaseYear ?? null,
           track.album.imageUrl ?? null,
-          track.previewUrl ?? null,
           track.spotifyUrl ?? null,
         );
 
@@ -148,11 +145,6 @@ export class SQLiteTrackRepository implements TrackRepository {
     if (options.year) {
       whereClause += ' AND t.album_release_year = ?';
       params.push(options.year);
-    }
-
-    // Filter by hasPreview
-    if (options.hasPreview) {
-      whereClause += " AND t.preview_url IS NOT NULL AND t.preview_url != ''";
     }
 
     // Filter by minPopularity
@@ -300,7 +292,6 @@ export class SQLiteTrackRepository implements TrackRepository {
         releaseYear: row.album_release_year ?? undefined,
         imageUrl: row.album_image_url ?? undefined,
       },
-      previewUrl: row.preview_url ?? undefined,
       spotifyUrl: row.spotify_url ?? undefined,
     };
   }
