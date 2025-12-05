@@ -95,6 +95,74 @@ Updated `docs/architecture/`:
 
 ---
 
+## 2025-12-04 (Late Night) — Genre Enrichment & API Improvements
+
+### Genre Enrichment
+
+Implemented automatic enrichment of artist genres from Spotify:
+
+```typescript
+// SpotifyApiAdapter now fetches artist details
+async fetchArtistGenres(artistIds: string[]): Promise<Map<string, string[]>>
+```
+
+**Process:**
+1. Extract unique artist IDs from fetched tracks (753 artists)
+2. Batch requests to Spotify `/artists?ids=...` (50 per request)
+3. Map genres back to tracks
+4. Store in `artist_genres` table
+
+**Result:** 272 unique genres across 1000 tracks.
+
+### New API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/spotify/tracks/search` | Paginated, filterable search |
+| `GET /api/spotify/tracks/:id` | Single track by ID |
+| `GET /api/spotify/genres` | All genres with counts |
+| `GET /api/spotify/years` | All years with counts |
+| `GET /api/spotify/stats` | Summary statistics |
+
+**Search supports:**
+- `?page=1&limit=50` — Pagination
+- `?q=linkin` — Text search
+- `?genre=rock` — Filter by genre
+- `?year=2020` — Filter by year
+- `?sortBy=popularity&sortOrder=desc` — Sorting
+
+### SQLite Improvements
+
+Added new indexes and FTS5 virtual table:
+
+```sql
+CREATE INDEX idx_tracks_album_year ON tracks(album_release_year DESC);
+CREATE INDEX idx_artists_name ON artists(name);
+CREATE INDEX idx_artist_genres_genre ON artist_genres(genre);
+
+CREATE VIRTUAL TABLE tracks_fts USING fts5(...);
+CREATE TABLE token_cache (...);  -- For future OAuth caching
+```
+
+### Stats Endpoint Example
+
+```json
+{
+  "totalTracks": 1000,
+  "totalGenres": 272,
+  "topGenres": [
+    { "genre": "ambient", "count": 123 },
+    { "genre": "argentine rock", "count": 123 }
+  ],
+  "decadeDistribution": {
+    "2020s": 331, "2010s": 272, "2000s": 169
+  },
+  "yearRange": { "oldest": 1964, "newest": 2025 }
+}
+```
+
+---
+
 ## Earlier in 2025 — Hexagonal Architecture
 
 ### Backend Refactoring
