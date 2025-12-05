@@ -113,6 +113,9 @@ export class SpotifyApiAdapter implements SourcePort {
 
   private mapToTrack(item: SpotifySavedTrack): Track {
     const t = item.track;
+    // Get the medium-sized image (300x300) or fallback to first available
+    const albumImage = t.album.images.find((img) => img.width === 300) || t.album.images[0];
+
     return {
       id: t.id,
       title: t.name,
@@ -122,22 +125,27 @@ export class SpotifyApiAdapter implements SourcePort {
         name: t.album.name,
         releaseDate: t.album.release_date,
         releaseYear: parseInt(t.album.release_date.split('-')[0]) || undefined,
+        imageUrl: albumImage?.url,
       },
       addedAt: item.added_at,
       durationMs: t.duration_ms,
       popularity: t.popularity,
+      previewUrl: t.preview_url || undefined,
+      spotifyUrl: `https://open.spotify.com/track/${t.id}`,
     };
   }
 
   /**
-   * Fetch genres for a list of artist IDs.
+   * Fetch genres and images for a list of artist IDs.
    * Spotify API allows up to 50 artists per request.
-   * Returns a Map of artistId -> genres[]
+   * Returns a Map of artistId -> { genres: string[], imageUrl?: string }
    */
-  async fetchArtistGenres(artistIds: string[]): Promise<Map<string, string[]>> {
+  async fetchArtistDetails(
+    artistIds: string[],
+  ): Promise<Map<string, { genres: string[]; imageUrl?: string }>> {
     if (!this.accessToken) await this.refreshAccessToken();
 
-    const genreMap = new Map<string, string[]>();
+    const detailsMap = new Map<string, { genres: string[]; imageUrl?: string }>();
     const uniqueIds = [...new Set(artistIds)];
 
     // Batch in chunks of 50 (Spotify limit)
@@ -153,15 +161,30 @@ export class SpotifyApiAdapter implements SourcePort {
 
         for (const artist of response.data.artists) {
           if (artist) {
-            genreMap.set(artist.id, artist.genres);
+            // Get small image (160px) for artist avatar
+            const image = artist.images.find((img) => img.width === 160) || artist.images[0];
+            detailsMap.set(artist.id, {
+              genres: artist.genres,
+              imageUrl: image?.url,
+            });
           }
         }
       } catch (error) {
         // Log but don't fail the whole operation
-        console.error(`Failed to fetch genres for batch starting at ${i}:`, error);
+        console.error(`Failed to fetch artist details for batch starting at ${i}:`, error);
       }
     }
 
+    return detailsMap;
+  }
+
+  // Backwards compatibility
+  async fetchArtistGenres(artistIds: string[]): Promise<Map<string, string[]>> {
+    const details = await this.fetchArtistDetails(artistIds);
+    const genreMap = new Map<string, string[]>();
+    for (const [id, { genres }] of details) {
+      genreMap.set(id, genres);
+    }
     return genreMap;
   }
 }

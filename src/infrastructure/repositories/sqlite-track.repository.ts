@@ -11,11 +11,15 @@ interface TrackRow {
   album_name: string | null;
   album_release_date: string | null;
   album_release_year: number | null;
+  album_image_url: string | null;
+  preview_url: string | null;
+  spotify_url: string | null;
 }
 
 interface ArtistRow {
   id: string;
   name: string;
+  image_url: string | null;
 }
 
 interface GenreRow {
@@ -46,12 +50,12 @@ export interface PaginatedResult<T> {
 export class SQLiteTrackRepository implements TrackRepository {
   async save(tracks: Track[]): Promise<void> {
     const insertTrack = db.prepare(`
-      INSERT OR REPLACE INTO tracks (id, title, added_at, duration_ms, popularity, album_id, album_name, album_release_date, album_release_year)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT OR REPLACE INTO tracks (id, title, added_at, duration_ms, popularity, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertArtist = db.prepare(`
-      INSERT OR IGNORE INTO artists (id, name) VALUES (?, ?)
+      INSERT OR REPLACE INTO artists (id, name, image_url) VALUES (?, ?, ?)
     `);
 
     const insertTrackArtist = db.prepare(`
@@ -74,10 +78,13 @@ export class SQLiteTrackRepository implements TrackRepository {
           track.album.name,
           track.album.releaseDate,
           track.album.releaseYear ?? null,
+          track.album.imageUrl ?? null,
+          track.previewUrl ?? null,
+          track.spotifyUrl ?? null,
         );
 
         for (const artist of track.artists) {
-          insertArtist.run(artist.id, artist.name);
+          insertArtist.run(artist.id, artist.name, artist.imageUrl ?? null);
           insertTrackArtist.run(track.id, artist.id);
 
           if (artist.genres) {
@@ -219,7 +226,7 @@ export class SQLiteTrackRepository implements TrackRepository {
     const artistRows = db
       .prepare(
         `
-      SELECT a.id, a.name
+      SELECT a.id, a.name, a.image_url
       FROM artists a
       JOIN track_artists ta ON ta.artist_id = a.id
       WHERE ta.track_id = ?
@@ -240,6 +247,7 @@ export class SQLiteTrackRepository implements TrackRepository {
         id: ar.id,
         name: ar.name,
         genres: genres.map((g) => g.genre),
+        imageUrl: ar.image_url ?? undefined,
       };
     });
 
@@ -255,7 +263,10 @@ export class SQLiteTrackRepository implements TrackRepository {
         name: row.album_name ?? '',
         releaseDate: row.album_release_date ?? '',
         releaseYear: row.album_release_year ?? undefined,
+        imageUrl: row.album_image_url ?? undefined,
       },
+      previewUrl: row.preview_url ?? undefined,
+      spotifyUrl: row.spotify_url ?? undefined,
     };
   }
 }

@@ -28,7 +28,9 @@ db.exec(`
     album_id TEXT,
     album_name TEXT,
     album_release_date TEXT,
-    album_release_year INTEGER
+    album_release_year INTEGER,
+    album_image_url TEXT,
+    preview_url TEXT
   );
 
   CREATE TABLE IF NOT EXISTS artists (
@@ -58,16 +60,6 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_artists_name ON artists(name);
   CREATE INDEX IF NOT EXISTS idx_artist_genres_genre ON artist_genres(genre);
 
-  -- Full-text search virtual table
-  CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
-    id,
-    title,
-    artist_names,
-    album_name,
-    content='tracks',
-    content_rowid='rowid'
-  );
-
   -- Token cache for Spotify access tokens
   CREATE TABLE IF NOT EXISTS token_cache (
     key TEXT PRIMARY KEY,
@@ -75,5 +67,27 @@ db.exec(`
     expires_at INTEGER NOT NULL
   );
 `);
+
+// Migration: Add new columns if they don't exist
+try {
+  db.exec(`ALTER TABLE tracks ADD COLUMN album_image_url TEXT`);
+} catch {
+  // Column already exists
+}
+try {
+  db.exec(`ALTER TABLE tracks ADD COLUMN preview_url TEXT`);
+} catch {
+  // Column already exists
+}
+try {
+  db.exec(`ALTER TABLE tracks ADD COLUMN spotify_url TEXT`);
+} catch {
+  // Column already exists
+}
+try {
+  db.exec(`ALTER TABLE artists ADD COLUMN image_url TEXT`);
+} catch {
+  // Column already exists
+}
 
 export default db;

@@ -20,7 +20,7 @@ export class SpotifyUseCase {
   constructor(
     private source: SpotifySourcePort,
     private repository: TrackRepository,
-  ) { }
+  ) {}
 
   async fetchAndSave(options: SpotifyUseCaseOptions = {}): Promise<{ count: number }> {
     const limit = options.limit ?? 20;
@@ -33,7 +33,7 @@ export class SpotifyUseCase {
 
     // Enrich with genres if requested
     if (enrichGenres && tracks.length > 0) {
-      tracks = await this.enrichTracksWithGenres(tracks);
+      tracks = await this.enrichTracksWithArtistDetails(tracks);
     }
 
     await this.repository.save(tracks);
@@ -42,16 +42,17 @@ export class SpotifyUseCase {
     return { count: tracks.length };
   }
 
-  private async enrichTracksWithGenres(tracks: Track[]): Promise<Track[]> {
+  private async enrichTracksWithArtistDetails(tracks: Track[]): Promise<Track[]> {
     // Collect all unique artist IDs
     const artistIds = [...new Set(tracks.flatMap((t) => t.artists.map((a) => a.id)))];
-    log.info({ artistCount: artistIds.length }, 'Enriching artist genres');
+    log.info({ artistCount: artistIds.length }, 'Enriching artist details (genres + images)');
 
-    // Fetch genres from Spotify
+    // Fetch details from Spotify (genres + images)
+    // Note: fetchArtistGenres internally calls fetchArtistDetails for backwards compat
     const genreMap = await this.source.fetchArtistGenres(artistIds);
-    log.info({ enrichedCount: genreMap.size }, 'Fetched artist genres');
+    log.info({ enrichedCount: genreMap.size }, 'Fetched artist details');
 
-    // Map genres back to tracks
+    // Map details back to tracks
     return tracks.map((track) => ({
       ...track,
       artists: track.artists.map((artist) => ({

@@ -6,6 +6,7 @@ export interface Artist {
   id: string;
   name: string;
   genres?: string[];
+  imageUrl?: string;
 }
 
 export interface Album {
@@ -13,6 +14,7 @@ export interface Album {
   name: string;
   releaseDate: string;
   releaseYear?: number;
+  imageUrl?: string;
 }
 
 export interface Track {
@@ -23,4 +25,6 @@ export interface Track {
   addedAt: string;
   durationMs: number;
   popularity?: number;
+  previewUrl?: string;
+  spotifyUrl?: string;
 }

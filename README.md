@@ -50,23 +50,23 @@ flow-sample/
 
 ## Available Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| **Server** | `npm run server` | Start Elysia backend (port 4173) |
-| **CLI** | `npm start` | Run Spotify flow via CLI |
-| **Tests** | `npm test` | Run Vitest |
-| **Typecheck** | `npm run typecheck` | TypeScript check |
-| **Lint** | `npm run lint` | ESLint check |
+| Script        | Command             | Description                      |
+| ------------- | ------------------- | -------------------------------- |
+| **Server**    | `npm run server`    | Start Elysia backend (port 4173) |
+| **CLI**       | `npm start`         | Run Spotify flow via CLI         |
+| **Tests**     | `npm test`          | Run Vitest                       |
+| **Typecheck** | `npm run typecheck` | TypeScript check                 |
+| **Lint**      | `npm run lint`      | ESLint check                     |
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| **UI** | Svelte 5, Vite 7, Tailwind CSS 4 |
-| **Server** | Elysia (with Node.js adapter) |
-| **Database** | SQLite (better-sqlite3) |
-| **Validation** | Zod, TypeBox |
-| **Testing** | Vitest |
+| Layer          | Technology                       |
+| -------------- | -------------------------------- |
+| **UI**         | Svelte 5, Vite 7, Tailwind CSS 4 |
+| **Server**     | Elysia (with Node.js adapter)    |
+| **Database**   | SQLite (better-sqlite3)          |
+| **Validation** | Zod, TypeBox                     |
+| **Testing**    | Vitest                           |
 
 ## Documentation
 
