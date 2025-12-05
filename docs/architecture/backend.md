@@ -2,46 +2,76 @@
 
 ## Overview
 
-The backend follows **Hexagonal Architecture** (Ports & Adapters), ensuring the core business logic is decoupled from external dependencies.
+The backend follows **Layered Architecture** with clear separation of concerns.
 
-## Tech Stack
+## Layers
 
-| Technology | Purpose |
-|------------|---------|
-| **TypeScript** | Type safety |
-| **Zod** | Config validation |
-| **Pino** | Structured logging |
-| **Axios** | HTTP client (Spotify API) |
-| **Commander** | CLI parsing |
+```
+┌─────────────────────────────────────────┐
+│  API Layer (src/api/)                   │
+│  - HTTP routes, validation              │
+├─────────────────────────────────────────┤
+│  Application Layer (src/application/)   │
+│  - Use cases, orchestration             │
+├─────────────────────────────────────────┤
+│  Domain Layer (src/domain/)             │
+│  - Entities, ports, business rules      │
+├─────────────────────────────────────────┤
+│  Infrastructure Layer (src/infra/)      │
+│  - Adapters, repositories, persistence  │
+└─────────────────────────────────────────┘
+```
 
 ## Directory Structure
 
 ```
-src/spotify-flow/
-├── core/                   # Pure domain logic
-│   ├── types.ts            # Track, Artist, Album, FlowOptions
-│   ├── ports.ts            # SourcePort, StoragePort interfaces
-│   ├── engine.ts           # FlowEngine orchestrator
-│   ├── errors.ts           # Typed error classes
-│   └── logger.ts           # Pino logger setup
-├── adapters/
-│   ├── spotify/            # SourcePort implementation
-│   │   ├── index.ts        # SpotifyAdapter
-│   │   └── types.ts        # Spotify API response types
-│   └── filesystem/         # StoragePort implementation
-│       └── index.ts        # FileSystemAdapter
-├── config/
-│   └── schema.ts           # Zod config validation
-└── cli/
-    └── index.ts            # Commander CLI entry point
+src/
+├── domain/                     # Pure domain logic (no external deps)
+│   ├── flows/spotify/
+│   │   ├── entities.ts         # Track, Artist, Album
+│   │   └── repository.ts       # TrackRepository interface
+│   └── shared/
+│       ├── ports.ts            # SourcePort, StoragePort
+│       └── errors.ts           # Domain errors
+│
+├── infrastructure/             # External integrations
+│   ├── adapters/
+│   │   └── spotify-api/        # Spotify Web API client
+│   ├── persistence/
+│   │   └── sqlite/             # Database connection + schema
+│   └── repositories/
+│       └── sqlite-track.repository.ts
+│
+├── application/                # Use cases
+│   ├── spotify.usecase.ts      # SpotifyUseCase
+│   └── logger.ts               # Pino logger
+│
+└── api/                        # HTTP layer
+    ├── app.ts                  # Elysia server
+    └── spotify.routes.ts       # Route definitions
 ```
 
-## Core Concepts
+## Domain Layer
+
+### Entities
+
+```typescript
+// domain/flows/spotify/entities.ts
+interface Track {
+  id: string;
+  title: string;
+  artists: Artist[];
+  album: Album;
+  addedAt: string;
+  durationMs: number;
+  popularity?: number;
+}
+```
 
 ### Ports (Interfaces)
 
 ```typescript
-// ports.ts
+// domain/shared/ports.ts
 interface SourcePort {
   fetchTracks(limit?: number): Promise<Track[]>;
 }
@@ -52,94 +82,89 @@ interface StoragePort {
 }
 ```
 
-### FlowEngine
+## Infrastructure Layer
 
-The orchestrator that knows nothing about Spotify or files—only about ports.
+### SQLite Persistence
 
 ```typescript
-class FlowEngine {
+// infrastructure/persistence/sqlite/database.ts
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tracks (...);
+  CREATE TABLE IF NOT EXISTS artists (...);
+  CREATE TABLE IF NOT EXISTS track_artists (...);
+`);
+```
+
+### Repository Implementation
+
+```typescript
+// infrastructure/repositories/sqlite-track.repository.ts
+class SQLiteTrackRepository implements TrackRepository {
+  async save(tracks: Track[]): Promise<void> { ... }
+  async findAll(): Promise<Track[]> { ... }
+  async count(): Promise<number> { ... }
+}
+```
+
+## Application Layer
+
+### Use Cases
+
+```typescript
+// application/spotify.usecase.ts
+class SpotifyUseCase {
   constructor(
     private source: SourcePort,
-    private storage: StoragePort
+    private repository: TrackRepository
   ) {}
 
-  async run(options: FlowOptions): Promise<void> {
+  async fetchAndSave(options: { limit?: number }): Promise<{ count: number }> {
     const tracks = await this.source.fetchTracks(options.limit);
-    await this.storage.saveTracks(tracks);
+    await this.repository.save(tracks);
+    return { count: tracks.length };
+  }
+
+  async getTracks(): Promise<Track[]> {
+    return this.repository.findAll();
   }
 }
 ```
 
-### Adapters
-
-**SpotifyAdapter** (implements `SourcePort`):
-- OAuth token management
-- Pagination handling
-- Rate limit retry (with `SpotifyRateLimitError`)
-- Artist enrichment (genres)
-
-**FileSystemAdapter** (implements `StoragePort`):
-- Read/write `liked_songs.json`
-- Automatic directory creation
-
 ## Error Handling
-
-Typed errors for specific failure modes:
 
 | Error | When Thrown |
 |-------|-------------|
 | `SpotifyAuthError` | OAuth token invalid/expired |
-| `SpotifyRateLimitError` | Rate limited (429), includes `retryAfterSeconds` |
-| `StorageError` | File system operations failed |
+| `SpotifyRateLimitError` | Rate limited (429) |
+| `StorageError` | Database operations failed |
 
 ## Data Flow
 
 ```mermaid
 sequenceDiagram
-    participant CLI
-    participant Engine
-    participant Spotify
-    participant Storage
+    participant API
+    participant UseCase
+    participant Adapter
+    participant Repository
+    participant SQLite
 
-    CLI->>Engine: run({ limit: 50 })
-    Engine->>Spotify: fetchTracks(50)
-    Spotify->>Spotify: OAuth refresh if needed
-    Spotify->>Spotify: Paginate /me/tracks
-    Spotify->>Spotify: Enrich artist genres
-    Spotify-->>Engine: Track[]
-    Engine->>Storage: saveTracks(tracks)
-    Storage-->>Engine: void
-    Engine-->>CLI: void
-```
-
-## Configuration
-
-Loaded from `.env` and validated with Zod:
-
-```typescript
-const configSchema = z.object({
-  spotify: z.object({
-    clientId: z.string(),
-    clientSecret: z.string(),
-    refreshToken: z.string(),
-    pageLimit: z.number().default(50),
-  }),
-  paths: z.object({
-    output: z.string().default('./outputs/spotify'),
-  }),
-  app: z.object({
-    host: z.string().default('127.0.0.1'),
-    port: z.number().default(4173),
-  }),
-});
+    API->>UseCase: fetchAndSave({ limit: 50 })
+    UseCase->>Adapter: fetchTracks(50)
+    Adapter->>Adapter: OAuth + pagination
+    Adapter-->>UseCase: Track[]
+    UseCase->>Repository: save(tracks)
+    Repository->>SQLite: INSERT INTO tracks...
+    SQLite-->>Repository: void
+    Repository-->>UseCase: void
+    UseCase-->>API: { count: 1247 }
 ```
 
 ## CLI Usage
 
 ```bash
-# Run with default limit
+# Run with default limit (20 pages = ~1000 tracks)
 npm start
 
 # Run with custom limit
-npm start -- --limit 100
+npm start -- --limit 50
 ```

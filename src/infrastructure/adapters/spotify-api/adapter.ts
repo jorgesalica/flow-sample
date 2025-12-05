@@ -1,15 +1,20 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
-import { SourcePort } from '../../core/ports';
-import { Track } from '../../core/types';
-import { Config } from '../../config/schema';
-import { SpotifyAuthError, SpotifyRateLimitError } from '../../core/errors';
-import { SpotifySavedTrack, SpotifyPaging, SpotifyTokenResponse } from './types';
+import type { SourcePort } from '../../../domain/shared';
+import type { Track } from '../../../domain/flows/spotify';
+import { SpotifyAuthError, SpotifyRateLimitError } from '../../../domain/shared';
+import type { SpotifySavedTrack, SpotifyPaging, SpotifyTokenResponse } from './types.js';
 
-export class SpotifyAdapter implements SourcePort {
+export interface SpotifyConfig {
+  clientId: string;
+  clientSecret: string;
+  refreshToken?: string;
+}
+
+export class SpotifyApiAdapter implements SourcePort {
   private client: AxiosInstance;
   private accessToken: string | null = null;
 
-  constructor(private config: Config['spotify']) {
+  constructor(private config: SpotifyConfig) {
     this.client = axios.create({
       baseURL: 'https://api.spotify.com/v1',
     });
@@ -20,13 +25,11 @@ export class SpotifyAdapter implements SourcePort {
         const status = error.response?.status;
         const originalRequest = error.config as typeof error.config & { _retry?: boolean };
 
-        // Rate limit (429)
         if (status === 429) {
           const retryAfter = parseInt((error.response?.headers?.['retry-after'] as string) || '60');
           throw new SpotifyRateLimitError(retryAfter);
         }
 
-        // Auth error on first try - attempt refresh
         if (status === 401 && originalRequest && !originalRequest._retry) {
           originalRequest._retry = true;
           try {
@@ -40,7 +43,6 @@ export class SpotifyAdapter implements SourcePort {
           }
         }
 
-        // Auth error after retry
         if (status === 401) {
           throw new SpotifyAuthError('Unauthorized');
         }

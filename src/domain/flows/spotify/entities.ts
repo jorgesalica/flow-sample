@@ -1,3 +1,7 @@
+/**
+ * Spotify Flow Domain Entities
+ */
+
 export interface Artist {
   id: string;
   name: string;
@@ -19,8 +23,4 @@ export interface Track {
   addedAt: string;
   durationMs: number;
   popularity?: number;
-}
-
-export interface FlowOptions {
-  limit?: number;
 }

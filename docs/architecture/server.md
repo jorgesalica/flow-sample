@@ -2,25 +2,29 @@
 
 ## Tech Stack
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Hono** | 4.x | Lightweight web framework |
-| **@hono/node-server** | - | Node.js adapter |
-| **TypeScript** | 5.x | Type safety |
+| Technology | Purpose |
+|------------|---------|
+| **Elysia** | Web framework (TypeBox validation, plugin system) |
+| **@elysiajs/node** | Node.js adapter |
+| **@elysiajs/static** | Static file serving |
+| **TypeScript** | Type safety |
 
-## Why Hono?
+## Why Elysia?
 
-- **Ultra lightweight** (~14kb)
-- **TypeScript first**
-- **Express-like API** (familiar patterns)
-- **Multi-runtime** (Node, Deno, Bun, Cloudflare Workers)
-- **Built-in middleware** (CORS, logger, etc.)
+- **Plugin system** — Dependency injection without decorators
+- **TypeBox validation** — Runtime validation with compile-time types
+- **Eden client** — Type-safe API client for frontend (future)
+- **Route groups** — Clean separation by domain
+- **Node.js adapter** — Works with existing Node.js ecosystem
 
 ## Directory Structure
 
 ```
-src/server/
-└── index.ts    # Server entry point
+src/api/
+├── app.ts              # Main Elysia server
+├── spotify.routes.ts   # Spotify route group
+├── config.ts           # Zod config loader
+└── index.ts            # Barrel exports
 ```
 
 ## API Endpoints
@@ -28,9 +32,11 @@ src/server/
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/status` | Health check |
-| `POST` | `/api/spotify/run` | Execute Spotify flow |
+| `POST` | `/api/spotify/run` | Fetch tracks and save to SQLite |
+| `GET` | `/api/spotify/tracks` | Get all tracks from SQLite |
+| `GET` | `/api/spotify/count` | Get track count |
 | `GET` | `/outputs/*` | Serve output files |
-| `GET` | `/*` | Serve UI static files |
+| `GET` | `/*` | Serve UI static files (production) |
 
 ## Request/Response Examples
 
@@ -54,41 +60,49 @@ Response:
 {
   "success": true,
   "message": "Flow completed.",
+  "count": 1247,
   "output": "liked_songs.json"
 }
+```
+
+### Get All Tracks
+```http
+GET /api/spotify/tracks
+
+[
+  {
+    "id": "abc123",
+    "title": "Song Name",
+    "artists": [{ "id": "...", "name": "Artist" }],
+    "album": { "id": "...", "name": "Album", "releaseYear": 2024 },
+    ...
+  }
+]
 ```
 
 ## Code Overview
 
 ```typescript
-import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
-import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
+import { Elysia } from 'elysia';
+import { node } from '@elysiajs/node';
+import { staticPlugin } from '@elysiajs/static';
 
-const app = new Hono();
-
-// Middleware
-app.use('*', cors());
-app.use('*', logger());
-
-// Routes
-app.get('/api/status', (c) => c.json({ success: true }));
-app.post('/api/spotify/run', async (c) => { ... });
-
-// Static files
-app.use('/outputs/*', serveStatic({ root: projectRoot }));
-app.use('/*', serveStatic({ root: 'ui/dist' }));
-
-serve({ fetch: app.fetch, port: 4173 });
+const app = new Elysia({ adapter: node() })
+  .get('/api/status', () => ({ success: true }))
+  .use(createSpotifyRoutes(config))
+  .use(staticPlugin({ assets: 'outputs', prefix: '/outputs' }))
+  .listen({ port: 4173 });
 ```
 
 ## Running the Server
 
 ```bash
-# Development (with ts-node)
+# Development
 npm run server
 
-# Production (after build)
-node dist/server/index.js
+# The server will:
+# - Start on http://127.0.0.1:4173
+# - Create SQLite database at data/flow.db
+# - Serve API endpoints
+# - Serve UI from ui/dist (if built)
 ```

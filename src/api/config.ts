@@ -2,16 +2,14 @@ import { z } from 'zod';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load .env file
 dotenv.config();
 
 const configSchema = z.object({
   spotify: z.object({
     clientId: z.string().min(1, 'SPOTIFY_CLIENT_ID is required'),
     clientSecret: z.string().min(1, 'SPOTIFY_CLIENT_SECRET is required'),
-    redirectUri: z.string().url('SPOTIFY_REDIRECT_URI must be a valid URL'),
     refreshToken: z.string().optional(),
-    pageLimit: z.coerce.number().default(20), // Default to 20 pages (1000 tracks)
+    pageLimit: z.coerce.number().default(20),
   }),
   app: z.object({
     port: z.coerce.number().default(4173),
@@ -29,7 +27,6 @@ export function loadConfig(): Config {
     spotify: {
       clientId: process.env.SPOTIFY_CLIENT_ID,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-      redirectUri: process.env.SPOTIFY_REDIRECT_URI,
       refreshToken: process.env.SPOTIFY_REFRESH_TOKEN,
       pageLimit: process.env.SPOTIFY_PAGE_LIMIT,
     },
