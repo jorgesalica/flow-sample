@@ -33,6 +33,8 @@ export interface SearchOptions {
   q?: string;
   genre?: string;
   year?: number;
+  hasPreview?: boolean;
+  minPopularity?: number;
   sortBy?: 'added_at' | 'popularity' | 'title';
   sortOrder?: 'asc' | 'desc';
 }

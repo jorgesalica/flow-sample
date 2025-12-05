@@ -55,6 +55,8 @@ export function createSpotifyRoutes(config: Config) {
             query: query.q,
             genre: query.genre,
             year: query.year,
+            hasPreview: query.hasPreview,
+            minPopularity: query.minPopularity,
             sortBy: query.sortBy as 'added_at' | 'popularity' | 'title' | undefined,
             sortOrder: query.sortOrder as 'asc' | 'desc' | undefined,
           });
@@ -66,6 +68,8 @@ export function createSpotifyRoutes(config: Config) {
             q: t.Optional(t.String()),
             genre: t.Optional(t.String()),
             year: t.Optional(t.Numeric()),
+            hasPreview: t.Optional(t.Boolean()),
+            minPopularity: t.Optional(t.Numeric()),
             sortBy: t.Optional(t.String()),
             sortOrder: t.Optional(t.String()),
           }),
@@ -122,9 +126,9 @@ export function createSpotifyRoutes(config: Config) {
           yearRange:
             years.length > 0
               ? {
-                  oldest: years[years.length - 1]?.year,
-                  newest: years[0]?.year,
-                }
+                oldest: years[years.length - 1]?.year,
+                newest: years[0]?.year,
+              }
               : null,
         };
       })

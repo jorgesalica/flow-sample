@@ -35,6 +35,8 @@ export interface SearchOptions extends PaginationOptions {
   query?: string;
   genre?: string;
   year?: number;
+  hasPreview?: boolean;
+  minPopularity?: number;
   sortBy?: 'added_at' | 'popularity' | 'title';
   sortOrder?: 'asc' | 'desc';
 }
@@ -146,6 +148,17 @@ export class SQLiteTrackRepository implements TrackRepository {
     if (options.year) {
       whereClause += ' AND t.album_release_year = ?';
       params.push(options.year);
+    }
+
+    // Filter by hasPreview
+    if (options.hasPreview) {
+      whereClause += " AND t.preview_url IS NOT NULL AND t.preview_url != ''";
+    }
+
+    // Filter by minPopularity
+    if (options.minPopularity !== undefined && options.minPopularity > 0) {
+      whereClause += ' AND t.popularity >= ?';
+      params.push(options.minPopularity);
     }
 
     // Search query (simple LIKE for now, FTS later)

@@ -18,6 +18,8 @@ export async function loadTracks(options?: Partial<SearchOptions>): Promise<void
     if (newOptions.q) params.set('q', newOptions.q);
     if (newOptions.genre) params.set('genre', newOptions.genre);
     if (newOptions.year) params.set('year', newOptions.year.toString());
+    if (newOptions.hasPreview) params.set('hasPreview', 'true');
+    if (newOptions.minPopularity) params.set('minPopularity', newOptions.minPopularity.toString());
     if (newOptions.sortBy) params.set('sortBy', newOptions.sortBy);
     if (newOptions.sortOrder) params.set('sortOrder', newOptions.sortOrder);
 

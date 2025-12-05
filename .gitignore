@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 # Project outputs
 outputs/
+
+# SQLite database
+data/*

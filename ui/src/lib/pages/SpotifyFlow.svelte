@@ -3,15 +3,13 @@
   import {
     Controls,
     StatusBanner,
-    MetricCard,
     TrackCard,
     Pagination,
     SearchBar,
-    GenreFilter,
-    YearFilter,
+    FilterPanel,
   } from '../components';
   import { tracks, topStats, isLoading } from '../stores';
-  import { loadTracks, updateStats } from '../api';
+  import { loadTracks } from '../api';
 
   onMount(() => {
     loadTracks({ page: 1 });
@@ -61,14 +59,13 @@
 
     <!-- Filters Toolbar -->
     <div
-      class="glass p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between sticky top-4 z-10 backdrop-blur-md border border-white/10 shadow-xl"
+      class="glass p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between sticky top-4 z-10 backdrop-blur-md border border-white/10 shadow-xl relative"
     >
       <div class="flex-grow w-full md:w-auto">
         <SearchBar />
       </div>
-      <div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-        <GenreFilter />
-        <YearFilter />
+      <div class="flex gap-2 w-full md:w-auto">
+        <FilterPanel />
       </div>
     </div>
 
@@ -91,7 +88,7 @@
               <p>No tracks found matching your filters.</p>
               <button
                 class="mt-4 text-purple-400 hover:text-purple-300 underline"
-                onClick={() => loadTracks({ page: 1, limit: 24, q: '', genre: '', year: undefined })}
+                onclick={() => loadTracks({ page: 1, limit: 24 })}
               >
                 Clear all filters
               </button>

@@ -6,3 +6,4 @@ export { default as Pagination } from './Pagination.svelte';
 export { default as SearchBar } from './SearchBar.svelte';
 export { default as GenreFilter } from './GenreFilter.svelte';
 export { default as YearFilter } from './YearFilter.svelte';
+export { default as FilterPanel } from './FilterPanel.svelte';
