@@ -2,7 +2,12 @@ import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import type { SourcePort } from '../../../domain/shared';
 import type { Track } from '../../../domain/flows/spotify';
 import { SpotifyAuthError, SpotifyRateLimitError } from '../../../domain/shared';
-import type { SpotifySavedTrack, SpotifyPaging, SpotifyTokenResponse } from './types.js';
+import type {
+  SpotifySavedTrack,
+  SpotifyPaging,
+  SpotifyTokenResponse,
+  SpotifyArtistsResponse,
+} from './types.js';
 
 export interface SpotifyConfig {
   clientId: string;
@@ -122,5 +127,41 @@ export class SpotifyApiAdapter implements SourcePort {
       durationMs: t.duration_ms,
       popularity: t.popularity,
     };
+  }
+
+  /**
+   * Fetch genres for a list of artist IDs.
+   * Spotify API allows up to 50 artists per request.
+   * Returns a Map of artistId -> genres[]
+   */
+  async fetchArtistGenres(artistIds: string[]): Promise<Map<string, string[]>> {
+    if (!this.accessToken) await this.refreshAccessToken();
+
+    const genreMap = new Map<string, string[]>();
+    const uniqueIds = [...new Set(artistIds)];
+
+    // Batch in chunks of 50 (Spotify limit)
+    const batchSize = 50;
+    for (let i = 0; i < uniqueIds.length; i += batchSize) {
+      const batch = uniqueIds.slice(i, i + batchSize);
+      const ids = batch.join(',');
+
+      try {
+        const response: AxiosResponse<SpotifyArtistsResponse> = await this.client.get(
+          `/artists?ids=${ids}`,
+        );
+
+        for (const artist of response.data.artists) {
+          if (artist) {
+            genreMap.set(artist.id, artist.genres);
+          }
+        }
+      } catch (error) {
+        // Log but don't fail the whole operation
+        console.error(`Failed to fetch genres for batch starting at ${i}:`, error);
+      }
+    }
+
+    return genreMap;
   }
 }

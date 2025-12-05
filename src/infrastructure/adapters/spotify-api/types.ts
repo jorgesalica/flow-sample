@@ -52,3 +52,16 @@ export interface SpotifyTokenResponse {
   expires_in: number;
   refresh_token?: string;
 }
+
+export interface SpotifyArtistFull {
+  id: string;
+  name: string;
+  genres: string[];
+  popularity: number;
+  followers: { total: number };
+  images: SpotifyImage[];
+}
+
+export interface SpotifyArtistsResponse {
+  artists: SpotifyArtistFull[];
+}

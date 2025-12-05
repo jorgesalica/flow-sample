@@ -22,6 +22,27 @@ interface GenreRow {
   genre: string;
 }
 
+export interface PaginationOptions {
+  page?: number;
+  limit?: number;
+}
+
+export interface SearchOptions extends PaginationOptions {
+  query?: string;
+  genre?: string;
+  year?: number;
+  sortBy?: 'added_at' | 'popularity' | 'title';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export class SQLiteTrackRepository implements TrackRepository {
   async save(tracks: Track[]): Promise<void> {
     const insertTrack = db.prepare(`
@@ -74,6 +95,113 @@ export class SQLiteTrackRepository implements TrackRepository {
   async findAll(): Promise<Track[]> {
     const tracks = db.prepare('SELECT * FROM tracks ORDER BY added_at DESC').all() as TrackRow[];
     return Promise.all(tracks.map((row) => this.hydrate(row)));
+  }
+
+  async findPaginated(options: SearchOptions = {}): Promise<PaginatedResult<Track>> {
+    const page = options.page ?? 1;
+    const limit = options.limit ?? 50;
+    const offset = (page - 1) * limit;
+    const sortBy = options.sortBy ?? 'added_at';
+    const sortOrder = options.sortOrder ?? 'desc';
+
+    let whereClause = '1=1';
+    const params: (string | number)[] = [];
+
+    // Filter by genre
+    if (options.genre) {
+      whereClause += ` AND t.id IN (
+        SELECT ta.track_id FROM track_artists ta
+        JOIN artist_genres ag ON ag.artist_id = ta.artist_id
+        WHERE ag.genre = ?
+      )`;
+      params.push(options.genre);
+    }
+
+    // Filter by year
+    if (options.year) {
+      whereClause += ' AND t.album_release_year = ?';
+      params.push(options.year);
+    }
+
+    // Search query (simple LIKE for now, FTS later)
+    if (options.query) {
+      whereClause += ` AND (
+        t.title LIKE ? OR
+        t.album_name LIKE ? OR
+        t.id IN (
+          SELECT ta.track_id FROM track_artists ta
+          JOIN artists a ON a.id = ta.artist_id
+          WHERE a.name LIKE ?
+        )
+      )`;
+      const searchTerm = `%${options.query}%`;
+      params.push(searchTerm, searchTerm, searchTerm);
+    }
+
+    // Count total
+    const countQuery = `SELECT COUNT(*) as count FROM tracks t WHERE ${whereClause}`;
+    const countResult = db.prepare(countQuery).get(...params) as { count: number };
+    const total = countResult.count;
+
+    // Fetch paginated tracks
+    const query = `
+      SELECT t.* FROM tracks t
+      WHERE ${whereClause}
+      ORDER BY t.${sortBy} ${sortOrder.toUpperCase()}
+      LIMIT ? OFFSET ?
+    `;
+    params.push(limit, offset);
+    const tracks = db.prepare(query).all(...params) as TrackRow[];
+
+    const data = await Promise.all(tracks.map((row) => this.hydrate(row)));
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async search(query: string, limit: number = 20): Promise<Track[]> {
+    const result = await this.findPaginated({ query, limit, page: 1 });
+    return result.data;
+  }
+
+  async findByGenre(genre: string, limit: number = 50): Promise<Track[]> {
+    const result = await this.findPaginated({ genre, limit, page: 1 });
+    return result.data;
+  }
+
+  async getGenres(): Promise<{ genre: string; count: number }[]> {
+    const result = db
+      .prepare(
+        `
+      SELECT ag.genre, COUNT(DISTINCT ta.track_id) as count
+      FROM artist_genres ag
+      JOIN track_artists ta ON ta.artist_id = ag.artist_id
+      GROUP BY ag.genre
+      ORDER BY count DESC
+    `,
+      )
+      .all() as { genre: string; count: number }[];
+    return result;
+  }
+
+  async getYears(): Promise<{ year: number; count: number }[]> {
+    const result = db
+      .prepare(
+        `
+      SELECT album_release_year as year, COUNT(*) as count
+      FROM tracks
+      WHERE album_release_year IS NOT NULL
+      GROUP BY album_release_year
+      ORDER BY year DESC
+    `,
+      )
+      .all() as { year: number; count: number }[];
+    return result;
   }
 
   async findById(id: string): Promise<Track | null> {
