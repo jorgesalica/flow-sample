@@ -8,6 +8,7 @@
     InfiniteScroll,
     GenreChart,
     DecadeChart,
+    Navbar,
   } from '../components';
   import { tracks, topStats, isLoading, totalTracks, searchOptions } from '../stores';
   import { loadTracks } from '../api';
@@ -29,7 +30,9 @@
   <title>{pageTitle}</title>
 </svelte:head>
 
-<div class="min-h-screen p-4 md:p-8">
+<Navbar />
+
+<div class="min-h-screen pt-16 p-4 md:p-8">
   <div class="max-w-7xl mx-auto flex flex-col gap-6">
     <!-- Header -->
     <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
