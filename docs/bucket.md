@@ -12,7 +12,7 @@ Ideas, future tasks, and things to do later.
 
 ## 🔥 High Priority
 
-- [ ] **[DevOps]** Implement path aliases (`@/`) for cleaner imports
+- [x] **[DevOps]** Implement path aliases (`@/`) for cleaner imports
 - [ ] **[Feat]** Lyrics Flow roadmap & spike (LrcLib integration)
 - [ ] **[Docs]** General high-level project status check
 
@@ -35,6 +35,7 @@ Ideas, future tasks, and things to do later.
 - [ ] **[Test]** E2E test for full sync flow
 - [ ] **[Code]** Code cleanup and organization
 - [ ] **[UI/Refactor]** Improve components (add common elements, extract more)
+- [ ] **[DevOps]** Fix backend path aliases (svelte-check cross-package issue)
 
 ## 🔮 Future Flows (TBD)
 

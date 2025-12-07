@@ -3,8 +3,7 @@ import { Command } from 'commander';
 import { loadConfig } from '../api/config';
 import { SpotifyApiAdapter } from '../infrastructure/adapters/spotify-api';
 import { SQLiteTrackRepository } from '../infrastructure/repositories';
-import { SpotifyUseCase } from '../application';
-import { logger } from '../application';
+import { SpotifyUseCase, logger } from '../application';
 import { FlowError, SpotifyAuthError, SpotifyRateLimitError, StorageError } from '../domain/shared';
 
 const program = new Command();

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { searchOptions, totalTracks } from '../../stores';
-  import { loadTracks } from '../../api';
+  import { searchOptions, totalTracks } from '@lib/stores';
+  import { loadTracks } from '@lib/api';
 
   let currentPage = $derived($searchOptions.page || 1);
   let limit = $derived($searchOptions.limit || 24);

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { isLoading, isAuthenticated } from '../../stores';
-  import { fetchFromSpotify, loadTracks, cancelSync } from '../../api';
-  import { ENDPOINTS } from '../../config';
+  import { isLoading, isAuthenticated } from '@lib/stores';
+  import { fetchFromSpotify, loadTracks, cancelSync } from '@lib/api';
+  import { ENDPOINTS } from '@lib/config';
 
   async function handleRefresh() {
     await loadTracks({ page: 1 });

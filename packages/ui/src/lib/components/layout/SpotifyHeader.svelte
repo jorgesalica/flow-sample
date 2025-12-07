@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TopStats } from '../../types';
+  import type { TopStats } from '@lib/types';
 
   interface Props {
     stats: TopStats;

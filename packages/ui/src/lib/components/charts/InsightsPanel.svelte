@@ -1,7 +1,7 @@
 <script lang="ts">
   import GenreChart from './GenreChart.svelte';
   import DecadeChart from './DecadeChart.svelte';
-  import type { TopStats } from '../../types';
+  import type { TopStats } from '@lib/types';
 
   interface Props {
     stats: TopStats;
