@@ -7,7 +7,7 @@
     "scripts": {
         "dev": "ts-node src/api/app.ts",
         "start": "ts-node src/cli/index.ts run",
-        "build": "tsc && tsc-alias",
+        "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
         "test": "vitest",
         "test:coverage": "vitest run --coverage",
         "typecheck": "tsc --noEmit",

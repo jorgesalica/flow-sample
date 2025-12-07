@@ -9,7 +9,6 @@
     "strict": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "rootDir": "src",
     "baseUrl": ".",
     "paths": {
       "@api/*": [
@@ -27,7 +26,8 @@
     }
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "tests/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -29,6 +29,8 @@ describe('SpotifyUseCase', () => {
       findAll: vi.fn().mockResolvedValue([]),
       findById: vi.fn().mockResolvedValue(null),
       count: vi.fn().mockResolvedValue(0),
+      getGenres: vi.fn(),
+      getYears: vi.fn(),
     };
 
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
@@ -50,6 +52,8 @@ describe('SpotifyUseCase', () => {
       findAll: vi.fn().mockResolvedValue([]),
       findById: vi.fn().mockResolvedValue(null),
       count: vi.fn().mockResolvedValue(0),
+      getGenres: vi.fn(),
+      getYears: vi.fn(),
     };
 
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
@@ -70,6 +74,8 @@ describe('SpotifyUseCase', () => {
       findAll: vi.fn().mockResolvedValue([mockTrack]),
       findById: vi.fn(),
       count: vi.fn().mockResolvedValue(1),
+      getGenres: vi.fn(),
+      getYears: vi.fn(),
     };
 
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
@@ -91,6 +97,8 @@ describe('SpotifyUseCase', () => {
       findAll: vi.fn(),
       findById: vi.fn(),
       count: vi.fn(),
+      getGenres: vi.fn(),
+      getYears: vi.fn(),
     };
 
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
@@ -110,6 +118,8 @@ describe('SpotifyUseCase', () => {
       findAll: vi.fn(),
       findById: vi.fn(),
       count: vi.fn(),
+      getGenres: vi.fn(),
+      getYears: vi.fn(),
     };
 
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
@@ -129,6 +139,8 @@ describe('SpotifyUseCase', () => {
       findAll: vi.fn(),
       findById: vi.fn(),
       count: vi.fn(),
+      getGenres: vi.fn(),
+      getYears: vi.fn(),
     };
 
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
@@ -148,6 +160,8 @@ describe('SpotifyUseCase', () => {
       findAll: vi.fn(),
       findById: vi.fn(),
       count: vi.fn().mockResolvedValue(42),
+      getGenres: vi.fn(),
+      getYears: vi.fn(),
     };
 
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
