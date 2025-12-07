@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { Track } from '../../types';
-  import AlbumArt from './AlbumArt.svelte';
-  import GenreBadges from './GenreBadges.svelte';
+  import type { Track } from '@lib/types';
+  import AlbumArt from '@components/track/AlbumArt.svelte';
+  import GenreBadges from '@components/track/GenreBadges.svelte';
 
   interface Props {
     track: Track;

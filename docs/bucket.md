@@ -12,7 +12,9 @@ Ideas, future tasks, and things to do later.
 
 ## 🔥 High Priority
 
-(Currently empty - all high priority items completed!)
+- [ ] **[DevOps]** Implement path aliases (`@/`) for cleaner imports
+- [ ] **[Feat]** Lyrics Flow roadmap & spike (LrcLib integration)
+- [ ] **[Docs]** General high-level project status check
 
 ## ⚡ Medium Priority
 
@@ -23,7 +25,6 @@ Ideas, future tasks, and things to do later.
 - [ ] **[Feat]** PWA support & Offline capability
 - [ ] **[Feat]** Export to playlist
 - [ ] **[Feat]** LLM-powered insights
-
 - [ ] **[UI/UX]** Dark/light theme toggle
 - [ ] **[UI/UX]** Keyboard shortcuts
 - [ ] **[Mobile]** Mobile-optimized touch interactions
@@ -33,6 +34,7 @@ Ideas, future tasks, and things to do later.
 - [ ] **[Test]** Integration tests for API endpoints
 - [ ] **[Test]** E2E test for full sync flow
 - [ ] **[Code]** Code cleanup and organization
+- [ ] **[UI/Refactor]** Improve components (add common elements, extract more)
 
 ## 🔮 Future Flows (TBD)
 
