@@ -1,4 +1,4 @@
-import type { Track, TrackRepository } from '../domain/flows/spotify';
+import type { Track, TrackRepository } from '@domain/flows/spotify';
 import { logger } from './logger';
 
 const log = logger.child({ module: 'SpotifyUseCase' });
@@ -30,7 +30,7 @@ export class SpotifyUseCase {
   constructor(
     private source: SpotifySourcePort,
     private repository: TrackRepository,
-  ) {}
+  ) { }
 
   async fetchAndSave(options: SpotifyUseCaseOptions = {}): Promise<{ count: number }> {
     const limit = options.limit ?? 20;

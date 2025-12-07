@@ -1,4 +1,4 @@
-import type { Track } from '../flows/spotify';
+import type { Track } from '@domain/flows/spotify';
 
 /**
  * Port for fetching tracks from external source

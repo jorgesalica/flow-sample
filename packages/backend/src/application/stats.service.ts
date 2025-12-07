@@ -1,5 +1,5 @@
 import type { GenreCount, YearRange } from '@flows/shared';
-import type { TrackRepository } from '../domain/flows/spotify';
+import type { TrackRepository } from '@domain/flows/spotify';
 
 export interface TopStats {
     totalTracks: number;

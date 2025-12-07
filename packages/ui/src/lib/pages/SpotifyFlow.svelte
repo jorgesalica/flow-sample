@@ -9,9 +9,9 @@
     Navbar,
     SpotifyHeader,
     InsightsPanel,
-  } from '../components';
-  import { tracks, topStats, isLoading, totalTracks, searchOptions } from '../stores';
-  import { loadTracks, checkAuthStatus } from '../api';
+  } from '@lib/components';
+  import { tracks, topStats, isLoading, totalTracks, searchOptions } from '@lib/stores';
+  import { loadTracks, checkAuthStatus } from '@lib/api';
 
   // Page title
   const pageTitle = 'Spotify Flow - Your Music Library';

@@ -1,6 +1,6 @@
 // Spotify Flow Registration
 import { registerFlow, type FlowStats } from './registry';
-import { ENDPOINTS } from '../config';
+import { ENDPOINTS } from '@lib/config';
 
 async function getSpotifyStats(): Promise<FlowStats> {
   try {

@@ -1,19 +1,19 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { SourcePort } from '../../../domain/shared';
-import type { Track } from '../../../domain/flows/spotify';
-import { SpotifyAuthError, SpotifyRateLimitError } from '../../../domain/shared';
+import type { SourcePort } from '@domain/shared';
+import type { Track } from '@domain/flows/spotify';
+import { SpotifyAuthError, SpotifyRateLimitError } from '@domain/shared';
 import type {
   SpotifySavedTrack,
   SpotifyPaging,
   SpotifyTokenResponse,
   SpotifyArtistsResponse,
 } from './types.js';
-import { logger } from '../../logger';
+import { logger } from '@infra/logger';
 
 const log = logger.child({ module: 'SpotifyApiAdapter' });
 
-import type { SQLiteTokenRepository } from '../../repositories/sqlite-token.repository';
+import type { SQLiteTokenRepository } from '@infra/repositories/sqlite-token.repository';
 
 export interface SpotifyConfig {
   clientId: string;

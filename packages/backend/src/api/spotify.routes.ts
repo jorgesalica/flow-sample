@@ -1,16 +1,16 @@
 import { Elysia, t } from 'elysia';
-import { SpotifyUseCase } from '../application';
-import { calculateStats } from '../application/stats.service';
-import type { GenreCount, YearCount } from '../domain/flows/spotify';
-import { SpotifyApiAdapter } from '../infrastructure/adapters/spotify-api';
-import { SQLiteTrackRepository } from '../infrastructure/repositories';
-import { apiCache } from '../infrastructure/cache';
-import { logger } from '../infrastructure/logger';
+import { SpotifyUseCase } from '@app/index';
+import { calculateStats } from '@app/stats.service';
+import type { GenreCount, YearCount } from '@domain/flows/spotify';
+import { SpotifyApiAdapter } from '@infra/adapters/spotify-api';
+import { SQLiteTrackRepository } from '@infra/repositories';
+import { apiCache } from '@infra/cache';
+import { logger } from '@infra/logger';
 import type { Config } from './config';
 
 const log = logger.child({ module: 'SpotifyRoutes' });
 
-import { SQLiteTokenRepository } from '../infrastructure/repositories/sqlite-token.repository';
+import { SQLiteTokenRepository } from '@infra/repositories/sqlite-token.repository';
 
 export function createSpotifyRoutes(config: Config) {
   const repository = new SQLiteTrackRepository();

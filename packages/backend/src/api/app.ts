@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto';
 
 import { loadConfig } from './config';
 import { createSpotifyRoutes } from './spotify.routes';
-import { logger } from '../infrastructure/logger';
+import { logger } from '@infra/logger';
 
 const config = loadConfig();
 const log = logger.child({ module: 'Server' });

@@ -4,9 +4,9 @@ import type {
   TrackRepository,
   GenreCount,
   YearCount,
-} from '../../domain/flows/spotify';
-import db from '../persistence/sqlite';
-import { logger } from '../logger';
+} from '@domain/flows/spotify';
+import db from '@infra/persistence/sqlite';
+import { logger } from '@infra/logger';
 
 const log = logger.child({ module: 'SQLiteTrackRepository' });
 

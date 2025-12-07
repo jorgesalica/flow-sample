@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getFlows, type FlowDefinition, type FlowStats } from '../flows';
-  import { Navbar } from '../components';
+  import { getFlows, type FlowDefinition, type FlowStats } from '@lib/flows';
+  import { Navbar } from '@lib/components';
 
   // Page title
   const pageTitle = 'Flow - Data Exploration Hub';

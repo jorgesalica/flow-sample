@@ -1,5 +1,5 @@
-import { db } from '../persistence/sqlite/database';
-import { logger } from '../logger';
+import { db } from '@infra/persistence/sqlite/database';
+import { logger } from '@infra/logger';
 
 const log = logger.child({ module: 'SQLiteTokenRepository' });
 
