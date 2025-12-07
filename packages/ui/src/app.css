@@ -8,8 +8,54 @@
 body {
   @apply bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen text-white;
   font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .glass {
   @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  /* Improve touch targets on mobile */
+  button, a, input, select {
+    min-height: 44px;
+  }
+  
+  /* Better chart sizing on mobile */
+  .chart-container {
+    min-height: 200px;
+  }
+  
+  /* Prevent horizontal scroll */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus states for accessibility */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-purple-400;
+}
+
+/* Hide scrollbar but allow scrolling (for mobile) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area padding for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
