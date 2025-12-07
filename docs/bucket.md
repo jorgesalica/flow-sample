@@ -18,8 +18,6 @@ Ideas, future tasks, and things to do later.
 
 - [ ] **[Feat]** Lyrics Flow integration
 - [ ] **[UI/Refactor]** Split large components (TrackCard, FilterPanel)
-- [ ] **[Test]** Integration tests for API endpoints
-- [ ] **[Test]** E2E test for full sync flow
 
 ## 🐢 Low Priority
 
@@ -33,6 +31,8 @@ Ideas, future tasks, and things to do later.
 - [ ] **[DevOps]** Docker containerization
 - [ ] **[DevOps]** GitHub Actions CI/CD
 - [ ] **[Test]** Performance benchmarks
+- [ ] **[Test]** Integration tests for API endpoints
+- [ ] **[Test]** E2E test for full sync flow
 - [ ] **[Code]** Code cleanup and organization
 
 ## 🔮 Future Flows (TBD)
