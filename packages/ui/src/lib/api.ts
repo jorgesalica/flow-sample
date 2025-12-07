@@ -1,5 +1,5 @@
 import type { Track, PaginatedResult, SearchOptions } from './types';
-import { tracks, totalTracks, status, isLoading, searchOptions, topStats } from './stores';
+import { tracks, totalTracks, status, isLoading, searchOptions, topStats, isAuthenticated } from './stores';
 import { get } from 'svelte/store';
 import { ENDPOINTS } from './config';
 import { showError, showSuccess, showLoading, dismissToast } from './toast';
@@ -126,3 +126,15 @@ export async function fetchFromSpotify(): Promise<void> {
     }
 }
 
+
+export async function checkAuthStatus(): Promise<void> {
+    try {
+        const res = await fetch(ENDPOINTS.AUTH_STATUS);
+        if (res.ok) {
+            const data = await res.json();
+            isAuthenticated.set(data.connected);
+        }
+    } catch (e) {
+        console.error('Failed to check auth status', e);
+    }
+}

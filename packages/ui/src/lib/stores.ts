@@ -19,6 +19,7 @@ export const status = writable<{ message: string; tone: 'info' | 'success' | 'wa
     { message: 'Ready to explore.', tone: 'info' }
 );
 export const isLoading = writable(false);
+export const isAuthenticated = writable(false);
 export const topStats = writable<{
     total: number;
     artists: number;

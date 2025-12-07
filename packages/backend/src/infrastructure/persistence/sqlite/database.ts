@@ -120,7 +120,13 @@ export function rebuildFtsIndex() {
     GROUP BY t.id
   `,
     )
-    .all() as { rowid: number; id: string; title: string; album_name: string; artist_names: string }[];
+    .all() as {
+    rowid: number;
+    id: string;
+    title: string;
+    album_name: string;
+    artist_names: string;
+  }[];
 
   // Clear and rebuild
   db.exec(`DELETE FROM tracks_fts`);
@@ -147,4 +153,3 @@ if (ftsCount.c === 0 && tracksCount.c > 0) {
 }
 
 export default db;
-

@@ -8,20 +8,76 @@ import type { Config } from './config';
 
 const log = logger.child({ module: 'SpotifyRoutes' });
 
+import { SQLiteTokenRepository } from '../infrastructure/repositories/sqlite-token.repository';
+
 export function createSpotifyRoutes(config: Config) {
   const repository = new SQLiteTrackRepository();
-  const adapter = new SpotifyApiAdapter({
-    clientId: config.spotify.clientId,
-    clientSecret: config.spotify.clientSecret,
-    refreshToken: config.spotify.refreshToken,
-  });
+  const tokenRepository = new SQLiteTokenRepository();
+
+  const adapter = new SpotifyApiAdapter(
+    {
+      clientId: config.spotify.clientId,
+      clientSecret: config.spotify.clientSecret,
+      refreshToken: config.spotify.refreshToken,
+    },
+    tokenRepository,
+  );
+
   const useCase = new SpotifyUseCase(adapter, repository);
 
   return (
     new Elysia({ prefix: '/api/spotify' })
       .decorate('spotifyUseCase', useCase)
       .decorate('spotifyRepository', repository)
+      .decorate('tokenRepository', tokenRepository)
+      .decorate('adapter', adapter)
       .decorate('config', config)
+
+      // --- Auth Routes ---
+
+      .get('/auth/login', ({ redirect, config }) => {
+        const scope = 'user-library-read user-read-email';
+        const params = new URLSearchParams({
+          response_type: 'code',
+          client_id: config.spotify.clientId,
+          scope,
+          redirect_uri: 'http://127.0.0.1:4173/api/spotify/auth/callback',
+        });
+
+        return redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
+      })
+
+      .get(
+        '/auth/callback',
+        async ({ query, adapter, set, redirect }) => {
+          const code = query.code;
+          if (!code) {
+            set.status = 400;
+            return { error: 'No code provided' };
+          }
+
+          try {
+            await adapter.exchangeCode(code);
+            return redirect('http://localhost:5173/?connected=true#/spotify'); // Back to UI Spotify Flow
+          } catch (error) {
+            set.status = 500;
+            return { error: 'Failed to exchange token' };
+          }
+        },
+        {
+          query: t.Object({
+            code: t.String(),
+            state: t.Optional(t.String()),
+          }),
+        },
+      )
+
+      .get('/auth/status', ({ tokenRepository }) => {
+        const hasToken = !!tokenRepository.get('spotify:refresh_token');
+        return { connected: hasToken };
+      })
+
+      // --- Flow Routes ---
 
       // Run flow (fetch + enrich + save)
       .post(
@@ -153,9 +209,9 @@ export function createSpotifyRoutes(config: Config) {
           yearRange:
             years.length > 0
               ? {
-                oldest: years[years.length - 1]?.year,
-                newest: years[0]?.year,
-              }
+                  oldest: years[years.length - 1]?.year,
+                  newest: years[0]?.year,
+                }
               : null,
         };
 

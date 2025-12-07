@@ -10,6 +10,8 @@ export const ENDPOINTS = {
     STATS: '/api/spotify/stats',
     GENRES: '/api/spotify/genres',
     YEARS: '/api/spotify/years',
+    AUTH_STATUS: '/api/spotify/auth/status',
+    AUTH_LOGIN: '/api/spotify/auth/login',
 } as const;
 
 export const APP_CONFIG = {

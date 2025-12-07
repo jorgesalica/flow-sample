@@ -2,9 +2,44 @@
 
 Ideas, future tasks, and things to do later.
 
+## Priorities Definition
+- **High**: Critical for usability or core value.
+- **Medium**: Important improvements or planned features.
+- **Low**: Nice to have, polish, or long-term.
+- **TBD**: Just defined, needs triage.
+
 ---
 
-## 🌌 New Flows
+## 🔥 High Priority
+
+- [ ] **[UI/Bug]** Fix Filter Panel transparency issues (hard to see when open)
+- [ ] **[UI/UX]** Improve "Clear All" in Filter Panel (should not close panel)
+- [ ] **[Feat]** OAuth flow (replace manual token)
+- [ ] **[DevOps]** Protect main with Husky pre-push hook
+
+## ⚡ Medium Priority
+
+- [ ] **[Feat]** Lyrics Flow integration
+- [ ] **[DevOps]** GitHub Actions CI/CD
+- [ ] **[UI/Refactor]** Split large components (TrackCard, FilterPanel)
+- [ ] **[Test]** Integration tests for API endpoints
+- [ ] **[Test]** E2E test for full sync flow
+
+## 🐢 Low Priority
+
+- [ ] **[Feat]** PWA support & Offline capability
+- [ ] **[Feat]** Export to playlist
+- [ ] **[Feat]** LLM-powered insights
+- [ ] **[UI/UX]** Custom favicon (space/flow theme)
+- [ ] **[UI/UX]** Dark/light theme toggle
+- [ ] **[UI/UX]** Keyboard shortcuts
+- [ ] **[Mobile]** Mobile-optimized touch interactions
+- [ ] **[DevOps]** Docker containerization
+- [ ] **[DevOps]** Automated releases
+- [ ] **[Test]** Performance benchmarks
+- [ ] **[Code]** Code cleanup and organization
+
+## 🔮 Future Flows (TBD)
 
 ### Fractal Flow
 - Render and explore fractals (Mandelbrot, Julia sets, etc.)
@@ -14,50 +49,4 @@ Ideas, future tasks, and things to do later.
 
 ---
 
-## 🎨 UI/UX
-
-- [ ] Custom favicon (space/flow theme)
-- [ ] UI refactor: split large components
-- [ ] Code cleanup and organization
-- [ ] Dark/light theme toggle
-- [ ] Keyboard shortcuts
-
----
-
-## 🔧 DevOps
-
-- [ ] Protect main with Husky pre-push hook
-- [ ] Docker containerization
-- [ ] GitHub Actions CI/CD
-- [ ] Automated releases
-
----
-
-## 🧪 Testing
-
-- [ ] More unit test edge cases
-- [ ] Integration tests for API endpoints
-- [ ] E2E test for full sync flow
-- [ ] Performance benchmarks
-
----
-
-## 🚀 Features (Spotify Flow)
-
-- [ ] Lyrics Flow integration
-- [ ] LLM-powered insights
-- [ ] PWA support
-- [ ] OAuth flow (replace manual token)
-- [ ] Export to playlist
-
----
-
-## 📱 Mobile
-
-- [ ] Progressive Web App (PWA)
-- [ ] Mobile-optimized touch interactions
-- [ ] Offline support
-
----
-
-*Last updated: 2025-12-06*
+*Last updated: 2025-12-07*

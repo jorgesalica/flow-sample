@@ -133,7 +133,10 @@ export class SQLiteTrackRepository implements TrackRepository {
     const sortBy = options.sortBy ?? 'added_at';
     const sortOrder = options.sortOrder ?? 'desc';
 
-    log.debug({ page, limit, query: options.query, genre: options.genre, year: options.year }, 'Searching tracks');
+    log.debug(
+      { page, limit, query: options.query, genre: options.genre, year: options.year },
+      'Searching tracks',
+    );
 
     let whereClause = '1=1';
     const params: (string | number)[] = [];
@@ -196,7 +199,10 @@ export class SQLiteTrackRepository implements TrackRepository {
 
     const data = await Promise.all(tracks.map((row) => this.hydrate(row)));
 
-    log.debug({ total, returned: data.length, page, totalPages: Math.ceil(total / limit) }, 'Search complete');
+    log.debug(
+      { total, returned: data.length, page, totalPages: Math.ceil(total / limit) },
+      'Search complete',
+    );
 
     return {
       data,
