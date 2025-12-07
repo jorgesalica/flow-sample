@@ -6,10 +6,7 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": [
-      "svelte",
-      "vite/client"
-    ],
+    "types": ["svelte", "vite/client"],
     "composite": true,
     "declaration": true,
     "declarationMap": true,
@@ -24,9 +21,5 @@
     "checkJs": true,
     "moduleDetection": "force"
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.js",
-    "src/**/*.svelte"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]
 }

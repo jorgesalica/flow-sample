@@ -8,7 +8,7 @@
   function handleInput(e: Event) {
     const val = (e.target as HTMLInputElement).value;
     value = val;
-    
+
     // Debounced search
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
@@ -29,10 +29,10 @@
   <input
     type="text"
     placeholder="Search tracks, artists, albums..."
-    bind:value={value}
+    bind:value
     oninput={handleInput}
-    class="w-full glass pl-10 pr-10 py-2 rounded-xl border border-white/10 
-           focus:border-purple-400 focus:ring-1 focus:ring-purple-400 
+    class="w-full glass pl-10 pr-10 py-2 rounded-xl border border-white/10
+           focus:border-purple-400 focus:ring-1 focus:ring-purple-400
            bg-black/20 text-white placeholder-white/30 outline-none transition-all"
   />
   {#if value}

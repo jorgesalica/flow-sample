@@ -1,140 +1,148 @@
 import type { Track, PaginatedResult, SearchOptions } from './types';
-import { tracks, totalTracks, status, isLoading, searchOptions, topStats, isAuthenticated } from './stores';
+import {
+  tracks,
+  totalTracks,
+  status,
+  isLoading,
+  searchOptions,
+  topStats,
+  isAuthenticated,
+} from './stores';
 import { get } from 'svelte/store';
 import { ENDPOINTS } from './config';
 import { showError, showSuccess, showLoading, dismissToast } from './toast';
 
-export async function loadTracks(options?: Partial<SearchOptions>, append: boolean = false): Promise<void> {
-    isLoading.set(true);
+export async function loadTracks(
+  options?: Partial<SearchOptions>,
+  append: boolean = false
+): Promise<void> {
+  isLoading.set(true);
 
-    // Merge current options with new ones
-    const currentOptions = get(searchOptions);
-    const newOptions = { ...currentOptions, ...options };
-    searchOptions.set(newOptions);
+  // Merge current options with new ones
+  const currentOptions = get(searchOptions);
+  const newOptions = { ...currentOptions, ...options };
+  searchOptions.set(newOptions);
 
-    // Build query params
-    const params = new URLSearchParams();
-    if (newOptions.page) params.set('page', newOptions.page.toString());
-    if (newOptions.limit) params.set('limit', newOptions.limit.toString());
-    if (newOptions.q) params.set('q', newOptions.q);
-    if (newOptions.genre) params.set('genre', newOptions.genre);
-    if (newOptions.year) params.set('year', newOptions.year.toString());
-    if (newOptions.minPopularity) params.set('minPopularity', newOptions.minPopularity.toString());
-    if (newOptions.sortBy) params.set('sortBy', newOptions.sortBy);
-    if (newOptions.sortOrder) params.set('sortOrder', newOptions.sortOrder);
+  // Build query params
+  const params = new URLSearchParams();
+  if (newOptions.page) params.set('page', newOptions.page.toString());
+  if (newOptions.limit) params.set('limit', newOptions.limit.toString());
+  if (newOptions.q) params.set('q', newOptions.q);
+  if (newOptions.genre) params.set('genre', newOptions.genre);
+  if (newOptions.year) params.set('year', newOptions.year.toString());
+  if (newOptions.minPopularity) params.set('minPopularity', newOptions.minPopularity.toString());
+  if (newOptions.sortBy) params.set('sortBy', newOptions.sortBy);
+  if (newOptions.sortOrder) params.set('sortOrder', newOptions.sortOrder);
 
-    try {
-        const res = await fetch(`${ENDPOINTS.TRACKS_SEARCH}?${params.toString()}`);
-        if (!res.ok) throw new Error(`Failed to load (${res.status})`);
+  try {
+    const res = await fetch(`${ENDPOINTS.TRACKS_SEARCH}?${params.toString()}`);
+    if (!res.ok) throw new Error(`Failed to load (${res.status})`);
 
-        const data: PaginatedResult<Track> = await res.json();
+    const data: PaginatedResult<Track> = await res.json();
 
-        if (append) {
-            tracks.update(current => [...current, ...data.data]);
-        } else {
-            tracks.set(data.data);
-        }
-        totalTracks.set(data.total);
-
-        // Also update stats if we're on the first page and no filters are active (initial load)
-        if (!newOptions.q && !newOptions.genre && !newOptions.year && newOptions.page === 1) {
-            updateStats();
-        }
-
-    } catch (error) {
-        console.error(error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        showError(`Failed to load tracks: ${message}`);
-        status.set({ message: 'Error loading tracks.', tone: 'error' });
-    } finally {
-        isLoading.set(false);
+    if (append) {
+      tracks.update((current) => [...current, ...data.data]);
+    } else {
+      tracks.set(data.data);
     }
+    totalTracks.set(data.total);
+
+    // Also update stats if we're on the first page and no filters are active (initial load)
+    if (!newOptions.q && !newOptions.genre && !newOptions.year && newOptions.page === 1) {
+      updateStats();
+    }
+  } catch (error) {
+    console.error(error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    showError(`Failed to load tracks: ${message}`);
+    status.set({ message: 'Error loading tracks.', tone: 'error' });
+  } finally {
+    isLoading.set(false);
+  }
 }
 
 export async function updateStats(): Promise<void> {
-    try {
-        const res = await fetch(ENDPOINTS.STATS);
-        if (res.ok) {
-            const data = await res.json();
-            topStats.set({
-                total: data.totalTracks,
-                artists: 0,
-                topGenre: data.topGenres?.[0]?.genre || '—',
-                genres: data.topGenres || [],
-                decadeDistribution: data.decadeDistribution || {},
-            });
-        }
-    } catch {
-        // Silent fail for stats - not critical
+  try {
+    const res = await fetch(ENDPOINTS.STATS);
+    if (res.ok) {
+      const data = await res.json();
+      topStats.set({
+        total: data.totalTracks,
+        artists: 0,
+        topGenre: data.topGenres?.[0]?.genre || '—',
+        genres: data.topGenres || [],
+        decadeDistribution: data.decadeDistribution || {},
+      });
     }
+  } catch {
+    // Silent fail for stats - not critical
+  }
 }
 
 let syncController: AbortController | null = null;
 let syncToastId: string | undefined;
 
 export function cancelSync() {
-    if (syncController) {
-        syncController.abort();
-        syncController = null;
-        isLoading.set(false);
-        if (syncToastId) dismissToast(syncToastId);
-        status.set({ message: 'Sync cancelled.', tone: 'info' });
-    }
+  if (syncController) {
+    syncController.abort();
+    syncController = null;
+    isLoading.set(false);
+    if (syncToastId) dismissToast(syncToastId);
+    status.set({ message: 'Sync cancelled.', tone: 'info' });
+  }
 }
 
 export async function fetchFromSpotify(): Promise<void> {
-    if (syncController) syncController.abort();
-    syncController = new AbortController();
+  if (syncController) syncController.abort();
+  syncController = new AbortController();
 
-    const toastId = showLoading('Syncing with Spotify...');
-    syncToastId = toastId;
-    status.set({ message: 'Fetching from Spotify...', tone: 'info' });
-    isLoading.set(true);
+  const toastId = showLoading('Syncing with Spotify...');
+  syncToastId = toastId;
+  status.set({ message: 'Fetching from Spotify...', tone: 'info' });
+  isLoading.set(true);
 
-    try {
-        const res = await fetch(ENDPOINTS.SPOTIFY_RUN, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ limit: 100 }), // Fetch more by default
-            signal: syncController.signal
-        });
-        const data = await res.json();
+  try {
+    const res = await fetch(ENDPOINTS.SPOTIFY_RUN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limit: 100 }), // Fetch more by default
+      signal: syncController.signal,
+    });
+    const data = await res.json();
 
-        if (!res.ok || !data.success) {
-            throw new Error(data.error || 'Request failed');
-        }
-
-        dismissToast(toastId);
-        showSuccess(`Synced ${data.count} tracks from Spotify!`);
-        status.set({ message: `Fetch complete. ${data.count} tracks processed.`, tone: 'success' });
-
-        // Reload everything
-        searchOptions.set({ ...get(searchOptions), page: 1 });
-        await loadTracks();
-        await updateStats();
-
-    } catch (error) {
-        if (error.name === 'AbortError') return; // Ignore aborts
-
-        dismissToast(toastId);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        showError(`Sync failed: ${message}`);
-        status.set({ message: `Fetch failed: ${message}`, tone: 'error' });
-    } finally {
-        isLoading.set(false);
-        syncController = null;
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Request failed');
     }
+
+    dismissToast(toastId);
+    showSuccess(`Synced ${data.count} tracks from Spotify!`);
+    status.set({ message: `Fetch complete. ${data.count} tracks processed.`, tone: 'success' });
+
+    // Reload everything
+    searchOptions.set({ ...get(searchOptions), page: 1 });
+    await loadTracks();
+    await updateStats();
+  } catch (error) {
+    if (error.name === 'AbortError') return; // Ignore aborts
+
+    dismissToast(toastId);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    showError(`Sync failed: ${message}`);
+    status.set({ message: `Fetch failed: ${message}`, tone: 'error' });
+  } finally {
+    isLoading.set(false);
+    syncController = null;
+  }
 }
 
-
 export async function checkAuthStatus(): Promise<void> {
-    try {
-        const res = await fetch(ENDPOINTS.AUTH_STATUS);
-        if (res.ok) {
-            const data = await res.json();
-            isAuthenticated.set(data.connected);
-        }
-    } catch (e) {
-        console.error('Failed to check auth status', e);
+  try {
+    const res = await fetch(ENDPOINTS.AUTH_STATUS);
+    if (res.ok) {
+      const data = await res.json();
+      isAuthenticated.set(data.connected);
     }
+  } catch (e) {
+    console.error('Failed to check auth status', e);
+  }
 }
