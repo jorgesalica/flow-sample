@@ -12,15 +12,11 @@ Ideas, future tasks, and things to do later.
 
 ## 🔥 High Priority
 
-- [ ] **[UI/Bug]** Fix Filter Panel transparency issues (hard to see when open)
-- [ ] **[UI/UX]** Improve "Clear All" in Filter Panel (should not close panel)
-- [ ] **[Feat]** OAuth flow (replace manual token)
-- [ ] **[DevOps]** Protect main with Husky pre-push hook
+
 
 ## ⚡ Medium Priority
 
 - [ ] **[Feat]** Lyrics Flow integration
-- [ ] **[DevOps]** GitHub Actions CI/CD
 - [ ] **[UI/Refactor]** Split large components (TrackCard, FilterPanel)
 - [ ] **[Test]** Integration tests for API endpoints
 - [ ] **[Test]** E2E test for full sync flow
@@ -30,12 +26,12 @@ Ideas, future tasks, and things to do later.
 - [ ] **[Feat]** PWA support & Offline capability
 - [ ] **[Feat]** Export to playlist
 - [ ] **[Feat]** LLM-powered insights
-- [ ] **[UI/UX]** Custom favicon (space/flow theme)
+
 - [ ] **[UI/UX]** Dark/light theme toggle
 - [ ] **[UI/UX]** Keyboard shortcuts
 - [ ] **[Mobile]** Mobile-optimized touch interactions
 - [ ] **[DevOps]** Docker containerization
-- [ ] **[DevOps]** Automated releases
+- [ ] **[DevOps]** GitHub Actions CI/CD
 - [ ] **[Test]** Performance benchmarks
 - [ ] **[Code]** Code cleanup and organization
 
@@ -50,3 +46,11 @@ Ideas, future tasks, and things to do later.
 ---
 
 *Last updated: 2025-12-07*
+
+## ✅ Done
+
+- [x] **[UI/Bug]** Fix Filter Panel transparency issues (hard to see when open)
+- [x] **[UI/UX]** Improve "Clear All" in Filter Panel (should not close panel)
+- [x] **[Feat]** OAuth flow (replace manual token)
+- [x] **[UI/UX]** Custom favicon (space/flow theme)
+- [x] **[DevOps]** Protect main with Husky pre-push/pre-commit hooks

@@ -13,9 +13,11 @@
     "check": "pnpm -r run check",
     "typecheck": "pnpm -r run typecheck",
     "format": "pnpm -r run format",
-    "clean": "rimraf packages/*/node_modules packages/*/dist node_modules"
+    "clean": "rimraf packages/*/node_modules packages/*/dist node_modules",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "rimraf": "^6.0.1"
   }
 }

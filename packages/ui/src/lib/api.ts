@@ -113,7 +113,7 @@ export async function fetchFromSpotify(): Promise<void> {
         await loadTracks();
         await updateStats();
 
-    } catch (error: any) {
+    } catch (error) {
         if (error.name === 'AbortError') return; // Ignore aborts
 
         dismissToast(toastId);

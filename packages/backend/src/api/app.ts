@@ -20,7 +20,7 @@ const app = new Elysia({ adapter: node() })
   .onRequest(({ request }) => {
     // Generate request ID
     const requestId = randomUUID();
-    // @ts-ignore
+
     request.headers.set('X-Request-ID', requestId);
   })
   .onAfterHandle(({ request, set }) => {

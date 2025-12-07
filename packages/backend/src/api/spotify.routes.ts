@@ -59,7 +59,7 @@ export function createSpotifyRoutes(config: Config) {
           try {
             await adapter.exchangeCode(code);
             return redirect('http://localhost:5173/?connected=true#/spotify'); // Back to UI Spotify Flow
-          } catch (error) {
+          } catch {
             set.status = 500;
             return { error: 'Failed to exchange token' };
           }
@@ -209,9 +209,9 @@ export function createSpotifyRoutes(config: Config) {
           yearRange:
             years.length > 0
               ? {
-                  oldest: years[years.length - 1]?.year,
-                  newest: years[0]?.year,
-                }
+                oldest: years[years.length - 1]?.year,
+                newest: years[0]?.year,
+              }
               : null,
         };
 
