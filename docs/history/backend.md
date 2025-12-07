@@ -4,6 +4,25 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2025-12-07 — OAuth Flow, Husky, Test Refactoring
+
+### OAuth 2.0 Flow
+- Replaced manual `SPOTIFY_REFRESH_TOKEN` with user-friendly OAuth flow
+- New routes: `/auth/login`, `/auth/callback`, `/auth/status`
+- Token storage in SQLite `token_cache` table
+- Auto token refresh with rotation support
+
+### Husky Git Hooks
+- Pre-commit: runs `lint` and `format`
+- Pre-push: runs `check` and `test`
+
+### Test Reorganization
+- Backend tests organized by domain: `tests/unit/spotify/`, `tests/integration/spotify/`
+- Added stub tests for future: API contract, error handling, auth flow
+- 14 tests passing, 15 TODOs for expansion
+
+---
+
 ## 2025-12-06 — Structured Logging, Caching & Resilience
 
 ### Deep Structured Logging (Pino)
