@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import type { Track, SearchOptions } from './types';
+import type { TopStats } from './types';
 
 // Track Data
 export const tracks = writable<Track[]>([]);
@@ -20,16 +21,11 @@ export const status = writable<{ message: string; tone: 'info' | 'success' | 'wa
 );
 export const isLoading = writable(false);
 export const isAuthenticated = writable(false);
-export const topStats = writable<{
-  total: number;
-  artists: number;
-  topGenre: string;
-  genres: { genre: string; count: number }[];
-  decadeDistribution: Record<string, number>;
-}>({
+export const topStats = writable<TopStats>({
   total: 0,
   artists: 0,
   topGenre: '—',
   genres: [],
   decadeDistribution: {},
 });
+

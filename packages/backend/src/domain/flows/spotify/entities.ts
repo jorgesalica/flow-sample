@@ -28,3 +28,14 @@ export interface Track {
   previewUrl?: string;
   spotifyUrl?: string;
 }
+
+// Aggregation types
+export interface GenreCount {
+  genre: string;
+  count: number;
+}
+
+export interface YearCount {
+  year: number;
+  count: number;
+}

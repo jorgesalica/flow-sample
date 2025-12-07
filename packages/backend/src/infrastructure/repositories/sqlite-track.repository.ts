@@ -1,4 +1,4 @@
-import type { Track, Artist, TrackRepository } from '../../domain/flows/spotify';
+import type { Track, Artist, TrackRepository, GenreCount, YearCount } from '../../domain/flows/spotify';
 import db from '../persistence/sqlite';
 import { logger } from '../logger';
 
@@ -223,7 +223,7 @@ export class SQLiteTrackRepository implements TrackRepository {
     return result.data;
   }
 
-  async getGenres(): Promise<{ genre: string; count: number }[]> {
+  async getGenres(): Promise<GenreCount[]> {
     const result = db
       .prepare(
         `
@@ -234,11 +234,11 @@ export class SQLiteTrackRepository implements TrackRepository {
       ORDER BY count DESC
     `,
       )
-      .all() as { genre: string; count: number }[];
+      .all() as GenreCount[];
     return result;
   }
 
-  async getYears(): Promise<{ year: number; count: number }[]> {
+  async getYears(): Promise<YearCount[]> {
     const result = db
       .prepare(
         `
@@ -249,7 +249,7 @@ export class SQLiteTrackRepository implements TrackRepository {
       ORDER BY year DESC
     `,
       )
-      .all() as { year: number; count: number }[];
+      .all() as YearCount[];
     return result;
   }
 

@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { SpotifyUseCase } from '../application';
 import { calculateStats } from '../application/stats.service';
+import type { GenreCount, YearCount } from '../domain/flows/spotify';
 import { SpotifyApiAdapter } from '../infrastructure/adapters/spotify-api';
 import { SQLiteTrackRepository } from '../infrastructure/repositories';
 import { apiCache } from '../infrastructure/cache';
@@ -157,7 +158,7 @@ export function createSpotifyRoutes(config: Config) {
 
       // Get all unique genres with counts (cached 5 min)
       .get('/genres', async ({ spotifyRepository }) => {
-        const cached = apiCache.get<{ genre: string; count: number }[]>('genres');
+        const cached = apiCache.get<GenreCount[]>('genres');
         if (cached) {
           log.debug('Cache hit: genres');
           return cached;
@@ -169,7 +170,7 @@ export function createSpotifyRoutes(config: Config) {
 
       // Get all years with counts (cached 5 min)
       .get('/years', async ({ spotifyRepository }) => {
-        const cached = apiCache.get<{ year: number; count: number }[]>('years');
+        const cached = apiCache.get<YearCount[]>('years');
         if (cached) {
           log.debug('Cache hit: years');
           return cached;
