@@ -84,11 +84,7 @@ git status --short
 
 ---
 
-## Bucket (Future Tasks)
+## Future Tasks
 
-- Protect main with Husky pre-push hook
-- Create custom favicon (space/flow theme)
-- UI refactor: split components, cleanup code
-- More unit test edge cases
-- Docker containerization
-- GitHub Actions CI/CD
+See [docs/bucket.md](../../docs/bucket.md) for ideas and future work.
+
