@@ -33,9 +33,9 @@ Ideas, future tasks, and things to do later.
 - [ ] **[Test]** Performance benchmarks
 - [ ] **[Backend/Test]** Integration tests for API endpoints
 - [ ] **[UI/Test]** E2E test for full sync flow
-- [ ] **[Backend/Refactor]** Split spotify.routes.ts (extract stats service)
-- [ ] **[Backend/Refactor]** Centralize error handling middleware
-- [ ] **[Backend/Feat]** Add health check endpoint
+- [x] **[Backend/Refactor]** Split spotify.routes.ts (extract stats service)
+- [x] **[Backend/Refactor]** Centralize error handling middleware (already in app.ts)
+- [x] **[Backend/Feat]** Add health check endpoint (already exists /api/status)
 - [ ] **[UI/Refactor]** Improve components (add common elements, extract more)
 - [ ] **[UI/Refactor]** Extract color tokens to CSS variables
 - [ ] **[UI/Feat]** Add global loading states

@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { SpotifyUseCase } from '../application';
+import { calculateStats } from '../application/stats.service';
 import { SpotifyApiAdapter } from '../infrastructure/adapters/spotify-api';
 import { SQLiteTrackRepository } from '../infrastructure/repositories';
 import { apiCache } from '../infrastructure/cache';
@@ -186,7 +187,6 @@ export function createSpotifyRoutes(config: Config) {
           return cached;
         }
 
-        const { calculateStats } = await import('../application/stats.service');
         const stats = await calculateStats(spotifyRepository);
 
         apiCache.set('stats', stats);
