@@ -56,7 +56,7 @@
     sortBy = 'added_at';
     sortOrder = 'desc';
     loadTracks({ page: 1 });
-    isOpen = false;
+    // isOpen = false; // Keep panel open for better UX
   }
 
   function togglePanel() {
@@ -96,7 +96,7 @@
 <!-- Expandable Panel -->
 {#if isOpen}
   <div
-    class="absolute top-full left-0 right-0 mt-2 p-4 rounded-xl border border-white/10 bg-void z-50 shadow-2xl shadow-aurora/10"
+    class="absolute top-full left-0 right-0 mt-2 p-4 rounded-xl border border-white/20 bg-nebula z-50 shadow-2xl shadow-aurora/10"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- Genre Filter -->

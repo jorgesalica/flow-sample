@@ -1,17 +1,16 @@
 @import 'tailwindcss';
 
-/* Cosmic Flow Design System */
-:root {
-  /* Base - Deep Space */
+@theme {
   --color-void: #0a0e17;
   --color-nebula: #111827;
   --color-stardust: #1f2937;
-
-  /* Accents - Aurora Borealis */
   --color-aurora: #10b981;
   --color-pulsar: #06b6d4;
   --color-cosmic: #8b5cf6;
+}
 
+/* Cosmic Flow Design System variables (legacy/fallback if needed, or removed if @theme handles it) */
+:root {
   /* Glass effect */
   --glass-bg: rgba(17, 24, 39, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
