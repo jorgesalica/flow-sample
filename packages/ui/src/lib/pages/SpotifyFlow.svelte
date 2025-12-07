@@ -12,6 +12,9 @@
   import { tracks, topStats, isLoading, totalTracks, searchOptions } from '../stores';
   import { loadTracks } from '../api';
 
+  // Page title
+  const pageTitle = 'Spotify Flow - Your Music Library';
+
   onMount(() => {
     loadTracks({ page: 1 });
   });
@@ -21,6 +24,10 @@
     loadTracks({ page: nextPage }, true);
   }
 </script>
+
+<svelte:head>
+  <title>{pageTitle}</title>
+</svelte:head>
 
 <div class="min-h-screen p-4 md:p-8">
   <div class="max-w-7xl mx-auto flex flex-col gap-6">

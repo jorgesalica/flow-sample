@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { getFlows, type FlowDefinition, type FlowStats } from '../flows';
 
+  // Page title
+  const pageTitle = 'Flow - Data Exploration Hub';
+
   interface FlowCard extends FlowDefinition {
     stats?: FlowStats;
   }
@@ -76,6 +79,10 @@
     }
   }
 </script>
+
+<svelte:head>
+  <title>{pageTitle}</title>
+</svelte:head>
 
 <div class="min-h-screen p-4 md:p-8 flex items-center justify-center">
   <div class="max-w-4xl w-full flex flex-col gap-10">
