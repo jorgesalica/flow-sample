@@ -9,6 +9,9 @@ import type {
   SpotifyTokenResponse,
   SpotifyArtistsResponse,
 } from './types.js';
+import { logger } from '../../logger';
+
+const log = logger.child({ module: 'SpotifyApiAdapter' });
 
 export interface SpotifyConfig {
   clientId: string;
@@ -93,6 +96,7 @@ export class SpotifyApiAdapter implements SourcePort {
   async fetchTracks(limit: number = 20): Promise<Track[]> {
     if (!this.accessToken) await this.refreshAccessToken();
 
+    log.info({ pageLimit: limit }, 'Fetching liked tracks from Spotify');
     const tracks: Track[] = [];
     let nextUrl: string | null = '/me/tracks?limit=50';
     let page = 1;
@@ -109,6 +113,7 @@ export class SpotifyApiAdapter implements SourcePort {
       page++;
     }
 
+    log.info({ trackCount: tracks.length, pagesFetched: page - 1 }, 'Fetched liked tracks');
     return tracks;
   }
 
@@ -149,6 +154,8 @@ export class SpotifyApiAdapter implements SourcePort {
     const detailsMap = new Map<string, { genres: string[]; imageUrl?: string }>();
     const uniqueIds = [...new Set(artistIds)];
 
+    log.info({ artistCount: uniqueIds.length }, 'Fetching artist details from Spotify');
+
     // Batch in chunks of 50 (Spotify limit)
     const batchSize = 50;
     for (let i = 0; i < uniqueIds.length; i += batchSize) {
@@ -172,10 +179,11 @@ export class SpotifyApiAdapter implements SourcePort {
         }
       } catch (error) {
         // Log but don't fail the whole operation
-        console.error(`Failed to fetch artist details for batch starting at ${i}:`, error);
+        log.error({ batchStart: i, error: error instanceof Error ? error.message : 'Unknown' }, 'Failed to fetch artist details batch');
       }
     }
 
+    log.info({ enrichedCount: detailsMap.size }, 'Fetched artist details');
     return detailsMap;
   }
 

@@ -143,3 +143,8 @@ outputs/
 
 # SQLite database
 data/*
+packages/backend/data/*
+
+# Playwright
+packages/ui/playwright-report/
+packages/ui/test-results/

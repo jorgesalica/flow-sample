@@ -1,5 +1,8 @@
 import type { Track, Artist, TrackRepository } from '../../domain/flows/spotify';
 import db from '../persistence/sqlite';
+import { logger } from '../logger';
+
+const log = logger.child({ module: 'SQLiteTrackRepository' });
 
 interface TrackRow {
   id: string;
@@ -50,6 +53,7 @@ export interface PaginatedResult<T> {
 
 export class SQLiteTrackRepository implements TrackRepository {
   async save(tracks: Track[]): Promise<void> {
+    log.info({ trackCount: tracks.length }, 'Saving tracks to SQLite');
     // Use UPSERT (ON CONFLICT DO UPDATE) instead of INSERT OR REPLACE
     // INSERT OR REPLACE does DELETE + INSERT which triggers ON DELETE CASCADE
     // and removes track_artists relationships
@@ -114,6 +118,7 @@ export class SQLiteTrackRepository implements TrackRepository {
     });
 
     transaction(tracks);
+    log.info({ trackCount: tracks.length }, 'Saved tracks successfully');
   }
 
   async findAll(): Promise<Track[]> {
@@ -127,6 +132,8 @@ export class SQLiteTrackRepository implements TrackRepository {
     const offset = (page - 1) * limit;
     const sortBy = options.sortBy ?? 'added_at';
     const sortOrder = options.sortOrder ?? 'desc';
+
+    log.debug({ page, limit, query: options.query, genre: options.genre, year: options.year }, 'Searching tracks');
 
     let whereClause = '1=1';
     const params: (string | number)[] = [];
@@ -188,6 +195,8 @@ export class SQLiteTrackRepository implements TrackRepository {
     const tracks = db.prepare(query).all(...params) as TrackRow[];
 
     const data = await Promise.all(tracks.map((row) => this.hydrate(row)));
+
+    log.debug({ total, returned: data.length, page, totalPages: Math.ceil(total / limit) }, 'Search complete');
 
     return {
       data,
