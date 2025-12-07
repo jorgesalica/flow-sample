@@ -17,7 +17,6 @@ Ideas, future tasks, and things to do later.
 ## ⚡ Medium Priority
 
 - [ ] **[Feat]** Lyrics Flow integration
-- [ ] **[UI/Refactor]** Split large components (TrackCard, FilterPanel)
 
 ## 🐢 Low Priority
 
@@ -57,3 +56,4 @@ Ideas, future tasks, and things to do later.
 - [x] **[Test]** Refactor test structure (organize by domain/flow)
 - [x] **[Test]** Add stub tests for future expansion (api-contract, error-handling, auth-flow)
 - [x] **[Docs]** Agent Documentation Overhaul (entry point + 6 sub-workflows)
+- [x] **[UI/Refactor]** Split components (AlbumArt, GenreBadges, FilterSelect, PopularitySlider)

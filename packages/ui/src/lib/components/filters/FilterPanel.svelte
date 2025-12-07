@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { searchOptions } from '../stores';
-  import { loadTracks } from '../api';
-  import { ENDPOINTS } from '../config';
+  import { searchOptions } from '../../stores';
+  import { loadTracks } from '../../api';
+  import { ENDPOINTS } from '../../config';
 
   // Local state for the panel
   let isOpen = $state(false);
