@@ -4,6 +4,42 @@ Changelog for the frontend (Svelte) application.
 
 ---
 
+## 2025-12-07 — Component Reorganization & Path Aliases
+
+### Component Directory Restructure
+Organized 18 components into 5 semantic folders:
+
+| Folder | Components |
+|--------|------------|
+| `track/` | TrackCard, AlbumArt, GenreBadges |
+| `filters/` | FilterPanel, FilterSelect, GenreFilter, YearFilter, PopularitySlider |
+| `charts/` | GenreChart, DecadeChart, InsightsPanel |
+| `common/` | SearchBar, Pagination, InfiniteScroll, MetricCard |
+| `layout/` | Controls, Navbar, SpotifyHeader |
+
+### Split Components
+Extracted reusable sub-components from TrackCard:
+- `AlbumArt.svelte`: Album image, duration overlay, Spotify link
+- `GenreBadges.svelte`: Genre tag display
+- `FilterSelect.svelte`: Generic select wrapper
+- `PopularitySlider.svelte`: Range slider component
+
+### Path Aliases
+Configured Vite + TypeScript for cleaner imports:
+```typescript
+// Before
+import { stores } from '../../stores';
+
+// After
+import { stores } from '@lib/stores';
+import TrackCard from '@components/track/TrackCard.svelte';
+```
+
+### TypeScript Target
+Updated `tsconfig.app.json` target from ES2022 → **ES2024**.
+
+---
+
 ## 2025-12-07 — Component Refactor & UI Polish
 
 ### Refactoring
