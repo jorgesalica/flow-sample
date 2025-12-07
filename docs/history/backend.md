@@ -10,25 +10,6 @@ Changelog for the backend (API, persistence, domain logic).
 
 Added comprehensive logging across the backend:
 
-```typescript
-// New logger module
-import { logger } from '../infrastructure/logger';
-const log = logger.child({ module: 'SQLiteTrackRepository' });
-
-log.info({ trackCount: tracks.length }, 'Saving tracks to SQLite');
-log.debug({ page, limit, query }, 'Searching tracks');
-```
-
-**Logged operations:**
-- `SQLiteTrackRepository`: save, findPaginated
-- `SpotifyApiAdapter`: fetchTracks, fetchArtistDetails
-- `app.ts`: Server startup, request handling
-
-### Unit Tests Fixed
-
-Updated test mocks to use `fetchArtistDetails` instead of deprecated `fetchArtistGenres`:
-
-```typescript
 const mockSource: SpotifySourcePort = {
   fetchTracks: vi.fn().mockResolvedValue([mockTrack]),
   fetchArtistDetails: vi.fn().mockResolvedValue(detailsMap),

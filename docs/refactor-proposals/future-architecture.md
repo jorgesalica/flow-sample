@@ -29,9 +29,10 @@ packages/
 | Charts/Visualizations | ✅ Done |
 | Structured Logging (Pino) | ✅ Done |
 | Unit Tests (Vitest) | ✅ Done (12 tests) |
-| E2E Tests (Playwright) | ✅ Done |
+| E2E Tests (Playwright) | ✅ Done (6 tests) |
 | API Cache (5 min TTL) | ✅ Done |
 | Responsive Polish | ✅ Done |
+| Rate Limit Retry | ✅ Done |
 
 ---
 
@@ -41,8 +42,8 @@ packages/
 
 | # | Item | Description |
 |---|------|-------------|
-| 1 | **More Unit Tests** | Additional edge cases: error handling, rate limiting |
-| 2 | **Rate limit retry** | Auto-retry when Spotify returns 429 |
+| 1 | **Error UI** | Show user-friendly errors when API fails |
+| 2 | **More Unit Tests** | Edge cases: error handling, timeouts |
 
 ### 🟡 Medium Priority (Later)
 
