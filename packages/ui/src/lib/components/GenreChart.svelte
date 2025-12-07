@@ -20,11 +20,13 @@
   let canvas: HTMLCanvasElement;
   let chart: Chart | null = null;
 
+  type GenreData = { genre: string; count: number };
+
   function updateChart() {
     if (!chart) return;
 
-    chart.data.labels = data.map((d) => d.genre);
-    chart.data.datasets[0].data = data.map((d) => d.count);
+    chart.data.labels = data.map((d: GenreData) => d.genre);
+    chart.data.datasets[0].data = data.map((d: GenreData) => d.count);
     chart.update();
   }
 
@@ -35,10 +37,10 @@
     const config: ChartConfiguration = {
       type: 'doughnut',
       data: {
-        labels: data.map((d) => d.genre),
+        labels: data.map((d: GenreData) => d.genre),
         datasets: [
           {
-            data: data.map((d) => d.count),
+            data: data.map((d: GenreData) => d.count),
             backgroundColor: [
               'rgba(255, 99, 132, 0.8)',
               'rgba(54, 162, 235, 0.8)',
