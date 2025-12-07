@@ -11,4 +11,3 @@ export interface TrackRepository {
   getGenres(): Promise<GenreCount[]>;
   getYears(): Promise<YearCount[]>;
 }
-

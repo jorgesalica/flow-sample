@@ -1,6 +1,5 @@
 import { writable } from 'svelte/store';
-import type { Track, SearchOptions } from './types';
-import type { TopStats } from './types';
+import type { Track, SearchOptions, TopStats, StatusMessage } from './types';
 
 // Track Data
 export const tracks = writable<Track[]>([]);
@@ -16,9 +15,10 @@ export const searchOptions = writable<SearchOptions>({
 });
 
 // UI State
-export const status = writable<{ message: string; tone: 'info' | 'success' | 'warning' | 'error' }>(
-  { message: 'Ready to explore.', tone: 'info' }
-);
+export const status = writable<StatusMessage>({
+  message: 'Ready to explore.',
+  tone: 'info',
+});
 export const isLoading = writable(false);
 export const isAuthenticated = writable(false);
 export const topStats = writable<TopStats>({

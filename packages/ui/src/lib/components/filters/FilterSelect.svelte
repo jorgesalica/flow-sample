@@ -1,9 +1,11 @@
 <script lang="ts">
+  import type { SelectOption } from '@lib/types';
+
   interface Props {
     id: string;
     label: string;
     value: string;
-    options: { value: string; label: string }[];
+    options: SelectOption[];
     onchange?: (value: string) => void;
   }
 

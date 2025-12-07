@@ -10,17 +10,16 @@
     CategoryScale,
     type ChartConfiguration,
   } from 'chart.js';
+  import type { GenreCount } from '@lib/types';
 
   Chart.register(Title, Tooltip, Legend, ArcElement, DoughnutController, CategoryScale);
 
   let { data } = $props<{
-    data: { genre: string; count: number }[];
+    data: GenreCount[];
   }>();
 
   let canvas: HTMLCanvasElement;
   let chart: Chart | null = null;
-
-  type GenreData = { genre: string; count: number };
 
   // Cosmic Flow color palette for charts
   const cosmicColors = [
@@ -37,8 +36,8 @@
   function updateChart() {
     if (!chart) return;
 
-    chart.data.labels = data.map((d: GenreData) => d.genre);
-    chart.data.datasets[0].data = data.map((d: GenreData) => d.count);
+    chart.data.labels = data.map((d: GenreCount) => d.genre);
+    chart.data.datasets[0].data = data.map((d: GenreCount) => d.count);
     chart.update();
   }
 
@@ -49,10 +48,10 @@
     const config: ChartConfiguration<'doughnut'> = {
       type: 'doughnut',
       data: {
-        labels: data.map((d: GenreData) => d.genre),
+        labels: data.map((d: GenreCount) => d.genre),
         datasets: [
           {
-            data: data.map((d: GenreData) => d.count),
+            data: data.map((d: GenreCount) => d.count),
             backgroundColor: cosmicColors,
             borderColor: 'rgba(15, 23, 42, 0.8)',
             borderWidth: 2,

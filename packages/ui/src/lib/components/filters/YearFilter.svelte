@@ -3,8 +3,9 @@
   import { searchOptions } from '@lib/stores';
   import { loadTracks } from '@lib/api';
   import { ENDPOINTS } from '@lib/config';
+  import type { YearCount } from '@lib/types';
 
-  let years: { year: number; count: number }[] = $state([]);
+  let years: YearCount[] = $state([]);
   let selectedYear = $state($searchOptions.year?.toString() || '');
 
   onMount(async () => {

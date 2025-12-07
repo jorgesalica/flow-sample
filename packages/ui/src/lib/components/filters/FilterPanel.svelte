@@ -3,11 +3,12 @@
   import { searchOptions } from '@lib/stores';
   import { loadTracks } from '@lib/api';
   import { ENDPOINTS } from '@lib/config';
+  import type { GenreCount, YearCount } from '@lib/types';
 
   // Local state for the panel
   let isOpen = $state(false);
-  let genres: { genre: string; count: number }[] = $state([]);
-  let years: { year: number; count: number }[] = $state([]);
+  let genres: GenreCount[] = $state([]);
+  let years: YearCount[] = $state([]);
 
   // Local filter values (synced with store)
   let selectedGenre = $state($searchOptions.genre || '');

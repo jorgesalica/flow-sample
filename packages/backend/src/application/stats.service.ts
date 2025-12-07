@@ -1,11 +1,12 @@
-import type { TrackRepository, GenreCount } from '../domain/flows/spotify';
+import type { GenreCount, YearRange } from '@flows/shared';
+import type { TrackRepository } from '../domain/flows/spotify';
 
 export interface TopStats {
     totalTracks: number;
     totalGenres: number;
     topGenres: GenreCount[];
     decadeDistribution: Record<string, number>;
-    yearRange: { oldest: number; newest: number } | null;
+    yearRange: YearRange | null;
 }
 
 /**

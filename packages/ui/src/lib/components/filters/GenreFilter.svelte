@@ -3,8 +3,9 @@
   import { searchOptions } from '@lib/stores';
   import { loadTracks } from '@lib/api';
   import { ENDPOINTS } from '@lib/config';
+  import type { GenreCount } from '@lib/types';
 
-  let genres: { genre: string; count: number }[] = $state([]);
+  let genres: GenreCount[] = $state([]);
   let selectedGenre = $state($searchOptions.genre || '');
 
   onMount(async () => {
