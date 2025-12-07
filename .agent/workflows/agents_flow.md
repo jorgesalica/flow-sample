@@ -87,6 +87,8 @@ git status --short
 ## Bucket (Future Tasks)
 
 - Protect main with Husky pre-push hook
-- Error UI for API failures
+- Create custom favicon (space/flow theme)
+- UI refactor: split components, cleanup code
 - More unit test edge cases
-
+- Docker containerization
+- GitHub Actions CI/CD
