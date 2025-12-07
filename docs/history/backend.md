@@ -4,6 +4,69 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2025-12-06 — Structured Logging & Testing
+
+### Deep Structured Logging (Pino)
+
+Added comprehensive logging across the backend:
+
+```typescript
+// New logger module
+import { logger } from '../infrastructure/logger';
+const log = logger.child({ module: 'SQLiteTrackRepository' });
+
+log.info({ trackCount: tracks.length }, 'Saving tracks to SQLite');
+log.debug({ page, limit, query }, 'Searching tracks');
+```
+
+**Logged operations:**
+- `SQLiteTrackRepository`: save, findPaginated
+- `SpotifyApiAdapter`: fetchTracks, fetchArtistDetails
+- `app.ts`: Server startup, request handling
+
+### Unit Tests Fixed
+
+Updated test mocks to use `fetchArtistDetails` instead of deprecated `fetchArtistGenres`:
+
+```typescript
+const mockSource: SpotifySourcePort = {
+  fetchTracks: vi.fn().mockResolvedValue([mockTrack]),
+  fetchArtistDetails: vi.fn().mockResolvedValue(detailsMap),
+};
+```
+
+**Test Status:** 12 tests passing (5 unit + 7 integration)
+
+### API Caching
+
+Implemented in-memory cache with 5-minute TTL for static endpoints:
+
+```typescript
+// New cache module
+import { apiCache } from '../infrastructure/cache';
+
+// Usage in routes
+const cached = apiCache.get<object>('stats');
+if (cached) return cached;
+
+const stats = await computeStats();
+apiCache.set('stats', stats);
+```
+
+**Cached endpoints:**
+- `GET /api/spotify/genres` - 5 min TTL
+- `GET /api/spotify/years` - 5 min TTL
+- `GET /api/spotify/stats` - 5 min TTL
+
+Cache is invalidated after sync (`POST /run`).
+
+### Environment Files
+
+- Created `packages/backend/.env.example` with all required variables
+
+---
+
+
 ## 2025-12-05 (Later) — pnpm Workspaces Monorepo
 
 Restructured project to pnpm workspaces:

@@ -4,7 +4,7 @@ This document outlines the planned evolution of Flow Sample's architecture.
 
 ---
 
-## Current State (2025-12-05) ✅
+## Current State (2025-12-06) ✅
 
 ### What's Done
 
@@ -27,41 +27,43 @@ packages/
 | Audio Previews | ✅ Removed (Deprecated) |
 | Infinite Scroll | ✅ Done |
 | Charts/Visualizations | ✅ Done |
+| Structured Logging (Pino) | ✅ Done |
+| Unit Tests (Vitest) | ✅ Done (12 tests) |
+| E2E Tests (Playwright) | ✅ Done |
+| API Cache (5 min TTL) | ✅ Done |
+| Responsive Polish | ✅ Done |
 
 ---
 
 ## 📋 Priority List
 
-### 🔴 Prioridad Alta (próximos pasos)
+### 🔴 High Priority (Next Steps)
 
-| # | Item | Descripción |
+| # | Item | Description |
 |---|------|-------------|
-| 1 | **Tests** | Más cobertura en usecases y repository |
-| 2 | **Logs** | Structured logging mejorado |
-| 3 | **Logs** | Structured logging mejorado |
+| 1 | **More Unit Tests** | Additional edge cases: error handling, rate limiting |
+| 2 | **Rate limit retry** | Auto-retry when Spotify returns 429 |
 
-### 🟡 Prioridad Media (después)
+### 🟡 Medium Priority (Later)
 
-| # | Item | Descripción |
+| # | Item | Description |
 |---|------|-------------|
-| 5 | **Cache endpoints** | genres, years, stats con TTL corto (5 min) |
-| 6 | **Responsive polish** | Mobile optimization |
-| 7 | **Rate limit retry** | Auto-retry cuando Spotify devuelve 429 |
-| 8 | **Limpiar preview si roto** | Verificar si funciona, si no, quitar UI |
+| 3 | **Responsive polish** | Mobile optimization |
+| 4 | **Rate limit retry** | Auto-retry when Spotify returns 429 |
 
-### 🟢 Bucket (no perder de vista)
+### 🟢 Bucket (Keep in Mind)
 
-| Item | Notas |
+| Item | Notes |
 |------|-------|
-| **Lyrics Flow** | Data source para LLM futuro |
-| **LLM Integration** | Después de tener más data |
-| **Docker** | Si necesitás deployar |
-| **GitHub Actions** | Si trabajás con otros |
-| **PWA** | Si querés instalable |
-| **OAuth Flow** | Reemplazar refresh token manual |
-| **WebSockets** | Sync en tiempo real |
-| **Background Jobs** | Syncs pesados |
-| **Social Features** | Comparar con amigos |
+| **Lyrics Flow** | Data source for future LLM |
+| **LLM Integration** | After gathering more data |
+| **Docker** | If deployment needed |
+| **GitHub Actions** | If collaborating with others |
+| **PWA** | If installable app wanted |
+| **OAuth Flow** | Replace manual refresh token |
+| **WebSockets** | Real-time sync |
+| **Background Jobs** | Heavy syncs |
+| **Social Features** | Compare with friends |
 
 ---
 
@@ -69,31 +71,31 @@ packages/
 
 ### Rate Limiting
 
-**Existe:**
-- Error handling para 429 en CLI
+**Exists:**
+- Error handling for 429 in CLI
 
-**Falta:**
-- Rate limiting en propia API
-- Auto-retry cuando Spotify limita
+**Missing:**
+- Rate limiting in our own API
+- Auto-retry when Spotify throttles
 
 ### Cache Strategy
 
-| Endpoint | Cachear | TTL |
-|----------|---------|-----|
-| `/genres` | ✅ Sí | 5 min |
-| `/years` | ✅ Sí | 5 min |
-| `/stats` | ✅ Sí | 5 min |
+| Endpoint | Cache | TTL |
+|----------|-------|-----|
+| `/genres` | ✅ Yes | 5 min |
+| `/years` | ✅ Yes | 5 min |
+| `/stats` | ✅ Yes | 5 min |
 | `/tracks/search` | ❌ No | - |
 | Sync | ❌ No | On-demand |
 
 ### Spotify API Deprecations (Nov 2024)
 
-Deprecado para nuevas apps:
+Deprecated for new apps:
 - ❌ Audio Features (danceability, energy)
 - ❌ Audio Analysis
 - ❌ Recommendations
 - ❌ Related Artists
-- ⚠️ 30-second previews (verificar si funciona)
+- ⚠️ 30-second previews (verify if working)
 
 ---
 
@@ -101,7 +103,10 @@ Deprecado para nuevas apps:
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2025-12-06 | Added Playwright E2E | Smoke tests for critical flows |
+| 2025-12-06 | Deep logging in Repo/Adapter | Better observability for debugging |
 | 2025-12-05 | Skip Docker | Solo dev, no lo necesita aún |
 | 2025-12-05 | Skip GitHub Actions | Workflow personal, merge directo a main |
 | 2025-12-05 | Skip Audio Features | Deprecado por Spotify Nov 2024 |
 | 2025-12-05 | Charts first | Alta demanda, usa datos existentes |
+

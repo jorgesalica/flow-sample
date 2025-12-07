@@ -4,6 +4,48 @@ Changelog for the frontend (Svelte) application.
 
 ---
 
+## 2025-12-06 — E2E Testing with Playwright
+
+### Playwright Setup
+
+Installed and configured Playwright for end-to-end testing:
+
+```bash
+pnpm --filter @flows/ui add -D @playwright/test
+npx playwright install chromium
+```
+
+**Configuration (`playwright.config.ts`):**
+- Headless Chromium
+- HTML report output
+- Auto-starts dev server for tests
+- Screenshot on failure
+
+### Smoke Tests
+
+Created `e2e/smoke.spec.ts` with 3 tests:
+
+| Test | Description |
+|------|-------------|
+| Landing page loads | Verifies h1 and "Spotify Flow" text visible |
+| Navigate to Spotify Flow | Clicks card, verifies URL change |
+| Spotify Flow shows content | Checks for tracks or Sync button |
+
+**Commands:**
+```bash
+pnpm --filter @flows/ui run test:e2e      # Headless
+pnpm --filter @flows/ui run test:e2e:ui   # Interactive UI
+```
+
+### Gitignore Updates
+
+Added to `.gitignore`:
+- `packages/ui/playwright-report/`
+- `packages/ui/test-results/`
+
+---
+
+
 ## 2025-12-05 (Later) — pnpm Workspaces & Fixes
 
 ### Monorepo Migration
