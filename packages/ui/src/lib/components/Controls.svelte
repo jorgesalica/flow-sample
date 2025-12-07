@@ -1,6 +1,6 @@
 <script lang="ts">
   import { isLoading } from '../stores';
-  import { fetchFromSpotify, loadTracks } from '../api';
+  import { fetchFromSpotify, loadTracks, cancelSync } from '../api';
 
   async function handleRefresh() {
     await loadTracks({ page: 1 });
@@ -27,9 +27,9 @@
     Refresh
   </button>
   <button
-    onclick={fetchFromSpotify}
-    disabled={$isLoading}
-    class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-transform hover:scale-105 active:scale-95"
+    onclick={$isLoading ? cancelSync : fetchFromSpotify}
+    class="btn-primary flex items-center gap-2 transition-transform hover:scale-105 active:scale-95"
+    title="Sync with Spotify to get latest tracks"
   >
     {#if $isLoading}
       <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         ></path>
       </svg>
-      Syncing...
+      Cancel
     {:else}
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
         <path

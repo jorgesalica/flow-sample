@@ -199,3 +199,31 @@ Today, it's a **modern Svelte 5 application** with reactive stores:
 - 🔄 Svelte stores for state management
 - 📝 TypeScript for type safety
 - 🧹 ESLint + Prettier for code quality
+
+---
+
+## 2025-12-07 — Component Refactor & UI Polish
+
+### Refactoring
+
+Broken down `SpotifyFlow.svelte` into manageable sub-components:
+- `SpotifyHeader.svelte`: Page title and top-level stats.
+- `InsightsPanel.svelte`: Container for charts (Genre/Decade).
+
+### UI Enhancements
+
+- **Navbar**: Added background (`bg-void/80 backdrop-blur-md`) and increased page padding (`pt-28`) to prevent overlap.
+- **Filter Panel**: Made background fully opaque (`bg-void`) and fixed dropdown option colors for dark theme.
+- **Track Cards**: Updated popularity bar design with gradient and clearer rail.
+- **Feedback**: Added hover/active scaling to control buttons.
+
+### Sync Cancellation
+
+Implemented `AbortController` in `api.ts` to allow cancelling the Spotify Sync process:
+- Added "Cancel" state to Sync button.
+- Properly tracks global `syncToastId` to dismiss loading toast on cancel.
+
+### Fixes
+
+- Fixed `app.css` 500 error by correcting invalid Tailwind 4 `@apply` utility.
+- Updated `agents_flow.md` with strict commit rules.

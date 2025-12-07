@@ -13,6 +13,10 @@ Quick reference for consistent development flow.
 
 ## During Development
 
+> [!CAUTION]
+> **NEVER COMMIT BROKEN CODE.**
+> Ensure the app compiles and runs before committing. If in doubt, run `pnpm build` or `pnpm check`.
+
 ### Commit Strategy
 
 **Goal:** Semantic grouping without being too granular or too broad.

@@ -2,7 +2,9 @@
   // Navbar component with logo
 </script>
 
-<nav class="fixed top-0 left-0 right-0 z-50 px-4 py-3">
+<nav
+  class="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-void/80 backdrop-blur-md border-b border-white/5"
+>
   <div class="max-w-7xl mx-auto flex items-center justify-between">
     <a href="#/" class="flex items-center gap-3 group">
       <img

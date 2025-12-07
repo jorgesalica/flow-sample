@@ -32,7 +32,7 @@
 
 <Navbar />
 
-<div class="min-h-screen pt-20 p-4 md:p-8">
+<div class="min-h-screen pt-28 p-4 md:p-8">
   <div class="max-w-7xl mx-auto flex flex-col gap-6">
     <!-- Header -->
     <SpotifyHeader stats={$topStats} />
