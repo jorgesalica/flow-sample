@@ -36,3 +36,40 @@ test.describe('Smoke Tests', () => {
         expect(hasContent || await page.getByText('Sync').isVisible()).toBeTruthy();
     });
 });
+
+test.describe('Navigation Tests', () => {
+    test('can navigate back to landing from Spotify Flow', async ({ page }) => {
+        await page.goto('/#/spotify');
+
+        // Click back link
+        await page.getByText('Back to Flows').click();
+
+        // Should be on landing
+        await page.waitForURL('**/#/');
+        await expect(page.getByText('Spotify Flow')).toBeVisible();
+    });
+});
+
+test.describe('Search Tests', () => {
+    test('search bar is visible on Spotify Flow page', async ({ page }) => {
+        await page.goto('/#/spotify');
+        await page.waitForLoadState('networkidle');
+
+        // Search input should be visible
+        const searchInput = page.locator('input[type="search"], input[placeholder*="Search"]');
+        await expect(searchInput).toBeVisible();
+    });
+
+    test('can type in search bar', async ({ page }) => {
+        await page.goto('/#/spotify');
+        await page.waitForLoadState('networkidle');
+
+        // Find and type in search
+        const searchInput = page.locator('input[type="search"], input[placeholder*="Search"]');
+        await searchInput.fill('rock');
+
+        // Verify the input value
+        await expect(searchInput).toHaveValue('rock');
+    });
+});
+
