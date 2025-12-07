@@ -2,6 +2,7 @@ import type { Track, PaginatedResult, SearchOptions } from './types';
 import { tracks, totalTracks, status, isLoading, searchOptions, topStats } from './stores';
 import { get } from 'svelte/store';
 import { ENDPOINTS } from './config';
+import { showError, showSuccess, showLoading, dismissToast } from './toast';
 
 export async function loadTracks(options?: Partial<SearchOptions>, append: boolean = false): Promise<void> {
     isLoading.set(true);
@@ -42,6 +43,8 @@ export async function loadTracks(options?: Partial<SearchOptions>, append: boole
 
     } catch (error) {
         console.error(error);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        showError(`Failed to load tracks: ${message}`);
         status.set({ message: 'Error loading tracks.', tone: 'error' });
     } finally {
         isLoading.set(false);
@@ -62,11 +65,12 @@ export async function updateStats(): Promise<void> {
             });
         }
     } catch {
-        // Silent fail for stats
+        // Silent fail for stats - not critical
     }
 }
 
 export async function fetchFromSpotify(): Promise<void> {
+    const toastId = showLoading('Syncing with Spotify...');
     status.set({ message: 'Fetching from Spotify...', tone: 'info' });
     isLoading.set(true);
 
@@ -82,6 +86,8 @@ export async function fetchFromSpotify(): Promise<void> {
             throw new Error(data.error || 'Request failed');
         }
 
+        dismissToast(toastId);
+        showSuccess(`Synced ${data.count} tracks from Spotify!`);
         status.set({ message: `Fetch complete. ${data.count} tracks processed.`, tone: 'success' });
 
         // Reload everything
@@ -90,9 +96,12 @@ export async function fetchFromSpotify(): Promise<void> {
         await updateStats();
 
     } catch (error) {
+        dismissToast(toastId);
         const message = error instanceof Error ? error.message : 'Unknown error';
+        showError(`Sync failed: ${message}`);
         status.set({ message: `Fetch failed: ${message}`, tone: 'error' });
     } finally {
         isLoading.set(false);
     }
 }
+

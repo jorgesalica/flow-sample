@@ -108,6 +108,9 @@ importers:
       chart.js:
         specifier: ^4.5.1
         version: 4.5.1
+      svelte-5-french-toast:
+        specifier: ^2.0.6
+        version: 2.0.6(svelte@5.45.5)
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
@@ -1904,6 +1907,11 @@ packages:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
 
+  svelte-5-french-toast@2.0.6:
+    resolution: {integrity: sha512-m3bYOHSoTk1w22OVWwnJLBdA4h1ZyQrh6v9mnh5HbRKQFlnDQw+qzykAyn6fyevdas5HQaYo5sg/gsZmAVzYDg==}
+    peerDependencies:
+      svelte: ^5.0.0
+
   svelte-check@4.3.4:
     resolution: {integrity: sha512-DVWvxhBrDsd+0hHWKfjP99lsSXASeOhHJYyuKOFYJcP7ThfSCKgjVarE8XfuMWpS5JV3AlDf+iK1YGGo2TACdw==}
     engines: {node: '>= 18.0.0'}
@@ -1920,6 +1928,11 @@ packages:
     peerDependenciesMeta:
       svelte:
         optional: true
+
+  svelte-writable-derived@3.1.1:
+    resolution: {integrity: sha512-w4LR6/bYZEuCs7SGr+M54oipk/UQKtiMadyOhW0PTwAtJ/Ai12QS77sLngEcfBx2q4H8ZBQucc9ktSA5sUGZWw==}
+    peerDependencies:
+      svelte: ^3.2.1 || ^4.0.0-next.1 || ^5.0.0-next.94
 
   svelte@5.45.5:
     resolution: {integrity: sha512-2074U+vObO5Zs8/qhxtBwdi6ZXNIhEBTzNmUFjiZexLxTdt9vq96D/0pnQELl6YcpLMD7pZ2dhXKByfGS8SAdg==}
@@ -3714,6 +3727,11 @@ snapshots:
     dependencies:
       has-flag: 4.0.0
 
+  svelte-5-french-toast@2.0.6(svelte@5.45.5):
+    dependencies:
+      svelte: 5.45.5
+      svelte-writable-derived: 3.1.1(svelte@5.45.5)
+
   svelte-check@4.3.4(picomatch@4.0.3)(svelte@5.45.5)(typescript@5.9.3):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -3735,6 +3753,10 @@ snapshots:
       postcss-scss: 4.0.9(postcss@8.5.6)
       postcss-selector-parser: 7.1.1
     optionalDependencies:
+      svelte: 5.45.5
+
+  svelte-writable-derived@3.1.1(svelte@5.45.5):
+    dependencies:
       svelte: 5.45.5
 
   svelte@5.45.5:
