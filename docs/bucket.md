@@ -12,11 +12,9 @@ Ideas, future tasks, and things to do later.
 
 ## 🔥 High Priority
 
-- [ ] **[Feat]** Lyrics Flow roadmap & spike (LrcLib integration)
+- [ ] **[Feat]** Lyrics Flow (LrcLib integration)
 
 ## ⚡ Medium Priority
-
-- [ ] **[Feat]** Lyrics Flow integration
 
 ## 🐢 Low Priority
 
@@ -31,9 +29,7 @@ Ideas, future tasks, and things to do later.
 - [ ] **[Test]** Performance benchmarks
 - [ ] **[Backend/Test]** Integration tests for API endpoints
 - [ ] **[UI/Test]** E2E test for full sync flow
-- [ ] **[UI/Feat]** Add global loading states
 - [ ] **[UI/Perf]** Lazy load SpotifyFlow page
-- [ ] **[DevOps]** Fix backend path aliases (svelte-check cross-package issue)
 
 ## 🔮 Future Flows (TBD)
 
@@ -72,3 +68,7 @@ Ideas, future tasks, and things to do later.
 - [x] **[Refactor]** Centralize types in @flows/shared (GenreCount, YearCount, SelectOption, YearRange, StatusMessage)
 - [x] **[UI/Refactor]** Eliminate all inline types across components
 - [x] **[UI/Refactor]** Remove duplicate stores/index.ts
+- [x] **[DevOps]** Fix backend path aliases (svelte-check cross-package issue)
+- [x] **[Backend/Test]** Fix test type errors (update mocks to satisfy TrackRepository interface)
+- [x] **[DevOps]** Split tsconfig.json/tsconfig.build.json for IDE+Tests vs Build
+- [x] **[UI/Feat]** Global loading states (isLoading store, toast, skeletons)

@@ -29,15 +29,11 @@ ui/
 │       │   └── SpotifyFlow.svelte
 │       └── components/
 │           ├── index.ts
-│           ├── Controls.svelte     # Refresh/Sync buttons
-│           ├── FilterPanel.svelte  # Expandable filter panel
-│           ├── MetricCard.svelte
-│           ├── InfiniteScroll.svelte # IntersectionObserver loader
-│           ├── GenreChart.svelte   # Doughnut chart (Chart.js)
-│           ├── DecadeChart.svelte  # Bar chart (Chart.js)
-│           ├── SearchBar.svelte
-│           ├── StatusBanner.svelte
-│           └── TrackCard.svelte    # With album art, artist avatar, Spotify link
+│           ├── track/          # TrackCard, AlbumArt, GenreBadges
+│           ├── filters/        # FilterPanel, FilterSelect, GenreFilter, YearFilter, PopularitySlider
+│           ├── charts/         # GenreChart, DecadeChart, InsightsPanel
+│           ├── common/         # SearchBar, Pagination, InfiniteScroll, MetricCard
+│           └── layout/         # Controls, Navbar, SpotifyHeader
 ├── vite.config.ts
 ├── tailwind.config.js
 ├── eslint.config.js

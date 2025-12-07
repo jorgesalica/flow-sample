@@ -13,6 +13,9 @@ Changelog for the backend (API, persistence, domain logic).
     - Installed `tsconfig-paths` for `ts-node` runtime resolution (dev/start).
     - Updated `package.json` scripts and `tsconfig.json`.
     - Updated `vitest.config.ts` to map aliases for tests.
+- Split TypeScript config:
+    - `tsconfig.json`: For IDE and typechecking (includes `src/` + `tests/`).
+    - `tsconfig.build.json`: For production build (only `src/`, preserves `dist/` structure).
 
 ### Type Refactoring
 - Centralized `YearRange` and `GenreCount` in `@flows/shared` (removed local definitions).
