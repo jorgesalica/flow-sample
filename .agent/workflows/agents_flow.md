@@ -14,6 +14,7 @@ Reference hub for agent workflows. Each sub-workflow has its own doc for details
 | **tests** | Run tests, verify coverage, best practices | `agents-tests.md` |
 | **qa** | Manual testing, run app, verify UI | `agents-qa.md` |
 | **digest** | Context sync for new chats | `agents-digest.md` |
+| **report-status** | Generate project status summary | `agents-report-status.md` |
 
 ---
 
