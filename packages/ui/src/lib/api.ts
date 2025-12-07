@@ -123,7 +123,7 @@ export async function fetchFromSpotify(): Promise<void> {
     await loadTracks();
     await updateStats();
   } catch (error) {
-    if (error.name === 'AbortError') return; // Ignore aborts
+    if (error instanceof Error && error.name === 'AbortError') return; // Ignore aborts
 
     dismissToast(toastId);
     const message = error instanceof Error ? error.message : 'Unknown error';

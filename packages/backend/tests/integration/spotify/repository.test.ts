@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import Database from 'better-sqlite3';
-import { SQLiteTrackRepository } from '../../src/infrastructure/repositories/sqlite-track.repository';
-import { Track } from '../../src/domain/flows/spotify';
+import { SQLiteTrackRepository } from '../../../src/infrastructure/repositories/sqlite-track.repository';
+import { Track } from '../../../src/domain/flows/spotify';
 
 const TEST_DB_PATH = path.join(process.cwd(), 'tests', '.tmp', 'test.db');
 
