@@ -17,3 +17,11 @@ export interface AppState {
   statusTone: 'info' | 'success' | 'warning' | 'error';
   isLoading: boolean;
 }
+
+export interface TopStats {
+  total: number;
+  artists: number;
+  topGenre: string;
+  genres: { genre: string; count: number }[];
+  decadeDistribution: Record<string, number>;
+}

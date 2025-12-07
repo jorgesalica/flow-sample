@@ -10,5 +10,8 @@ export { default as InfiniteScroll } from './InfiniteScroll.svelte';
 export { default as GenreChart } from './GenreChart.svelte';
 export { default as DecadeChart } from './DecadeChart.svelte';
 export { default as Navbar } from './Navbar.svelte';
+export { default as SpotifyHeader } from './SpotifyHeader.svelte';
+export { default as InsightsPanel } from './InsightsPanel.svelte';
+
 
 

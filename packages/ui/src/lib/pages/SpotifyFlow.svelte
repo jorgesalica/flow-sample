@@ -6,9 +6,9 @@
     SearchBar,
     FilterPanel,
     InfiniteScroll,
-    GenreChart,
-    DecadeChart,
     Navbar,
+    SpotifyHeader,
+    InsightsPanel,
   } from '../components';
   import { tracks, topStats, isLoading, totalTracks, searchOptions } from '../stores';
   import { loadTracks } from '../api';
@@ -32,52 +32,13 @@
 
 <Navbar />
 
-<div class="min-h-screen pt-16 p-4 md:p-8">
+<div class="min-h-screen pt-20 p-4 md:p-8">
   <div class="max-w-7xl mx-auto flex flex-col gap-6">
     <!-- Header -->
-    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-      <div>
-        <a
-          href="#/"
-          class="text-white/50 hover:text-white text-sm flex items-center gap-1 mb-2 transition-colors group"
-        >
-          <span class="group-hover:-translate-x-1 transition-transform">←</span> Back to Flows
-        </a>
-        <h1 class="text-4xl md:text-5xl font-bold text-aurora">Spotify Flow</h1>
-        <p class="text-white/40 text-sm mt-1">Your music library, visualized</p>
-      </div>
-
-      <!-- Stats Panel (Compact) -->
-      <div class="flex gap-6 md:gap-10">
-        <div class="text-right">
-          <div class="text-3xl font-bold text-aurora">{$topStats.total}</div>
-          <div class="text-xs text-white/40 uppercase tracking-widest">Tracks</div>
-        </div>
-        <div class="text-right">
-          <div class="text-xl font-semibold text-white truncate max-w-[150px]">
-            {$topStats.topGenre}
-          </div>
-          <div class="text-xs text-white/40 uppercase tracking-widest">Top Genre</div>
-        </div>
-      </div>
-    </header>
+    <SpotifyHeader stats={$topStats} />
 
     <!-- Insights Section -->
-    {#if $topStats.genres.length > 0}
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Genre Chart -->
-        <div class="glass glass-hover p-6">
-          <h3 class="text-lg font-semibold text-white/90 mb-4">Top Genres</h3>
-          <GenreChart data={$topStats.genres.slice(0, 6)} />
-        </div>
-
-        <!-- Decade/Timeline Chart -->
-        <div class="glass glass-hover p-6">
-          <h3 class="text-lg font-semibold text-white/90 mb-4">Eras</h3>
-          <DecadeChart data={$topStats.decadeDistribution} />
-        </div>
-      </div>
-    {/if}
+    <InsightsPanel stats={$topStats} />
 
     <!-- Controls -->
     <div class="flex items-center">

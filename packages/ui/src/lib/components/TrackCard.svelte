@@ -108,13 +108,13 @@
       <!-- Popularity Bar -->
       {#if track.popularity !== undefined}
         <div class="flex items-center gap-2 flex-grow" title="Popularity: {track.popularity}%">
-          <div class="w-full max-w-[60px] h-1.5 bg-nebula/20 rounded-full overflow-hidden">
+          <div class="w-full max-w-[60px] h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div
-              class="h-full bg-gradient-to-r from-aurora to-nebula"
+              class="h-full bg-gradient-to-r from-aurora to-cyan-400"
               style="width: {track.popularity}%"
             ></div>
           </div>
-          <span class="text-[10px] text-pulsar">{track.popularity}</span>
+          <span class="text-[10px] text-pulsar font-medium">{track.popularity}</span>
         </div>
       {/if}
       <!-- Added date -->

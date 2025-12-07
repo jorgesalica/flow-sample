@@ -67,7 +67,7 @@
 <!-- Filter Button -->
 <button
   onclick={togglePanel}
-  class="glass px-4 py-2 rounded-xl text-cosmic outline-none cursor-pointer hover:bg-nebula/20 transition-colors flex items-center gap-2"
+  class="glass px-4 py-2 rounded-xl text-cosmic outline-none cursor-pointer hover:bg-nebula/20 active:scale-95 transition-all flex items-center gap-2"
 >
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
@@ -96,7 +96,7 @@
 <!-- Expandable Panel -->
 {#if isOpen}
   <div
-    class="absolute top-full left-0 right-0 mt-2 p-4 rounded-xl glass bg-void/95 z-50 shadow-2xl shadow-aurora/10"
+    class="absolute top-full left-0 right-0 mt-2 p-4 rounded-xl border border-white/10 bg-void z-50 shadow-2xl shadow-aurora/10"
   >
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- Genre Filter -->
