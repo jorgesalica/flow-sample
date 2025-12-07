@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SpotifyUseCase, SpotifySourcePort, ArtistDetails } from '../../../src/application/spotify.usecase';
-import { TrackRepository, Track } from '../../../src/domain/flows/spotify';
+import { SpotifyUseCase, SpotifySourcePort, ArtistDetails } from '@app/spotify.usecase';
+import { TrackRepository, Track } from '@domain/flows/spotify';
 
 const mockTrack: Track = {
   id: '1',

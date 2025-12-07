@@ -4,6 +4,22 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2025-12-07 — Backend Refactoring & Aliases
+
+### Import Aliases & Build Tools
+- Refactored 27+ files to use path aliases (`@domain`, `@infra`, `@app`, `@api`) instead of relative imports.
+- Configured build tools to support aliases:
+    - Installed `tsc-alias` for production build path resolution.
+    - Installed `tsconfig-paths` for `ts-node` runtime resolution (dev/start).
+    - Updated `package.json` scripts and `tsconfig.json`.
+    - Updated `vitest.config.ts` to map aliases for tests.
+
+### Type Refactoring
+- Centralized `YearRange` and `GenreCount` in `@flows/shared` (removed local definitions).
+- Updated various services and repositories to import shared types.
+
+---
+
 ## 2025-12-07 — OAuth Flow, Husky, Test Refactoring
 
 ### OAuth 2.0 Flow

@@ -51,7 +51,9 @@ Ideas, future tasks, and things to do later.
 
 ## ✅ Done
 
-- [x] **[DevOps]** Implement path aliases (`@/`) for cleaner imports
+- [x] **[Backend/Refactor]** Convert relative imports to aliases (27+ files)
+- [x] **[DevOps]** Configure backend build tools for aliases (tsc-alias, tsconfig-paths)
+- [x] **[DevOps]** Implement path aliases (`@/`) for cleaner imports (UI & Backend)
 - [x] **[Docs]** General high-level project status check
 - [x] **[Backend/Refactor]** Split spotify.routes.ts (extract stats service)
 - [x] **[Backend/Refactor]** Centralize error handling middleware (already in app.ts)

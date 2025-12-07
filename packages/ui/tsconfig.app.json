@@ -23,7 +23,11 @@
     "baseUrl": ".",
     "paths": {
       "@lib/*": ["src/lib/*"],
-      "@components/*": ["src/lib/components/*"]
+      "@components/*": ["src/lib/components/*"],
+      "@domain/*": ["../backend/src/domain/*"],
+      "@infra/*": ["../backend/src/infrastructure/*"],
+      "@app/*": ["../backend/src/application/*"],
+      "@api/*": ["../backend/src/api/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]
