@@ -32,10 +32,25 @@ export class SpotifyApiAdapter implements SourcePort {
       (response) => response,
       async (error: AxiosError) => {
         const status = error.response?.status;
-        const originalRequest = error.config as typeof error.config & { _retry?: boolean };
+        const originalRequest = error.config as typeof error.config & { _retry?: boolean; _retryCount?: number };
 
+        // Handle rate limiting with auto-retry
         if (status === 429) {
-          const retryAfter = parseInt((error.response?.headers?.['retry-after'] as string) || '60');
+          const retryAfter = parseInt((error.response?.headers?.['retry-after'] as string) || '5');
+          const retryCount = originalRequest?._retryCount || 0;
+          const maxRetries = 3;
+
+          if (retryCount < maxRetries && originalRequest) {
+            originalRequest._retryCount = retryCount + 1;
+            log.warn({ retryAfter, attempt: retryCount + 1, maxRetries }, 'Rate limited by Spotify, retrying...');
+
+            // Wait for the specified time
+            await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+
+            return this.client(originalRequest);
+          }
+
+          // Max retries exceeded
           throw new SpotifyRateLimitError(retryAfter);
         }
 
