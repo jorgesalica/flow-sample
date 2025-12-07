@@ -12,9 +12,7 @@ Ideas, future tasks, and things to do later.
 
 ## 🔥 High Priority
 
-- [x] **[DevOps]** Implement path aliases (`@/`) for cleaner imports
 - [ ] **[Feat]** Lyrics Flow roadmap & spike (LrcLib integration)
-- [ ] **[Docs]** General high-level project status check
 
 ## ⚡ Medium Priority
 
@@ -33,11 +31,6 @@ Ideas, future tasks, and things to do later.
 - [ ] **[Test]** Performance benchmarks
 - [ ] **[Backend/Test]** Integration tests for API endpoints
 - [ ] **[UI/Test]** E2E test for full sync flow
-- [x] **[Backend/Refactor]** Split spotify.routes.ts (extract stats service)
-- [x] **[Backend/Refactor]** Centralize error handling middleware (already in app.ts)
-- [x] **[Backend/Feat]** Add health check endpoint (already exists /api/status)
-- [ ] **[UI/Refactor]** Improve components (add common elements, extract more)
-- [ ] **[UI/Refactor]** Extract color tokens to CSS variables
 - [ ] **[UI/Feat]** Add global loading states
 - [ ] **[UI/Perf]** Lazy load SpotifyFlow page
 - [ ] **[DevOps]** Fix backend path aliases (svelte-check cross-package issue)
@@ -54,8 +47,17 @@ Ideas, future tasks, and things to do later.
 
 *Last updated: 2025-12-07*
 
+---
+
 ## ✅ Done
 
+- [x] **[DevOps]** Implement path aliases (`@/`) for cleaner imports
+- [x] **[Docs]** General high-level project status check
+- [x] **[Backend/Refactor]** Split spotify.routes.ts (extract stats service)
+- [x] **[Backend/Refactor]** Centralize error handling middleware (already in app.ts)
+- [x] **[Backend/Feat]** Add health check endpoint (already exists /api/status)
+- [x] **[UI/Refactor]** Improve components (add common elements, extract more)
+- [x] **[UI/Refactor]** Extract color tokens to CSS variables (using Tailwind 4 @theme)
 - [x] **[UI/Bug]** Fix Filter Panel transparency issues (hard to see when open)
 - [x] **[UI/UX]** Improve "Clear All" in Filter Panel (should not close panel)
 - [x] **[Feat]** OAuth flow (replace manual token)
@@ -65,3 +67,6 @@ Ideas, future tasks, and things to do later.
 - [x] **[Test]** Add stub tests for future expansion (api-contract, error-handling, auth-flow)
 - [x] **[Docs]** Agent Documentation Overhaul (entry point + 6 sub-workflows)
 - [x] **[UI/Refactor]** Split components (AlbumArt, GenreBadges, FilterSelect, PopularitySlider)
+- [x] **[Refactor]** Centralize types in @flows/shared (GenreCount, YearCount, SelectOption, YearRange, StatusMessage)
+- [x] **[UI/Refactor]** Eliminate all inline types across components
+- [x] **[UI/Refactor]** Remove duplicate stores/index.ts

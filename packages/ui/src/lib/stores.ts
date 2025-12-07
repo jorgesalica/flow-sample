@@ -28,4 +28,3 @@ export const topStats = writable<TopStats>({
   genres: [],
   decadeDistribution: {},
 });
-

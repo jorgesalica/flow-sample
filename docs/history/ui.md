@@ -4,6 +4,31 @@ Changelog for the frontend (Svelte) application.
 
 ---
 
+## 2025-12-07 — Type Centralization
+
+### Centralized Types in @flows/shared
+All shared types now live in `@flows/shared` and are re-exported from `lib/types.ts`:
+
+| Type | Description |
+|------|-------------|
+| `GenreCount` | `{ genre, count }` for genre stats |
+| `YearCount` | `{ year, count }` for year stats |
+| `SelectOption` | `{ value, label }` for dropdowns |
+| `YearRange` | `{ oldest, newest }` for stats |
+| `StatusMessage` | `{ message, tone }` for status |
+| `StatusTone` | `'info' | 'success' | 'warning' | 'error'` |
+
+### Components Updated
+- `GenreFilter.svelte`, `YearFilter.svelte`, `FilterPanel.svelte`: use `GenreCount`, `YearCount`
+- `GenreChart.svelte`: uses `GenreCount`
+- `FilterSelect.svelte`: uses `SelectOption`
+- `stores.ts`: uses `StatusMessage`, `TopStats`
+
+### Removed
+- `lib/stores/index.ts` (duplicate file, was conflicting with `stores.ts`)
+
+---
+
 ## 2025-12-07 — Component Reorganization & Path Aliases
 
 ### Component Directory Restructure
