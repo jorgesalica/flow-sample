@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
-import Database from 'better-sqlite3';
+
 import { SQLiteTrackRepository } from '@infra/repositories/sqlite-track.repository';
 import { Track } from '@domain/flows/spotify';
 
