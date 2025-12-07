@@ -186,34 +186,8 @@ export function createSpotifyRoutes(config: Config) {
           return cached;
         }
 
-        const [count, genres, years] = await Promise.all([
-          spotifyRepository.count(),
-          spotifyRepository.getGenres(),
-          spotifyRepository.getYears(),
-        ]);
-
-        const topGenres = genres.slice(0, 10);
-        const decadeDistribution: Record<string, number> = {};
-
-        for (const { year, count } of years) {
-          const decade = Math.floor(year / 10) * 10;
-          const decadeKey = `${decade}s`;
-          decadeDistribution[decadeKey] = (decadeDistribution[decadeKey] || 0) + count;
-        }
-
-        const stats = {
-          totalTracks: count,
-          totalGenres: genres.length,
-          topGenres,
-          decadeDistribution,
-          yearRange:
-            years.length > 0
-              ? {
-                  oldest: years[years.length - 1]?.year,
-                  newest: years[0]?.year,
-                }
-              : null,
-        };
+        const { calculateStats } = await import('../application/stats.service');
+        const stats = await calculateStats(spotifyRepository);
 
         apiCache.set('stats', stats);
         return stats;

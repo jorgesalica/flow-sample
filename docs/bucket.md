@@ -22,19 +22,24 @@ Ideas, future tasks, and things to do later.
 
 ## 🐢 Low Priority
 
-- [ ] **[Feat]** PWA support & Offline capability
-- [ ] **[Feat]** Export to playlist
-- [ ] **[Feat]** LLM-powered insights
-- [ ] **[UI/UX]** Dark/light theme toggle
-- [ ] **[UI/UX]** Keyboard shortcuts
-- [ ] **[Mobile]** Mobile-optimized touch interactions
+- [ ] **[UI/Feat]** PWA support & Offline capability
+- [ ] **[UI/Feat]** Export to playlist
+- [ ] **[Backend/Feat]** LLM-powered insights
+- [ ] **[UI]** Dark/light theme toggle
+- [ ] **[UI]** Keyboard shortcuts
+- [ ] **[UI/Mobile]** Mobile-optimized touch interactions
 - [ ] **[DevOps]** Docker containerization
 - [ ] **[DevOps]** GitHub Actions CI/CD
 - [ ] **[Test]** Performance benchmarks
-- [ ] **[Test]** Integration tests for API endpoints
-- [ ] **[Test]** E2E test for full sync flow
-- [ ] **[Code]** Code cleanup and organization
+- [ ] **[Backend/Test]** Integration tests for API endpoints
+- [ ] **[UI/Test]** E2E test for full sync flow
+- [ ] **[Backend/Refactor]** Split spotify.routes.ts (extract stats service)
+- [ ] **[Backend/Refactor]** Centralize error handling middleware
+- [ ] **[Backend/Feat]** Add health check endpoint
 - [ ] **[UI/Refactor]** Improve components (add common elements, extract more)
+- [ ] **[UI/Refactor]** Extract color tokens to CSS variables
+- [ ] **[UI/Feat]** Add global loading states
+- [ ] **[UI/Perf]** Lazy load SpotifyFlow page
 - [ ] **[DevOps]** Fix backend path aliases (svelte-check cross-package issue)
 
 ## 🔮 Future Flows (TBD)

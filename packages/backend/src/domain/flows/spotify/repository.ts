@@ -8,4 +8,6 @@ export interface TrackRepository {
   findAll(): Promise<Track[]>;
   findById(id: string): Promise<Track | null>;
   count(): Promise<number>;
+  getGenres(): Promise<{ genre: string; count: number }[]>;
+  getYears(): Promise<{ year: number; count: number }[]>;
 }
