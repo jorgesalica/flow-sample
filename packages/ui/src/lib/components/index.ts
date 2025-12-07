@@ -1,5 +1,4 @@
 export { default as Controls } from './Controls.svelte';
-export { default as StatusBanner } from './StatusBanner.svelte';
 export { default as MetricCard } from './MetricCard.svelte';
 export { default as TrackCard } from './TrackCard.svelte';
 export { default as Pagination } from './Pagination.svelte';
@@ -10,3 +9,9 @@ export { default as FilterPanel } from './FilterPanel.svelte';
 export { default as InfiniteScroll } from './InfiniteScroll.svelte';
 export { default as GenreChart } from './GenreChart.svelte';
 export { default as DecadeChart } from './DecadeChart.svelte';
+export { default as Navbar } from './Navbar.svelte';
+export { default as SpotifyHeader } from './SpotifyHeader.svelte';
+export { default as InsightsPanel } from './InsightsPanel.svelte';
+
+
+

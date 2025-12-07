@@ -20,11 +20,25 @@
   let canvas: HTMLCanvasElement;
   let chart: Chart | null = null;
 
+  type GenreData = { genre: string; count: number };
+
+  // Cosmic Flow color palette for charts
+  const cosmicColors = [
+    'rgba(52, 211, 153, 0.85)', // Aurora (emerald)
+    'rgba(59, 130, 246, 0.85)', // Nebula (blue)
+    'rgba(139, 92, 246, 0.85)', // Cosmic purple
+    'rgba(236, 72, 153, 0.85)', // Pink accent
+    'rgba(6, 182, 212, 0.85)', // Cyan
+    'rgba(16, 185, 129, 0.85)', // Teal
+    'rgba(99, 102, 241, 0.85)', // Indigo
+    'rgba(168, 85, 247, 0.85)', // Purple
+  ];
+
   function updateChart() {
     if (!chart) return;
 
-    chart.data.labels = data.map((d) => d.genre);
-    chart.data.datasets[0].data = data.map((d) => d.count);
+    chart.data.labels = data.map((d: GenreData) => d.genre);
+    chart.data.datasets[0].data = data.map((d: GenreData) => d.count);
     chart.update();
   }
 
@@ -32,23 +46,16 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const config: ChartConfiguration = {
+    const config: ChartConfiguration<'doughnut'> = {
       type: 'doughnut',
       data: {
-        labels: data.map((d) => d.genre),
+        labels: data.map((d: GenreData) => d.genre),
         datasets: [
           {
-            data: data.map((d) => d.count),
-            backgroundColor: [
-              'rgba(255, 99, 132, 0.8)',
-              'rgba(54, 162, 235, 0.8)',
-              'rgba(255, 206, 86, 0.8)',
-              'rgba(75, 192, 192, 0.8)',
-              'rgba(153, 102, 255, 0.8)',
-              'rgba(255, 159, 64, 0.8)',
-            ],
-            borderColor: 'rgba(0, 0, 0, 0.2)',
-            borderWidth: 1,
+            data: data.map((d: GenreData) => d.count),
+            backgroundColor: cosmicColors,
+            borderColor: 'rgba(15, 23, 42, 0.8)',
+            borderWidth: 2,
           },
         ],
       },
@@ -58,8 +65,21 @@
           legend: {
             position: 'right',
             labels: {
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: 'rgba(148, 163, 184, 0.9)',
+              padding: 12,
+              font: {
+                size: 11,
+              },
             },
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleColor: 'rgba(226, 232, 240, 1)',
+            bodyColor: 'rgba(148, 163, 184, 1)',
+            borderColor: 'rgba(52, 211, 153, 0.3)',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 8,
           },
         },
       },

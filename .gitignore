@@ -143,3 +143,11 @@ outputs/
 
 # SQLite database
 data/*
+packages/backend/data/*
+
+# Playwright
+packages/ui/playwright-report/
+packages/ui/test-results/
+
+# Generated TypeScript declaration files
+packages/ui/*.d.ts

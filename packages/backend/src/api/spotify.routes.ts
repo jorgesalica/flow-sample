@@ -2,7 +2,11 @@ import { Elysia, t } from 'elysia';
 import { SpotifyUseCase } from '../application';
 import { SpotifyApiAdapter } from '../infrastructure/adapters/spotify-api';
 import { SQLiteTrackRepository } from '../infrastructure/repositories';
+import { apiCache } from '../infrastructure/cache';
+import { logger } from '../infrastructure/logger';
 import type { Config } from './config';
+
+const log = logger.child({ module: 'SpotifyRoutes' });
 
 export function createSpotifyRoutes(config: Config) {
   const repository = new SQLiteTrackRepository();
@@ -25,6 +29,11 @@ export function createSpotifyRoutes(config: Config) {
         async ({ spotifyUseCase, body, config }) => {
           const limit = body?.limit ?? config.spotify.pageLimit;
           const result = await spotifyUseCase.fetchAndSave({ limit });
+
+          // Invalidate cache after sync
+          apiCache.invalidateAll();
+          log.info('Cache invalidated after sync');
+
           return {
             success: true,
             message: 'Flow completed.',
@@ -89,18 +98,38 @@ export function createSpotifyRoutes(config: Config) {
         return { count };
       })
 
-      // Get all unique genres with counts
+      // Get all unique genres with counts (cached 5 min)
       .get('/genres', async ({ spotifyRepository }) => {
-        return spotifyRepository.getGenres();
+        const cached = apiCache.get<{ genre: string; count: number }[]>('genres');
+        if (cached) {
+          log.debug('Cache hit: genres');
+          return cached;
+        }
+        const genres = await spotifyRepository.getGenres();
+        apiCache.set('genres', genres);
+        return genres;
       })
 
-      // Get all years with counts
+      // Get all years with counts (cached 5 min)
       .get('/years', async ({ spotifyRepository }) => {
-        return spotifyRepository.getYears();
+        const cached = apiCache.get<{ year: number; count: number }[]>('years');
+        if (cached) {
+          log.debug('Cache hit: years');
+          return cached;
+        }
+        const years = await spotifyRepository.getYears();
+        apiCache.set('years', years);
+        return years;
       })
 
-      // Get stats summary
+      // Get stats summary (cached 5 min)
       .get('/stats', async ({ spotifyRepository }) => {
+        const cached = apiCache.get<object>('stats');
+        if (cached) {
+          log.debug('Cache hit: stats');
+          return cached;
+        }
+
         const [count, genres, years] = await Promise.all([
           spotifyRepository.count(),
           spotifyRepository.getGenres(),
@@ -116,7 +145,7 @@ export function createSpotifyRoutes(config: Config) {
           decadeDistribution[decadeKey] = (decadeDistribution[decadeKey] || 0) + count;
         }
 
-        return {
+        const stats = {
           totalTracks: count,
           totalGenres: genres.length,
           topGenres,
@@ -129,6 +158,9 @@ export function createSpotifyRoutes(config: Config) {
               }
               : null,
         };
+
+        apiCache.set('stats', stats);
+        return stats;
       })
   );
 }

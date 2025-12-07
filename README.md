@@ -2,6 +2,14 @@
 
 A playground for data flows — extract, transform, and visualize data from various sources.
 
+## ✨ Features
+
+- **Spotify Flow**: Sync your saved tracks, explore genres, decades, and discover patterns
+- **Cosmic UI**: Dark space-themed interface with glassmorphism and subtle animations
+- **Charts & Insights**: Genre distribution, decade analysis, and more
+- **Smart Caching**: 5-minute API cache with auto-invalidation
+- **Infinite Scroll**: Seamless browsing of your track library
+
 ## Current Architecture
 
 ```
@@ -22,9 +30,8 @@ A playground for data flows — extract, transform, and visualize data from vari
 pnpm install
 
 # 2. Configure environment
-# Copy example to backend package (where it's needed)
-cp .env.example packages/backend/.env
-# Fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, etc. in packages/backend/.env
+cp packages/backend/.env.example packages/backend/.env
+# Fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, etc.
 
 # 3. Development
 pnpm dev                # Runs backend (:4173) and UI (:5173) in parallel
@@ -40,7 +47,10 @@ flow-sample/
 │   └── shared/         # Shared Types/Interfaces (@flows/shared)
 ├── data/               # SQLite database
 ├── docs/               # Documentation
-└── package.json        # Root Workspace configuration
+│   ├── bucket.md       # Future tasks and ideas
+│   ├── design-system.md
+│   └── history/        # Changelogs
+└── package.json        # Root Workspace
 ```
 
 ## Available Scripts
@@ -48,29 +58,29 @@ flow-sample/
 | Script | Command | Description |
 | :--- | :--- | :--- |
 | **Dev** | `pnpm dev` | Start Backend + UI in parallel |
-| **Backend** | `pnpm --filter @flows/backend run dev` | Start only Backend |
-| **UI** | `pnpm --filter @flows/ui run dev` | Start only UI |
-| **Build Shared**| `pnpm build:shared` | Build shared types (required for TS) |
-| **Check** | `pnpm -r run check` | Run type checking in all packages |
-| **Lint** | `pnpm -r run lint` | Run ESLint in all packages |
+| **Type Check** | `pnpm run typecheck` | TypeScript checking |
+| **Test** | `pnpm run test` | Run unit tests |
+| **E2E** | `pnpm --filter @flows/ui run test:e2e` | Playwright tests |
+| **Lint** | `pnpm run lint` | ESLint |
 
 ## Tech Stack
 
-| Layer          | Technology                       |
-| -------------- | -------------------------------- |
-| **UI**         | Svelte 5, Vite 7, Tailwind CSS 4 |
-| **Server**     | Elysia (with Node.js adapter)    |
-| **Database**   | SQLite (better-sqlite3)          |
-| **Validation** | Zod, TypeBox                     |
-| **Testing**    | Vitest                           |
+| Layer | Technology |
+| ----- | ---------- |
+| **UI** | Svelte 5, Vite 7, Tailwind CSS 4, Chart.js |
+| **Server** | Elysia (with Node.js adapter) |
+| **Database** | SQLite (better-sqlite3) |
+| **Validation** | Zod, TypeBox |
+| **Testing** | Vitest, Playwright |
+| **Logging** | Pino |
 
 ## Documentation
 
-- [Architecture Overview](docs/architecture/README.md)
-- [Server Architecture](docs/architecture/server.md)
-- [Backend Architecture](docs/architecture/backend.md)
-- [UI Architecture](docs/architecture/ui.md)
-- [Project History](HISTORY.md)
+- [Architecture Roadmap](docs/refactor-proposals/future-architecture.md)
+- [Design System](docs/design-system.md)
+- [Future Tasks (Bucket)](docs/bucket.md)
+- [Backend History](docs/history/backend.md)
+- [UI History](docs/history/ui.md)
 
 ## License
 

@@ -4,6 +4,104 @@ Changelog for the frontend (Svelte) application.
 
 ---
 
+## 2025-12-07 — Component Refactor & UI Polish
+
+### Refactoring
+
+Broken down `SpotifyFlow.svelte` into manageable sub-components:
+- `SpotifyHeader.svelte`: Page title and top-level stats.
+- `InsightsPanel.svelte`: Container for charts (Genre/Decade).
+
+### UI Enhancements
+
+- **Navbar**: Added background (`bg-void/80 backdrop-blur-md`) and increased page padding (`pt-28`) to prevent overlap.
+- **Filter Panel**: Made background fully opaque (`bg-void`) and fixed dropdown option colors for dark theme.
+- **Track Cards**: Updated popularity bar design with gradient and clearer rail.
+- **Feedback**: Added hover/active scaling to control buttons.
+
+### Sync Cancellation
+
+Implemented `AbortController` in `api.ts` to allow cancelling the Spotify Sync process:
+- Added "Cancel" state to Sync button.
+- Properly tracks global `syncToastId` to dismiss loading toast on cancel.
+
+### Fixes
+
+- Fixed `app.css` 500 error by correcting invalid Tailwind 4 `@apply` utility.
+
+---
+
+## 2025-12-06 — Cosmic Flow UI Theme
+
+### Design System
+
+Created `docs/design-system.md` with dark space-themed palette:
+- **Void** (#0a0f1c): Deep black for backgrounds
+- **Nebula** (#3b82f6): Blue for accents
+- **Aurora** (#34d399): Emerald green for primary actions
+- **Pulsar** (#94a3b8): Muted text
+- **Cosmic** (#e2e8f0): Light text
+
+### Components Updated
+
+All components refactored with consistent theming:
+- `TrackCard.svelte`: Aurora/nebula colors, void backgrounds
+- `Controls.svelte`: Glass effect, btn-primary style
+- `FilterPanel.svelte`: Aurora accents, void dropdowns
+- `GenreChart.svelte`: Cosmic color palette, styled tooltips
+- `Landing.svelte`: text-cosmic gradient, glass-hover cards
+- `SpotifyFlow.svelte`: Removed StatusBanner, new header styling
+
+### Toast Notifications
+
+Replaced `StatusBanner` with `svelte-5-french-toast`.
+- Utility wrapper: `lib/toast.ts`
+- Added to `lib/api.ts` for error handling
+
+---
+
+## 2025-12-06 — E2E Testing with Playwright
+
+### Playwright Setup
+
+Installed and configured Playwright for end-to-end testing:
+
+```bash
+pnpm --filter @flows/ui add -D @playwright/test
+npx playwright install chromium
+```
+
+**Configuration (`playwright.config.ts`):**
+- Headless Chromium
+- HTML report output
+- Auto-starts dev server for tests
+- Screenshot on failure
+
+### Smoke Tests
+
+Created `e2e/smoke.spec.ts` with 3 tests:
+
+| Test | Description |
+|------|-------------|
+| Landing page loads | Verifies h1 and "Spotify Flow" text visible |
+| Navigate to Spotify Flow | Clicks card, verifies URL change |
+| Spotify Flow shows content | Checks for tracks or Sync button |
+
+**Commands:**
+```bash
+pnpm --filter @flows/ui run test:e2e      # Headless
+pnpm --filter @flows/ui run test:e2e:ui   # Interactive UI
+```
+
+### Gitignore Updates
+
+Added to `.gitignore`:
+- `packages/ui/playwright-report/`
+- `packages/ui/test-results/`
+
+---
+
+
 ## 2025-12-05 (Later) — pnpm Workspaces & Fixes
 
 ### Monorepo Migration

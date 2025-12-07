@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SpotifyUseCase, SpotifySourcePort } from '../../src/application/spotify.usecase';
+import { SpotifyUseCase, SpotifySourcePort, ArtistDetails } from '../../src/application/spotify.usecase';
 import { TrackRepository, Track } from '../../src/domain/flows/spotify';
 
 const mockTrack: Track = {
@@ -21,7 +21,7 @@ describe('SpotifyUseCase', () => {
   it('fetches tracks and saves them', async () => {
     const mockSource: SpotifySourcePort = {
       fetchTracks: vi.fn().mockResolvedValue([mockTrack]),
-      fetchArtistGenres: vi.fn().mockResolvedValue(new Map([['a1', ['rock']]])),
+      fetchArtistDetails: vi.fn().mockResolvedValue(new Map<string, ArtistDetails>([['a1', { genres: ['rock'], imageUrl: 'http://example.com/img.jpg' }]])),
     };
 
     const mockRepository: TrackRepository = {
@@ -42,7 +42,7 @@ describe('SpotifyUseCase', () => {
   it('handles empty track list', async () => {
     const mockSource: SpotifySourcePort = {
       fetchTracks: vi.fn().mockResolvedValue([]),
-      fetchArtistGenres: vi.fn().mockResolvedValue(new Map()),
+      fetchArtistDetails: vi.fn().mockResolvedValue(new Map<string, ArtistDetails>()),
     };
 
     const mockRepository: TrackRepository = {
@@ -62,7 +62,7 @@ describe('SpotifyUseCase', () => {
   it('returns tracks from repository', async () => {
     const mockSource: SpotifySourcePort = {
       fetchTracks: vi.fn(),
-      fetchArtistGenres: vi.fn(),
+      fetchArtistDetails: vi.fn(),
     };
 
     const mockRepository: TrackRepository = {
@@ -80,10 +80,10 @@ describe('SpotifyUseCase', () => {
   });
 
   it('enriches tracks with genres when enabled', async () => {
-    const genreMap = new Map([['a1', ['rock', 'alternative']]]);
+    const detailsMap = new Map<string, ArtistDetails>([['a1', { genres: ['rock', 'alternative'], imageUrl: 'http://example.com/img.jpg' }]]);
     const mockSource: SpotifySourcePort = {
       fetchTracks: vi.fn().mockResolvedValue([mockTrack]),
-      fetchArtistGenres: vi.fn().mockResolvedValue(genreMap),
+      fetchArtistDetails: vi.fn().mockResolvedValue(detailsMap),
     };
 
     const mockRepository: TrackRepository = {
@@ -96,13 +96,13 @@ describe('SpotifyUseCase', () => {
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
     await useCase.fetchAndSave({ limit: 1, enrichGenres: true });
 
-    expect(mockSource.fetchArtistGenres).toHaveBeenCalledWith(['a1']);
+    expect(mockSource.fetchArtistDetails).toHaveBeenCalledWith(['a1']);
   });
 
   it('skips genre enrichment when disabled', async () => {
     const mockSource: SpotifySourcePort = {
       fetchTracks: vi.fn().mockResolvedValue([mockTrack]),
-      fetchArtistGenres: vi.fn(),
+      fetchArtistDetails: vi.fn(),
     };
 
     const mockRepository: TrackRepository = {
@@ -115,6 +115,46 @@ describe('SpotifyUseCase', () => {
     const useCase = new SpotifyUseCase(mockSource, mockRepository);
     await useCase.fetchAndSave({ limit: 1, enrichGenres: false });
 
-    expect(mockSource.fetchArtistGenres).not.toHaveBeenCalled();
+    expect(mockSource.fetchArtistDetails).not.toHaveBeenCalled();
+  });
+
+  it('propagates fetch errors', async () => {
+    const mockSource: SpotifySourcePort = {
+      fetchTracks: vi.fn().mockRejectedValue(new Error('API Error')),
+      fetchArtistDetails: vi.fn(),
+    };
+
+    const mockRepository: TrackRepository = {
+      save: vi.fn(),
+      findAll: vi.fn(),
+      findById: vi.fn(),
+      count: vi.fn(),
+    };
+
+    const useCase = new SpotifyUseCase(mockSource, mockRepository);
+
+    await expect(useCase.fetchAndSave({ limit: 1 })).rejects.toThrow('API Error');
+    expect(mockRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('returns count from repository', async () => {
+    const mockSource: SpotifySourcePort = {
+      fetchTracks: vi.fn(),
+      fetchArtistDetails: vi.fn(),
+    };
+
+    const mockRepository: TrackRepository = {
+      save: vi.fn(),
+      findAll: vi.fn(),
+      findById: vi.fn(),
+      count: vi.fn().mockResolvedValue(42),
+    };
+
+    const useCase = new SpotifyUseCase(mockSource, mockRepository);
+    const count = await useCase.getTrackCount();
+
+    expect(count).toBe(42);
+    expect(mockRepository.count).toHaveBeenCalled();
   });
 });
+

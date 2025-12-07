@@ -4,6 +4,58 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2025-12-06 — Structured Logging, Caching & Resilience
+
+### Deep Structured Logging (Pino)
+
+Added comprehensive logging across the backend:
+
+```typescript
+import { logger } from '../infrastructure/logger';
+const log = logger.child({ module: 'SQLiteTrackRepository' });
+
+log.info({ trackCount: tracks.length }, 'Saving tracks to SQLite');
+log.debug({ page, limit, query }, 'Searching tracks');
+```
+
+**Logged operations:**
+- `SQLiteTrackRepository`: save, findPaginated
+- `SpotifyApiAdapter`: fetchTracks, fetchArtistDetails
+- `app.ts`: Server startup, request handling
+
+### Rate Limit Auto-Retry
+
+Auto-retry with exponential backoff for Spotify 429 errors:
+
+- Up to 3 retries per request
+- Respects `Retry-After` header from Spotify
+- Logs each retry attempt
+
+### Unit Tests
+
+Updated mocks to use `fetchArtistDetails`:
+
+**Test Status:** 12 tests passing (5 unit + 7 integration)
+
+### API Caching
+
+In-memory cache with 5-minute TTL:
+
+**Cached endpoints:**
+- `GET /api/spotify/genres`
+- `GET /api/spotify/years`
+- `GET /api/spotify/stats`
+
+Cache invalidated after sync (`POST /run`).
+
+### Environment Files
+
+- Created `packages/backend/.env.example`
+
+---
+
+
+
 ## 2025-12-05 (Later) — pnpm Workspaces Monorepo
 
 Restructured project to pnpm workspaces:

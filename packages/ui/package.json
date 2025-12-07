@@ -9,10 +9,13 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "lint": "eslint src",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.57.0",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
     "@tailwindcss/postcss": "^4.1.17",
     "@tailwindcss/vite": "^4.1.17",
@@ -39,6 +42,7 @@
     "@elysiajs/eden": "^1.4.5",
     "@flows/backend": "workspace:*",
     "@flows/shared": "workspace:*",
-    "chart.js": "^4.5.1"
+    "chart.js": "^4.5.1",
+    "svelte-5-french-toast": "^2.0.6"
   }
 }
