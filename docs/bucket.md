@@ -60,3 +60,4 @@ Ideas, future tasks, and things to do later.
 - [x] **[UI/UX]** Custom favicon (space/flow theme)
 - [x] **[DevOps]** Protect main with Husky pre-push/pre-commit hooks
 - [x] **[Test]** Refactor test structure (organize by domain/flow)
+- [x] **[Test]** Add stub tests for future expansion (api-contract, error-handling, auth-flow)
