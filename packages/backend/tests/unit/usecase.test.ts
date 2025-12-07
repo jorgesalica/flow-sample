@@ -117,4 +117,44 @@ describe('SpotifyUseCase', () => {
 
     expect(mockSource.fetchArtistDetails).not.toHaveBeenCalled();
   });
+
+  it('propagates fetch errors', async () => {
+    const mockSource: SpotifySourcePort = {
+      fetchTracks: vi.fn().mockRejectedValue(new Error('API Error')),
+      fetchArtistDetails: vi.fn(),
+    };
+
+    const mockRepository: TrackRepository = {
+      save: vi.fn(),
+      findAll: vi.fn(),
+      findById: vi.fn(),
+      count: vi.fn(),
+    };
+
+    const useCase = new SpotifyUseCase(mockSource, mockRepository);
+
+    await expect(useCase.fetchAndSave({ limit: 1 })).rejects.toThrow('API Error');
+    expect(mockRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('returns count from repository', async () => {
+    const mockSource: SpotifySourcePort = {
+      fetchTracks: vi.fn(),
+      fetchArtistDetails: vi.fn(),
+    };
+
+    const mockRepository: TrackRepository = {
+      save: vi.fn(),
+      findAll: vi.fn(),
+      findById: vi.fn(),
+      count: vi.fn().mockResolvedValue(42),
+    };
+
+    const useCase = new SpotifyUseCase(mockSource, mockRepository);
+    const count = await useCase.getTrackCount();
+
+    expect(count).toBe(42);
+    expect(mockRepository.count).toHaveBeenCalled();
+  });
 });
+
