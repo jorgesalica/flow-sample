@@ -1,36 +1,127 @@
 @import 'tailwindcss';
 
+/* Cosmic Flow Design System */
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.1);
-  --glass-border: rgba(255, 255, 255, 0.2);
+  /* Base - Deep Space */
+  --color-void: #0a0e17;
+  --color-nebula: #111827;
+  --color-stardust: #1f2937;
+
+  /* Accents - Aurora Borealis */
+  --color-aurora: #10b981;
+  --color-pulsar: #06b6d4;
+  --color-cosmic: #8b5cf6;
+
+  /* Glass effect */
+  --glass-bg: rgba(17, 24, 39, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 body {
-  @apply bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen text-white;
+  background: linear-gradient(135deg, var(--color-void) 0%, #0f172a 50%, #0a1628 100%);
+  min-height: 100vh;
+  color: white;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Glass morphism card */
 .glass {
-  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
 }
 
-/* Mobile-first responsive utilities */
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 30px -10px rgba(16, 185, 129, 0.2);
+}
+
+/* Gradient text - Aurora */
+.text-aurora {
+  background: linear-gradient(135deg, var(--color-aurora) 0%, var(--color-pulsar) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient text - Cosmic */
+.text-cosmic {
+  background: linear-gradient(135deg, var(--color-pulsar) 0%, var(--color-cosmic) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Primary button */
+.btn-aurora {
+  background: linear-gradient(135deg, var(--color-aurora) 0%, #059669 100%);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-aurora:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4);
+}
+
+/* Ghost button */
+.btn-ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Subtle glow animation */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.glow-pulse {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Mobile-first responsive */
 @media (max-width: 640px) {
-  /* Improve touch targets on mobile */
-  button, a, input, select {
+
+  button,
+  a[role="button"],
+  input,
+  select {
     min-height: 44px;
   }
-  
-  /* Better chart sizing on mobile */
+
   .chart-container {
-    min-height: 200px;
-  }
-  
-  /* Prevent horizontal scroll */
-  .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
+    min-height: 180px;
   }
 }
 
@@ -39,23 +130,53 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Focus states for accessibility */
+/* Focus states - accessible */
 :focus-visible {
-  @apply outline-2 outline-offset-2 outline-purple-400;
+  outline: 2px solid var(--color-aurora);
+  outline-offset: 2px;
 }
 
-/* Hide scrollbar but allow scrolling (for mobile) */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* Scrollbar - minimal */
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Safe area padding for notched devices */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Genre/tag badges */
+.badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-aurora);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--color-nebula) 25%, var(--color-stardust) 50%, var(--color-nebula) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
   }
 }

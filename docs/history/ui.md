@@ -4,6 +4,35 @@ Changelog for the frontend (Svelte) application.
 
 ---
 
+## 2025-12-06 — Cosmic Flow UI Theme
+
+### Design System
+
+Created `docs/design-system.md` with dark space-themed palette:
+- **Void** (#0a0f1c): Deep black for backgrounds
+- **Nebula** (#3b82f6): Blue for accents
+- **Aurora** (#34d399): Emerald green for primary actions
+- **Pulsar** (#94a3b8): Muted text
+- **Cosmic** (#e2e8f0): Light text
+
+### Components Updated
+
+All components refactored with consistent theming:
+- `TrackCard.svelte`: Aurora/nebula colors, void backgrounds
+- `Controls.svelte`: Glass effect, btn-primary style
+- `FilterPanel.svelte`: Aurora accents, void dropdowns
+- `GenreChart.svelte`: Cosmic color palette, styled tooltips
+- `Landing.svelte`: text-cosmic gradient, glass-hover cards
+- `SpotifyFlow.svelte`: Removed StatusBanner, new header styling
+
+### Toast Notifications
+
+Replaced `StatusBanner` with `svelte-5-french-toast`.
+- Utility wrapper: `lib/toast.ts`
+- Added to `lib/api.ts` for error handling
+
+---
+
 ## 2025-12-06 — E2E Testing with Playwright
 
 ### Playwright Setup
