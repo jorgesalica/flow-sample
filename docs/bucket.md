@@ -12,7 +12,10 @@ Ideas, future tasks, and things to do later.
 
 ## 🔥 High Priority
 
-
+- [ ] **[Docs]** Agent Documentation Overhaul
+  - Entry point: `.agent/workflows/agents_flow.md`
+  - Sub-docs: `agents-checkpoint.md`, `agents-documentation-refresh.md`
+  - Define workflows for docs/README updates
 
 ## ⚡ Medium Priority
 
@@ -20,6 +23,8 @@ Ideas, future tasks, and things to do later.
 - [ ] **[UI/Refactor]** Split large components (TrackCard, FilterPanel)
 - [ ] **[Test]** Integration tests for API endpoints
 - [ ] **[Test]** E2E test for full sync flow
+- [ ] **[Docs]** Agent Workflows expansion
+  - agents-checkpoint, agents-pre-commit, agents-feature-start, agents-debug
 
 ## 🐢 Low Priority
 
@@ -54,3 +59,4 @@ Ideas, future tasks, and things to do later.
 - [x] **[Feat]** OAuth flow (replace manual token)
 - [x] **[UI/UX]** Custom favicon (space/flow theme)
 - [x] **[DevOps]** Protect main with Husky pre-push/pre-commit hooks
+- [x] **[Test]** Refactor test structure (organize by domain/flow)
