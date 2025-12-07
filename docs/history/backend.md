@@ -4,48 +4,56 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
-## 2025-12-06 — Structured Logging & Testing
+## 2025-12-06 — Structured Logging, Caching & Resilience
 
 ### Deep Structured Logging (Pino)
 
 Added comprehensive logging across the backend:
 
-const mockSource: SpotifySourcePort = {
-  fetchTracks: vi.fn().mockResolvedValue([mockTrack]),
-  fetchArtistDetails: vi.fn().mockResolvedValue(detailsMap),
-};
+```typescript
+import { logger } from '../infrastructure/logger';
+const log = logger.child({ module: 'SQLiteTrackRepository' });
+
+log.info({ trackCount: tracks.length }, 'Saving tracks to SQLite');
+log.debug({ page, limit, query }, 'Searching tracks');
 ```
+
+**Logged operations:**
+- `SQLiteTrackRepository`: save, findPaginated
+- `SpotifyApiAdapter`: fetchTracks, fetchArtistDetails
+- `app.ts`: Server startup, request handling
+
+### Rate Limit Auto-Retry
+
+Auto-retry with exponential backoff for Spotify 429 errors:
+
+- Up to 3 retries per request
+- Respects `Retry-After` header from Spotify
+- Logs each retry attempt
+
+### Unit Tests
+
+Updated mocks to use `fetchArtistDetails`:
 
 **Test Status:** 12 tests passing (5 unit + 7 integration)
 
 ### API Caching
 
-Implemented in-memory cache with 5-minute TTL for static endpoints:
-
-```typescript
-// New cache module
-import { apiCache } from '../infrastructure/cache';
-
-// Usage in routes
-const cached = apiCache.get<object>('stats');
-if (cached) return cached;
-
-const stats = await computeStats();
-apiCache.set('stats', stats);
-```
+In-memory cache with 5-minute TTL:
 
 **Cached endpoints:**
-- `GET /api/spotify/genres` - 5 min TTL
-- `GET /api/spotify/years` - 5 min TTL
-- `GET /api/spotify/stats` - 5 min TTL
+- `GET /api/spotify/genres`
+- `GET /api/spotify/years`
+- `GET /api/spotify/stats`
 
-Cache is invalidated after sync (`POST /run`).
+Cache invalidated after sync (`POST /run`).
 
 ### Environment Files
 
-- Created `packages/backend/.env.example` with all required variables
+- Created `packages/backend/.env.example`
 
 ---
+
 
 
 ## 2025-12-05 (Later) — pnpm Workspaces Monorepo

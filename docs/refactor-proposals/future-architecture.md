@@ -56,6 +56,7 @@ packages/
 
 | Item | Notes |
 |------|-------|
+| **Husky pre-push** | Protect main from accidental pushes |
 | **Lyrics Flow** | Data source for future LLM |
 | **LLM Integration** | After gathering more data |
 | **Docker** | If deployment needed |
