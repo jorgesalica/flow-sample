@@ -1,10 +1,4 @@
-import type {
-  Track,
-  Artist,
-  TrackRepository,
-  GenreCount,
-  YearCount,
-} from '@domain/flows/spotify';
+import type { Track, Artist, TrackRepository, GenreCount, YearCount } from '@domain/flows/spotify';
 import db from '@infra/persistence/sqlite';
 import { logger } from '@infra/logger';
 
