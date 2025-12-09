@@ -12,7 +12,7 @@ Ideas, future tasks, and things to do later.
 
 ## 🔥 High Priority
 
-- [ ] **[Feat]** Lyrics Flow (LrcLib integration)
+- [x] **[Feat]** Lyrics Flow (LrcLib integration)
 
 ## ⚡ Medium Priority
 

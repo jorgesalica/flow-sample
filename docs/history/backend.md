@@ -4,6 +4,21 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2025-12-09 — Lyrics Flow (Backend)
+
+### Infrastructure
+- **Schema**: Added `lyrics` table with `plain_lyrics`, `synced_lyrics`, `status` (pending/found/not_found), and `fetched_at`.
+- **Adapter**: `LrcLibAdapter` for fetching lyrics from `lrclib.net` (no auth required).
+- **Repository**: `SQLiteLyricsRepository` with helper to fetching pending track IDs.
+
+### API & Logic
+- **Cache-First Strategy**: `GET /api/lyrics/:trackId` strictly returns cached data if found.
+- **Force Fetch**: Added `?force=true` param to bypass cache and re-fetch from LrcLib.
+- **Batch Processing**: `POST /api/lyrics/fetch-all` endpoint to process only pending tracks.
+- **CORS**: Enabled `@elysiajs/cors` to allow cross-origin requests from frontend.
+
+---
+
 ## 2025-12-07 — Backend Refactoring & Aliases
 
 ### Import Aliases & Build Tools

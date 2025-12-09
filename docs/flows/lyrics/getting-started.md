@@ -71,7 +71,7 @@ Location: **TrackCard component**
 |-------|--------|--------|
 | `pending` | "View Lyrics" | Fetch from LrcLib → Show modal |
 | `found` | "View Lyrics" | Show cached lyrics |
-| `not_found` | "No Lyrics" (disabled) | — |
+| `not_found` | "No Lyrics" (enables modal) | Show "Not Found" message + "Retry" button |
 
 ### Batch Button
 
@@ -87,7 +87,7 @@ Location: **Near Sync button (Controls component)**
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/lyrics/:trackId` | Get lyrics for a track (fetches if pending) |
+| `GET` | `/api/lyrics/:trackId` | Get lyrics. Use `?force=true` to bypass cache. |
 | `POST` | `/api/lyrics/fetch-all` | Batch fetch all pending lyrics |
 
 ---
