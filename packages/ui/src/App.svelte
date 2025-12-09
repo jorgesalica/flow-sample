@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Landing, SpotifyFlow } from './lib/pages';
+  import { Landing, SpotifyFlow, LyricsFlow } from './lib/pages';
   import { Toaster } from './lib/toast';
 
   // Simple hash-based routing
@@ -18,6 +18,8 @@
 
 {#if currentRoute === '#/spotify'}
   <SpotifyFlow />
+{:else if currentRoute === '#/lyrics'}
+  <LyricsFlow />
 {:else}
   <Landing />
 {/if}

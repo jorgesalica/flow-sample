@@ -13,16 +13,6 @@
   // Placeholder flows for "coming soon" features
   const placeholderFlows: FlowCard[] = [
     {
-      id: 'lyrics',
-      name: 'Lyrics Flow',
-      icon: '📝',
-      description: 'Analyze song lyrics and discover themes',
-      route: '#/lyrics',
-      color: 'from-blue-400 to-cyan-500',
-      stats: { count: 0, status: 'disabled', statusMessage: 'Coming Soon' },
-      getStats: async () => ({ count: 0, status: 'disabled' }),
-    },
-    {
       id: 'youtube',
       name: 'YouTube Flow',
       icon: '📺',
