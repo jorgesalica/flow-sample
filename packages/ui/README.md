@@ -45,18 +45,19 @@ src/
 
 ## Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run lint` | ESLint check |
-| `npm run format` | Prettier format |
-| `npm run check` | Svelte + TypeScript check |
+| Script            | Description               |
+| ----------------- | ------------------------- |
+| `npm run dev`     | Start dev server          |
+| `npm run build`   | Production build          |
+| `npm run preview` | Preview production build  |
+| `npm run lint`    | ESLint check              |
+| `npm run format`  | Prettier format           |
+| `npm run check`   | Svelte + TypeScript check |
 
 ## Development
 
 The UI connects to the backend server for:
+
 - `GET /outputs/spotify/liked_songs.json` — Load saved tracks
 - `POST /api/spotify/run` — Trigger Spotify fetch
 

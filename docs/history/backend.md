@@ -4,6 +4,44 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2025-12-07 — Backend Refactoring & Aliases
+
+### Import Aliases & Build Tools
+- Refactored 27+ files to use path aliases (`@domain`, `@infra`, `@app`, `@api`) instead of relative imports.
+- Configured build tools to support aliases:
+    - Installed `tsc-alias` for production build path resolution.
+    - Installed `tsconfig-paths` for `ts-node` runtime resolution (dev/start).
+    - Updated `package.json` scripts and `tsconfig.json`.
+    - Updated `vitest.config.ts` to map aliases for tests.
+- Split TypeScript config:
+    - `tsconfig.json`: For IDE and typechecking (includes `src/` + `tests/`).
+    - `tsconfig.build.json`: For production build (only `src/`, preserves `dist/` structure).
+
+### Type Refactoring
+- Centralized `YearRange` and `GenreCount` in `@flows/shared` (removed local definitions).
+- Updated various services and repositories to import shared types.
+
+---
+
+## 2025-12-07 — OAuth Flow, Husky, Test Refactoring
+
+### OAuth 2.0 Flow
+- Replaced manual `SPOTIFY_REFRESH_TOKEN` with user-friendly OAuth flow
+- New routes: `/auth/login`, `/auth/callback`, `/auth/status`
+- Token storage in SQLite `token_cache` table
+- Auto token refresh with rotation support
+
+### Husky Git Hooks
+- Pre-commit: runs `lint` and `format`
+- Pre-push: runs `check` and `test`
+
+### Test Reorganization
+- Backend tests organized by domain: `tests/unit/spotify/`, `tests/integration/spotify/`
+- Added stub tests for future: API contract, error handling, auth flow
+- 14 tests passing, 15 TODOs for expansion
+
+---
+
 ## 2025-12-06 — Structured Logging, Caching & Resilience
 
 ### Deep Structured Logging (Pino)

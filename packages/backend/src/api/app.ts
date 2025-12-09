@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto';
 
 import { loadConfig } from './config';
 import { createSpotifyRoutes } from './spotify.routes';
-import { logger } from '../infrastructure/logger';
+import { logger } from '@infra/logger';
 
 const config = loadConfig();
 const log = logger.child({ module: 'Server' });
@@ -20,19 +20,22 @@ const app = new Elysia({ adapter: node() })
   .onRequest(({ request }) => {
     // Generate request ID
     const requestId = randomUUID();
-    // @ts-ignore
+
     request.headers.set('X-Request-ID', requestId);
   })
   .onAfterHandle(({ request, set }) => {
     const url = new URL(request.url).pathname;
     const method = request.method;
 
-    log.info({
-      method,
-      url,
-      status: set.status,
-      // requestId: request.headers.get('X-Request-ID'), // TODO: Pass via context
-    }, 'Request processed');
+    log.info(
+      {
+        method,
+        url,
+        status: set.status,
+        // requestId: request.headers.get('X-Request-ID'), // TODO: Pass via context
+      },
+      'Request processed',
+    );
   })
   // Health check
   .get('/api/status', () => ({ success: true, message: 'Server ready.' }))
@@ -51,7 +54,10 @@ const app = new Elysia({ adapter: node() })
   // Error handling
   .onError(({ error, set }) => {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    log.error({ error: message, stack: error instanceof Error ? error.stack : undefined }, 'Request error');
+    log.error(
+      { error: message, stack: error instanceof Error ? error.stack : undefined },
+      'Request error',
+    );
     set.status = 500;
     return { success: false, error: message };
   });
@@ -80,7 +86,7 @@ const host = config.app.host;
 
 log.info({ host, port }, 'Server starting...');
 
-app.listen({ port, hostname: host }, ({ hostname, port }: { hostname: string, port: number }) => {
+app.listen({ port, hostname: host }, ({ hostname, port }: { hostname: string; port: number }) => {
   log.info({ host: hostname, port }, 'Server started');
   if (!fs.existsSync(uiDistPath)) {
     log.info(

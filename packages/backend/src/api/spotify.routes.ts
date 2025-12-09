@@ -1,27 +1,85 @@
 import { Elysia, t } from 'elysia';
-import { SpotifyUseCase } from '../application';
-import { SpotifyApiAdapter } from '../infrastructure/adapters/spotify-api';
-import { SQLiteTrackRepository } from '../infrastructure/repositories';
-import { apiCache } from '../infrastructure/cache';
-import { logger } from '../infrastructure/logger';
+import { SpotifyUseCase } from '@app/index';
+import { calculateStats } from '@app/stats.service';
+import type { GenreCount, YearCount } from '@domain/flows/spotify';
+import { SpotifyApiAdapter } from '@infra/adapters/spotify-api';
+import { SQLiteTrackRepository } from '@infra/repositories';
+import { apiCache } from '@infra/cache';
+import { logger } from '@infra/logger';
 import type { Config } from './config';
 
 const log = logger.child({ module: 'SpotifyRoutes' });
 
+import { SQLiteTokenRepository } from '@infra/repositories/sqlite-token.repository';
+
 export function createSpotifyRoutes(config: Config) {
   const repository = new SQLiteTrackRepository();
-  const adapter = new SpotifyApiAdapter({
-    clientId: config.spotify.clientId,
-    clientSecret: config.spotify.clientSecret,
-    refreshToken: config.spotify.refreshToken,
-  });
+  const tokenRepository = new SQLiteTokenRepository();
+
+  const adapter = new SpotifyApiAdapter(
+    {
+      clientId: config.spotify.clientId,
+      clientSecret: config.spotify.clientSecret,
+      refreshToken: config.spotify.refreshToken,
+    },
+    tokenRepository,
+  );
+
   const useCase = new SpotifyUseCase(adapter, repository);
 
   return (
     new Elysia({ prefix: '/api/spotify' })
       .decorate('spotifyUseCase', useCase)
       .decorate('spotifyRepository', repository)
+      .decorate('tokenRepository', tokenRepository)
+      .decorate('adapter', adapter)
       .decorate('config', config)
+
+      // --- Auth Routes ---
+
+      .get('/auth/login', ({ redirect, config }) => {
+        const scope = 'user-library-read user-read-email';
+        const params = new URLSearchParams({
+          response_type: 'code',
+          client_id: config.spotify.clientId,
+          scope,
+          redirect_uri: 'http://127.0.0.1:4173/api/spotify/auth/callback',
+        });
+
+        return redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
+      })
+
+      .get(
+        '/auth/callback',
+        async ({ query, adapter, set, redirect }) => {
+          const code = query.code;
+          if (!code) {
+            set.status = 400;
+            return { error: 'No code provided' };
+          }
+
+          try {
+            await adapter.exchangeCode(code);
+            return redirect('http://localhost:5173/?connected=true#/spotify'); // Back to UI Spotify Flow
+          } catch {
+            set.status = 500;
+            return { error: 'Failed to exchange token' };
+          }
+        },
+        {
+          query: t.Object({
+            code: t.String(),
+            state: t.Optional(t.String()),
+          }),
+        },
+      )
+
+      .get('/auth/status', ({ tokenRepository }) => {
+        const hasToken = !!tokenRepository.get('spotify:refresh_token');
+        return { connected: hasToken };
+      })
+
+      // --- Flow Routes ---
 
       // Run flow (fetch + enrich + save)
       .post(
@@ -100,7 +158,7 @@ export function createSpotifyRoutes(config: Config) {
 
       // Get all unique genres with counts (cached 5 min)
       .get('/genres', async ({ spotifyRepository }) => {
-        const cached = apiCache.get<{ genre: string; count: number }[]>('genres');
+        const cached = apiCache.get<GenreCount[]>('genres');
         if (cached) {
           log.debug('Cache hit: genres');
           return cached;
@@ -112,7 +170,7 @@ export function createSpotifyRoutes(config: Config) {
 
       // Get all years with counts (cached 5 min)
       .get('/years', async ({ spotifyRepository }) => {
-        const cached = apiCache.get<{ year: number; count: number }[]>('years');
+        const cached = apiCache.get<YearCount[]>('years');
         if (cached) {
           log.debug('Cache hit: years');
           return cached;
@@ -130,34 +188,7 @@ export function createSpotifyRoutes(config: Config) {
           return cached;
         }
 
-        const [count, genres, years] = await Promise.all([
-          spotifyRepository.count(),
-          spotifyRepository.getGenres(),
-          spotifyRepository.getYears(),
-        ]);
-
-        const topGenres = genres.slice(0, 10);
-        const decadeDistribution: Record<string, number> = {};
-
-        for (const { year, count } of years) {
-          const decade = Math.floor(year / 10) * 10;
-          const decadeKey = `${decade}s`;
-          decadeDistribution[decadeKey] = (decadeDistribution[decadeKey] || 0) + count;
-        }
-
-        const stats = {
-          totalTracks: count,
-          totalGenres: genres.length,
-          topGenres,
-          decadeDistribution,
-          yearRange:
-            years.length > 0
-              ? {
-                oldest: years[years.length - 1]?.year,
-                newest: years[0]?.year,
-              }
-              : null,
-        };
+        const stats = await calculateStats(spotifyRepository);
 
         apiCache.set('stats', stats);
         return stats;

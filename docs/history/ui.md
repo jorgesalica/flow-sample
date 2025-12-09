@@ -4,6 +4,67 @@ Changelog for the frontend (Svelte) application.
 
 ---
 
+## 2025-12-07 — Type Centralization
+
+### Centralized Types in @flows/shared
+All shared types now live in `@flows/shared` and are re-exported from `lib/types.ts`:
+
+| Type | Description |
+|------|-------------|
+| `GenreCount` | `{ genre, count }` for genre stats |
+| `YearCount` | `{ year, count }` for year stats |
+| `SelectOption` | `{ value, label }` for dropdowns |
+| `YearRange` | `{ oldest, newest }` for stats |
+| `StatusMessage` | `{ message, tone }` for status |
+| `StatusTone` | `'info' | 'success' | 'warning' | 'error'` |
+
+### Components Updated
+- `GenreFilter.svelte`, `YearFilter.svelte`, `FilterPanel.svelte`: use `GenreCount`, `YearCount`
+- `GenreChart.svelte`: uses `GenreCount`
+- `FilterSelect.svelte`: uses `SelectOption`
+- `stores.ts`: uses `StatusMessage`, `TopStats`
+
+### Removed
+- `lib/stores/index.ts` (duplicate file, was conflicting with `stores.ts`)
+
+---
+
+## 2025-12-07 — Component Reorganization & Path Aliases
+
+### Component Directory Restructure
+Organized 18 components into 5 semantic folders:
+
+| Folder | Components |
+|--------|------------|
+| `track/` | TrackCard, AlbumArt, GenreBadges |
+| `filters/` | FilterPanel, FilterSelect, GenreFilter, YearFilter, PopularitySlider |
+| `charts/` | GenreChart, DecadeChart, InsightsPanel |
+| `common/` | SearchBar, Pagination, InfiniteScroll, MetricCard |
+| `layout/` | Controls, Navbar, SpotifyHeader |
+
+### Split Components
+Extracted reusable sub-components from TrackCard:
+- `AlbumArt.svelte`: Album image, duration overlay, Spotify link
+- `GenreBadges.svelte`: Genre tag display
+- `FilterSelect.svelte`: Generic select wrapper
+- `PopularitySlider.svelte`: Range slider component
+
+### Path Aliases
+Configured Vite + TypeScript for cleaner imports:
+```typescript
+// Before
+import { stores } from '../../stores';
+
+// After
+import { stores } from '@lib/stores';
+import TrackCard from '@components/track/TrackCard.svelte';
+```
+
+### TypeScript Target
+Updated `tsconfig.app.json` target from ES2022 → **ES2024**.
+
+---
+
 ## 2025-12-07 — Component Refactor & UI Polish
 
 ### Refactoring

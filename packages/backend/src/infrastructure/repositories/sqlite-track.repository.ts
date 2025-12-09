@@ -1,6 +1,12 @@
-import type { Track, Artist, TrackRepository } from '../../domain/flows/spotify';
-import db from '../persistence/sqlite';
-import { logger } from '../logger';
+import type {
+  Track,
+  Artist,
+  TrackRepository,
+  GenreCount,
+  YearCount,
+} from '@domain/flows/spotify';
+import db from '@infra/persistence/sqlite';
+import { logger } from '@infra/logger';
 
 const log = logger.child({ module: 'SQLiteTrackRepository' });
 
@@ -133,7 +139,10 @@ export class SQLiteTrackRepository implements TrackRepository {
     const sortBy = options.sortBy ?? 'added_at';
     const sortOrder = options.sortOrder ?? 'desc';
 
-    log.debug({ page, limit, query: options.query, genre: options.genre, year: options.year }, 'Searching tracks');
+    log.debug(
+      { page, limit, query: options.query, genre: options.genre, year: options.year },
+      'Searching tracks',
+    );
 
     let whereClause = '1=1';
     const params: (string | number)[] = [];
@@ -196,7 +205,10 @@ export class SQLiteTrackRepository implements TrackRepository {
 
     const data = await Promise.all(tracks.map((row) => this.hydrate(row)));
 
-    log.debug({ total, returned: data.length, page, totalPages: Math.ceil(total / limit) }, 'Search complete');
+    log.debug(
+      { total, returned: data.length, page, totalPages: Math.ceil(total / limit) },
+      'Search complete',
+    );
 
     return {
       data,
@@ -217,7 +229,7 @@ export class SQLiteTrackRepository implements TrackRepository {
     return result.data;
   }
 
-  async getGenres(): Promise<{ genre: string; count: number }[]> {
+  async getGenres(): Promise<GenreCount[]> {
     const result = db
       .prepare(
         `
@@ -228,11 +240,11 @@ export class SQLiteTrackRepository implements TrackRepository {
       ORDER BY count DESC
     `,
       )
-      .all() as { genre: string; count: number }[];
+      .all() as GenreCount[];
     return result;
   }
 
-  async getYears(): Promise<{ year: number; count: number }[]> {
+  async getYears(): Promise<YearCount[]> {
     const result = db
       .prepare(
         `
@@ -243,7 +255,7 @@ export class SQLiteTrackRepository implements TrackRepository {
       ORDER BY year DESC
     `,
       )
-      .all() as { year: number; count: number }[];
+      .all() as YearCount[];
     return result;
   }
 

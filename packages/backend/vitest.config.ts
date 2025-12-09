@@ -11,4 +11,12 @@ export default defineConfig({
             exclude: ['node_modules', 'tests'],
         },
     },
+    resolve: {
+        alias: {
+            '@api': '/src/api',
+            '@domain': '/src/domain',
+            '@infra': '/src/infrastructure',
+            '@app': '/src/application',
+        },
+    },
 });

@@ -9,15 +9,30 @@
     Navbar,
     SpotifyHeader,
     InsightsPanel,
-  } from '../components';
-  import { tracks, topStats, isLoading, totalTracks, searchOptions } from '../stores';
-  import { loadTracks } from '../api';
+  } from '@lib/components';
+  import { tracks, topStats, isLoading, totalTracks, searchOptions } from '@lib/stores';
+  import { loadTracks, checkAuthStatus } from '@lib/api';
 
   // Page title
   const pageTitle = 'Spotify Flow - Your Music Library';
 
+  import { toast } from 'svelte-5-french-toast';
+
   onMount(() => {
+    checkAuthStatus();
     loadTracks({ page: 1 });
+
+    // Check for success redirect
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('connected') === 'true') {
+      toast.success('Successfully connected to Spotify!', {
+        position: 'bottom-right',
+        className: 'glass text-cosmic font-medium',
+      });
+      // Clean up URL
+      url.searchParams.delete('connected');
+      window.history.replaceState({}, '', url.toString());
+    }
   });
 
   function handleLoadMore() {

@@ -8,33 +8,33 @@ export { toast, Toaster };
 
 // Convenience functions with consistent styling
 export const showSuccess = (message: string) => {
-    toast.success(message, {
-        duration: 3000,
-        position: 'bottom-right',
-    });
+  toast.success(message, {
+    duration: 3000,
+    position: 'bottom-right',
+  });
 };
 
 export const showError = (message: string) => {
-    toast.error(message, {
-        duration: 5000,
-        position: 'bottom-right',
-    });
+  toast.error(message, {
+    duration: 5000,
+    position: 'bottom-right',
+  });
 };
 
 export const showInfo = (message: string) => {
-    toast(message, {
-        duration: 3000,
-        position: 'bottom-right',
-        icon: 'ℹ️',
-    });
+  toast(message, {
+    duration: 3000,
+    position: 'bottom-right',
+    icon: 'ℹ️',
+  });
 };
 
 export const showLoading = (message: string) => {
-    return toast.loading(message, {
-        position: 'bottom-right',
-    });
+  return toast.loading(message, {
+    position: 'bottom-right',
+  });
 };
 
 export const dismissToast = (id: string) => {
-    toast.dismiss(id);
+  toast.dismiss(id);
 };

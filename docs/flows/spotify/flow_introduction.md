@@ -1,26 +1,65 @@
 # The Observer's Toolkit: What You Can Do
 
+> **Purpose**: This document describes the *capabilities* of the Spotify Flow — not as technical features, but as intentional lenses through which you can observe and understand your musical history.
+
 This application is not just a script; it is a set of lenses designed to observe your musical history without altering it. Here is how you can interact with your flow:
 
-## 1. Capture the Echo (Export)
-You can cast a net into the Spotify API to retrieve your "Liked Songs".
-*   **What it does**: It travels back in time, page by page, collecting every track you've ever saved.
-*   **The Result**: A raw, unfiltered archive of your listening history. The foundation of your emotional trail.
+---
 
-## 2. Deepen the Context (Enrich)
-You can ask the system to listen closer. It doesn't just see a song title; it looks for the connections.
-*   **What it does**: It fetches the album details, the artist's genres, and the release dates. It asks "Where did this come from?" and "Who made this?".
-*   **The Result**: A rich dataset where every song is anchored in its era and style. The "Pop" song becomes "Synth-pop from 1984".
+## 1. Connect (Establish Trust)
 
-## 3. Distill the Essence (Compact)
-You can strip away the noise of the industry (markets, available codes, external URLs) to keep only what matters to the memory.
-*   **What it does**: It creates a lightweight version of your data, perfect for quick reading or sharing.
-*   **The Result**: A `compact.json` that holds the soul of the track without the weight of the metadata.
+Before the system can observe, it must be invited. You grant permission once, and the system remembers.
 
-## 4. Navigate the Landscape (UI)
-You can stop looking at a spreadsheet and start walking through the terrain.
-*   **What it does**: The local interface (`pnpm dev`) renders your data as a visual grid.
+*   **The Intent**: To create a secure, persistent bridge between you and your data. No credentials are stored visibly; the handshake happens once and renews itself silently.
+*   **The Result**: A trusted connection. The system can now listen on your behalf, whenever you ask.
+
+---
+
+## 2. Capture the Echo (Sync)
+
+You cast a net into Spotify to retrieve your "Liked Songs" — every track you've ever marked as meaningful.
+
+*   **The Intent**: To travel back in time, page by page, collecting the complete emotional trail you've left behind.
+*   **The Result**: A raw, unfiltered archive stored locally. Your data now lives with you, not in a distant cloud.
+
+---
+
+## 3. Deepen the Context (Enrich)
+
+The system doesn't just see a song title; it looks for the connections. Who made this? When? What world does it belong to?
+
+*   **The Intent**: To transform isolated data points into a rich tapestry. Every song becomes anchored in its era, genre, and visual identity.
+*   **The Result**: The "Pop" song becomes "Synth-pop from 1984". The anonymous artist gains a face. The abstract becomes concrete.
+
+---
+
+## 4. Crystallize (Persist)
+
+The enriched data is crystallized — frozen in a structured, queryable form that survives restarts and enables fast exploration.
+
+*   **The Intent**: To turn the ephemeral stream into something permanent and searchable. Full-text search, filters, and instant retrieval become possible.
+*   **The Result**: Your history is no longer a scroll; it's an indexed library you can query in milliseconds.
+
+---
+
+## 5. Navigate the Landscape (Explore)
+
+You stop looking at a spreadsheet and start walking through the terrain. The interface renders your data as a living visual grid.
+
+*   **The Intent**: To make exploration feel natural. Infinite scrolling mirrors the endless nature of memory. Filters let you slice by era, genre, or mood.
 *   **The Result**:
-    *   **See the Eras**: Visual tags and charts tell you if a song is from the "90s" or a "Fresh wave".
-    *   **Feel the Weight**: Metrics, Infinite Scroll, and Charts show your total volume and top genres.
-    *   **Drift**: Scroll infinitely through your history, filter by genre or year, and explore your musical eras.
+    *   **See the Eras**: Charts reveal decades — are you a child of the 90s or the 2020s?
+    *   **Feel the Weight**: Metrics show volume, top genres, and distribution.
+    *   **Drift**: Scroll endlessly, filter freely, and rediscover forgotten corners of your musical self.
+
+---
+
+## The Flow at a Glance
+
+```
+Connect → Sync → Enrich → Persist → Explore
+   │         │       │         │         │
+   └─ Trust  └─ Raw  └─ Rich   └─ Fast   └─ Visual
+```
+
+Each step builds on the previous. The system never pushes; it waits for you to ask. And when you do, it reflects your history back to you — transformed, but never altered.

@@ -5,16 +5,24 @@ export type {
   Track,
   SearchOptions,
   PaginatedResult,
+  GenreCount,
+  YearCount,
+  StatusTone,
+  StatusMessage,
+  SelectOption,
+  YearRange,
 } from '@flows/shared';
+
+import type { Track, StatusTone, GenreCount } from '@flows/shared';
 
 // UI-specific types
 export type TimeFilter = 'all' | 'this_month' | 'last_month' | 'this_year' | 'last_year';
 
 export interface AppState {
-  tracks: import('@flows/shared').Track[];
+  tracks: Track[];
   filter: TimeFilter;
   status: string;
-  statusTone: 'info' | 'success' | 'warning' | 'error';
+  statusTone: StatusTone;
   isLoading: boolean;
 }
 
@@ -22,6 +30,6 @@ export interface TopStats {
   total: number;
   artists: number;
   topGenre: string;
-  genres: { genre: string; count: number }[];
+  genres: GenreCount[];
   decadeDistribution: Record<string, number>;
 }

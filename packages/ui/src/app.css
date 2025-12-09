@@ -1,17 +1,16 @@
 @import 'tailwindcss';
 
-/* Cosmic Flow Design System */
-:root {
-  /* Base - Deep Space */
+@theme {
   --color-void: #0a0e17;
   --color-nebula: #111827;
   --color-stardust: #1f2937;
-
-  /* Accents - Aurora Borealis */
   --color-aurora: #10b981;
   --color-pulsar: #06b6d4;
   --color-cosmic: #8b5cf6;
+}
 
+/* Cosmic Flow Design System variables (legacy/fallback if needed, or removed if @theme handles it) */
+:root {
   /* Glass effect */
   --glass-bg: rgba(17, 24, 39, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -40,7 +39,7 @@ body::before {
   background:
     radial-gradient(ellipse 80% 50% at 20% 40%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
     radial-gradient(ellipse 60% 40% at 80% 20%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 60% at 60% 80%, rgba(139, 92, 246, 0.10) 0%, transparent 50%);
+    radial-gradient(ellipse 50% 60% at 60% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
   animation: gradient-shift 15s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: -2;
@@ -95,7 +94,6 @@ body::after {
 }
 
 @keyframes stars-twinkle {
-
   0%,
   100% {
     opacity: 0.3;

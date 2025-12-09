@@ -1,17 +1,19 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { SourcePort } from '../../../domain/shared';
-import type { Track } from '../../../domain/flows/spotify';
-import { SpotifyAuthError, SpotifyRateLimitError } from '../../../domain/shared';
+import type { SourcePort } from '@domain/shared';
+import type { Track } from '@domain/flows/spotify';
+import { SpotifyAuthError, SpotifyRateLimitError } from '@domain/shared';
 import type {
   SpotifySavedTrack,
   SpotifyPaging,
   SpotifyTokenResponse,
   SpotifyArtistsResponse,
 } from './types.js';
-import { logger } from '../../logger';
+import { logger } from '@infra/logger';
 
 const log = logger.child({ module: 'SpotifyApiAdapter' });
+
+import type { SQLiteTokenRepository } from '@infra/repositories/sqlite-token.repository';
 
 export interface SpotifyConfig {
   clientId: string;
@@ -22,8 +24,13 @@ export interface SpotifyConfig {
 export class SpotifyApiAdapter implements SourcePort {
   private client: AxiosInstance;
   private accessToken: string | null = null;
+  private tokenRepository?: SQLiteTokenRepository;
 
-  constructor(private config: SpotifyConfig) {
+  constructor(
+    private config: SpotifyConfig,
+    tokenRepository?: SQLiteTokenRepository,
+  ) {
+    this.tokenRepository = tokenRepository;
     this.client = axios.create({
       baseURL: 'https://api.spotify.com/v1',
     });
@@ -32,7 +39,10 @@ export class SpotifyApiAdapter implements SourcePort {
       (response) => response,
       async (error: AxiosError) => {
         const status = error.response?.status;
-        const originalRequest = error.config as typeof error.config & { _retry?: boolean; _retryCount?: number };
+        const originalRequest = error.config as typeof error.config & {
+          _retry?: boolean;
+          _retryCount?: number;
+        };
 
         // Handle rate limiting with auto-retry
         if (status === 429) {
@@ -42,10 +52,13 @@ export class SpotifyApiAdapter implements SourcePort {
 
           if (retryCount < maxRetries && originalRequest) {
             originalRequest._retryCount = retryCount + 1;
-            log.warn({ retryAfter, attempt: retryCount + 1, maxRetries }, 'Rate limited by Spotify, retrying...');
+            log.warn(
+              { retryAfter, attempt: retryCount + 1, maxRetries },
+              'Rate limited by Spotify, retrying...',
+            );
 
             // Wait for the specified time
-            await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+            await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
 
             return this.client(originalRequest);
           }
@@ -77,7 +90,11 @@ export class SpotifyApiAdapter implements SourcePort {
   }
 
   private async refreshAccessToken(): Promise<void> {
-    if (!this.config.refreshToken) {
+    // 1. Try to get refresh token from DB, fallback to config
+    const dbRefreshToken = this.tokenRepository?.get('spotify:refresh_token');
+    const refreshToken = dbRefreshToken || this.config.refreshToken;
+
+    if (!refreshToken) {
       throw new SpotifyAuthError('No refresh token provided');
     }
 
@@ -90,7 +107,7 @@ export class SpotifyApiAdapter implements SourcePort {
         'https://accounts.spotify.com/api/token',
         new URLSearchParams({
           grant_type: 'refresh_token',
-          refresh_token: this.config.refreshToken,
+          refresh_token: refreshToken,
         }),
         {
           headers: {
@@ -102,9 +119,67 @@ export class SpotifyApiAdapter implements SourcePort {
 
       this.accessToken = response.data.access_token;
       this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
+
+      // 2. Save new tokens to DB if we have a repository
+      if (this.tokenRepository) {
+        // Expire slightly before actual expiration (e.g. 1 min buffer)
+        const expiresAt = Date.now() + (response.data.expires_in - 60) * 1000;
+        this.tokenRepository.set('spotify:access_token', this.accessToken, expiresAt);
+
+        // Update refresh token if provided (it might rotate)
+        if (response.data.refresh_token) {
+          // Refresh tokens last a long time, but let's give it 30 days default or just ignore exp for logic
+          this.tokenRepository.set(
+            'spotify:refresh_token',
+            response.data.refresh_token,
+            Date.now() + 30 * 24 * 60 * 60 * 1000,
+          );
+        }
+      }
     } catch (error) {
       if (error instanceof SpotifyAuthError) throw error;
       throw new SpotifyAuthError('Failed to refresh access token');
+    }
+  }
+
+  async exchangeCode(code: string): Promise<void> {
+    const basicAuth = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString(
+      'base64',
+    );
+
+    try {
+      const response: AxiosResponse<SpotifyTokenResponse> = await axios.post(
+        'https://accounts.spotify.com/api/token',
+        new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: 'http://127.0.0.1:4173/api/spotify/auth/callback',
+        }),
+        {
+          headers: {
+            Authorization: `Basic ${basicAuth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      );
+
+      this.accessToken = response.data.access_token;
+      this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
+
+      if (this.tokenRepository) {
+        const expiresAt = Date.now() + (response.data.expires_in - 60) * 1000;
+        this.tokenRepository.set('spotify:access_token', this.accessToken, expiresAt);
+        if (response.data.refresh_token) {
+          this.tokenRepository.set(
+            'spotify:refresh_token',
+            response.data.refresh_token,
+            Date.now() + 30 * 24 * 60 * 60 * 1000,
+          );
+        }
+      }
+    } catch (error) {
+      log.error({ error }, 'Failed to exchange code');
+      throw new SpotifyAuthError('Failed to exchange code');
     }
   }
 
@@ -194,7 +269,10 @@ export class SpotifyApiAdapter implements SourcePort {
         }
       } catch (error) {
         // Log but don't fail the whole operation
-        log.error({ batchStart: i, error: error instanceof Error ? error.message : 'Unknown' }, 'Failed to fetch artist details batch');
+        log.error(
+          { batchStart: i, error: error instanceof Error ? error.message : 'Unknown' },
+          'Failed to fetch artist details batch',
+        );
       }
     }
 
