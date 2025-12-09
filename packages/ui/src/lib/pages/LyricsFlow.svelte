@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { LyricsStats } from '@flows/shared';
-  import { getLyricsStats, getLyricsLibrary, fetchAllLyrics } from '@lib/lyricsApi';
+  import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from '@lib/lyricsApi';
   import { toast } from '@lib/toast';
   import { Navbar } from '@lib/components';
 
@@ -12,14 +12,46 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
   let isFetchingLyrics = $state(false);
+  let isRetryingFailed = $state(false);
+
+  // Filter state
+  let currentFilter = $state<string>(''); // '' = all
+  let page = $state(1);
+  let hasMore = $state(true);
+  const LIMIT = 50;
 
   // Load data
-  async function refreshData() {
-    loading = true;
+  async function loadData(reset = false) {
+    if (reset) {
+      page = 1;
+      tracks = [];
+      hasMore = true;
+      loading = true;
+    } else {
+      loading = true; // Show loading indicator while appending
+    }
+
     try {
-      const [statsData, tracksData] = await Promise.all([getLyricsStats(), getLyricsLibrary()]);
+      // Cast the filter string to the expected type (or undefined if empty)
+      const filterArg = currentFilter ? (currentFilter as any) : undefined;
+
+      const [statsData, newTracks] = await Promise.all([
+        getLyricsStats(), // Stats are always global
+        getLyricsLibrary(page, LIMIT, filterArg),
+      ]);
+
       stats = statsData;
-      tracks = tracksData;
+
+      if (newTracks.length < LIMIT) {
+        hasMore = false;
+      }
+
+      if (reset) {
+        tracks = newTracks;
+      } else {
+        tracks = [...tracks, ...newTracks];
+      }
+
       error = null;
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load data';
@@ -28,33 +60,79 @@
     }
   }
 
+  function handleFilterChange(e: Event) {
+    const target = e.target as HTMLSelectElement;
+    currentFilter = target.value;
+    loadData(true);
+  }
+
+  function handleLoadMore() {
+    if (!loading && hasMore) {
+      page++;
+      loadData(false);
+    }
+  }
+
+  function refreshAll() {
+    return loadData(true);
+  }
+
   onMount(() => {
-    refreshData();
+    loadData(true);
   });
 
-  async function handleFetchAllLyrics() {
-    isFetchingLyrics = true;
-    const toastId = toast.loading('Fetching lyrics for all pending tracks...');
+  async function handleFetchAllLyrics(retryFailed = false) {
+    if (retryFailed) {
+      isRetryingFailed = true;
+    } else {
+      isFetchingLyrics = true;
+    }
+
+    // Slight delay to ensure UI updates before toast
+    await new Promise((r) => setTimeout(r, 50));
+
+    const toastId = toast.loading(
+      retryFailed ? 'Retrying lyrics for failed tracks...' : 'Fetching lyrics for pending tracks...'
+    );
 
     try {
-      const result = await fetchAllLyrics();
+      const result = await fetchAllLyrics(retryFailed);
       toast.dismiss(toastId);
 
-      const message = `Lyrics Sync Complete: ${result.found} found, ${result.notFound} not available.`;
-      if (result.errors > 0) {
-        toast.error(`${message} (${result.errors} errors)`);
+      if (result.processed === 0) {
+        toast.success('No tracks needed processing.');
       } else {
-        toast.success(message);
+        const message = `Sync Complete: ${result.found} found, ${result.notFound} not available.`;
+        if (result.errors > 0) {
+          toast.error(`${message} (${result.errors} errors)`);
+        } else {
+          toast.success(message);
+        }
       }
 
       // Refresh data to show updates
-      await refreshData();
+      await refreshAll();
     } catch (e) {
       toast.dismiss(toastId);
       toast.error('Failed to fetch lyrics batch');
       console.error(e);
     } finally {
       isFetchingLyrics = false;
+      isRetryingFailed = false;
+    }
+  }
+
+  async function handleIndividualRetry(trackId: string, e: Event) {
+    e.stopPropagation();
+    const toastId = toast.loading('Retrying...');
+    try {
+      await getLyrics(trackId, { force: true });
+      toast.dismiss(toastId);
+      toast.success('Retry complete');
+      await refreshAll(); // Refresh list to update status
+    } catch (e) {
+      toast.dismiss(toastId);
+      toast.error('Retry failed');
     }
   }
 
@@ -91,28 +169,55 @@
     </div>
 
     <!-- Actions -->
-    <button
-      onclick={handleFetchAllLyrics}
-      disabled={isFetchingLyrics || loading}
-      class="btn-primary flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {#if isFetchingLyrics}
-        <div
-          class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-        ></div>
-        Fetching...
-      {:else}
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-          />
-        </svg>
-        Fetch Missing Lyrics
-      {/if}
-    </button>
+    <div class="flex items-center gap-3">
+      <!-- Retry Failed Button -->
+      <button
+        onclick={() => handleFetchAllLyrics(true)}
+        disabled={isRetryingFailed || isFetchingLyrics || loading}
+        class="btn-secondary flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm py-2"
+      >
+        {#if isRetryingFailed}
+          <div
+            class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"
+          ></div>
+          Retrying...
+        {:else}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            ><path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            /></svg
+          >
+          Retry Failed
+        {/if}
+      </button>
+
+      <!-- Fetch Missing Button -->
+      <button
+        onclick={() => handleFetchAllLyrics(false)}
+        disabled={isRetryingFailed || isFetchingLyrics || loading}
+        class="btn-primary flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {#if isFetchingLyrics}
+          <div
+            class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+          ></div>
+          Fetching...
+        {:else}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            />
+          </svg>
+          Fetch Missing
+        {/if}
+      </button>
+    </div>
   </header>
 
   {#if loading && !tracks.length}
@@ -176,56 +281,128 @@
     <!-- Tracks Table -->
     <div class="glass rounded-2xl overflow-hidden border border-white/5">
       <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-        <h2 class="text-lg font-bold text-cosmic">Recent Tracks Status</h2>
-        <span class="text-xs text-pulsar bg-black/20 px-2 py-1 rounded">Latest 50</span>
+        <div class="flex items-center gap-4">
+          <h2 class="text-lg font-bold text-cosmic">Recent Tracks</h2>
+
+          <!-- Filter Control -->
+          <div class="relative">
+            <select
+              value={currentFilter}
+              onchange={handleFilterChange}
+              class="appearance-none bg-black/20 border border-white/10 text-pulsar text-xs rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:border-aurora cursor-pointer hover:bg-black/30 transition-colors"
+            >
+              <option value="">All Status</option>
+              <option value="found">✅ Found</option>
+              <option value="not_found">❌ Not Found</option>
+              <option value="pending">⏳ Pending</option>
+            </select>
+            <div
+              class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/30"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                ><path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                /></svg
+              >
+            </div>
+          </div>
+        </div>
+
+        <span class="text-xs text-pulsar bg-black/20 px-2 py-1 rounded">
+          {tracks.length} loaded
+        </span>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="border-b border-white/5 text-xs text-pulsar uppercase tracking-wider">
-              <th class="p-4 font-medium w-16">Cover</th>
-              <th class="p-4 font-medium">Title</th>
-              <th class="p-4 font-medium">Artist</th>
-              <th class="p-4 font-medium text-right">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-white/5">
-            {#each tracks as track (track.id)}
-              <tr class="hover:bg-white/5 transition-colors group">
-                <td class="p-4">
-                  {#if track.imageUrl}
-                    <img
-                      src={track.imageUrl}
-                      alt={track.title}
-                      class="w-10 h-10 rounded shadow-md object-cover"
-                    />
-                  {:else}
-                    <div
-                      class="w-10 h-10 rounded bg-white/10 flex items-center justify-center text-xl"
-                    >
-                      🎵
-                    </div>
-                  {/if}
-                </td>
-                <td class="p-4 text-white font-medium group-hover:text-aurora transition-colors"
-                  >{track.title}</td
-                >
-                <td class="p-4 text-pulsar">{track.artist}</td>
-                <td class="p-4 text-right">
-                  <span
-                    class="px-2 py-1 rounded text-xs border {getStatusColor(
-                      track.status
-                    )} font-medium capitalize"
-                  >
-                    {track.status.replace('_', ' ')}
-                  </span>
-                </td>
+      {#if tracks.length === 0}
+        <!-- Empty State -->
+        <div class="flex flex-col items-center justify-center py-16 text-pulsar/50">
+          <div class="text-4xl mb-4">📭</div>
+          <p class="text-lg font-medium">No tracks found</p>
+          <p class="text-xs mt-1">Try changing the filter or fetching more lyrics.</p>
+        </div>
+      {:else}
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/5 text-xs text-pulsar uppercase tracking-wider">
+                <th class="p-4 font-medium w-16">Cover</th>
+                <th class="p-4 font-medium">Title</th>
+                <th class="p-4 font-medium">Artist</th>
+                <th class="p-4 font-medium text-right">Status</th>
+                <th class="p-4 font-medium w-10"></th>
               </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {#each tracks as track (track.id)}
+                <tr class="hover:bg-white/5 transition-colors group">
+                  <td class="p-4">
+                    {#if track.imageUrl}
+                      <img
+                        src={track.imageUrl}
+                        alt={track.title}
+                        class="w-10 h-10 rounded shadow-md object-cover"
+                      />
+                    {:else}
+                      <div
+                        class="w-10 h-10 rounded bg-white/10 flex items-center justify-center text-xl"
+                      >
+                        🎵
+                      </div>
+                    {/if}
+                  </td>
+                  <td class="p-4 text-white font-medium group-hover:text-aurora transition-colors"
+                    >{track.title}</td
+                  >
+                  <td class="p-4 text-pulsar">{track.artist}</td>
+                  <td class="p-4 text-right">
+                    <span
+                      class="px-2 py-1 rounded text-xs border {getStatusColor(
+                        track.status
+                      )} font-medium capitalize"
+                    >
+                      {track.status.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td class="p-4 text-right">
+                    {#if track.status === 'not_found'}
+                      <button
+                        class="text-pulsar hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+                        title="Retry Fetching"
+                        onclick={(e) => handleIndividualRetry(track.id, e)}
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          ><path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          /></svg
+                        >
+                      </button>
+                    {/if}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {/if}
+
+      <!-- Load More Action -->
+      {#if hasMore && tracks.length > 0}
+        <div class="p-4 border-t border-white/5 flex justify-center">
+          <button
+            onclick={handleLoadMore}
+            disabled={loading}
+            class="text-sm text-pulsar hover:text-white transition-colors disabled:opacity-50 py-2 px-4 rounded hover:bg-white/5"
+          >
+            {loading ? 'Loading more...' : 'Load More'}
+          </button>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

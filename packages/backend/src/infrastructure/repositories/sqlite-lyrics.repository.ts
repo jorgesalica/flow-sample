@@ -84,14 +84,20 @@ export class SQLiteLyricsRepository {
     /**
      * Get all track IDs that don't have lyrics fetched yet
      */
-    async getPendingTrackIds(): Promise<string[]> {
-        const rows = db
-            .prepare(
-                `SELECT t.id FROM tracks t
+    /**
+     * Get all track IDs that don't have lyrics fetched yet
+     * @param includeFailed If true, also returns tracks with status 'not_found'
+     */
+    async getPendingTrackIds(includeFailed = false): Promise<string[]> {
+        let query = `SELECT t.id FROM tracks t
          LEFT JOIN lyrics l ON l.track_id = t.id
-         WHERE l.track_id IS NULL OR l.status = 'pending'`,
-            )
-            .all() as { id: string }[];
+         WHERE l.track_id IS NULL OR l.status = 'pending'`;
+
+        if (includeFailed) {
+            query += ` OR l.status = 'not_found'`;
+        }
+
+        const rows = db.prepare(query).all() as { id: string }[];
 
         return rows.map((r) => r.id);
     }
@@ -124,6 +130,7 @@ export class SQLiteLyricsRepository {
     async getLibraryWithStatus(
         limit = 50,
         offset = 0,
+        statusFilter?: LyricsStatus,
     ): Promise<
         Array<{
             id: string;
@@ -133,9 +140,8 @@ export class SQLiteLyricsRepository {
             status: LyricsStatus;
         }>
     > {
-        const rows = db
-            .prepare(
-                `SELECT 
+        let query = `
+        SELECT 
            t.id, 
            t.title, 
            t.album_image_url as imageUrl,
@@ -145,17 +151,34 @@ export class SQLiteLyricsRepository {
          JOIN track_artists ta ON t.id = ta.track_id
          JOIN artists a ON ta.artist_id = a.id
          LEFT JOIN lyrics l ON t.id = l.track_id
+    `;
+
+        const params: (string | number)[] = [];
+
+        if (statusFilter) {
+            if (statusFilter === 'pending') {
+                // Special handle for pending which naturally includes NULLs
+                query += ` WHERE l.status = 'pending' OR l.status IS NULL`;
+            } else {
+                query += ` WHERE l.status = ?`;
+                params.push(statusFilter);
+            }
+        }
+
+        query += `
          GROUP BY t.id
          ORDER BY t.added_at DESC
-         LIMIT ? OFFSET ?`,
-            )
-            .all(limit, offset) as Array<{
-                id: string;
-                title: string;
-                imageUrl: string | null;
-                artist: string;
-                status: string;
-            }>;
+         LIMIT ? OFFSET ?
+    `;
+        params.push(limit, offset);
+
+        const rows = db.prepare(query).all(...params) as Array<{
+            id: string;
+            title: string;
+            imageUrl: string | null;
+            artist: string;
+            status: string;
+        }>;
 
         return rows.map((r) => ({
             id: r.id,

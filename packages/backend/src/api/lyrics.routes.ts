@@ -158,12 +158,19 @@ export function createLyricsRoutes() {
                 async ({ lyricsRepository, query }) => {
                     const limit = query.limit ? parseInt(query.limit) : 50;
                     const offset = query.offset ? parseInt(query.offset) : 0;
-                    return lyricsRepository.getLibraryWithStatus(limit, offset);
+                    // Validate status if provided
+                    const status =
+                        query.status && ['found', 'not_found', 'pending'].includes(query.status)
+                            ? (query.status as any)
+                            : undefined;
+
+                    return lyricsRepository.getLibraryWithStatus(limit, offset, status);
                 },
                 {
                     query: t.Object({
                         limit: t.Optional(t.String()),
                         offset: t.Optional(t.String()),
+                        status: t.Optional(t.String()),
                     }),
                 },
             )

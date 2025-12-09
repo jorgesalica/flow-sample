@@ -24,7 +24,7 @@ export async function getLyrics(trackId: string, options?: { force?: boolean }):
 /**
  * Batch fetch all pending lyrics
  */
-export async function fetchAllLyrics(): Promise<{
+export async function fetchAllLyrics(retryFailed = false): Promise<{
     processed: number;
     found: number;
     notFound: number;
@@ -32,6 +32,10 @@ export async function fetchAllLyrics(): Promise<{
 }> {
     const response = await fetch(`${API_BASE}/api/lyrics/fetch-all`, {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ retryFailed }),
     });
 
     if (!response.ok) {
@@ -60,9 +64,16 @@ export async function getLyricsStats(): Promise<LyricsStats> {
 export async function getLyricsLibrary(
     page = 1,
     limit = 50,
+    status?: LyricsStatus,
 ): Promise<Array<{ id: string; title: string; artist: string; imageUrl: string | null; status: LyricsStatus }>> {
     const offset = (page - 1) * limit;
-    const response = await fetch(`${API_BASE}/api/lyrics/tracks?limit=${limit}&offset=${offset}`);
+    let url = `${API_BASE}/api/lyrics/tracks?limit=${limit}&offset=${offset}`;
+
+    if (status) {
+        url += `&status=${status}`;
+    }
+
+    const response = await fetch(url);
 
     if (!response.ok) {
         throw new Error(`Failed to fetch lyrics library: ${response.statusText}`);
