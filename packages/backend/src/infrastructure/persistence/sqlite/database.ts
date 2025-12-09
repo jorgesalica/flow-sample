@@ -66,6 +66,16 @@ db.exec(`
     value TEXT NOT NULL,
     expires_at INTEGER NOT NULL
   );
+
+  -- Lyrics cache for tracks
+  CREATE TABLE IF NOT EXISTS lyrics (
+    track_id TEXT PRIMARY KEY,
+    plain_lyrics TEXT,
+    synced_lyrics TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    fetched_at TEXT,
+    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
+  );
 `);
 
 // Migration: Add new columns if they don't exist

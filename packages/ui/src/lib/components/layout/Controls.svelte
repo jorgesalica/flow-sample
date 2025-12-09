@@ -1,10 +1,30 @@
 <script lang="ts">
   import { isLoading, isAuthenticated } from '@lib/stores';
   import { fetchFromSpotify, loadTracks, cancelSync } from '@lib/api';
+  import { fetchAllLyrics } from '@lib/lyricsApi';
   import { ENDPOINTS } from '@lib/config';
+  import { toast } from '@lib/toast';
+
+  let isFetchingLyrics = $state(false);
 
   async function handleRefresh() {
     await loadTracks({ page: 1 });
+  }
+
+  async function handleFetchAllLyrics() {
+    isFetchingLyrics = true;
+    const toastId = toast.loading('Fetching lyrics for all tracks...');
+
+    try {
+      const result = await fetchAllLyrics();
+      toast.dismiss(toastId);
+      toast.success(`Lyrics: ${result.found} found, ${result.notFound} not available`);
+    } catch {
+      toast.dismiss(toastId);
+      toast.error('Failed to fetch lyrics');
+    } finally {
+      isFetchingLyrics = false;
+    }
   }
 </script>
 
@@ -53,6 +73,36 @@
         </svg>
         Sync with Spotify
       {/if}
+    </button>
+
+    <!-- Fetch All Lyrics Button -->
+    <button
+      onclick={handleFetchAllLyrics}
+      disabled={isFetchingLyrics || $isLoading}
+      class="px-4 py-2 glass hover:bg-nebula/20 rounded-lg transition-all active:scale-95 disabled:opacity-50 text-cosmic flex items-center gap-2"
+      title="Fetch lyrics for all tracks without lyrics"
+    >
+      {#if isFetchingLyrics}
+        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+      {:else}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      {/if}
+      Fetch Lyrics
     </button>
   {:else}
     <a

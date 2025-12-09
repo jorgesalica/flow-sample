@@ -1,12 +1,14 @@
 import { Elysia } from 'elysia';
 import { node } from '@elysiajs/node';
 import { staticPlugin } from '@elysiajs/static';
+import { cors } from '@elysiajs/cors';
 import * as path from 'path';
 import * as fs from 'fs';
 import { randomUUID } from 'crypto';
 
 import { loadConfig } from './config';
 import { createSpotifyRoutes } from './spotify.routes';
+import { createLyricsRoutes } from './lyrics.routes';
 import { logger } from '@infra/logger';
 
 const config = loadConfig();
@@ -17,6 +19,7 @@ const uiDistPath = path.join(projectRoot, 'ui', 'dist');
 const outputsPath = path.join(projectRoot, 'outputs');
 
 const app = new Elysia({ adapter: node() })
+  .use(cors())
   .onRequest(({ request }) => {
     // Generate request ID
     const requestId = randomUUID();
@@ -42,6 +45,9 @@ const app = new Elysia({ adapter: node() })
 
   // Spotify routes
   .use(createSpotifyRoutes(config))
+
+  // Lyrics routes
+  .use(createLyricsRoutes())
 
   // Serve outputs directory
   .use(

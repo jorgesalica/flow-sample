@@ -11,6 +11,9 @@ export type {
   StatusMessage,
   SelectOption,
   YearRange,
+  Lyrics,
+  LyricsStatus,
+  LyricsStats,
 } from '@flows/shared';
 
 import type { Track, StatusTone, GenreCount } from '@flows/shared';
