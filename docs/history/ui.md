@@ -4,6 +4,21 @@ Changelog for the frontend (Svelte) application.
 
 ---
 
+## 2025-12-09 — Lyrics Flow (UI)
+
+### New Features
+- **Lyrics Modal**: Glassmorphism modal to display plain lyrics.
+- **Track Card Integration**: Added "Lyrics" button (always visible) and "Added Date".
+- **Batch Controls**: Added "Fetch Lyrics" button in Controls bar to fetch all missing lyrics.
+
+### UX Improvements
+- **Empty States**: Helpful messaging ("It might be an instrumental song") when lyrics are not found.
+- **Retry Mechanism**: "Retry Retrieval" button allows forcing a re-fetch if lyrics were previously not found.
+- **Accessibility**: Improved contrast on buttons and text labels.
+- **Feedback**: Toast notifications for batch operations.
+
+---
+
 ## 2025-12-07 — Type Centralization
 
 ### Centralized Types in @flows/shared

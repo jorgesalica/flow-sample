@@ -2,6 +2,7 @@
   import type { Track } from '@lib/types';
   import AlbumArt from '@components/track/AlbumArt.svelte';
   import GenreBadges from '@components/track/GenreBadges.svelte';
+  import LyricsModal from '@components/common/LyricsModal.svelte';
 
   interface Props {
     track: Track;
@@ -11,6 +12,9 @@
 
   // Get the first artist for the avatar
   let mainArtist = $derived(track.artists[0]);
+
+  // Lyrics modal state
+  let showLyrics = $state(false);
 </script>
 
 <article
@@ -81,10 +85,28 @@
           <span class="text-[10px] text-pulsar font-medium">{track.popularity}</span>
         </div>
       {/if}
+
+      <!-- Lyrics Button -->
+      <button
+        class="text-[10px] text-white/90 hover:text-aurora transition-colors px-2 py-1 bg-white/5 hover:bg-white/10 rounded font-medium"
+        onclick={(e) => {
+          e.stopPropagation();
+          showLyrics = true;
+        }}
+        title="View lyrics"
+      >
+        Lyrics
+      </button>
+
       <!-- Added date -->
-      <span class="text-[10px] text-nebula/50 ml-auto">
+      <span class="text-[10px] text-pulsar/80 ml-2">
         {track.addedAt ? new Date(track.addedAt).toLocaleDateString() : ''}
       </span>
     </div>
   </div>
 </article>
+
+<!-- Lyrics Modal -->
+{#if showLyrics}
+  <LyricsModal {track} onclose={() => (showLyrics = false)} />
+{/if}
