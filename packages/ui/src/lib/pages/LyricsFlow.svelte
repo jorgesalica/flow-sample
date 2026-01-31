@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { LyricsStats } from '@flows/shared';
+  import type { LyricsStats, LyricsStatus } from '@flows/shared';
   import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from '@lib/lyricsApi';
   import { toast } from '@lib/toast';
   import { Navbar } from '@lib/components';
@@ -33,7 +33,7 @@
 
     try {
       // Cast the filter string to the expected type (or undefined if empty)
-      const filterArg = currentFilter ? (currentFilter as any) : undefined;
+      const filterArg = currentFilter ? (currentFilter as LyricsStatus) : undefined;
 
       const [statsData, newTracks] = await Promise.all([
         getLyricsStats(), // Stats are always global
@@ -130,7 +130,7 @@
       toast.dismiss(toastId);
       toast.success('Retry complete');
       await refreshAll(); // Refresh list to update status
-    } catch (e) {
+    } catch {
       toast.dismiss(toastId);
       toast.error('Retry failed');
     }
