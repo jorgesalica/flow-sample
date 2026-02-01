@@ -35,7 +35,7 @@ graph LR
 * **Role**: Real-time market data ingestion (Candles).
 * **Doc Reference**: [Binance WebSocket Streams](https://developers.binance.com/docs/binance-spot-api-docs/web-socket-streams)
 
-### Validated Facts
+### Binance WS Validated Facts
 
 * **Base Endpoint**: `wss://stream.binance.com:9443` (or `:443`).
 * **Stream Name for 1m Candles**: `<symbol>@kline_1m` (e.g., `btcusdt@kline_1m`).
@@ -49,7 +49,7 @@ graph LR
 * **Ping/Pong**: Server sends a `ping` every 20s. Client must respond with `pong` within 1 minute or be disconnected.
 * **Limits**: Max 1024 streams per connection. Max 300 new connections per 5 minutes per IP.
 
-### Implementation Notes
+### Binance WS Implementation Notes
 
 * Must implement:
   * Heartbeat handler (pong response).
@@ -63,14 +63,14 @@ graph LR
 * **Role**: WebSocket client for Node.js to connect to Binance.
 * **Doc Reference**: [https://github.com/websockets/ws](https://github.com/websockets/ws)
 
-### Validated Facts
+### ws Package Validated Facts
 
 * A popular, fast, and RFC-6455 compliant WebSocket implementation.
 * Does **not** work in the browser (use native `WebSocket` there). Our backend is Node.js, so this is fine.
 * Supports binary data, extensions, and custom HTTP headers.
 * `npm install ws`.
 
-### Example Usage (from docs)
+### ws Package Example Usage
 
 ```javascript
 import WebSocket from 'ws';
@@ -90,7 +90,7 @@ ws.on('close', () => console.log('Disconnected - Reconnect needed'));
 * **Role**: Synchronous SQLite driver for high-performance local persistence.
 * **Doc Reference**: [https://github.com/WiseLibs/better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
 
-### Validated Facts
+### SQLite Validated Facts
 
 * **Synchronous API**: All operations are blocking. This is by design for simplicity and performance in single-threaded scripts.
 * **Speed**: Claimed to be the fastest SQLite driver for Node.js.
@@ -98,12 +98,12 @@ ws.on('close', () => console.log('Disconnected - Reconnect needed'));
 * **WAL Mode**: Recommended for concurrent read/write scenarios. Enabled via `PRAGMA journal_mode = WAL;`.
 * `npm install better-sqlite3`.
 
-### Considerations
+### SQLite Considerations
 
 * ⚠️ **Blocking**: For high-concurrency web servers, blocking I/O could be an issue. For our use case (processing one candle per minute), this is acceptable and preferred for its simplicity.
 * The library requires a C++ build step. Ensure build tools are available on the deployment machine.
 
-### Example Usage (UPSERT from docs pattern)
+### SQLite Example Usage
 
 ```javascript
 import Database from 'better-sqlite3';
@@ -128,14 +128,14 @@ const upsertCandle = db.prepare(`
 * **Role**: Calculate RSI, MACD, Bollinger Bands, and other standard trading cues.
 * **Doc Reference**: [https://github.com/anandanand84/technicalindicators](https://github.com/anandanand84/technicalindicators)
 
-### Validated Facts
+### Tech Indicators Validated Facts
 
 * A comprehensive, well-tested JavaScript library for technical analysis.
 * Available indicators include: `RSI`, `MACD`, `EMA`, `SMA`, `BollingerBands`, `ATR`, and many more.
 * Works in both Node.js and browsers.
 * `npm install technicalindicators`.
 
-### Example Usage (from docs)
+### Tech Indicators Example Usage
 
 ```javascript
 import { RSI, MACD } from 'technicalindicators';
@@ -162,7 +162,7 @@ const macdResult = MACD.calculate({
 * **Role**: Determine market regime (Trending vs. Mean-Reverting vs. Noise).
 * **Doc Reference**: Academic (No standard npm library available).
 
-### Validated Facts
+### Hurst Validated Facts
 
 * **No dedicated JavaScript/npm library found.** This requires a custom implementation.
 * The standard algorithm is **Rescaled Range (R/S) Analysis**.
@@ -174,7 +174,7 @@ const macdResult = MACD.calculate({
 * Python's `hurst` library can be used as a reference for porting.
 * Alternatively, a **WebAssembly (WASM)** module could be compiled from Rust/C++ for performance if needed in the future.
 
-### Implementation Plan
+### Hurst Implementation Plan
 
 * Create a custom `hurst.ts` utility in `packages/backend/src/trading/math/`.
 * Test against known datasets (e.g., Mandelbrot's cotton prices) to validate.
@@ -186,14 +186,14 @@ const macdResult = MACD.calculate({
 * **Role**: LLM reasoning engine for generating educational insights.
 * **Doc Reference**: [Google AI for Developers - Quickstart](https://ai.google.dev/gemini-api/docs/quickstart)
 
-### Validated Facts
+### Gemini API Validated Facts
 
 * **SDK**: Use official `@google/genai` npm package.
 * **Streaming**: Supports response streaming via `generateContentStream`.
 * **Node.js Version**: Requires Node.js 18+.
 * `npm install @google/genai`.
 
-### Example Usage (from docs)
+### Gemini API Example Usage
 
 ```javascript
 import { GoogleGenAI } from "@google/genai";
@@ -215,7 +215,7 @@ for await (const chunk of streamResult) {
 }
 ```
 
-### Considerations
+### Gemini API Considerations
 
 * **Pricing**: Gemini 1.5 Flash is the cost-effective option for high-frequency calls per minute.
 * **Rate Limits**: Free tier has limits (e.g., 60 RPM). Monitor usage.

@@ -14,7 +14,7 @@ The goal is not to execute trades automatically, but to act as a **Real-Time Men
 
 ## 🏗️ Architecture Overview
 
-```
+```text
 N1 (Watcher) → N2 (Scribe) → N3 (Navigator) → N4 (Translator) → N5 (Captain) → N6 (Dashboard)
    Binance       SQLite         Math Engine       Prompt Builder     LLM           Svelte UI
 ```
@@ -63,7 +63,7 @@ TRADING_INTERVAL=1m
 ## 📂 Documentation Structure
 
 | Document | Purpose |
-|---|---|
+| --- | --- |
 | [flow_introduction.md](./flow_introduction.md) | Philosophy and high-level concepts. |
 | [flow-map.md](./flow-map.md) | Node-by-node breakdown with decisions and stack. |
 | [implementation-plan.md](./implementation-plan.md) | Phase-by-phase development plan. |
@@ -74,7 +74,7 @@ TRADING_INTERVAL=1m
 
 ## 📁 Code Structure
 
-```
+```text
 packages/backend/src/
 ├── api/
 │   └── trading.routes.ts           # Trading API endpoints (SSE, start/stop, insights)
@@ -124,7 +124,7 @@ packages/ui/src/lib/
 The advisor uses **Google Gemini 2.5 Flash** as the primary LLM:
 
 | Aspect | Choice |
-|---|---|
+| --- | --- |
 | **Model** | `gemini-2.5-flash` (GA) |
 | **Why** | Fast inference (~1-2s), low cost, sufficient reasoning for market commentary. |
 | **SDK** | `@google/genai` (Official Google SDK for Node.js) |

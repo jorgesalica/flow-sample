@@ -40,9 +40,9 @@ flowchart TD
 
 ### Node.js vs Python
 
-**Decision: Node.js (TypeScript)**
+- **Decision**: Node.js (TypeScript)
 
-* **Rationale**:
+- **Rationale**:
     1. **Uniformity**: Keeps the project in a single language/runtime.
     2. **Concurrency**: Node's event loop is excellent for handling multiple WebSockets and asynchronous API calls.
     3. **Library Maturation**: Libraries like `technicalindicators` are stable and fast enough for our 1s-10s resolution.
@@ -50,13 +50,13 @@ flowchart TD
 
 ### Database Separation
 
-**Decision: `trading.db` (Independent SQLite)**
+- **Decision**: `trading.db` (Independent SQLite)
 
-* **Rationale**: Isolation. Market data grows exponentially. Keeping it separate prevents it from bloating the core `flow.db` (Spotify/User data).
+- **Rationale**: Isolation. Market data grows exponentially. Keeping it separate prevents it from bloating the core `flow.db` (Spotify/User data).
 
 ### Multi-Agent Intelligence
 
-**Decision: Tiered Strategy**
+- **Decision**: Tiered Strategy
 
-* **Code-Level Agents**: Fast, deterministic rules (RSI crossing).
-* **Conversational Agents**: LLMs for reasoning and teaching.
+- **Code-Level Agents**: Fast, deterministic rules (RSI crossing).
+- **Conversational Agents**: LLMs for reasoning and teaching.

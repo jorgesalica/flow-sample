@@ -10,7 +10,7 @@
 ## 🤖 Model Specification
 
 | Parameter | Value |
-|---|---|
+| --- | --- |
 | **Model ID** | `gemini-3-flash` |
 | **Provider** | Google DeepMind |
 | **Context Window** | 1M tokens (typical usage: < 2k) |
@@ -25,7 +25,7 @@
 ### Why Gemini 3 Flash?
 
 | Factor | Justification |
-|---|---|
+| --- | --- |
 | **Activation Model** | **On-Demand** (user toggles advisor on/off). Not always-on. |
 | **Real Usage Pattern** | User decides when to activate. Typical: 1-4 hours/day during active trading windows. |
 | **Cost (1 hour/day)** | `60 req × (800 × $0.50 + 500 × $3.00) / 1M = $0.11/day = **$3.30/month**` |
@@ -162,7 +162,7 @@ Return a JSON object with the following structure:
 ### Realistic Usage Scenarios
 
 | Usage Pattern | Requests/Day | Gemini 3 Flash Cost | Groq Llama 8B Cost |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **1 hour/day** | 60 | **$0** (free tier: 250/day) | $0.005/day ($0.15/mo) |
 | **2 hours/day** | 120 | **$0** (free tier) | $0.01/day ($0.30/mo) |
 | **4 hours/day** | 240 | **$0** (free tier) ✅ | $0.02/day ($0.60/mo) |
