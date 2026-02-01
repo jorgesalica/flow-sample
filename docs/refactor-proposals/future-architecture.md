@@ -6,7 +6,7 @@ This document outlines the planned evolution of Flow Sample's architecture.
 
 ## Current State (2025-12-06)
 
-```
+```text
 packages/
 ├── backend/         @flows/backend (Elysia + SQLite)
 ├── ui/              @flows/ui (Svelte 5 + Tailwind)
@@ -16,7 +16,7 @@ packages/
 ### Completed Features
 
 | Feature | Status |
-|---------|--------|
+| ------- | ------ |
 | pnpm Workspaces Monorepo | ✅ |
 | Elysia API | ✅ |
 | SQLite + FTS5 | ✅ |
@@ -42,7 +42,7 @@ packages/
 ### API Caching
 
 | Endpoint | Cached | TTL |
-|----------|--------|-----|
+| -------- | ------ | --- |
 | `/genres` | ✅ | 5 min |
 | `/years` | ✅ | 5 min |
 | `/stats` | ✅ | 5 min |
@@ -52,6 +52,7 @@ packages/
 ### Spotify API Constraints (Nov 2024)
 
 Deprecated for new apps:
+
 - ❌ Audio Features (danceability, energy)
 - ❌ Audio Analysis
 - ❌ Recommendations
@@ -63,7 +64,7 @@ Deprecated for new apps:
 ## Decision Log
 
 | Date | Decision | Rationale |
-|------|----------|-----------|
+| ---- | -------- | --------- |
 | 2025-12-06 | Cosmic Flow UI theme | Space-themed dark design |
 | 2025-12-06 | Toast notifications | Replace StatusBanner |
 | 2025-12-06 | Playwright E2E | Smoke tests for critical flows |

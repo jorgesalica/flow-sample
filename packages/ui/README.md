@@ -24,7 +24,7 @@ npm run build
 
 ## Project Structure
 
-```
+```text
 src/
 ├── App.svelte              # Main application
 ├── main.ts                 # Entry point

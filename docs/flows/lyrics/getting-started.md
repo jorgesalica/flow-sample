@@ -20,16 +20,18 @@ No additional API keys are required. LrcLib is free and open.
 ### Data Source: LrcLib
 
 | Endpoint | Purpose |
-|----------|---------|
+| -------- | ------- |
 | `GET /api/get` | Fetch lyrics by track signature |
 
 **Parameters sent:**
+
 - `track_name` — Track title
 - `artist_name` — Primary artist
 - `album_name` — Album title  
 - `duration` — Track duration in seconds (±2s tolerance)
 
 **Response:**
+
 - `plainLyrics` — Plain text lyrics
 - `syncedLyrics` — LRC format with timestamps (optional)
 - `404` — Not found
@@ -52,7 +54,7 @@ CREATE TABLE IF NOT EXISTS lyrics (
 ```
 
 | Column | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `track_id` | Foreign key to tracks table |
 | `plain_lyrics` | Plain text lyrics |
 | `synced_lyrics` | LRC format (timestamped) |
@@ -68,7 +70,7 @@ CREATE TABLE IF NOT EXISTS lyrics (
 Location: **TrackCard component**
 
 | State | Button | Action |
-|-------|--------|--------|
+| ----- | ------ | ------ |
 | `pending` | "View Lyrics" | Fetch from LrcLib → Show modal |
 | `found` | "View Lyrics" | Show cached lyrics |
 | `not_found` | "No Lyrics" (enables modal) | Show "Not Found" message + "Retry" button |
@@ -78,7 +80,7 @@ Location: **TrackCard component**
 Location: **Near Sync button (Controls component)**
 
 | Button | Action |
-|--------|--------|
+| ------ | ------ |
 | "Fetch All Lyrics" | Process all tracks with `status = 'pending'` |
 
 ---
@@ -86,7 +88,7 @@ Location: **Near Sync button (Controls component)**
 ## API Endpoints (Backend)
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+| ------ | -------- | ----------- |
 | `GET` | `/api/lyrics/:trackId` | Get lyrics. Use `?force=true` to bypass cache. |
 | `POST` | `/api/lyrics/fetch-all` | Batch fetch all pending lyrics |
 
@@ -95,7 +97,7 @@ Location: **Near Sync button (Controls component)**
 ## Tech Stack Addition
 
 | Layer | Addition |
-|-------|----------|
+| ----- | -------- |
 | **Backend** | `LrcLibAdapter` — HTTP client for LrcLib API |
 | **Backend** | `LyricsRepository` — SQLite persistence |
 | **Backend** | `lyrics.routes.ts` — API endpoints |
@@ -107,6 +109,6 @@ Location: **Near Sync button (Controls component)**
 ## Useful Scripts
 
 | Command | Description |
-|---------|-------------|
+| ------- | ----------- |
 | `pnpm dev` | Start full stack (includes lyrics endpoints) |
 | `pnpm --filter @flows/backend test` | Run backend tests (includes lyrics tests) |

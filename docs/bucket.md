@@ -3,6 +3,7 @@
 Ideas, future tasks, and things to do later.
 
 ## Priorities Definition
+
 - **High**: Critical for usability or core value.
 - **Medium**: Important improvements or planned features.
 - **Low**: Nice to have, polish, or long-term.
@@ -32,11 +33,12 @@ Ideas, future tasks, and things to do later.
 - [ ] **[UI/Perf]** Lazy load SpotifyFlow page
 
 ## 🔮 Future Flows (TBD)
+
 - [ ] **[Flow Improvement/Feat]** Add Spotify features to the flow like liked albums, playlists, etc.
 - [ ] **[Flow Improvement/Feat]** Add Fractal Flow to the flows spike
- 
 
 ### Fractal Flow
+
 - Render and explore fractals (Mandelbrot, Julia sets, etc.)
 - Interactive zoom/pan exploration
 - Color palette customization

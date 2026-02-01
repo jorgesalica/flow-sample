@@ -6,7 +6,7 @@ The backend follows **Layered Architecture** with clear separation of concerns.
 
 ## Layers
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │  API Layer (src/api/)                   │
 │  - HTTP routes, validation              │
@@ -24,7 +24,7 @@ The backend follows **Layered Architecture** with clear separation of concerns.
 
 ## Directory Structure
 
-```
+```text
 src/
 ├── domain/                     # Pure domain logic (no external deps)
 │   ├── flows/spotify/
@@ -133,7 +133,7 @@ class SpotifyUseCase {
 ## Error Handling
 
 | Error | When Thrown |
-|-------|-------------|
+| ----- | ----------- |
 | `SpotifyAuthError` | OAuth token invalid/expired |
 | `SpotifyRateLimitError` | Rate limited (429) |
 | `StorageError` | Database operations failed |

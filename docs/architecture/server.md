@@ -41,6 +41,7 @@ src/api/
 ## Request/Response Examples
 
 ### Health Check
+
 ```http
 GET /api/status
 
@@ -48,6 +49,7 @@ GET /api/status
 ```
 
 ### Run Spotify Flow
+
 ```http
 POST /api/spotify/run
 Content-Type: application/json
@@ -56,6 +58,7 @@ Content-Type: application/json
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -66,6 +69,7 @@ Response:
 ```
 
 ### Get All Tracks
+
 ```http
 GET /api/spotify/tracks
 
