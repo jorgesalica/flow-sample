@@ -60,11 +60,23 @@
 
 ## 🚀 Future Enhancements
 
-- [ ] **Automatic Advisor Mode**: Implement scheduled insight generation when advisor is ON.
-- [ ] **Historical Data Backfill**: Add ability to fetch and analyze historical candles.
-- [ ] **Advanced Indicators**: Integrate RSI, MACD, and custom divergence detection.
-- [ ] **Multi-Symbol Support**: Track multiple trading pairs simultaneously.
-- [ ] **Charting**: Add visual candle charts with fractal overlays.
-- [ ] **Notification System**: Alert users on regime changes or significant patterns.
-- [ ] **Export/Import**: Save and restore analysis sessions.
-- [ ] **Testing**: Add unit tests for math functions and integration tests for services.
+### High Priority 🔥
+
+- [ ] **Insight Data Transparency**: Show input data used for LLM analysis (Hurst value, fractal patterns, price action)
+- [ ] **Improve LLM Prompt**: Make insights more specific and actionable (less generic "drink water" advice)
+- [ ] **Chat Interface**: Convert insight panel to interactive chat for follow-up questions
+
+### Medium Priority ⭐
+
+- [ ] **Automatic Advisor Mode**: Implement scheduled insight generation when advisor is ON
+- [ ] **Historical Data Backfill**: Add ability to fetch and analyze historical candles
+- [ ] **Advanced Indicators**: Integrate RSI, MACD, and custom divergence detection
+- [ ] **Multi-Symbol Support**: Track multiple trading pairs simultaneously
+- [ ] **Charting**: Add visual candle charts with fractal overlays
+- [ ] **Notification System**: Alert users on regime changes or significant patterns
+
+### Low Priority 📋
+
+- [ ] **Export/Import**: Save and restore analysis sessions
+- [ ] **Testing**: Add unit tests for math functions and integration tests for services
+- [ ] **Refactoring**: Extract business logic to domain layer, add error handling, improve type safety

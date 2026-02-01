@@ -72,16 +72,76 @@ TRADING_INTERVAL=1m
 | [flow-history.md](./flow-history.md) | Chronological development log. |
 | [flow-backlog.md](./flow-backlog.md) | Task tracking and phase checklists. |
 
+## 📁 Code Structure
+
+```
+packages/backend/src/
+├── api/
+│   └── trading.routes.ts           # Trading API endpoints (SSE, start/stop, insights)
+├── application/
+│   ├── trading/                    # Trading Flow services
+│   │   ├── trading.service.ts      # N1+N2: Data ingestion & persistence
+│   │   ├── analyst.service.ts      # N3: Hurst + Fractals (Fractal State Machine)
+│   │   ├── synthesizer.service.ts  # N4: LLM prompt builder
+│   │   └── mentor.service.ts       # N5: LLM orchestration
+│   ├── spotify/                    # Spotify Flow services
+│   │   └── spotify.usecase.ts
+│   └── stats.service.ts            # Shared flow stats service
+├── domain/
+│   └── trading/
+│       └── math/
+│           ├── hurst.ts            # Hurst exponent calculation
+│           └── fractals.ts         # Bill Williams fractal detection
+└── infrastructure/
+    ├── adapters/
+    │   └── binance/
+    │       ├── binance-stream.ts   # WebSocket client
+    │       └── types.ts
+    ├── llm/                        # LLM abstraction layer
+    │   ├── llm-client.ts           # Provider factory
+    │   └── providers/
+    │       ├── base-provider.ts
+    │       └── gemini-provider.ts
+    └── persistence/
+        └── sqlite/
+            └── trading-database.ts # SQLite schema & prepared statements
+
+packages/ui/src/lib/
+├── flows/
+│   └── trading.ts                  # Svelte store & API functions
+└── pages/
+    └── TradingFlow.svelte          # Dashboard UI
+```
+
 ## 🧠 LLM Choice
 
-The advisor uses **Google Gemini 1.5 Flash** as the primary LLM:
+The advisor uses **Google Gemini 2.5 Flash** as the primary LLM:
 
 | Aspect | Choice |
 |---|---|
-| **Model** | `gemini-1.5-flash` |
+| **Model** | `gemini-2.5-flash` (GA) |
 | **Why** | Fast inference (~1-2s), low cost, sufficient reasoning for market commentary. |
 | **SDK** | `@google/genai` (Official Google SDK for Node.js) |
+| **Token Limit** | 1500 max tokens to prevent truncation |
 | **Alternative** | Groq (Llama 3) for even faster inference if needed. |
+
+## 🔮 Refactoring Opportunities
+
+### Current Status ✅
+
+- [x] Services organized by flow (`trading/`, `spotify/`)
+- [x] UI converted to Tailwind CSS
+- [x] All imports updated and linting passing
+
+### Identified Improvements 🚧
+
+1. **Testing**: Add unit tests for math functions (`hurst.ts`, `fractals.ts`)
+2. **Domain Layer**: Extract business logic from services to domain models
+3. **Error Handling**: Centralize error handling with custom error classes
+4. **Configuration**: Move magic numbers to configuration files
+5. **Type Safety**: Add Zod schemas for API responses
+6. **Monitoring**: Add structured logging and metrics
+7. **Documentation**: Add inline JSDoc comments for all public functions
 
 ## 🚀 Quick Start
 
