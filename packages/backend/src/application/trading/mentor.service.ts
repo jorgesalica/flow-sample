@@ -8,6 +8,7 @@ import {
   type AdvisorLogRow,
 } from '@infra/persistence/sqlite/trading-database';
 import { TRADING_CONFIG } from '@config/trading.config';
+import { LLMQuotaError } from '@domain/trading/errors';
 
 export interface MentorServiceState {
   isEnabled: boolean;
@@ -93,6 +94,16 @@ export class MentorService {
   /**
    * Generate an insight for the current market state.
    * Can be called manually (on-demand) or automatically when enabled.
+   *
+   * Process:
+   * 1. Fetches MarketState from AnalystService
+   * 2. Checks if LLM client is initialized (creates if specific on-demand request)
+   * 3. Uses SynthesizerService to build prompt from MarketState
+   * 4. Calls LLM provider to generate insight
+   * 5. Parses and validates response
+   * 6. Persists insight to database
+   *
+   * @returns AdvisorNote object or null if generation failed (no data, error, etc)
    */
   async generateInsight(): Promise<AdvisorNote | null> {
     console.log('[MentorService] generateInsight() called');
@@ -176,8 +187,13 @@ export class MentorService {
       );
 
       return insight;
-    } catch (error) {
-      console.error('[MentorService] LLM call failed:', error);
+    } catch (error: any) {
+      if (error?.status === 429 || error?.message?.includes('quota')) {
+        const quotaError = new LLMQuotaError();
+        console.error(`[MentorService] ${quotaError.message}`);
+      } else {
+        console.error('[MentorService] LLM call failed:', error);
+      }
       return null;
     }
   }

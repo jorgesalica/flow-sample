@@ -18,6 +18,7 @@ import { RSI, MACD } from 'technicalindicators';
 
 // Re-export types for convenience
 export type { MarketState } from '@domain/trading/types';
+import { InsufficientDataError } from '@domain/trading/errors';
 
 export interface AnalystServiceConfig {
   symbol: string;
@@ -49,6 +50,9 @@ export class AnalystService {
   /**
    * Analyze current market state.
    * Called after each candle closes.
+   *
+   * @returns MarketState if successful, null if insufficient data
+   * @throws InsufficientDataError if critical data is missing (not currently thrown, but prepared)
    */
   analyze(): MarketState | null {
     // Fetch recent candles
@@ -59,7 +63,10 @@ export class AnalystService {
     ) as CandleRow[];
 
     if (candleRows.length < TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS) {
-      console.log('[AnalystService] Not enough candles for analysis');
+      const error = new InsufficientDataError(
+        `Not enough candles for analysis. Need ${TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS}, got ${candleRows.length}`,
+      );
+      console.warn(`[AnalystService] ${error.message}`);
       return null;
     }
 
