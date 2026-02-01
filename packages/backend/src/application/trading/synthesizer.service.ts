@@ -1,4 +1,4 @@
-import type { MarketState } from './analyst.service';
+import { type MarketState } from '@domain/trading/types';
 import type { LLMMessage } from '@infra/llm';
 
 /**

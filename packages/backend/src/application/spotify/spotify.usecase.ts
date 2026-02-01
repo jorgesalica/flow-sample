@@ -30,7 +30,7 @@ export class SpotifyUseCase {
   constructor(
     private source: SpotifySourcePort,
     private repository: TrackRepository,
-  ) { }
+  ) {}
 
   async fetchAndSave(options: SpotifyUseCaseOptions = {}): Promise<{ count: number }> {
     const limit = options.limit ?? 20;

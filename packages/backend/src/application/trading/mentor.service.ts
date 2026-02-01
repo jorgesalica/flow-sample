@@ -1,22 +1,13 @@
 import { getAnalystService } from './analyst.service';
 import { getSynthesizerService } from './synthesizer.service';
 import { createLLMClient, type LLMClient } from '@infra/llm';
+import { type AdvisorNote } from '@domain/trading/types';
 import {
   insertAdvisorLog,
   getLatestAdvisorLog,
   type AdvisorLogRow,
 } from '@infra/persistence/sqlite/trading-database';
-
-/**
- * Advisor output structure (LLM response schema)
- */
-export interface AdvisorNote {
-  title: string;
-  regime_context: string;
-  scenario_bullish: string;
-  scenario_bearish: string;
-  mentor_tip: string;
-}
+import { TRADING_CONFIG } from '@config/trading.config';
 
 export interface MentorServiceState {
   isEnabled: boolean;
@@ -148,8 +139,8 @@ export class MentorService {
 
       const response = await this.llm.generate({
         messages,
-        temperature: 0.5,
-        maxTokens: 1500,
+        temperature: TRADING_CONFIG.LLM.TEMPERATURE,
+        maxTokens: TRADING_CONFIG.LLM.MAX_TOKENS,
       });
 
       console.log('[MentorService] ✓ LLM response received:', {

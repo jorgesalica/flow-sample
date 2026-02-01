@@ -6,41 +6,18 @@ import {
   findNearestResistance,
   findNearestSupport,
   type Candle,
-  type FractalNode,
-  type MarketRegime,
 } from '@domain/trading/math';
+import { type MarketState } from '@domain/trading/types';
 import {
   getLastNCandles,
   insertFractalNode,
   type CandleRow,
 } from '@infra/persistence/sqlite/trading-database';
+import { TRADING_CONFIG } from '@config/trading.config';
 import { RSI, MACD } from 'technicalindicators';
 
-export interface MarketState {
-  symbol: string;
-  timestamp: number;
-  regime: MarketRegime;
-  hurst: number;
-  fractalDimension: number;
-  price: {
-    current: number;
-    open24h?: number;
-    change24h?: number;
-  };
-  nodes: {
-    all: FractalNode[];
-    resistance: FractalNode | null;
-    support: FractalNode | null;
-  };
-  indicators: {
-    rsi?: number;
-    macd?: {
-      value: number;
-      signal: number;
-      histogram: number;
-    };
-  };
-}
+// Re-export types for convenience
+export type { MarketState } from '@domain/trading/types';
 
 export interface AnalystServiceConfig {
   symbol: string;
@@ -64,7 +41,7 @@ export class AnalystService {
     this.config = {
       symbol: config?.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT',
       interval: config?.interval || process.env.TRADING_INTERVAL || '1m',
-      hurstWindowSize: config?.hurstWindowSize || 100,
+      hurstWindowSize: config?.hurstWindowSize || TRADING_CONFIG.HURST.WINDOW_SIZE,
       candleLookback: config?.candleLookback || 500,
     };
   }
@@ -81,7 +58,7 @@ export class AnalystService {
       this.config.candleLookback,
     ) as CandleRow[];
 
-    if (candleRows.length < 50) {
+    if (candleRows.length < TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS) {
       console.log('[AnalystService] Not enough candles for analysis');
       return null;
     }
