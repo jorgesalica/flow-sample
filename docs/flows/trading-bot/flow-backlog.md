@@ -80,3 +80,14 @@
 - [ ] **Export/Import**: Save and restore analysis sessions
 - [ ] **Testing**: Add unit tests for math functions and integration tests for services
 - [ ] **Refactoring**: Extract business logic to domain layer, add error handling, improve type safety
+
+---
+
+## ✅ Completed Refactoring (Section 12)
+
+- [x] **Service Organization**: Moved to flow-specific folders (trading/, spotify/)
+- [x] **Barrel Exports**: Added index.ts for cleaner imports
+- [x] **Type Extraction**: Created domain/trading/types/ with shared types
+- [x] **Config Centralization**: Created config/trading.config.ts
+- [x] **UI Tailwind**: Converted TradingFlow.svelte to Tailwind CSS
+- [x] **Path Aliases**: Added @config/* to backend and UI tsconfig
