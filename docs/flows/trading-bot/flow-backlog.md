@@ -35,22 +35,36 @@
 
 ## 🔜 Implementation Phases
 
-- [ ] **Phase 1: The Foundation (N1 + N2)**:
-  - [ ] Create `trading-database.ts` (schema, prepared statements).
-  - [ ] Create `adapters/binance/` (WebSocket client).
-  - [ ] Create `trading.service.ts` (orchestrator).
-  - [ ] Create `trading.routes.ts` (API endpoints).
-  - [ ] Install `ws` dependency.
-  - [ ] Verify live data ingestion.
-- [ ] **Phase 2: The Navigator (N3)**:
-  - [ ] Implement `hurst.ts` (R/S algorithm).
-  - [ ] Implement `fractals.ts` (5-bar detection).
-  - [ ] Create `analyst.service.ts` (Fractal State Machine).
-- [ ] **Phase 3: The Advisor (N4 + N5)**:
-  - [ ] Create `gemini.adapter.ts` (LLM client).
-  - [ ] Create `synthesizer.service.ts` (prompt builder).
-  - [ ] Create `mentor.service.ts` (orchestrator).
-- [ ] **Phase 4: The Dashboard (N6)**:
-  - [ ] Create `flows/trading.ts` (Svelte store).
-  - [ ] Create `TradingPage.svelte` (main view).
-  - [ ] Create Regime/Insight components.
+- [x] **Phase 1: The Foundation (N1 + N2)**:
+  - [x] Create `trading-database.ts` (schema, prepared statements).
+  - [x] Create `adapters/binance/` (WebSocket client).
+  - [x] Create `trading.service.ts` (orchestrator).
+  - [x] Create `trading.routes.ts` (API endpoints).
+  - [x] Install `ws` dependency.
+  - [x] Verify live data ingestion.
+- [x] **Phase 2: The Navigator (N3)**:
+  - [x] Implement `hurst.ts` (R/S algorithm).
+  - [x] Implement `fractals.ts` (5-bar detection).
+  - [x] Create `analyst.service.ts` (Fractal State Machine).
+- [x] **Phase 3: The Advisor (N4 + N5)**:
+  - [x] Create LLM abstraction layer with Gemini provider.
+  - [x] Create `synthesizer.service.ts` (prompt builder).
+  - [x] Create `mentor.service.ts` (orchestrator).
+  - [x] Install `@google/genai` SDK.
+  - [x] Configure gemini-2.5-flash model.
+- [x] **Phase 4: The Dashboard (N6)**:
+  - [x] Create `flows/trading.ts` (Svelte store).
+  - [x] Create `TradingFlow.svelte` (main view).
+  - [x] Add SSE for real-time updates.
+  - [x] Integrate into app routing.
+
+## 🚀 Future Enhancements
+
+- [ ] **Automatic Advisor Mode**: Implement scheduled insight generation when advisor is ON.
+- [ ] **Historical Data Backfill**: Add ability to fetch and analyze historical candles.
+- [ ] **Advanced Indicators**: Integrate RSI, MACD, and custom divergence detection.
+- [ ] **Multi-Symbol Support**: Track multiple trading pairs simultaneously.
+- [ ] **Charting**: Add visual candle charts with fractal overlays.
+- [ ] **Notification System**: Alert users on regime changes or significant patterns.
+- [ ] **Export/Import**: Save and restore analysis sessions.
+- [ ] **Testing**: Add unit tests for math functions and integration tests for services.
