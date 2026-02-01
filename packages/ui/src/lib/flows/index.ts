@@ -3,6 +3,7 @@ export { registerFlow, getFlows, getFlow, type FlowDefinition, type FlowStats } 
 
 // Auto-register flows by importing them
 import './spotify';
+import './trading';
 import { lyricsFlow } from './lyrics';
 import { registerFlow } from './registry';
 
