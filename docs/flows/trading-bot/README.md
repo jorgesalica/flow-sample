@@ -32,7 +32,7 @@ cp .env.example .env
 ```
 
 | Variable | Required | Description |
-|---|---|---|
+| :--- | :--- | :--- |
 | `GEMINI_API_KEY` | **Yes (Phase 3)** | Google AI API key for Gemini Flash 1.5. Get one at [Google AI Studio](https://aistudio.google.com/). |
 
 ### `.env.example` Contents
@@ -79,7 +79,7 @@ packages/backend/src/
 ├── api/
 │   └── trading.routes.ts           # Trading API endpoints (SSE, start/stop, insights)
 ├── application/
-│   ├── trading/                    # Trading Flow services
+│   ├── trading/                    # Trading Flow services (with index.ts barrel)
 │   │   ├── trading.service.ts      # N1+N2: Data ingestion & persistence
 │   │   ├── analyst.service.ts      # N3: Hurst + Fractals (Fractal State Machine)
 │   │   ├── synthesizer.service.ts  # N4: LLM prompt builder
@@ -87,11 +87,17 @@ packages/backend/src/
 │   ├── spotify/                    # Spotify Flow services
 │   │   └── spotify.usecase.ts
 │   └── stats.service.ts            # Shared flow stats service
+├── config/
+│   └── trading.config.ts           # Centralized trading configuration
 ├── domain/
 │   └── trading/
-│       └── math/
-│           ├── hurst.ts            # Hurst exponent calculation
-│           └── fractals.ts         # Bill Williams fractal detection
+│       ├── math/
+│       │   ├── hurst.ts            # Hurst exponent calculation
+│       │   └── fractals.ts         # Bill Williams fractal detection
+│       ├── types/                  # Shared domain types
+│       │   ├── market.types.ts
+│       │   └── advisor.types.ts
+│       └── errors.ts               # Custom error classes
 └── infrastructure/
     ├── adapters/
     │   └── binance/
@@ -129,19 +135,19 @@ The advisor uses **Google Gemini 2.5 Flash** as the primary LLM:
 
 ### Current Status ✅
 
-- [x] Services organized by flow (`trading/`, `spotify/`)
-- [x] UI converted to Tailwind CSS
-- [x] All imports updated and linting passing
+- [x] **Service Organization**: Separated by flow (`trading/`, `spotify/`) with barrel exports
+- [x] **UI Styling**: Converted to Tailwind CSS
+- [x] **Configuration**: Centralized in `config/trading.config.ts`
+- [x] **Unit Tests**: Added for math functions (`hurst.ts`, `fractals.ts`)
+- [x] **Domain Layer**: extracted types and errors
+- [x] **Documentation**: JSDoc added to services
+- [x] **Type Safety**: Domain types shared across backend/ui via paths
 
 ### Identified Improvements 🚧
 
-1. **Testing**: Add unit tests for math functions (`hurst.ts`, `fractals.ts`)
-2. **Domain Layer**: Extract business logic from services to domain models
-3. **Error Handling**: Centralize error handling with custom error classes
-4. **Configuration**: Move magic numbers to configuration files
-5. **Type Safety**: Add Zod schemas for API responses
-6. **Monitoring**: Add structured logging and metrics
-7. **Documentation**: Add inline JSDoc comments for all public functions
+1. **Type Safety**: Add Zod schemas for API input/output validation
+2. **Monitoring**: Add structured logging and Prometheus metrics
+3. **Integration Testing**: More comprehensive end-to-end flow tests
 
 ## 🚀 Quick Start
 

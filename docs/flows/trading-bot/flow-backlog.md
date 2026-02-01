@@ -77,9 +77,9 @@
 
 ### Low Priority 📋
 
-- [ ] **Export/Import**: Save and restore analysis sessions
-- [ ] **Testing**: Add unit tests for math functions and integration tests for services
-- [ ] **Refactoring**: Extract business logic to domain layer, add error handling, improve type safety
+- [x] **Export/Import**: Save and restore analysis sessions
+- [x] **Testing**: Add unit tests for math functions and integration tests for services
+- [x] **Refactoring**: Extract business logic to domain layer, add error handling, improve type safety
 
 ---
 

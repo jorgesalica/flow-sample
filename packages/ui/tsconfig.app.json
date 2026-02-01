@@ -6,10 +6,7 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": [
-      "svelte",
-      "vite/client"
-    ],
+    "types": ["svelte", "vite/client"],
     "composite": true,
     "declaration": true,
     "declarationMap": true,
@@ -25,32 +22,14 @@
     "moduleDetection": "force",
     "baseUrl": ".",
     "paths": {
-      "@lib/*": [
-        "src/lib/*"
-      ],
-      "@components/*": [
-        "src/lib/components/*"
-      ],
-      "@domain/*": [
-        "../backend/src/domain/*"
-      ],
-      "@infra/*": [
-        "../backend/src/infrastructure/*"
-      ],
-      "@app/*": [
-        "../backend/src/application/*"
-      ],
-      "@api/*": [
-        "../backend/src/api/*"
-      ],
-      "@config/*": [
-        "../backend/src/config/*"
-      ]
+      "@lib/*": ["src/lib/*"],
+      "@components/*": ["src/lib/components/*"],
+      "@domain/*": ["../backend/src/domain/*"],
+      "@infra/*": ["../backend/src/infrastructure/*"],
+      "@app/*": ["../backend/src/application/*"],
+      "@api/*": ["../backend/src/api/*"],
+      "@config/*": ["../backend/src/config/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.js",
-    "src/**/*.svelte"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]
 }
