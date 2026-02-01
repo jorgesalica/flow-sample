@@ -1,5 +1,5 @@
-import { getAnalystService } from '@app/analyst.service';
-import { getSynthesizerService } from '@app/synthesizer.service';
+import { getAnalystService } from './analyst.service';
+import { getSynthesizerService } from './synthesizer.service';
 import { createLLMClient, type LLMClient } from '@infra/llm';
 import {
   insertAdvisorLog,

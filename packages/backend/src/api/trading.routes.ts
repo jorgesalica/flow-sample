@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
-import { getTradingService } from '@app/trading.service';
-import { getMentorService } from '@app/mentor.service';
+import { getTradingService } from '@app/trading/trading.service';
+import { getMentorService } from '@app/trading/mentor.service';
 import {
   getLastNCandles,
   getLastNFractalNodes,
