@@ -7,7 +7,7 @@ This document outlines technical improvements to evolve the project from a proto
 **Problem**: The current `flowRunner` is tightly coupled to the Spotify implementation and the file system.
 **Goal**: Decouple the "Flow" logic from external systems.
 
-### Proposal
+### Backend Proposal
 
 * **Core Domain**: Define a generic `FlowEngine` that knows nothing about Spotify. It only knows about `Steps` (Export, Enrich, Compact).
 * **Ports (Interfaces)**:
@@ -25,7 +25,7 @@ This document outlines technical improvements to evolve the project from a proto
 **Problem**: `app.js` is a "God Object" (600+ lines) handling state, fetching, rendering, and filtering.
 **Goal**: Break the UI into small, single-responsibility components.
 
-### Proposal
+### Frontend Proposal
 
 * **State Management**: Extract state to a `Store` class (Observer pattern). Components subscribe to changes.
 * **Components**:
@@ -43,7 +43,7 @@ This document outlines technical improvements to evolve the project from a proto
 **Problem**: Loading 10,000 JSON objects into memory and filtering with JavaScript arrays is inefficient and hard to query complexly.
 **Goal**: Enable complex queries and better performance.
 
-### Proposal
+### Data Layer Proposal
 
 * **Transition**: Move from `JSON` files to a local `SQLite` or `DuckDB` file.
 * **Workflow**:
@@ -58,7 +58,7 @@ This document outlines technical improvements to evolve the project from a proto
 **Problem**: Config is scattered (`.env`, `config.ts`, hardcoded constants).
 **Goal**: Single source of truth.
 
-### Proposal
+### Configuration Proposal
 
 * **Config Schema**: Use `zod` or similar to validate configuration at startup.
 * **Structure**:

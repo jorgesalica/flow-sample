@@ -22,8 +22,8 @@ graph TD
 
 ## Layered Architecture
 
-| Location | Responsibility |
-|----------|----------------|
+| Layer | Location | Responsibility |
+| ----- | -------- | -------------- |
 | **API** | `packages/backend/src/api/` | HTTP routes, validation, serialization |
 | **Application** | `packages/backend/src/application/` | Use cases, orchestration |
 | **Domain** | `packages/backend/src/domain/` | Entities, ports, business rules |
@@ -32,7 +32,7 @@ graph TD
 ## Tech Stack
 
 | Component | Technology |
-|-----------|------------|
+| --------- | ---------- |
 | **UI** | Svelte 5, Vite 7, Tailwind CSS 4, Chart.js |
 | **Server** | Elysia (Node.js adapter) |
 | **Database** | SQLite (better-sqlite3) |
@@ -41,7 +41,7 @@ graph TD
 
 ## Directory Structure
 
-```
+```text
 flow-sample/
 ├── packages/
 │   ├── backend/

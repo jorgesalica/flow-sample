@@ -46,7 +46,9 @@ Ideas, future tasks, and things to do later.
 
 ---
 
-*Last updated: 2025-12-07*
+### Last Updated
+
+2025-12-07
 
 ---
 
