@@ -22,7 +22,7 @@
   interface EnhancedAdvisorNote extends AdvisorNote {
     reasoning_key_factors?: string[];
     confidence_score?: number;
-    _debugContext?: any;
+    _debugContext?: unknown;
   }
 
   // Local derived state
@@ -243,7 +243,7 @@
                 {/if}
               </div>
               <ul class="list-disc list-inside space-y-1 text-sm text-white/80">
-                {#each insight.reasoning_key_factors as factor}
+                {#each insight.reasoning_key_factors as factor (factor)}
                   <li>{factor}</li>
                 {/each}
               </ul>
