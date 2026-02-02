@@ -27,6 +27,7 @@ export interface FractalNode {
 }
 
 export interface AdvisorNote {
+  // Updated for Iteration 2 (Glass Box)
   title: string;
   regime_context: string;
   scenario_bullish: string;
@@ -175,7 +176,9 @@ export async function generateInsight(): Promise<void> {
     if (!res.ok) throw new Error('Failed to generate insight');
     const data = await res.json();
     if (data.success && data.insight) {
-      latestInsight.set(data.insight);
+      const insight = data.insight;
+      if (data.debugContext) insight._debugContext = data.debugContext;
+      latestInsight.set(insight);
       showSuccess('Insight generated!');
     } else {
       showError(data.error || 'Failed to generate insight');
@@ -194,7 +197,9 @@ export async function fetchLatestInsight(): Promise<void> {
     if (!res.ok) throw new Error('Failed to fetch insight');
     const data = await res.json();
     if (data.insight) {
-      latestInsight.set(data.insight);
+      const insight = data.insight;
+      if (data.debugContext) insight._debugContext = data.debugContext;
+      latestInsight.set(insight);
     }
   } catch (error) {
     console.error('[TradingFlow] Insight fetch failed:', error);

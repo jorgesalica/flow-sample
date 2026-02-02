@@ -175,6 +175,7 @@ export function createTradingRoutes() {
           return {
             success: true,
             insight: JSON.parse(log.insight_json),
+            debugContext: log.market_state_json ? JSON.parse(log.market_state_json) : null,
             timestamp: log.timestamp,
             regime: log.regime,
             tokensUsed: log.tokens_used,

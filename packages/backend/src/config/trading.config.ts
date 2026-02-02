@@ -42,11 +42,11 @@ export const TRADING_CONFIG = {
    */
   LLM: {
     /** Maximum tokens for LLM response */
-    MAX_TOKENS: 1500,
-    /** Temperature for response creativity (0-1) */
-    TEMPERATURE: 0.5,
-    /** Default model to use */
-    DEFAULT_MODEL: 'gemini-2.5-flash',
+    MAX_TOKENS: 8192,
+    /** Temperature for response creativity (0-1) - Lower for analytical precision */
+    TEMPERATURE: 0.3,
+    /** Default model to use - Gemini 3 Pro for state-of-the-art reasoning */
+    DEFAULT_MODEL: 'gemini-3-pro',
     /** Maximum age of cached insight (milliseconds) */
     MAX_INSIGHT_AGE_MS: 5 * 60 * 1000, // 5 minutes
   },

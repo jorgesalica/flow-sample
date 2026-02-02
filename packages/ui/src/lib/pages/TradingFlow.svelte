@@ -15,12 +15,20 @@
     fetchLatestInsight,
     connectToStream,
     disconnectFromStream,
+    type AdvisorNote,
   } from '../flows/trading';
+
+  // Local interface extension to bypass potential type-check caching issues
+  interface EnhancedAdvisorNote extends AdvisorNote {
+    reasoning_key_factors?: string[];
+    confidence_score?: number;
+    _debugContext?: any;
+  }
 
   // Local derived state
   let state = $derived($tradingState);
   let advisor = $derived($advisorState);
-  let insight = $derived($latestInsight);
+  let insight = $derived($latestInsight) as EnhancedAdvisorNote | null;
   let candleList = $derived($candles);
   let loadingInsight = $derived($isLoadingInsight);
 
@@ -220,6 +228,42 @@
                 💡 Mentor Tip
               </div>
               <p class="text-sm leading-relaxed">{insight.mentor_tip}</p>
+            </div>
+          {/if}
+
+          <!-- New: Reasoning & Confidence (Iteration 2) -->
+          {#if insight.reasoning_key_factors && insight.reasoning_key_factors.length > 0}
+            <div class="p-4 rounded-lg bg-blue-500/10 border-l-4 border-blue-500">
+              <div
+                class="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2 flex justify-between"
+              >
+                <span>Logic Trace</span>
+                {#if insight.confidence_score}
+                  <span class="text-blue-300">Confidence: {insight.confidence_score}%</span>
+                {/if}
+              </div>
+              <ul class="list-disc list-inside space-y-1 text-sm text-white/80">
+                {#each insight.reasoning_key_factors as factor}
+                  <li>{factor}</li>
+                {/each}
+              </ul>
+            </div>
+          {/if}
+
+          <!-- New: Glass Box Debug (Iteration 2) -->
+          {#if insight._debugContext}
+            <div class="pt-2">
+              <details class="group">
+                <summary
+                  class="cursor-pointer text-[10px] text-white/20 hover:text-white/40 uppercase tracking-wider transition-colors select-none"
+                >
+                  Show Glass Box Data (Debug)
+                </summary>
+                <pre
+                  class="mt-2 text-[10px] text-green-400/80 bg-black/40 p-3 rounded-lg overflow-x-auto font-mono max-h-60">
+{JSON.stringify(insight._debugContext, null, 2)}
+                  </pre>
+              </details>
             </div>
           {/if}
         </div>

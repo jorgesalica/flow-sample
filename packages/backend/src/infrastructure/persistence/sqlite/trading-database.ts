@@ -52,11 +52,19 @@ tradingDb.exec(`
     symbol TEXT NOT NULL,
     regime TEXT,
     insight_json TEXT NOT NULL,
+    market_state_json TEXT, -- Snapshotted input state for debugging/transparency
     tokens_used INTEGER,
     latency_ms INTEGER
   );
   CREATE INDEX IF NOT EXISTS idx_advisor_logs_time ON advisor_logs(timestamp DESC);
 `);
+
+// Auto-migration for existing databases (idempotent-ish)
+try {
+  tradingDb.exec('ALTER TABLE advisor_logs ADD COLUMN market_state_json TEXT');
+} catch {
+  // Column already exists or table doesn't exist yet (handled by CREATE above)
+}
 
 // Prepared statements for candles
 export const upsertCandle = tradingDb.prepare(`
@@ -99,8 +107,8 @@ export const getLastNFractalNodes = tradingDb.prepare(`
 
 // Prepared statements for advisor logs
 export const insertAdvisorLog = tradingDb.prepare(`
-  INSERT INTO advisor_logs (timestamp, symbol, regime, insight_json, tokens_used, latency_ms)
-  VALUES (@timestamp, @symbol, @regime, @insightJson, @tokensUsed, @latencyMs)
+  INSERT INTO advisor_logs (timestamp, symbol, regime, insight_json, market_state_json, tokens_used, latency_ms)
+  VALUES (@timestamp, @symbol, @regime, @insightJson, @marketStateJson, @tokensUsed, @latencyMs)
 `);
 
 export const getLatestAdvisorLog = tradingDb.prepare(`
@@ -139,6 +147,7 @@ export interface AdvisorLogRow {
   symbol: string;
   regime: string | null;
   insight_json: string;
+  market_state_json: string | null;
   tokens_used: number | null;
   latency_ms: number | null;
 }

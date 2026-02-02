@@ -138,7 +138,8 @@ export class MentorService {
 
     // Build prompt via synthesizer
     const synthesizer = getSynthesizerService();
-    const messages = synthesizer.buildMessages(marketState);
+    // Destructure messages and contextJson
+    const { messages, contextJson } = synthesizer.buildMessages(marketState);
 
     try {
       // Call LLM
@@ -175,6 +176,7 @@ export class MentorService {
         symbol: this.symbol,
         regime: marketState.regime,
         insightJson: JSON.stringify(insight),
+        marketStateJson: contextJson, // Persist debug context
         tokensUsed: response.usage.totalTokens,
         latencyMs: response.latencyMs,
       });
@@ -226,16 +228,20 @@ export class MentorService {
   private parseInsight(content: string): AdvisorNote | null {
     console.log('[MentorService] Parsing insight from LLM response...');
     try {
-      // Try to extract JSON from response (LLM might wrap it in markdown)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
+      // Robust cleaning: remove markdown code blocks and find first { to last }
+      let clean = content.replace(/```json/g, '').replace(/```/g, '').trim();
+      const jsonMatch = clean.match(/\{[\s\S]*\}/);
+
+      if (jsonMatch) {
+        clean = jsonMatch[0];
+      } else {
         console.error('[MentorService] ❌ No JSON found in response!');
-        console.error('[MentorService] Full content:', content);
+        console.debug('[MentorService] Full content:', content);
         return null;
       }
 
-      console.log('[MentorService] Found JSON match:', jsonMatch[0].slice(0, 200) + '...');
-      const parsed = JSON.parse(jsonMatch[0]);
+      console.log('[MentorService] Found JSON match:', clean.slice(0, 200) + '...');
+      const parsed = JSON.parse(clean);
       console.log('[MentorService] Parsed object keys:', Object.keys(parsed));
 
       // Validate required fields
@@ -256,6 +262,10 @@ export class MentorService {
         scenario_bullish: parsed.scenario_bullish || '',
         scenario_bearish: parsed.scenario_bearish || '',
         mentor_tip: parsed.mentor_tip,
+        reasoning_key_factors: Array.isArray(parsed.reasoning_key_factors)
+          ? parsed.reasoning_key_factors
+          : [],
+        confidence_score: typeof parsed.confidence_score === 'number' ? parsed.confidence_score : 50,
       };
     } catch (error) {
       console.error('[MentorService] ❌ JSON parse error:', error);
