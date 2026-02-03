@@ -4,6 +4,15 @@
 
 export type RegimeType = 'TRENDING' | 'RANGING' | 'MEAN_REVERTING' | 'RANDOM';
 
+/**
+ * Candle pattern detection result for LLM context.
+ */
+export interface CandlePatternInfo {
+  name: string;
+  type: 'bullish' | 'bearish' | 'neutral';
+  significance: 'strong' | 'moderate' | 'weak';
+}
+
 export interface MarketState {
   symbol: string;
   timestamp: number;
@@ -19,6 +28,8 @@ export interface MarketState {
     all: FractalNode[];
     support: FractalNode | null;
     resistance: FractalNode | null;
+    supportTouchCount?: number;
+    resistanceTouchCount?: number;
   };
   indicators: {
     rsi?: number;
@@ -28,6 +39,8 @@ export interface MarketState {
       histogram: number;
     };
   };
+  /** Detected candle patterns in recent price action */
+  candlePatterns?: CandlePatternInfo[];
 }
 
 export interface FractalNode {
@@ -35,3 +48,4 @@ export interface FractalNode {
   price: number;
   candleOpenTime: number;
 }
+
