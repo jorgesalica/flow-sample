@@ -60,17 +60,20 @@
 
 ## 🚀 Future Enhancements
 
-### High Priority 🔥
+## 🚀 Future Enhancements
 
-- [ ] **Insight Data Transparency**: Show input data used for LLM analysis (Hurst value, fractal patterns, price action)
-- [ ] **Improve LLM Prompt**: Make insights more specific and actionable (less generic "drink water" advice)
-- [ ] **Chat Interface**: Convert insight panel to interactive chat for follow-up questions
+### High Priority 🔥 (Iteration 3: The Cascade Agent)
+
+- [ ] **Candle Pattern Detection**: Implement algorithm to detect visual patterns (Hammer, Engulfing, Doji) for entry triggers.
+- [ ] **Cascade Analysis Logic**: Refactor MentorService to process data in stages: Macro (1D/4H) -> Structure (1H) -> Entry (15m).
+- [ ] **Risk Management Engine**: Calculate and suggest structural Stop Loss and R:R Ratio in the insight.
+- [ ] **Data Confluence**: Calculate "Touch Count" for S/R levels to validate strength.
 
 ### Medium Priority ⭐
 
+- [ ] **Chat Interface**: Convert insight panel to interactive chat for follow-up questions
 - [ ] **Automatic Advisor Mode**: Implement scheduled insight generation when advisor is ON
 - [ ] **Historical Data Backfill**: Add ability to fetch and analyze historical candles
-- [ ] **Advanced Indicators**: Integrate RSI, MACD, and custom divergence detection
 - [ ] **Multi-Symbol Support**: Track multiple trading pairs simultaneously
 - [ ] **Charting**: Add visual candle charts with fractal overlays
 - [ ] **Notification System**: Alert users on regime changes or significant patterns
@@ -80,6 +83,14 @@
 - [x] **Export/Import**: Save and restore analysis sessions
 - [x] **Testing**: Add unit tests for math functions and integration tests for services
 - [x] **Refactoring**: Extract business logic to domain layer, add error handling, improve type safety
+
+---
+
+## ✅ Completed (Iteration 1 & 2)
+
+- [x] **Insight Data Transparency**: "Glass Box" UI showing raw inputs.
+- [x] **Improve LLM Prompt**: "Quantitative Analyst" persona with specific data citation.
+- [x] **Advanced Indicators**: Added RSI/MACD dynamic calculation based on regime.
 
 ---
 

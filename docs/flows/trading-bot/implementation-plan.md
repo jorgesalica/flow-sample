@@ -11,7 +11,7 @@ This document serves as the index for the development iterations of the Trading 
 * **Nodes**: N1 (Watcher), N2 (Scribe), N3 (Navigator), N4 (Translator), N5 (Mentor), N6 (Dashboard).
 * **Result**: Functional bot with live data, technical analysis, and basic LLM insights (Gemini Flash).
 
-### [Iteration 2: The Insight Agent](./iterations/it2-insight-agent.md) (🚧 In Progress)
+### [Iteration 2: The Insight Agent](./iterations/it2-insight-agent.md) (✅ Completed)
 
 **Focus**: Enhancing the "Mentor" aspect (N5) to provide deep, non-generic, data-driven insights.
 
