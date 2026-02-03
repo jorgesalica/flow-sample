@@ -26,13 +26,27 @@ export interface FractalNode {
   candleOpenTime: number;
 }
 
+export type SentimentBias = 'LONG' | 'SHORT' | 'NEUTRAL';
+
+export interface RiskManagement {
+  recommended_sl: number;
+  invalidation_reason: string;
+}
+
 export interface AdvisorNote {
-  // Updated for Iteration 2 (Glass Box)
   title: string;
+  /** Cascade Agent v3: Overall market bias */
+  sentiment_bias?: SentimentBias;
   regime_context: string;
   scenario_bullish: string;
   scenario_bearish: string;
+  /** Cascade Agent v3: Risk management suggestion */
+  risk_management?: RiskManagement;
   mentor_tip: string;
+  /** List of key data points driving this analysis */
+  reasoning_key_factors?: string[];
+  /** Confidence in the assessment (0-100) */
+  confidence_score?: number;
 }
 
 export interface TradingState {

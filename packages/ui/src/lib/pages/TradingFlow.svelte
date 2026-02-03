@@ -20,8 +20,6 @@
 
   // Local interface extension to bypass potential type-check caching issues
   interface EnhancedAdvisorNote extends AdvisorNote {
-    reasoning_key_factors?: string[];
-    confidence_score?: number;
     _debugContext?: unknown;
   }
 
@@ -193,7 +191,25 @@
       </h3>
       {#if insight}
         <div class="space-y-4 max-h-96 overflow-y-auto">
-          <h4 class="text-xl font-bold text-amber-400">{insight.title}</h4>
+          <div class="flex items-center justify-between gap-4">
+            <h4 class="text-xl font-bold text-amber-400">{insight.title}</h4>
+            {#if insight.sentiment_bias}
+              <span
+                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider {insight.sentiment_bias ===
+                'LONG'
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                  : insight.sentiment_bias === 'SHORT'
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                    : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'}"
+              >
+                {insight.sentiment_bias === 'LONG'
+                  ? '🐂 BULLISH'
+                  : insight.sentiment_bias === 'SHORT'
+                    ? '🐻 BEARISH'
+                    : '⚖️ NEUTRAL'}
+              </span>
+            {/if}
+          </div>
 
           {#if insight.regime_context}
             <div class="p-4 rounded-lg bg-white/5">
@@ -219,6 +235,26 @@
                 🔴 Bearish Scenario
               </div>
               <p class="text-sm leading-relaxed">{insight.scenario_bearish}</p>
+            </div>
+          {/if}
+
+          {#if insight.risk_management}
+            <div class="p-4 rounded-lg bg-orange-500/10 border-l-4 border-orange-500">
+              <div class="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+                🛡️ Risk Management
+              </div>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span class="text-white/50">Stop Loss:</span>
+                  <span class="font-bold text-orange-400">
+                    ${formatPrice(insight.risk_management.recommended_sl)}
+                  </span>
+                </div>
+                <div>
+                  <span class="text-white/50">Reason:</span>
+                  <span class="text-white/80">{insight.risk_management.invalidation_reason}</span>
+                </div>
+              </div>
             </div>
           {/if}
 
