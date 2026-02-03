@@ -60,22 +60,18 @@
 
 ## 🚀 Future Enhancements
 
-## 🚀 Future Enhancements
+### High Priority 🔥 (Iteration 4: The Cascade Wizard)
 
-### High Priority 🔥 (Iteration 3: The Cascade Agent)
-
-- [ ] **Candle Pattern Detection**: Implement algorithm to detect visual patterns (Hammer, Engulfing, Doji) for entry triggers.
-- [ ] **Cascade Analysis Logic**: Refactor MentorService to process data in stages: Macro (1D/4H) -> Structure (1H) -> Entry (15m).
-- [ ] **Risk Management Engine**: Calculate and suggest structural Stop Loss and R:R Ratio in the insight.
-- [ ] **Data Confluence**: Calculate "Touch Count" for S/R levels to validate strength.
+- [ ] **Candlestick Chart**: Add `lightweight-charts` for visual candle rendering with S/R overlays.
+- [ ] **Multi-Timeframe Data**: Implement Binance REST adapter to fetch historical klines (1d, 4h, 1h, 15m).
+- [ ] **Step Wizard UI**: Create step-based navigation for Cascade analysis flow.
+- [ ] **Timeframe-Specific Insights**: Generate LLM insights tailored to each analysis level.
 
 ### Medium Priority ⭐
 
 - [ ] **Chat Interface**: Convert insight panel to interactive chat for follow-up questions
 - [ ] **Automatic Advisor Mode**: Implement scheduled insight generation when advisor is ON
-- [ ] **Historical Data Backfill**: Add ability to fetch and analyze historical candles
 - [ ] **Multi-Symbol Support**: Track multiple trading pairs simultaneously
-- [ ] **Charting**: Add visual candle charts with fractal overlays
 - [ ] **Notification System**: Alert users on regime changes or significant patterns
 
 ### Low Priority 📋
