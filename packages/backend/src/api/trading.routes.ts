@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { getTradingService, getMentorService } from '@app/trading';
+import { fetchKlines, type KlineInterval } from '@infra/adapters/binance';
 import {
   getLastNCandles,
   getLastNFractalNodes,
@@ -107,6 +108,39 @@ export function createTradingRoutes() {
           isRunning: state.isRunning,
         };
       })
+
+      /** Fetch historical klines from Binance for multi-timeframe analysis */
+      .get(
+        '/klines',
+        async ({ query }) => {
+          const symbol = query.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT';
+          const interval = (query.interval || '1d') as KlineInterval;
+          const limit = query.limit ? parseInt(query.limit, 10) : 100;
+
+          try {
+            const candles = await fetchKlines(symbol, interval, limit);
+            return {
+              success: true,
+              count: candles.length,
+              symbol,
+              interval,
+              candles,
+            };
+          } catch (error) {
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : 'Failed to fetch klines',
+            };
+          }
+        },
+        {
+          query: t.Object({
+            symbol: t.Optional(t.String()),
+            interval: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+          }),
+        },
+      )
 
       // ============================================
       // Fractal Analysis (Phase 2)
