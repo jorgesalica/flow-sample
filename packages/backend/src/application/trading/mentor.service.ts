@@ -258,9 +258,18 @@ export class MentorService {
       console.log('[MentorService] ✓ Insight parsed successfully:', parsed.title);
       return {
         title: parsed.title,
+        sentiment_bias: ['LONG', 'SHORT', 'NEUTRAL'].includes(parsed.sentiment_bias)
+          ? parsed.sentiment_bias
+          : undefined,
         regime_context: parsed.regime_context || '',
         scenario_bullish: parsed.scenario_bullish || '',
         scenario_bearish: parsed.scenario_bearish || '',
+        risk_management: parsed.risk_management?.recommended_sl
+          ? {
+            recommended_sl: parsed.risk_management.recommended_sl,
+            invalidation_reason: parsed.risk_management.invalidation_reason || 'Structural level',
+          }
+          : undefined,
         mentor_tip: parsed.mentor_tip,
         reasoning_key_factors: Array.isArray(parsed.reasoning_key_factors)
           ? parsed.reasoning_key_factors

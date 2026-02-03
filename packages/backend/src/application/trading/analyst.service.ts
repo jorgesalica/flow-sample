@@ -5,6 +5,8 @@ import {
   detectFractals,
   findNearestResistance,
   findNearestSupport,
+  calculateTouchCounts,
+  detectCandlePatterns,
   type Candle,
 } from '@domain/trading/math';
 import { type MarketState } from '@domain/trading/types';
@@ -153,6 +155,18 @@ export class AnalystService {
       change24h = ((currentPrice - open24h) / open24h) * 100;
     }
 
+    // Detect candle patterns (Iteration 3)
+    const candlePatterns = detectCandlePatterns(candles);
+
+    // Calculate touch counts for S/R levels (Iteration 3)
+    const fractalsWithTouches = calculateTouchCounts(fractals, candles);
+    const supportTouchCount = support
+      ? fractalsWithTouches.find((f) => f.price === support.price)?.touchCount ?? 0
+      : 0;
+    const resistanceTouchCount = resistance
+      ? fractalsWithTouches.find((f) => f.price === resistance.price)?.touchCount ?? 0
+      : 0;
+
     const marketState: MarketState = {
       symbol: this.config.symbol,
       timestamp: Date.now(),
@@ -168,8 +182,11 @@ export class AnalystService {
         all: recentFractals,
         resistance,
         support,
+        supportTouchCount,
+        resistanceTouchCount,
       },
       indicators,
+      candlePatterns,
     };
 
     console.log(

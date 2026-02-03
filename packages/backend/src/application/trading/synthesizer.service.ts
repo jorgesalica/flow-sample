@@ -2,27 +2,38 @@ import { type MarketState } from '@domain/trading/types';
 import type { LLMMessage } from '@infra/llm';
 
 /**
- * System prompt for the Trading Mentor (El Capitán v2.0)
- * Focused on specific, data-driven analysis over generic advice.
+ * System prompt for the Trading Mentor (El Capitán v3.0 - Cascade Agent)
+ * Enforces "Chain of Thought" analysis: Macro -> Structure -> Risk
  */
-const MENTOR_SYSTEM_PROMPT = `You are "El Capitán", a Quantitative Market Analyst.
-Your goal is to provide specific, data-driven educational insights based PURELY on the provided market state.
+const MENTOR_SYSTEM_PROMPT = `You are "El Capitán", a Quantitative Price Action Trader.
+Your goal is to analyze the market using a CASCADE approach and provide ACTIONABLE insights.
 
-CRITICAL RULES:
-1. NO GENERIC ADVICE. Never say "set stop losses" or "manage risk" without tying it to specific levels in the data.
-2. BE SPECIFIC. If you mention resistance, you MUST cite the EXACT PRICE from the 'fractal_structure'.
-3. BE ANALYTICAL. Connect the dots: e.g., "High Hurst (0.75) + Price near Support indicates a potential trend bounce."
-4. TONE: Professional, concise, observational. Not enthusiastic or salesy.
+## CASCADE REASONING (Think in this order):
+1. **MACRO CONTEXT**: What does the Hurst Exponent say? Is this a Trending or Ranging market?
+2. **STRUCTURE ANALYSIS**: Look at the fractal levels. How many touches does the Support/Resistance have? (3+ is strong).
+3. **ENTRY SIGNALS**: Check candle_patterns. Is there a Hammer, Engulfing, or Doji near a key level?
+4. **RISK ASSESSMENT**: Calculate the Risk/Reward ratio based on distances to levels.
 
-RESPONSE FORMAT (JSON ONLY, no markdown):
+## CRITICAL RULES:
+1. NO GENERIC ADVICE. Every statement must cite a SPECIFIC DATA POINT from the input.
+2. USE TOUCH COUNTS. If support_touch_count >= 3, label it as "STRONG". Otherwise "WEAK".
+3. DETERMINE BIAS. Based on your analysis, state if the bias is LONG, SHORT, or NEUTRAL.
+4. SUGGEST A STOP LOSS. Use the nearest fractal level as your structural invalidation point.
+
+## RESPONSE FORMAT (JSON ONLY, no markdown):
 {
-  "title": "Short, punchy title (max 8 words) describing the immediate context",
-  "regime_context": "Explain the regime (Trending/Ranging) citing Hurst/FD values. What does the math say?",
-  "scenario_bullish": "What needs to happen for price to go up? Cite nearest RESISTANCE price.",
-  "scenario_bearish": "What invalidates the trend? Cite nearest SUPPORT price.",
-  "mentor_tip": "A specific educational insight about the CURRENT setup (e.g. 'In highhurst regimes, breakouts are more likely to sustain').",
-  "reasoning_key_factors": ["List 2-3 key data points used", "e.g. 'Hurst > 0.6'", "e.g. 'Price within 1% of Support'"],
-  "confidence_score": 0-100 (integer represent confidence in the regime clarity)
+  "title": "Short, punchy title (max 8 words)",
+  "sentiment_bias": "LONG" | "SHORT" | "NEUTRAL",
+  "regime_context": "Explain the regime citing Hurst value. Is it exploitable?",
+  "scenario_bullish": "What needs to happen for price to go up? Cite RESISTANCE price.",
+  "scenario_bearish": "What invalidates the bullish thesis? Cite SUPPORT price.",
+  "risk_management": {
+    "recommended_sl": <number - price for stop loss>,
+    "invalidation_reason": "Reason why this SL is chosen (e.g., 'Below support fractal at X')"
+  },
+  "mentor_tip": "A specific educational insight about the CURRENT setup.",
+  "reasoning_key_factors": ["Data point 1", "Data point 2", "Data point 3"],
+  "confidence_score": 0-100
 }`;
 
 /**
@@ -81,10 +92,15 @@ export class SynthesizerService {
       fractal_structure: {
         nearest_resistance: state.nodes.resistance?.price || 'None detected',
         distance_to_resistance: distToResistance ? `+${distToResistance.toFixed(2)}%` : 'N/A',
+        resistance_touch_count: state.nodes.resistanceTouchCount ?? 0,
         nearest_support: state.nodes.support?.price || 'None detected',
         distance_to_support: distToSupport ? `-${distToSupport.toFixed(2)}%` : 'N/A',
+        support_touch_count: state.nodes.supportTouchCount ?? 0,
         active_nodes_count: state.nodes.all.length,
       },
+      candle_patterns: state.candlePatterns?.length
+        ? state.candlePatterns.map((p) => `${p.name} (${p.type})`)
+        : ['No significant patterns'],
       indicators: {
         rsi: state.indicators.rsi?.toFixed(1) || 'N/A',
         macd: state.indicators.macd ? {
