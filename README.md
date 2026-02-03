@@ -5,6 +5,7 @@ A playground for data flows — extract, transform, and visualize data from vari
 ## ✨ Features
 
 - **Spotify Flow**: Sync your saved tracks, explore genres, decades, and discover patterns
+- **Trading Bot Flow**: Real-time advisor with Fractal Analysis and AI-driven "Matrioshka" reasoning
 - **Cosmic UI**: Dark space-themed interface with glassmorphism and subtle animations
 - **Charts & Insights**: Genre distribution, decade analysis, and more
 - **Smart Caching**: 5-minute API cache with auto-invalidation

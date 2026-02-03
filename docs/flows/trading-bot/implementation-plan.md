@@ -19,6 +19,23 @@ This document serves as the index for the development iterations of the Trading 
 * **Model**: Upgrade from Gemini Flash to **Gemini 3 Flash**.
 * **UX**: "Debug Context" in UI to show the raw data behind the insight.
 
+### [Iteration 3: The Cascade Agent (Risk & Patterns)](./iterations/it3-cascade-agent.md) (✅ Completed)
+
+**Focus**: Implementing the mathematical foundation for "Top-Down" analysis (Fractal, Patterns) and Risk Management.
+
+* **Math**: Candle Pattern Recognition (Engulfing, Pinbar) + Touch Count Logic.
+* **UI**: Bias Badge (LONG/SHORT) + Risk Box (Stop Loss/Take Profit).
+* **Synthesis**: Enriching LLM context with specific pattern data.
+
+### [Iteration 4: The Cascade Wizard](./iterations/it4-cascade-wizard.md) (✅ Completed)
+
+**Focus**: Creating a guided, multi-timeframe "Wizard" experience (1D → 4H → 1H → 15m) for deep-dive analysis.
+
+* **UI**: `StepWizard` component with interactive charts for each timeframe.
+* **Logic**: **Matrioshka Prompting** (passing context from macro to micro).
+* **Data**: Local Timezone support + Variable Kline Limit fetching.
+* **Doc**: Comprehensive [Experience Flow](../cascade-wizard-experience-flow.md).
+
 ---
 
 ## 🛠️ Global Backlog & History
