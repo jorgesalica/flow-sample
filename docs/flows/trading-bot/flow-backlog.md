@@ -58,16 +58,17 @@
   - [x] Add SSE for real-time updates.
   - [x] Integrate into app routing.
 
-## 🚀 Future Enhancements
+### High Priority 🔥
 
-### High Priority 🔥 (Iteration 4: The Cascade Wizard)
-
-- [ ] **Candlestick Chart**: Add `lightweight-charts` for visual candle rendering with S/R overlays.
-- [ ] **Multi-Timeframe Data**: Implement Binance REST adapter to fetch historical klines (1d, 4h, 1h, 15m).
-- [ ] **Step Wizard UI**: Create step-based navigation for Cascade analysis flow.
-- [ ] **Timeframe-Specific Insights**: Generate LLM insights tailored to each analysis level.
+- [ ] **Chat Interface**: Convert insight panel to interactive chat for follow-up questions
+- [ ] **Automatic Advisor Mode**: Implement scheduled insight generation when advisor is ON
+- [ ] **Multi-Symbol Support**: Track multiple trading pairs simultaneously
+- [ ] **Notification System**: Alert users on regime changes or significant patterns
 
 ### Medium Priority ⭐
+
+- [ ] **Portfolio Management**: Basic position tracking
+- [ ] **Backtesting Engine**: Simulate strategy against historical data
 
 - [ ] **Chat Interface**: Convert insight panel to interactive chat for follow-up questions
 - [ ] **Automatic Advisor Mode**: Implement scheduled insight generation when advisor is ON
@@ -98,3 +99,15 @@
 - [x] **Config Centralization**: Created config/trading.config.ts
 - [x] **UI Tailwind**: Converted TradingFlow.svelte to Tailwind CSS
 - [x] **Path Aliases**: Added @config/* to backend and UI tsconfig
+- [x] **Repository Cleanup**: Removed unused files (old `src/` root)
+
+## ✅ Completed (Iteration 3 & 4)
+
+- [x] **It3: Math Layer**: Implemented candle patterns and touch count logic.
+- [x] **It3: Synthesizer Layer**: Enriched MarketState with patterns and bias.
+- [x] **It3: UI Layer**: Added "Bias Badge" and "Risk Box".
+- [x] **It4: Backend**: Implemented `binance-rest.ts` for historical klines (1D, 4H, 1H, 15m).
+- [x] **It4: Charting**: Integrated `lightweight-charts` v5.
+- [x] **It4: Wizard UI**: Created `StepWizard.svelte` with Matrioshka prompt logic.
+- [x] **It4: Localization**: Configured charts for local timezone display.
+- [x] **It4: Documentation**: Created comprehensive experience flow document.

@@ -11,6 +11,12 @@ graph TD
     N3 --> N4["N4: The Translator (Context Digest)"]
     N4 --> N5["N5: The Captain (LLM Reasoner)"]
     N5 --> N6["N6: The Interface (Dashboard)"]
+
+    subgraph "Recursive Analysis (Wizard)"
+        W1[User Action] -.-> W2[REST Fetch]
+        W2 -.-> W3[Matrioshka Prompting]
+        W3 -.-> N6
+    end
 ```
 
 ---
@@ -95,6 +101,15 @@ graph TD
   * **Visuals**: Plots Fractal Nodes as horizontal zones on the chart.
   * **Regime Indicator**: A "Weather Widget" showing the current Hurst status (Sunny/Stormy).
 * **Output**: Visual updates on the dashboard.
+
+---
+
+### W: The Cascade Wizard (El Sabio) - On-Demand Analysis
+
+* **Description**: A manual, deep-dive tool that mimics a human trader's "Top-Down" analysis workflow. Unlike the automatic stream, this is user-initiated.
+* **Flow**: 1D (Macro) → 4H (Structure) → 1H (Setup) → 15m (Trigger).
+* **Key Logic**: **Matrioshka Prompting**. The insight from the previous timeframe is passed as context to the next prompt, creating a coherent narrative chain.
+* **Integration**: bypassing the WebSocket stream, it fetches historical data via REST API on demand.
 
 ---
 

@@ -12,6 +12,13 @@ This flow transforms raw market data into educational trading insights by combin
 
 The goal is not to execute trades automatically, but to act as a **Real-Time Mentor** that teaches you *why* the market behaves as it does.
 
+## ✨ Key Features
+
+1. **📊 Glass Box Analysis**: Transparent view of all metrics (Hurst, RSI, Fractals) and raw LLM input/output.
+2. **🧙‍♂️ Cascade Analysis Wizard**: Guided, multi-timeframe analysis (1D → 4H → 1H → 15m) mimicing expert "top-down" analysis.
+3. **🤖 Fractal Advisor**: Real-time AI mentor that explains market structure using Hurst Exponent and regime theory.
+4. **⚡ Live Ingestion**: WebSocket integration with Binance for real-time OHLCV updates.
+
 ## 🏗️ Architecture Overview
 
 ```text
@@ -113,10 +120,13 @@ packages/backend/src/
             └── trading-database.ts # SQLite schema & prepared statements
 
 packages/ui/src/lib/
+├── components/
+│   ├── CandleChart.svelte      # Lightweight Charts wrapper
+│   └── StepWizard.svelte       # Multi-timeframe analysis wizard
 ├── flows/
-│   └── trading.ts                  # Svelte store & API functions
+│   └── trading.ts              # Svelte store & API functions
 └── pages/
-    └── TradingFlow.svelte          # Dashboard UI
+    └── TradingFlow.svelte      # Dashboard UI
 ```
 
 ## 🧠 LLM Choice
