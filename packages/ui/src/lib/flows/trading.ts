@@ -170,6 +170,21 @@ export async function fetchFractals(limit: number = 50): Promise<void> {
   }
 }
 
+/**
+ * Fetch historical klines for a specific timeframe (for Cascade Wizard)
+ */
+export async function fetchKlines(interval: string, limit: number = 100): Promise<Candle[]> {
+  try {
+    const res = await fetch(`${TRADING_API}/klines?interval=${interval}&limit=${limit}`);
+    if (!res.ok) throw new Error('Failed to fetch klines');
+    const data = await res.json();
+    return data.candles || [];
+  } catch (error) {
+    console.error('[TradingFlow] Klines fetch failed:', error);
+    return [];
+  }
+}
+
 export async function toggleAdvisor(): Promise<void> {
   try {
     const res = await fetch(`${TRADING_API}/advisor/toggle`, { method: 'POST' });

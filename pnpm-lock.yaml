@@ -135,9 +135,15 @@ importers:
       chart.js:
         specifier: ^4.5.1
         version: 4.5.1
+      lightweight-charts:
+        specifier: ^5.1.0
+        version: 5.1.0
       svelte-5-french-toast:
         specifier: ^2.0.6
         version: 2.0.6(svelte@5.45.5)
+      svelte-lightweight-charts:
+        specifier: ^2.2.0
+        version: 2.2.0(lightweight-charts@5.1.0)(svelte@5.45.5)
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
@@ -1400,6 +1406,9 @@ packages:
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
 
+  fancy-canvas@2.1.0:
+    resolution: {integrity: sha512-nifxXJ95JNLFR2NgRV4/MxVP45G9909wJTEKz5fg/TZS20JJZA6hfgRVh/bC9bwl2zBtBNcYPjiBE4njQHVBwQ==}
+
   fast-copy@4.0.0:
     resolution: {integrity: sha512-/oA0gx1xyXE9R2YlV4FXwZJXngFdm9Du0zN8FhY38jnLkhp1u35h6bCyKgRhlsA6C9I+1vfXE4KISdt7xc6M9w==}
 
@@ -1801,6 +1810,9 @@ packages:
   lightningcss@1.30.2:
     resolution: {integrity: sha512-utfs7Pr5uJyyvDETitgsaqSyjCb2qNRAtuqUeWIAKztsOYdcACf2KtARYXg2pSvhkt+9NfoaNY7fxjl6nuMjIQ==}
     engines: {node: '>= 12.0.0'}
+
+  lightweight-charts@5.1.0:
+    resolution: {integrity: sha512-jEAYR4ODYeyNZcWUigsoLTl52rbPmgXnvd5FLIv/ZoA/2sSDw63YKnef8n4yhzum7W926yHeFwlm7ididKb7YQ==}
 
   lilconfig@2.1.0:
     resolution: {integrity: sha512-utWOt/GHzuUxnLKxB6dk81RoOeoNeHgbrXiuGk4yyF5qlRz+iIVWu56E2fqGHFrXz0QNUhLB/8nKqvRH66JKGQ==}
@@ -2294,6 +2306,12 @@ packages:
     peerDependenciesMeta:
       svelte:
         optional: true
+
+  svelte-lightweight-charts@2.2.0:
+    resolution: {integrity: sha512-LXdha4vfLMuOPc0Yyetu+DLSDJkPryGkufUQgpCkfguCscSQUcrLiI9MdqKwQk6Fkm6AZbg8SQ5qDIYxcyC+Dg==}
+    peerDependencies:
+      lightweight-charts: '>=4.0.0'
+      svelte: '>=3.44.0'
 
   svelte-writable-derived@3.1.1:
     resolution: {integrity: sha512-w4LR6/bYZEuCs7SGr+M54oipk/UQKtiMadyOhW0PTwAtJ/Ai12QS77sLngEcfBx2q4H8ZBQucc9ktSA5sUGZWw==}
@@ -3652,6 +3670,8 @@ snapshots:
 
   extend@3.0.2: {}
 
+  fancy-canvas@2.1.0: {}
+
   fast-copy@4.0.0: {}
 
   fast-decode-uri-component@1.0.1: {}
@@ -4036,6 +4056,10 @@ snapshots:
       lightningcss-linux-x64-musl: 1.30.2
       lightningcss-win32-arm64-msvc: 1.30.2
       lightningcss-win32-x64-msvc: 1.30.2
+
+  lightweight-charts@5.1.0:
+    dependencies:
+      fancy-canvas: 2.1.0
 
   lilconfig@2.1.0: {}
 
@@ -4514,6 +4538,11 @@ snapshots:
       postcss-scss: 4.0.9(postcss@8.5.6)
       postcss-selector-parser: 7.1.1
     optionalDependencies:
+      svelte: 5.45.5
+
+  svelte-lightweight-charts@2.2.0(lightweight-charts@5.1.0)(svelte@5.45.5):
+    dependencies:
+      lightweight-charts: 5.1.0
       svelte: 5.45.5
 
   svelte-writable-derived@3.1.1(svelte@5.45.5):
