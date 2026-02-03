@@ -148,4 +148,55 @@ export function findNearestSupport(
   return lows.length > 0 ? lows[0] : null;
 }
 
+/**
+ * Fractal with touch count for strength validation.
+ */
+export interface FractalWithTouches extends FractalNode {
+  touchCount: number;
+}
+
+/**
+ * Calculate "touch counts" for fractal levels.
+ * A "touch" is when price came within a tolerance zone of the fractal price.
+ *
+ * @param fractals - Array of detected fractals
+ * @param candles - Full candle history to search for touches
+ * @param tolerancePercent - How close price must be to count as a touch (default 0.5%)
+ * @returns Fractals enriched with touch counts
+ */
+export function calculateTouchCounts(
+  fractals: FractalNode[],
+  candles: Candle[],
+  tolerancePercent: number = 0.5,
+): FractalWithTouches[] {
+  return fractals.map((fractal) => {
+    let touchCount = 0;
+    const tolerance = fractal.price * (tolerancePercent / 100);
+
+    // Count how many candles "touched" this level after it was formed
+    for (let i = fractal.index + 3; i < candles.length; i++) {
+      const candle = candles[i];
+
+      // For highs (resistance), check if high came close to the level
+      if (fractal.type === 'high') {
+        if (Math.abs(candle.high - fractal.price) <= tolerance) {
+          touchCount++;
+        }
+      }
+
+      // For lows (support), check if low came close to the level
+      if (fractal.type === 'low') {
+        if (Math.abs(candle.low - fractal.price) <= tolerance) {
+          touchCount++;
+        }
+      }
+    }
+
+    return {
+      ...fractal,
+      touchCount,
+    };
+  });
+}
+
 export default detectFractals;
