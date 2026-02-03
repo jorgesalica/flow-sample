@@ -1,102 +1,136 @@
-# 📘 Guía del Usuario: El Mago de Análisis en Cascada
+# 📘 Manual de Usuario: Asistente de Análisis de Mercado
 
-> **Bienvenido a tu Copiloto de Trading.** Esta guía te enseña a usar el asistente inteligente para analizar el mercado paso a paso, tal como lo haría un profesional, pero simplificado.
-
-## ¿Qué es esto?
-
-Imagina que tienes a un mentor experto sentado a tu lado. En lugar de mirar un gráfico caótico y no saber por dónde empezar, el "Mago" te guía por una **escalera de 4 pasos**.
-
-No puedes saltar escalones. Primero miramos el clima (Macro), luego el mapa (Estructura), y finalmente decidimos si caminar (Operar).
+> **Propósito**: Esta guía detalla cómo utilizar la herramienta de "Análisis en Cascada" para tomar decisiones de inversión informadas, siguiendo una metodología profesional paso a paso, desde la tendencia general hasta la ejecución precisa.
 
 ---
 
-## 🧭 Cómo Usar el Asistente
+## 1. Introducción al Sistema
 
-El proceso es lineal. En cada paso verás:
+El **Asistente de Análisis** está diseñado para resolver el problema más común del trading: la falta de contexto. En lugar de operar basándose en una sola mirada rápida, el sistema te obliga a seguir un proceso lógico y ordenado:
 
-1. **Un Gráfico**: La foto del mercado en ese momento.
-2. **Un Botón "Generar Insight"**: Para pedirle opinión al mentor.
-3. **El Consejo**: La respuesta inteligente sobre qué hacer.
+1. **Día (1D)**: ¿Hacia dónde va la corriente principal?
+2. **4 Horas (4H)**: ¿Dónde están los obstáculos (pisos y techos)?
+3. **1 Hora (1H)**: ¿Hay una oportunidad formándose ahora mismo?
+4. **15 Minutos (15m)**: ¿Cuál es el precio exacto para entrar?
 
-### Paso 1: El Panorama (Visión Diaria) 🌍
-
-*El Climatólogo*
-
-**¿Qué estamos mirando?**
-Las últimas 24 horas. Aquí no nos importa el ruido minuto a minuto, solo queremos saber la **Tendencia Principal**.
-
-**Tu Input (Tu tarea):**
-
-* Observa si el precio general sube o baja.
-* Haz clic en "Analizar".
-
-**El Output (Lo que recibes):**
-
-* **Sesgo (Bias)**: Te dirá si el viento sopla a favor ("ALCISTA"), en contra ("BAJISTA") o si no hay viento ("NEUTRAL").
-* **Consejo**: Una frase simple explicándote por qué. *Ej: "El mercado sube con fuerza. Solo busca compras."*
+El sistema "recuerda" lo que descubrió en el paso anterior. Por ejemplo, si en el gráfico Diario detectó una tendencia alcista, usará esa información para recomendarte compras en los gráficos de minutos.
 
 ---
 
-### Paso 2: El Terreno (Visión 4 Horas) 🏗️
+## 2. Descripción de la Interfaz
 
-*El Topógrafo*
+En cada paso del asistente encontrarás tres elementos principales:
 
-**¿Qué estamos mirando?**
-La estructura del camino. ¿Hay muros (Resistencias) o pisos (Soportes) cerca?
+### A. El Gráfico Interactivo
 
-**Tu Input:**
+Ocupa la parte central. Muestra las velas japonesas (precios de apertura, cierre, máximo y mínimo) para el periodo seleccionado.
 
-* Verifica si el precio está chocando con alguna línea importante.
+* **Líneas**: Puedes ver líneas horizontales que marcan precios importantes (Soportes/Resistencias automáticas).
+* **Hora Local**: El eje inferior muestra la hora exacta en tu zona horaria local.
 
-**El Output:**
+### B. El Panel de Control (Derecha)
 
-* El mentor te confirmará si es seguro avanzar.
-* *Ej: "Estamos rebotando en un piso sólido. Es buen lugar para buscar entrada."*
+Aquí es donde interactúas con el sistema.
 
----
+* **Botón "Generar Insight"**: Envía los datos actuales al motor de inteligencia artificial para recibir un análisis.
+* **Resultados**: Una vez procesado, verás dos cajas de información:
+  * **Sesgo (Tendencia)**: Una etiqueta rápida (ALCISTA, BAJISTA o NEUTRAL).
+  * **Análisis Detallado**: Un párrafo de texto explicando el razonamiento.
 
-### Paso 3: La Oportunidad (Visión 1 Hora) 🎯
+### C. Barra de Progreso (Superior)
 
-*El Arquitecto*
-
-**¿Qué estamos mirando?**
-Patrones claros. Banderas, triángulos o formaciones que indican que algo va a pasar pronto.
-
-**Tu Input:**
-
-* Busca formas conocidas en las velas.
-
-**El Output:**
-
-* El mentor identificará la "Configuración" (Setup).
-* *Ej: "Se está formando una bandera de compra. Atento a la ruptura."*
+Indica en qué etapa del análisis te encuentras (1D > 4H > 1H > 15m) y si ya has completado los pasos anteriores (marcado con un punto verde).
 
 ---
 
-### Paso 4: El Disparo (Visión 15 Minutos) ⚡
+## 3. Flujo Paso a Paso
 
-*El Francotirador*
+### Paso 1: Análisis de Tendencia (Gráfico Diario)
 
-**¿Qué estamos mirando?**
-El momento exacto. Aquí es donde se aprieta el gatillo.
+**Objetivo**: Determinar si el mercado es seguro para operar y en qué dirección.
 
-**Tu Input:**
+**Tu Tarea**:
 
-* La decisión final.
+1. Observa el gráfico. ¿Los precios de hoy son más altos que los de ayer?
+2. Haz clic en **Generar Insight**.
 
-**El Output:**
+**Interpretación de Resultados**:
 
-* **Instrucción Precisa**: Comprar, Vender o Esperar.
-* **Mapa de Riesgo**: Te dirá exactamente:
-  * **Dónde entrar** (Precio actual).
-  * **Dónde salir si sale mal** (Stop Loss).
-  * **Dónde cobrar ganancias** (Take Profit).
+* **Sesgo ALCISTA (LONG)**: La tendencia es subir. Tu mentalidad debe ser "buscar oportunidades de compra". Ignorar señales de venta.
+* **Sesgo BAJISTA (SHORT)**: La tendencia es bajar. Tu mentalidad debe ser "buscar oportunidades de venta".
+* **Sesgo NEUTRAL**: El mercado está lateral (sin dirección). Es el escenario más peligroso. La recomendación suele ser esperar a que rompa el rango.
 
 ---
 
-## 💡 Glosario Rápido
+### Paso 2: Niveles Estructurales (Gráfico de 4 Horas)
 
-* **Sesgo (Bias)**: La "actitud" del mercado. Si estás feliz, tu sesgo es positivo. Si el mercado sube, su sesgo es **LONG** (Largo/Compra). Si baja, es **SHORT** (Corto/Venta).
-* **Stop Loss (SL)**: Tu cinturón de seguridad. El precio donde admites "me equivoqué" y sales para proteger tu capital.
-* **Take Profit (TP)**: Tu meta. El precio donde cobras tu premio.
-* **Matrioshka**: La magia del sistema. El paso 4 "sabe" lo que pasó en el paso 1. No analiza cosas aisladas, conecta los puntos por ti.
+**Objetivo**: Identificar dónde "rebotará" el precio.
+
+**Contexto Automático**: El sistema ya sabe la tendencia del Paso 1.
+
+**Tu Tarea**:
+
+1. Busca zonas donde el precio se haya detenido anteriormente.
+2. Haz clic en **Generar Insight**.
+
+**Explicación Detallada**:
+El sistema buscará **Soportes** (pisos donde el precio suele subir) y **Resistencias** (techos donde suele bajar).
+
+* Si vienes de una Tendencia Alcista, el sistema buscará un Soporte sólido para apoyarse.
+* Si el precio está "en medio de la nada" (lejos de un soporte o resistencia), el consejo será esperar.
+
+---
+
+### Paso 3: Configuración y Patrones (Gráfico de 1 Hora)
+
+**Objetivo**: Confirmar que el movimiento esperado está comenzando.
+
+**Tu Tarea**:
+
+1. Verifica si hay formas reconocibles en las velas (ej. una vela envolvente grande).
+2. Haz clic en **Generar Insight**.
+
+**Lo que analiza el sistema**:
+El asistente busca **Patrones Técnicos**:
+
+* **Banderas**: Pequeñas pausas antes de continuar la tendencia.
+* **Divergencias**: Cuando el precio sube pero la fuerza (indicadores internos) baja, indicando un posible cambio.
+* **Velas de Confirmación**: Velas específicas que indican fuerza de compradores o vendedores.
+
+---
+
+### Paso 4: Ejecución y Riesgo (Gráfico de 15 Minutos)
+
+**Objetivo**: Definir los números exactos de la operación. Este es el paso final y más crítico.
+
+**Tu Tarea**:
+
+1. Revisar los números propuestos.
+2. Decidir si la operación vale la pena.
+
+**Elementos de la Ejecución**:
+El sistema te entregará tres precios clave:
+
+1. **Precio de Entrada**: El valor exacto al que deberías comprar o vender ahora.
+2. **Stop Loss (Límite de Pérdida)**: El precio donde debes salir de la operación si el mercado se vuelve en tu contra. Esto protege tu capital.
+    * *Regla*: El sistema nunca sugerirá una operación sin Stop Loss.
+3. **Take Profit (Objetivo)**: El precio donde deberías cobrar tus ganancias.
+
+**La Regla de Oro (Ratio Riesgo/Beneficio)**:
+El análisis te dirá si la operación es matemáticamente rentable.
+
+* *Ejemplo*: "Arriesgas $10 para ganar $30". Esto es un ratio 1:3 (Muy bueno).
+* Si el ratio es menor a 1:2 (ej. arriesgas $10 para ganar $15), el sistema probablemente te aconseje **NO OPERAR**, aunque el gráfico se vea bien.
+
+---
+
+## 4. Preguntas Frecuentes
+
+**¿Qué hago si el Paso 1 dice "Alcista" pero el Paso 4 dice "Venta"?**
+El sistema suele filtrar estas contradicciones. Sin embargo, si ocurre, la regla es priorizar el **Paso 1**. No operes en contra de la tendencia principal (Macro) a menos que seas un experto en contra-tendencia. Lo mejor es cancelar y esperar.
+
+**¿Puedo saltarme pasos?**
+Técnicamente sí, pero no se recomienda. El análisis de 15 minutos carece de validez sin el contexto de las 4 horas. Un "buen precio" en 15m puede ser una trampa si está chocando contra una pared invisible en 4H.
+
+**¿El sistema opera por mí?**
+No. El Asistente es un consejero. La decisión de abrir la operación en tu bróker (Binance, Bybit, etc.) es 100% tuya.
