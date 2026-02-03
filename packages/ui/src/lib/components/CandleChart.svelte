@@ -21,7 +21,7 @@
 
   let { candles, supportLevel, resistanceLevel, height = 400 }: Props = $props();
 
-  let chartContainer: HTMLDivElement;
+  let chartContainer = $state<HTMLDivElement>();
   let chart: IChartApi | null = null;
   let candlestickSeries: ISeriesApi<'Candlestick'> | null = null;
   let supportLine: ISeriesApi<'Line'> | null = null;
