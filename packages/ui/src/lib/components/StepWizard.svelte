@@ -16,42 +16,42 @@
     {
       id: 1,
       label: '1D',
-      interval: '15m', // Use 15m candles to show last 24h
-      focus: 'Macro Bias',
+      interval: '1d', // Daily candles over ~1 month
+      focus: 'Daily Candles',
       icon: '🌍',
-      candleLimit: 96, // 24h × 4 candles/hour = 96 candles of 15m
+      candleLimit: 30, // 30 days = 30 daily candles
       promptContext:
-        'Analyze the last 24 HOURS of price action to determine the overall market bias. Is this a trending or ranging market? What is the dominant direction?',
+        'Analyze the last MONTH of price action using DAILY candles to determine the overall market bias. Is this a trending or ranging market? What is the dominant direction? Identify key support/resistance zones visible at this macro scale.',
     },
     {
       id: 2,
       label: '4H',
-      interval: '5m', // Use 5m candles to show last 4h
-      focus: 'Structure',
+      interval: '4h', // 4-hour candles over ~1 month
+      focus: '4-Hour Candles',
       icon: '🏗️',
-      candleLimit: 48, // 4h × 12 candles/hour = 48 candles of 5m
+      candleLimit: 180, // 30 days × 6 candles/day = 180
       promptContext:
-        'Analyze the last 4 HOURS to identify key structural levels. Where are the major support and resistance zones? Are we near any significant highs or lows?',
+        'Analyze the last MONTH using 4-HOUR candles to identify key structural levels. Where are the major support and resistance zones? Are there any structural shifts (higher highs/lows or lower highs/lows)?',
     },
     {
       id: 3,
       label: '1H',
-      interval: '1m', // Use 1m candles to show last 1h
-      focus: 'Setup',
+      interval: '1h', // Hourly candles over ~1 month
+      focus: 'Hourly Candles',
       icon: '🎯',
-      candleLimit: 60, // 60 candles of 1m = 1 hour
+      candleLimit: 720, // 30 days × 24 candles/day = 720
       promptContext:
-        'Analyze the last HOUR to look for trade setups. Are there any candlestick patterns forming? Is price approaching a key level where a reaction is likely?',
+        'Analyze the last MONTH using HOURLY candles to look for trade setups. Are there any candlestick patterns forming? Is price approaching a key level where a reaction is likely? What is the short-term trend direction?',
     },
     {
       id: 4,
       label: '15m',
-      interval: '1m', // Use 1m candles to show last 15min
-      focus: 'Entry',
+      interval: '15m', // 15-minute candles (~10 days due to Binance 1000 limit)
+      focus: '15-Min Candles',
       icon: '⚡',
-      candleLimit: 15, // 15 candles of 1m = 15 minutes
+      candleLimit: 1000, // 30 days × 96/day = 2880, capped at 1000 (~10 days)
       promptContext:
-        'Analyze the last 15 MINUTES for entry timing. What is the immediate price action? Where would be the optimal entry point and stop loss?',
+        'Analyze the most recent price action using 15-MINUTE candles for entry timing. What is the immediate price action? Where would be the optimal entry point and stop loss? Look for micro-patterns and momentum signals.',
     },
   ];
 
