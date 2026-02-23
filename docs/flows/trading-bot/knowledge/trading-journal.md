@@ -10,7 +10,19 @@
 **Resultado**: ❌ Stop Loss (-10%)
 **Movimiento Perdido**: ✅ +28% (Dirección Correcta)
 
-### 1. El Análisis (Lo que vio el Trader)
+### 1. Relato Original (Bitácora del Trader)
+
+> **2/2/26**
+> vi en grafico de 4h que esta bajista la tendencia, no llego a la media de 20 y esta en una resistencia de dias anteriores, lo que me hace pensar que probablemente baje. el macd marca fuerza alcista con un cruce desde abajo muy alejado de 0 (para mi siempre es mas importante el comportamiento de las velas, la experiencia me dice que las velas dan informacion mas certera con respecto a la linea principal y linea señal del macd).
+> bajo a 1h y veo que se formo un doble techo en la resistencia, pongo alarma arriba de esa resistencia y en el soporte para ver de que forma llega (los patrones de vela). el macd perdiendo fuerza alcista (histograma).
+> la resistencia de 4h y 1h es la media de 200 de 15min, un macd muy chato (por el doble techo). la alarma del soporte esta colocada abajo del cuello (el cuello del doble techo).
+> siempre ver como llega, esperar confirmacion con patrones de vela en primer lugar y luego con indicador macd para ver la fuerza (histograma)
+
+> **3/2/26**
+> anoche entre en un trade, despues de ver lo que explique antes (bitacora anterior), fue negativo, imagino por que entre sin confirmacion, pero luego de sacarme en el stop loss fijo del 10% (no en estructura) tuvo una bajada el precio del 28% (a mi favor si seguia dentro).
+> necesito respetar las reglas de entrada, no llevarme por la ansieda y saber acomodar el stop
+
+### 2. El Análisis Estructurado (Interpretación del Sistema)
 
 * **Contexto 4H**:
   * Tendencia Bajista clara.
@@ -25,20 +37,12 @@
   * La resistencia coincide con la EMA 200 (Confluencia fuerte).
   * MACD "chato" (lateralización).
 
-### 2. El Plan Original
+### 3. El Plan vs Ejecución (El Error Humano)
 
-* Colocar alarma en el soporte (cuello del patrón).
-* **Regla de Oro**: Esperar ruptura confirmada por patrón de vela + histograma MACD.
-
-### 3. La Ejecución (El Error Humano)
-
-* **Acción**: Entró ANTES de la confirmación (Ansiedad).
-* **Gestión**: Colocó un Stop Loss fijo del 10% (no estructurado).
-
-### 4. El Desenlace
-
-* El mercado hizo un movimiento volátil que activó el Stop Loss corto del 10%.
-* Inmediatamente después, el precio bajó un 28% en la dirección prevista.
+* **Plan**: Esperar ruptura confirmada por patrón de vela + histograma MACD.
+* **Acción Real**: Entró ANTES de la confirmación (Ansiedad).
+* **Gestión de Riesgo**: Colocó un Stop Loss fijo del 10% (no estructurado).
+* **Desenlace**: El mercado activó el SL corto (-10%) y luego bajó un 28% a favor.
 
 ---
 
