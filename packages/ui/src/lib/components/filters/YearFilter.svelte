@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { searchOptions } from '@lib/stores';
   import { loadTracks } from '@lib/api';
-  import { ENDPOINTS } from '@lib/config';
+  import { api } from '@lib/client';
   import type { YearCount } from '@lib/types';
 
   let years: YearCount[] = $state([]);
@@ -10,9 +10,9 @@
 
   onMount(async () => {
     try {
-      const res = await fetch(ENDPOINTS.YEARS);
-      if (res.ok) {
-        years = await res.json();
+      const { data, error } = await api.api.spotify.years.get();
+      if (!error && data) {
+        years = data as unknown as YearCount[];
       }
     } catch (e) {
       console.error('Failed to load years', e);

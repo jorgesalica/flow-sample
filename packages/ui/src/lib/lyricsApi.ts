@@ -1,24 +1,18 @@
 import type { Lyrics, LyricsStats, LyricsStatus } from '@flows/shared';
-import { API_BASE } from './config';
+import { api } from './client';
 
 /**
  * Fetch lyrics for a specific track
  * Will fetch from LrcLib if not cached or forced
  */
 export async function getLyrics(trackId: string, options?: { force?: boolean }): Promise<Lyrics> {
-  const params = new URLSearchParams();
-  if (options?.force) {
-    params.append('force', 'true');
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (api.api.lyrics as any)[trackId].get({
+    query: options?.force ? { force: 'true' } : undefined,
+  });
 
-  const queryString = params.toString() ? `?${params.toString()}` : '';
-  const response = await fetch(`${API_BASE}/api/lyrics/${trackId}${queryString}`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch lyrics: ${response.statusText}`);
-  }
-
-  return response.json();
+  if (error) throw new Error('Failed to fetch lyrics');
+  return data as Lyrics;
 }
 
 /**
@@ -30,32 +24,23 @@ export async function fetchAllLyrics(retryFailed = false): Promise<{
   notFound: number;
   errors: number;
 }> {
-  const response = await fetch(`${API_BASE}/api/lyrics/fetch-all`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ retryFailed }),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (api.api.lyrics as any)['fetch-all'].post({
+    retryFailed,
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch all lyrics: ${response.statusText}`);
-  }
-
-  return response.json();
+  if (error) throw new Error('Failed to fetch all lyrics');
+  return data as { processed: number; found: number; notFound: number; errors: number };
 }
 
 /**
  * Get lyrics statistics
  */
 export async function getLyricsStats(): Promise<LyricsStats> {
-  const response = await fetch(`${API_BASE}/api/lyrics/stats`);
+  const { data, error } = await api.api.lyrics.stats.get();
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch lyrics stats: ${response.statusText}`);
-  }
-
-  return response.json();
+  if (error) throw new Error('Failed to fetch lyrics stats');
+  return data as unknown as LyricsStats;
 }
 
 /**
@@ -64,7 +49,7 @@ export async function getLyricsStats(): Promise<LyricsStats> {
 export async function getLyricsLibrary(
   page = 1,
   limit = 50,
-  status?: LyricsStatus
+  status?: LyricsStatus,
 ): Promise<
   Array<{
     id: string;
@@ -75,17 +60,20 @@ export async function getLyricsLibrary(
   }>
 > {
   const offset = (page - 1) * limit;
-  let url = `${API_BASE}/api/lyrics/tracks?limit=${limit}&offset=${offset}`;
+  const { data, error } = await api.api.lyrics.tracks.get({
+    query: {
+      limit: limit.toString(),
+      offset: offset.toString(),
+      ...(status ? { status } : {}),
+    },
+  });
 
-  if (status) {
-    url += `&status=${status}`;
-  }
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch lyrics library: ${response.statusText}`);
-  }
-
-  return response.json();
+  if (error) throw new Error('Failed to fetch lyrics library');
+  return data as unknown as Array<{
+    id: string;
+    title: string;
+    artist: string;
+    imageUrl: string | null;
+    status: LyricsStatus;
+  }>;
 }

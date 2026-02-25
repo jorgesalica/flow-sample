@@ -1,13 +1,11 @@
 import type { FlowDefinition, FlowStats } from './registry';
 import { getLyricsStats } from '@lib/lyricsApi';
+import LyricsFlow from '@lib/pages/LyricsFlow.svelte';
 
 async function getStats(): Promise<FlowStats> {
   try {
     const stats = await getLyricsStats();
 
-    // Status is active if we have any tracks processed (found or not found)
-    // or if we have pending tracks (meaning the system is aware of tracks)
-    // Basically always active if DB has content
     const total = stats.total;
     const processed = stats.found + stats.notFound;
 
@@ -36,9 +34,10 @@ async function getStats(): Promise<FlowStats> {
 export const lyricsFlow: FlowDefinition = {
   id: 'lyrics-flow',
   name: 'Lyrics Flow',
-  icon: '🎤', // Material symbol name
+  icon: '🎤',
   description: 'Manage and view lyrics status for your library.',
   route: '#/lyrics',
-  color: 'from-pink-500 to-rose-500', // Gradient for the card
+  color: 'from-pink-500 to-rose-500',
+  component: LyricsFlow,
   getStats,
 };

@@ -2,67 +2,19 @@
 import { registerFlow, type FlowStats } from './registry';
 import { writable } from 'svelte/store';
 import { showError, showSuccess } from '@lib/toast';
+import { api } from '@lib/client';
+import TradingFlow from '@lib/pages/TradingFlow.svelte';
+import type {
+  Candle,
+  FractalNode,
+  AdvisorNote,
+  TradingState,
+  AdvisorState,
+} from '@flows/shared';
 
-// ============================================
-// Types
-// ============================================
-
-export interface Candle {
-  symbol: string;
-  interval: string;
-  openTime: number;
-  closeTime: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-  isClosed: boolean;
-}
-
-export interface FractalNode {
-  type: 'high' | 'low';
-  price: number;
-  candleOpenTime: number;
-}
-
-export type SentimentBias = 'LONG' | 'SHORT' | 'NEUTRAL';
-
-export interface RiskManagement {
-  recommended_sl: number;
-  invalidation_reason: string;
-}
-
-export interface AdvisorNote {
-  title: string;
-  /** Cascade Agent v3: Overall market bias */
-  sentiment_bias?: SentimentBias;
-  regime_context: string;
-  scenario_bullish: string;
-  scenario_bearish: string;
-  /** Cascade Agent v3: Risk management suggestion */
-  risk_management?: RiskManagement;
-  mentor_tip: string;
-  /** List of key data points driving this analysis */
-  reasoning_key_factors?: string[];
-  /** Confidence in the assessment (0-100) */
-  confidence_score?: number;
-}
-
-export interface TradingState {
-  isRunning: boolean;
-  symbol: string;
-  interval: string;
-  lastCandle: Candle | null;
-  candleCount: number;
-  connectedAt: string | null;
-}
-
-export interface AdvisorState {
-  isEnabled: boolean;
-  lastInsightAt: string | null;
-  insightCount: number;
-}
+// Re-export types from shared for UI consumers
+export type { Candle, FractalNode, AdvisorNote, TradingState, AdvisorState };
+export type { SentimentBias, RiskManagement } from '@flows/shared';
 
 // ============================================
 // Stores
@@ -89,18 +41,17 @@ export const latestInsight = writable<AdvisorNote | null>(null);
 export const isLoadingInsight = writable(false);
 
 // ============================================
-// API Functions
+// API Functions (Eden-based)
 // ============================================
-
-const TRADING_API = '/api/trading';
 
 export async function fetchTradingStatus(): Promise<void> {
   try {
-    const res = await fetch(`${TRADING_API}/status`);
-    if (!res.ok) throw new Error('Failed to fetch status');
-    const data = await res.json();
-    if (data.trading) tradingState.set(data.trading);
-    if (data.advisor) advisorState.set(data.advisor);
+    const { data, error } = await api.api.trading.status.get();
+    if (error) throw new Error('Failed to fetch status');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
+    if (result.trading) tradingState.set(result.trading);
+    if (result.advisor) advisorState.set(result.advisor);
   } catch (error) {
     console.error('[TradingFlow] Status fetch failed:', error);
   }
@@ -108,18 +59,16 @@ export async function fetchTradingStatus(): Promise<void> {
 
 export async function startTrading(): Promise<void> {
   try {
-    const res = await fetch(`${TRADING_API}/start`, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to start');
-    const data = await res.json();
+    const { data, error } = await api.api.trading.start.post();
+    if (error) throw new Error('Failed to start');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
 
-    // Update state immediately from response
-    if (data.state) {
-      tradingState.set(data.state);
+    if (result.state) {
+      tradingState.set(result.state);
     }
 
     showSuccess('Trading stream started');
-
-    // Also fetch full status to ensure sync
     await fetchTradingStatus();
   } catch (error) {
     showError('Failed to start trading stream');
@@ -129,18 +78,16 @@ export async function startTrading(): Promise<void> {
 
 export async function stopTrading(): Promise<void> {
   try {
-    const res = await fetch(`${TRADING_API}/stop`, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to stop');
-    const data = await res.json();
+    const { data, error } = await api.api.trading.stop.post();
+    if (error) throw new Error('Failed to stop');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
 
-    // Update state immediately from response
-    if (data.state) {
-      tradingState.set(data.state);
+    if (result.state) {
+      tradingState.set(result.state);
     }
 
     showSuccess('Trading stream stopped');
-
-    // Also fetch full status to ensure sync
     await fetchTradingStatus();
   } catch (error) {
     showError('Failed to stop trading stream');
@@ -150,10 +97,13 @@ export async function stopTrading(): Promise<void> {
 
 export async function fetchCandles(limit: number = 100): Promise<void> {
   try {
-    const res = await fetch(`${TRADING_API}/candles?limit=${limit}`);
-    if (!res.ok) throw new Error('Failed to fetch candles');
-    const data = await res.json();
-    candles.set(data.candles || []);
+    const { data, error } = await api.api.trading.candles.get({
+      query: { limit: limit.toString() },
+    });
+    if (error) throw new Error('Failed to fetch candles');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
+    candles.set(result.candles || []);
   } catch (error) {
     console.error('[TradingFlow] Candles fetch failed:', error);
   }
@@ -161,10 +111,13 @@ export async function fetchCandles(limit: number = 100): Promise<void> {
 
 export async function fetchFractals(limit: number = 50): Promise<void> {
   try {
-    const res = await fetch(`${TRADING_API}/fractals?limit=${limit}`);
-    if (!res.ok) throw new Error('Failed to fetch fractals');
-    const data = await res.json();
-    fractals.set(data.nodes || []);
+    const { data, error } = await api.api.trading.fractals.get({
+      query: { limit: limit.toString() },
+    });
+    if (error) throw new Error('Failed to fetch fractals');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
+    fractals.set(result.nodes || []);
   } catch (error) {
     console.error('[TradingFlow] Fractals fetch failed:', error);
   }
@@ -175,10 +128,16 @@ export async function fetchFractals(limit: number = 50): Promise<void> {
  */
 export async function fetchKlines(interval: string, limit: number = 100): Promise<Candle[]> {
   try {
-    const res = await fetch(`${TRADING_API}/klines?interval=${interval}&limit=${limit}`);
-    if (!res.ok) throw new Error('Failed to fetch klines');
-    const data = await res.json();
-    return data.candles || [];
+    const { data, error } = await api.api.trading.klines.get({
+      query: {
+        interval,
+        limit: limit.toString(),
+      },
+    });
+    if (error) throw new Error('Failed to fetch klines');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
+    return result.candles || [];
   } catch (error) {
     console.error('[TradingFlow] Klines fetch failed:', error);
     return [];
@@ -187,11 +146,12 @@ export async function fetchKlines(interval: string, limit: number = 100): Promis
 
 export async function toggleAdvisor(): Promise<void> {
   try {
-    const res = await fetch(`${TRADING_API}/advisor/toggle`, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to toggle advisor');
-    const data = await res.json();
-    advisorState.update((s) => ({ ...s, isEnabled: data.active }));
-    showSuccess(data.message);
+    const { data, error } = await api.api.trading.advisor.toggle.post();
+    if (error) throw new Error('Failed to toggle advisor');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
+    advisorState.update((s) => ({ ...s, isEnabled: result.active }));
+    showSuccess(result.message);
   } catch (error) {
     showError('Failed to toggle advisor');
     console.error(error);
@@ -201,16 +161,17 @@ export async function toggleAdvisor(): Promise<void> {
 export async function generateInsight(): Promise<void> {
   isLoadingInsight.set(true);
   try {
-    const res = await fetch(`${TRADING_API}/insight/generate`, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to generate insight');
-    const data = await res.json();
-    if (data.success && data.insight) {
-      const insight = data.insight;
-      if (data.debugContext) insight._debugContext = data.debugContext;
+    const { data, error } = await api.api.trading.insight.generate.post();
+    if (error) throw new Error('Failed to generate insight');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
+    if (result.success && result.insight) {
+      const insight = result.insight;
+      if (result.debugContext) insight._debugContext = result.debugContext;
       latestInsight.set(insight);
       showSuccess('Insight generated!');
     } else {
-      showError(data.error || 'Failed to generate insight');
+      showError(result.error || 'Failed to generate insight');
     }
   } catch (error) {
     showError('Failed to generate insight');
@@ -221,8 +182,7 @@ export async function generateInsight(): Promise<void> {
 }
 
 /**
- * Generate insight using the Wizard endpoint (analyzes wizard-specific klines, not stream data).
- * Returns both the AI insight and the computed analysis data for UI display.
+ * Generate insight using the Wizard endpoint
  */
 export async function generateWizardInsight(params: {
   interval: string;
@@ -236,21 +196,18 @@ export async function generateWizardInsight(params: {
   meta: Record<string, unknown>;
 } | null> {
   try {
-    const res = await fetch(`${TRADING_API}/wizard/insight`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    });
-    if (!res.ok) throw new Error('Failed to generate wizard insight');
-    const data = await res.json();
-    if (data.success && data.insight) {
+    const { data, error } = await api.api.trading.wizard.insight.post(params);
+    if (error) throw new Error('Failed to generate wizard insight');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
+    if (result.success && result.insight) {
       return {
-        insight: data.insight,
-        analysis: data.analysis,
-        meta: data.meta,
+        insight: result.insight,
+        analysis: result.analysis,
+        meta: result.meta,
       };
     } else {
-      showError(data.error || 'Wizard insight generation failed');
+      showError(result.error || 'Wizard insight generation failed');
       return null;
     }
   } catch (error) {
@@ -262,12 +219,13 @@ export async function generateWizardInsight(params: {
 
 export async function fetchLatestInsight(): Promise<void> {
   try {
-    const res = await fetch(`${TRADING_API}/insight`);
-    if (!res.ok) throw new Error('Failed to fetch insight');
-    const data = await res.json();
-    if (data.insight) {
-      const insight = data.insight;
-      if (data.debugContext) insight._debugContext = data.debugContext;
+    const { data, error } = await api.api.trading.insight.get();
+    if (error) throw new Error('Failed to fetch insight');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
+    if (result.insight) {
+      const insight = result.insight;
+      if (result.debugContext) insight._debugContext = result.debugContext;
       latestInsight.set(insight);
     }
   } catch (error) {
@@ -276,7 +234,7 @@ export async function fetchLatestInsight(): Promise<void> {
 }
 
 // ============================================
-// SSE Real-time Stream
+// SSE Real-time Stream (stays as EventSource — Eden doesn't replace SSE)
 // ============================================
 
 let eventSource: EventSource | null = null;
@@ -284,7 +242,7 @@ let eventSource: EventSource | null = null;
 export function connectToStream(): void {
   if (eventSource) return;
 
-  eventSource = new EventSource(`${TRADING_API}/stream`);
+  eventSource = new EventSource('/api/trading/stream');
 
   eventSource.addEventListener('candle', (event) => {
     const candle = JSON.parse(event.data) as Candle;
@@ -321,13 +279,14 @@ export function disconnectFromStream(): void {
 
 async function getTradingStats(): Promise<FlowStats> {
   try {
-    const res = await fetch(`${TRADING_API}/status`);
-    if (!res.ok) throw new Error('Failed to fetch status');
-    const data = await res.json();
+    const { data, error } = await api.api.trading.status.get();
+    if (error) throw new Error('Failed to fetch status');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any;
     return {
-      count: data.trading?.candleCount || 0,
-      status: data.trading?.isRunning ? 'active' : 'configured',
-      statusMessage: data.trading?.isRunning ? 'Streaming' : 'Stopped',
+      count: result.trading?.candleCount || 0,
+      status: result.trading?.isRunning ? 'active' : 'configured',
+      statusMessage: result.trading?.isRunning ? 'Streaming' : 'Stopped',
     };
   } catch {
     return {
@@ -346,6 +305,7 @@ registerFlow({
   description: 'Real-time BTC analysis with Hurst exponent, fractals, and AI-powered insights.',
   route: '#/trading',
   color: 'from-amber-400 to-orange-500',
+  component: TradingFlow,
   getStats: getTradingStats,
 });
 

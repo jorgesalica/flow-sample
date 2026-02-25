@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { Landing, SpotifyFlow, LyricsFlow, TradingFlow } from './lib/pages';
+  import { Landing } from './lib/pages';
   import { Toaster } from './lib/toast';
+  import { getFlows } from './lib/flows';
 
   // Simple hash-based routing
   let currentRoute = $state(window.location.hash || '#/');
@@ -12,16 +13,16 @@
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   });
+
+  // Find the matching flow for the current route
+  const matchedFlow = $derived(getFlows().find((f) => f.route === currentRoute));
+  const FlowComponent = $derived(matchedFlow?.component);
 </script>
 
 <Toaster />
 
-{#if currentRoute === '#/spotify'}
-  <SpotifyFlow />
-{:else if currentRoute === '#/lyrics'}
-  <LyricsFlow />
-{:else if currentRoute === '#/trading'}
-  <TradingFlow />
+{#if FlowComponent}
+  <FlowComponent />
 {:else}
   <Landing />
 {/if}

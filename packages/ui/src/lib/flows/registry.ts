@@ -13,6 +13,8 @@ export interface FlowDefinition {
   description: string;
   route: string;
   color: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  component?: any; // Svelte component constructor
   getStats: () => Promise<FlowStats>;
 }
 

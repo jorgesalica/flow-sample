@@ -1,7 +1,6 @@
 <script lang="ts">
   import { isLoading, isAuthenticated } from '@lib/stores';
   import { fetchFromSpotify, loadTracks, cancelSync } from '@lib/api';
-  import { ENDPOINTS } from '@lib/config';
 
   async function handleRefresh() {
     await loadTracks({ page: 1 });
@@ -56,7 +55,7 @@
     </button>
   {:else}
     <a
-      href={ENDPOINTS.AUTH_LOGIN}
+      href="/api/spotify/auth/login"
       rel="external"
       class="btn-primary flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 bg-aurora text-void"
       title="Connect your Spotify account"

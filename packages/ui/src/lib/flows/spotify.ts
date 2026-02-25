@@ -1,16 +1,18 @@
 // Spotify Flow Registration
 import { registerFlow, type FlowStats } from './registry';
-import { ENDPOINTS } from '@lib/config';
+import { api } from '@lib/client';
+import SpotifyFlow from '@lib/pages/SpotifyFlow.svelte';
 
 async function getSpotifyStats(): Promise<FlowStats> {
   try {
-    const res = await fetch(ENDPOINTS.STATS);
-    if (!res.ok) throw new Error('Failed to fetch stats');
-    const data = await res.json();
+     
+    const { data, error } = await api.api.spotify.stats.get();
+    if (error) throw new Error('Failed to fetch stats');
+    const stats = data as Record<string, unknown>;
     return {
-      count: data.totalTracks || 0,
+      count: (stats.totalTracks as number) || 0,
       status: 'active',
-      statusMessage: `${data.totalGenres || 0} genres`,
+      statusMessage: `${(stats.totalGenres as number) || 0} genres`,
     };
   } catch {
     return {
@@ -29,6 +31,7 @@ registerFlow({
   description: 'Explore your liked songs, discover genres, and analyze your music taste.',
   route: '#/spotify',
   color: 'from-green-400 to-emerald-500',
+  component: SpotifyFlow,
   getStats: getSpotifyStats,
 });
 

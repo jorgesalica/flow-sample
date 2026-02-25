@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { searchOptions } from '@lib/stores';
   import { loadTracks } from '@lib/api';
-  import { ENDPOINTS } from '@lib/config';
+  import { api } from '@lib/client';
   import type { GenreCount } from '@lib/types';
 
   let genres: GenreCount[] = $state([]);
@@ -10,9 +10,9 @@
 
   onMount(async () => {
     try {
-      const res = await fetch(ENDPOINTS.GENRES);
-      if (res.ok) {
-        genres = await res.json();
+      const { data, error } = await api.api.spotify.genres.get();
+      if (!error && data) {
+        genres = data as unknown as GenreCount[];
       }
     } catch (e) {
       console.error('Failed to load genres', e);

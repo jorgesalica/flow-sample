@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { searchOptions } from '@lib/stores';
   import { loadTracks } from '@lib/api';
-  import { ENDPOINTS } from '@lib/config';
+  import { api } from '@lib/client';
   import type { GenreCount, YearCount } from '@lib/types';
 
   // Local state for the panel
@@ -28,11 +28,11 @@
   onMount(async () => {
     try {
       const [genresRes, yearsRes] = await Promise.all([
-        fetch(ENDPOINTS.GENRES),
-        fetch(ENDPOINTS.YEARS),
+        api.api.spotify.genres.get(),
+        api.api.spotify.years.get(),
       ]);
-      if (genresRes.ok) genres = await genresRes.json();
-      if (yearsRes.ok) years = await yearsRes.json();
+      if (!genresRes.error && genresRes.data) genres = genresRes.data as unknown as GenreCount[];
+      if (!yearsRes.error && yearsRes.data) years = yearsRes.data as unknown as YearCount[];
     } catch (e) {
       console.error('Failed to load filter options', e);
     }
