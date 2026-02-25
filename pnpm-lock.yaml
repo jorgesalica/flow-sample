@@ -247,9 +247,21 @@ importers:
       '@flows/backend':
         specifier: workspace:*
         version: link:../backend
+      '@flows/core':
+        specifier: workspace:*
+        version: link:../core
+      '@flows/lyrics':
+        specifier: workspace:*
+        version: link:../flows/lyrics
       '@flows/shared':
         specifier: workspace:*
         version: link:../shared
+      '@flows/spotify':
+        specifier: workspace:*
+        version: link:../flows/spotify
+      '@flows/trading':
+        specifier: workspace:*
+        version: link:../flows/trading
       chart.js:
         specifier: ^4.5.1
         version: 4.5.1
