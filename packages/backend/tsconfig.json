@@ -9,38 +9,13 @@
     "strict": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "baseUrl": ".",
-    "paths": {
-      "@api/*": [
-        "src/api/*"
-      ],
-      "@domain/*": [
-        "src/domain/*"
-      ],
-      "@infra/*": [
-        "src/infrastructure/*"
-      ],
-      "@app/*": [
-        "src/application/*"
-      ],
-      "@config/*": [
-        "src/config/*"
-      ]
-    }
+    "rootDir": "src"
   },
   "include": [
-    "src/**/*.ts",
-    "tests/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "build",
-    "coverage"
-  ],
-  "ts-node": {
-    "require": [
-      "tsconfig-paths/register"
-    ]
-  }
+    "dist"
+  ]
 }
