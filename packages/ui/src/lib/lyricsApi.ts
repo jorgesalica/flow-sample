@@ -3,20 +3,21 @@ import { api } from './client';
 
 /**
  * Fetch lyrics for a specific track
- * Will fetch from LrcLib if not cached or forced
+ * Uses plain fetch because Eden can't type dynamic route params ([trackId])
  */
 export async function getLyrics(trackId: string, options?: { force?: boolean }): Promise<Lyrics> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (api.api.lyrics as any)[trackId].get({
-    query: options?.force ? { force: 'true' } : undefined,
-  });
+  const params = new URLSearchParams();
+  if (options?.force) params.append('force', 'true');
+  const queryString = params.toString() ? `?${params.toString()}` : '';
 
-  if (error) throw new Error('Failed to fetch lyrics');
-  return data as Lyrics;
+  const response = await fetch(`/api/lyrics/${trackId}${queryString}`);
+  if (!response.ok) throw new Error('Failed to fetch lyrics');
+  return response.json() as Promise<Lyrics>;
 }
 
 /**
  * Batch fetch all pending lyrics
+ * Uses plain fetch because 'fetch-all' contains a hyphen which Eden can't resolve
  */
 export async function fetchAllLyrics(retryFailed = false): Promise<{
   processed: number;
@@ -24,13 +25,14 @@ export async function fetchAllLyrics(retryFailed = false): Promise<{
   notFound: number;
   errors: number;
 }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (api.api.lyrics as any)['fetch-all'].post({
-    retryFailed,
+  const response = await fetch('/api/lyrics/fetch-all', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ retryFailed }),
   });
 
-  if (error) throw new Error('Failed to fetch all lyrics');
-  return data as { processed: number; found: number; notFound: number; errors: number };
+  if (!response.ok) throw new Error('Failed to fetch all lyrics');
+  return response.json();
 }
 
 /**

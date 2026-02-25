@@ -11,6 +11,48 @@ export type { Candle, FractalNode, AdvisorNote, TradingState, AdvisorState };
 export type { SentimentBias, RiskManagement } from '@flows/shared';
 
 // ============================================
+// API Response Types
+// ============================================
+
+interface StatusResponse {
+  trading: TradingState;
+  advisor: AdvisorState;
+}
+
+interface StateResponse {
+  state: TradingState;
+  message: string;
+}
+
+interface CandlesResponse {
+  candles: Candle[];
+}
+
+interface FractalsResponse {
+  nodes: FractalNode[];
+}
+
+interface AdvisorToggleResponse {
+  active: boolean;
+  message: string;
+}
+
+interface InsightResponse {
+  success?: boolean;
+  insight?: AdvisorNote & { _debugContext?: unknown };
+  debugContext?: unknown;
+  error?: string;
+}
+
+interface WizardInsightResponse {
+  success: boolean;
+  insight?: AdvisorNote;
+  analysis?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+  error?: string;
+}
+
+// ============================================
 // Stores
 // ============================================
 
@@ -42,8 +84,7 @@ export async function fetchTradingStatus(): Promise<void> {
   try {
     const { data, error } = await api.api.trading.status.get();
     if (error) throw new Error('Failed to fetch status');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as StatusResponse;
     if (result.trading) tradingState.set(result.trading);
     if (result.advisor) advisorState.set(result.advisor);
   } catch (error) {
@@ -55,8 +96,7 @@ export async function startTrading(): Promise<void> {
   try {
     const { data, error } = await api.api.trading.start.post();
     if (error) throw new Error('Failed to start');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as StateResponse;
 
     if (result.state) {
       tradingState.set(result.state);
@@ -74,8 +114,7 @@ export async function stopTrading(): Promise<void> {
   try {
     const { data, error } = await api.api.trading.stop.post();
     if (error) throw new Error('Failed to stop');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as StateResponse;
 
     if (result.state) {
       tradingState.set(result.state);
@@ -95,8 +134,7 @@ export async function fetchCandles(limit: number = 100): Promise<void> {
       query: { limit: limit.toString() },
     });
     if (error) throw new Error('Failed to fetch candles');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as CandlesResponse;
     candles.set(result.candles || []);
   } catch (error) {
     console.error('[TradingFlow] Candles fetch failed:', error);
@@ -109,8 +147,7 @@ export async function fetchFractals(limit: number = 50): Promise<void> {
       query: { limit: limit.toString() },
     });
     if (error) throw new Error('Failed to fetch fractals');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as FractalsResponse;
     fractals.set(result.nodes || []);
   } catch (error) {
     console.error('[TradingFlow] Fractals fetch failed:', error);
@@ -129,8 +166,7 @@ export async function fetchKlines(interval: string, limit: number = 100): Promis
       },
     });
     if (error) throw new Error('Failed to fetch klines');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as CandlesResponse;
     return result.candles || [];
   } catch (error) {
     console.error('[TradingFlow] Klines fetch failed:', error);
@@ -142,8 +178,7 @@ export async function toggleAdvisor(): Promise<void> {
   try {
     const { data, error } = await api.api.trading.advisor.toggle.post();
     if (error) throw new Error('Failed to toggle advisor');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as AdvisorToggleResponse;
     advisorState.update((s) => ({ ...s, isEnabled: result.active }));
     showSuccess(result.message);
   } catch (error) {
@@ -157,8 +192,7 @@ export async function generateInsight(): Promise<void> {
   try {
     const { data, error } = await api.api.trading.insight.generate.post();
     if (error) throw new Error('Failed to generate insight');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as InsightResponse;
     if (result.success && result.insight) {
       const insight = result.insight;
       if (result.debugContext) insight._debugContext = result.debugContext;
@@ -192,13 +226,12 @@ export async function generateWizardInsight(params: {
   try {
     const { data, error } = await api.api.trading.wizard.insight.post(params);
     if (error) throw new Error('Failed to generate wizard insight');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as WizardInsightResponse;
     if (result.success && result.insight) {
       return {
         insight: result.insight,
-        analysis: result.analysis,
-        meta: result.meta,
+        analysis: result.analysis || {},
+        meta: result.meta || {},
       };
     } else {
       showError(result.error || 'Wizard insight generation failed');
@@ -215,8 +248,7 @@ export async function fetchLatestInsight(): Promise<void> {
   try {
     const { data, error } = await api.api.trading.insight.get();
     if (error) throw new Error('Failed to fetch insight');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as InsightResponse;
     if (result.insight) {
       const insight = result.insight;
       if (result.debugContext) insight._debugContext = result.debugContext;
@@ -250,7 +282,7 @@ export function connectToStream(): void {
   });
 
   eventSource.addEventListener('state', (event) => {
-    const state = JSON.parse(event.data);
+    const state = JSON.parse(event.data) as TradingState;
     tradingState.set(state);
   });
 
@@ -275,8 +307,7 @@ async function getTradingStats(): Promise<FlowStats> {
   try {
     const { data, error } = await api.api.trading.status.get();
     if (error) throw new Error('Failed to fetch status');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = data as any;
+    const result = data as unknown as StatusResponse;
     return {
       count: result.trading?.candleCount || 0,
       status: result.trading?.isRunning ? 'active' : 'configured',
