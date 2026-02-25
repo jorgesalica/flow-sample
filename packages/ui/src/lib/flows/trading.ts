@@ -230,7 +230,11 @@ export async function generateWizardInsight(params: {
   stepLabel: string;
   promptContext: string;
   previousInsights: { label: string; insight: AdvisorNote }[];
-}): Promise<{ insight: AdvisorNote; analysis: Record<string, unknown>; meta: Record<string, unknown> } | null> {
+}): Promise<{
+  insight: AdvisorNote;
+  analysis: Record<string, unknown>;
+  meta: Record<string, unknown>;
+} | null> {
   try {
     const res = await fetch(`${TRADING_API}/wizard/insight`, {
       method: 'POST',
