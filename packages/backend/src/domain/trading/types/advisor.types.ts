@@ -29,4 +29,3 @@ export interface AdvisorState {
   isEnabled: boolean;
   lastGenerated: Date | null;
 }
-

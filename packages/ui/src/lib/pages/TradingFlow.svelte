@@ -14,6 +14,7 @@
     fetchKlines,
     toggleAdvisor,
     generateInsight,
+    generateWizardInsight,
     fetchLatestInsight,
     connectToStream,
     disconnectFromStream,
@@ -190,28 +191,30 @@
       </div>
       <StepWizard
         onFetchKlines={fetchKlines}
-        onGenerateInsightForTimeframe={async (stepLabel, promptContext, previousInsights) => {
-          // MATRIOSHKA: Build contextual prompt with previous insights
-          let fullPrompt = promptContext;
-
-          if (previousInsights.length > 0) {
-            fullPrompt = `## Context from previous timeframes:\n`;
-            for (const prev of previousInsights) {
-              fullPrompt += `\n### ${prev.label} Analysis:\n`;
-              fullPrompt += `- **Bias**: ${prev.insight.sentiment_bias || 'NEUTRAL'}\n`;
-              fullPrompt += `- **Insight**: ${prev.insight.mentor_tip}\n`;
-            }
-            fullPrompt += `\n## Now analyze ${stepLabel}:\n${promptContext}`;
-          }
-
+        onGenerateInsightForTimeframe={async (
+          stepLabel,
+          promptContext,
+          previousInsights,
+          interval,
+          limit
+        ) => {
           console.log(
-            `[Wizard Matrioshka] Generating ${stepLabel} with ${previousInsights.length} prior insights`
+            `[Wizard] Generating ${stepLabel} insight via wizard endpoint (${interval}, ${limit} candles)`
           );
-          console.log('[Wizard Matrioshka] Full prompt:', fullPrompt);
 
-          // TODO: Pass fullPrompt to a dedicated wizard insight endpoint
-          await generateInsight();
-          return $latestInsight;
+          const result = await generateWizardInsight({
+            interval,
+            limit,
+            stepLabel,
+            promptContext,
+            previousInsights,
+          });
+
+          if (result) {
+            console.log(`[Wizard] ${stepLabel} insight received:`, result.meta);
+            return { insight: result.insight, analysis: result.analysis };
+          }
+          return null;
         }}
       />
     </section>

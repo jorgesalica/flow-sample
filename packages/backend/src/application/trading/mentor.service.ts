@@ -229,7 +229,10 @@ export class MentorService {
     console.log('[MentorService] Parsing insight from LLM response...');
     try {
       // Robust cleaning: remove markdown code blocks and find first { to last }
-      let clean = content.replace(/```json/g, '').replace(/```/g, '').trim();
+      let clean = content
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
       const jsonMatch = clean.match(/\{[\s\S]*\}/);
 
       if (jsonMatch) {
@@ -266,15 +269,16 @@ export class MentorService {
         scenario_bearish: parsed.scenario_bearish || '',
         risk_management: parsed.risk_management?.recommended_sl
           ? {
-            recommended_sl: parsed.risk_management.recommended_sl,
-            invalidation_reason: parsed.risk_management.invalidation_reason || 'Structural level',
-          }
+              recommended_sl: parsed.risk_management.recommended_sl,
+              invalidation_reason: parsed.risk_management.invalidation_reason || 'Structural level',
+            }
           : undefined,
         mentor_tip: parsed.mentor_tip,
         reasoning_key_factors: Array.isArray(parsed.reasoning_key_factors)
           ? parsed.reasoning_key_factors
           : [],
-        confidence_score: typeof parsed.confidence_score === 'number' ? parsed.confidence_score : 50,
+        confidence_score:
+          typeof parsed.confidence_score === 'number' ? parsed.confidence_score : 50,
       };
     } catch (error) {
       console.error('[MentorService] ❌ JSON parse error:', error);

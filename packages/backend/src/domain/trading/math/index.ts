@@ -19,4 +19,3 @@ export {
   summarizeCandlePatterns,
   type CandlePattern,
 } from './candle-patterns';
-

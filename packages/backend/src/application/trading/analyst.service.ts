@@ -9,7 +9,7 @@ import {
   detectCandlePatterns,
   type Candle,
 } from '@domain/trading/math';
-import { type MarketState } from '@domain/trading/types';
+import { type MarketState, type FractalNode } from '@domain/trading/types';
 import {
   getLastNCandles,
   insertFractalNode,
@@ -82,6 +82,48 @@ export class AnalystService {
       volume: row.volume,
     }));
 
+    return AnalystService.analyzeCandles(candles, this.config.symbol, (fractals) => {
+      // Persist fractals to database (only for stream pipeline, not wizard)
+      for (const fractal of fractals) {
+        try {
+          insertFractalNode.run({
+            symbol: this.config.symbol,
+            type: fractal.type,
+            price: fractal.price,
+            candleOpenTime: fractal.candleOpenTime,
+            detectedAt: Date.now(),
+          });
+        } catch {
+          // Ignore duplicates (UNIQUE constraint)
+        }
+      }
+    });
+  }
+
+  /**
+   * Analyze an externally-provided array of candles.
+   * Used by the Cascade Wizard to analyze klines fetched from Binance REST API
+   * instead of the local SQLite stream data.
+   *
+   * Computes ALL indicators (RSI + MACD) regardless of regime so the wizard
+   * can display the full picture.
+   *
+   * @param candles Array of candles in chronological order (oldest first)
+   * @param symbol Trading pair symbol
+   * @returns MarketState if successful, null if insufficient data
+   */
+  static analyzeCandles(
+    candles: Candle[],
+    symbol: string,
+    onFractalsDetected?: (fractals: FractalNode[]) => void,
+  ): MarketState | null {
+    if (candles.length < TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS) {
+      console.warn(
+        `[AnalystService] Not enough candles for analysis. Need ${TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS}, got ${candles.length}`,
+      );
+      return null;
+    }
+
     const closes = candles.map((c) => c.close);
     const currentPrice = closes[closes.length - 1];
 
@@ -92,91 +134,74 @@ export class AnalystService {
 
     // Detect fractals
     const fractals = detectFractals(candles);
-
-    // Persist new fractals to database
     const recentFractals = fractals.slice(-20);
-    for (const fractal of recentFractals) {
-      try {
-        insertFractalNode.run({
-          symbol: this.config.symbol,
-          type: fractal.type,
-          price: fractal.price,
-          candleOpenTime: fractal.candleOpenTime,
-          detectedAt: Date.now(),
-        });
-      } catch {
-        // Ignore duplicates (UNIQUE constraint)
-      }
+
+    // Allow caller to persist fractals (used by stream pipeline)
+    if (onFractalsDetected) {
+      onFractalsDetected(recentFractals);
     }
 
     const resistance = findNearestResistance(fractals, currentPrice);
     const support = findNearestSupport(fractals, currentPrice);
 
-    // Calculate conditional indicators based on regime
+    // Calculate ALL indicators (wizard always shows the full picture)
     const indicators: MarketState['indicators'] = {};
 
-    if (regime === 'RANGING') {
-      // Use RSI for ranging markets
-      const rsiResult = RSI.calculate({
-        values: closes,
-        period: 14,
-      });
-      if (rsiResult.length > 0) {
-        indicators.rsi = rsiResult[rsiResult.length - 1];
-      }
-    } else if (regime === 'TRENDING') {
-      // Use MACD for trending markets
-      const macdResult = MACD.calculate({
-        values: closes,
-        fastPeriod: 12,
-        slowPeriod: 26,
-        signalPeriod: 9,
-        SimpleMAOscillator: false,
-        SimpleMASignal: false,
-      });
-      if (macdResult.length > 0) {
-        const last = macdResult[macdResult.length - 1];
-        if (last.MACD !== undefined && last.signal !== undefined && last.histogram !== undefined) {
-          indicators.macd = {
-            value: last.MACD,
-            signal: last.signal,
-            histogram: last.histogram,
-          };
-        }
+    // RSI
+    const rsiResult = RSI.calculate({
+      values: closes,
+      period: 14,
+    });
+    if (rsiResult.length > 0) {
+      indicators.rsi = rsiResult[rsiResult.length - 1];
+    }
+
+    // MACD
+    const macdResult = MACD.calculate({
+      values: closes,
+      fastPeriod: 12,
+      slowPeriod: 26,
+      signalPeriod: 9,
+      SimpleMAOscillator: false,
+      SimpleMASignal: false,
+    });
+    if (macdResult.length > 0) {
+      const last = macdResult[macdResult.length - 1];
+      if (last.MACD !== undefined && last.signal !== undefined && last.histogram !== undefined) {
+        indicators.macd = {
+          value: last.MACD,
+          signal: last.signal,
+          histogram: last.histogram,
+        };
       }
     }
 
-    // Calculate 24h price change if we have enough data
-    let open24h: number | undefined;
-    let change24h: number | undefined;
-    if (candles.length >= 1440) {
-      // 1440 one-minute candles = 24 hours
-      open24h = candles[candles.length - 1440].open;
-      change24h = ((currentPrice - open24h) / open24h) * 100;
-    }
+    // Price change: first candle open vs last candle close
+    const openFirst = candles[0].open;
+    const changePeriod = ((currentPrice - openFirst) / openFirst) * 100;
 
-    // Detect candle patterns (Iteration 3)
+    // Detect candle patterns
     const candlePatterns = detectCandlePatterns(candles);
 
-    // Calculate touch counts for S/R levels (Iteration 3)
+    // Calculate touch counts for S/R levels
     const fractalsWithTouches = calculateTouchCounts(fractals, candles);
     const supportTouchCount = support
-      ? fractalsWithTouches.find((f) => f.price === support.price)?.touchCount ?? 0
+      ? (fractalsWithTouches.find((f) => f.price === support.price)?.touchCount ?? 0)
       : 0;
     const resistanceTouchCount = resistance
-      ? fractalsWithTouches.find((f) => f.price === resistance.price)?.touchCount ?? 0
+      ? (fractalsWithTouches.find((f) => f.price === resistance.price)?.touchCount ?? 0)
       : 0;
 
     const marketState: MarketState = {
-      symbol: this.config.symbol,
+      symbol,
       timestamp: Date.now(),
       regime,
       hurst,
       fractalDimension,
       price: {
         current: currentPrice,
-        open24h,
-        change24h,
+        open24h: openFirst,
+        change24h: changePeriod,
       },
       nodes: {
         all: recentFractals,
@@ -188,10 +213,6 @@ export class AnalystService {
       indicators,
       candlePatterns,
     };
-
-    console.log(
-      `[AnalystService] Regime: ${regime} (H=${hurst.toFixed(3)}) | Price: ${currentPrice.toFixed(2)} | Fractals: ${recentFractals.length}`,
-    );
 
     return marketState;
   }

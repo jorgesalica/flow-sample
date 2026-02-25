@@ -220,6 +220,42 @@ export async function generateInsight(): Promise<void> {
   }
 }
 
+/**
+ * Generate insight using the Wizard endpoint (analyzes wizard-specific klines, not stream data).
+ * Returns both the AI insight and the computed analysis data for UI display.
+ */
+export async function generateWizardInsight(params: {
+  interval: string;
+  limit: number;
+  stepLabel: string;
+  promptContext: string;
+  previousInsights: { label: string; insight: AdvisorNote }[];
+}): Promise<{ insight: AdvisorNote; analysis: Record<string, unknown>; meta: Record<string, unknown> } | null> {
+  try {
+    const res = await fetch(`${TRADING_API}/wizard/insight`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) throw new Error('Failed to generate wizard insight');
+    const data = await res.json();
+    if (data.success && data.insight) {
+      return {
+        insight: data.insight,
+        analysis: data.analysis,
+        meta: data.meta,
+      };
+    } else {
+      showError(data.error || 'Wizard insight generation failed');
+      return null;
+    }
+  } catch (error) {
+    showError('Failed to generate wizard insight');
+    console.error('[TradingFlow] Wizard insight failed:', error);
+    return null;
+  }
+}
+
 export async function fetchLatestInsight(): Promise<void> {
   try {
     const res = await fetch(`${TRADING_API}/insight`);

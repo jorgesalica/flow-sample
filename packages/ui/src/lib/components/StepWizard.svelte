@@ -16,12 +16,12 @@
     {
       id: 1,
       label: '1D',
-      interval: '1d', // Daily candles over ~1 month
+      interval: '1d', // Daily candles over ~10 months
       focus: 'Daily Candles',
       icon: '🌍',
-      candleLimit: 30, // 30 days = 30 daily candles
+      candleLimit: 300, // ~10 months of daily candles
       promptContext:
-        'Analyze the last MONTH of price action using DAILY candles to determine the overall market bias. Is this a trending or ranging market? What is the dominant direction? Identify key support/resistance zones visible at this macro scale.',
+        'Analyze the last 10 MONTHS of price action using DAILY candles to determine the overall market bias. Is this a trending or ranging market? What is the dominant direction? Identify key support/resistance zones visible at this macro scale.',
     },
     {
       id: 2,
@@ -55,13 +55,50 @@
     },
   ];
 
+  interface RegimeAnalysis {
+    classification: string;
+    hurst_exponent: number;
+    fractal_dimension: number;
+  }
+
+  interface FractalStructure {
+    nearest_resistance: string | number;
+    distance_to_resistance: string;
+    nearest_support: string | number;
+    distance_to_support: string;
+    support_touch_count: number;
+    resistance_touch_count: number;
+  }
+
+  interface Indicators {
+    rsi?: string;
+    macd?: {
+      histogram: string;
+      bias: string;
+    };
+  }
+
+  interface WizardAnalysis {
+    regime_analysis?: RegimeAnalysis;
+    fractal_structure?: FractalStructure;
+    indicators?: Indicators;
+    candle_patterns?: string[];
+  }
+
+  interface WizardInsightResult {
+    insight: AdvisorNote;
+    analysis: WizardAnalysis;
+  }
+
   interface Props {
     onFetchKlines: (interval: string, limit: number) => Promise<Candle[]>;
     onGenerateInsightForTimeframe?: (
       stepLabel: string,
       promptContext: string,
-      previousInsights: { label: string; insight: AdvisorNote }[]
-    ) => Promise<AdvisorNote | null>;
+      previousInsights: { label: string; insight: AdvisorNote }[],
+      interval: string,
+      limit: number
+    ) => Promise<WizardInsightResult | null>;
   }
 
   let { onFetchKlines, onGenerateInsightForTimeframe }: Props = $props();
@@ -73,6 +110,8 @@
 
   // Per-step insights storage
   let stepInsights: Record<string, AdvisorNote | null> = $state({});
+  // Per-step analysis data (from backend computation)
+  let stepAnalysis: Record<string, WizardAnalysis> = $state({});
 
   const activeStep = $derived(STEPS[currentStep]);
   const canGoNext = $derived(currentStep < STEPS.length - 1);
@@ -110,13 +149,16 @@
         `[Wizard Matrioshka] Step ${activeStep.label} has ${previousInsights.length} previous insights`
       );
 
-      const insight = await onGenerateInsightForTimeframe(
+      const result = await onGenerateInsightForTimeframe(
         activeStep.label,
         activeStep.promptContext,
-        previousInsights
+        previousInsights,
+        activeStep.interval,
+        activeStep.candleLimit
       );
-      if (insight) {
-        stepInsights[activeStep.label] = insight;
+      if (result) {
+        stepInsights[activeStep.label] = result.insight;
+        stepAnalysis[activeStep.label] = result.analysis;
       }
     } catch (error) {
       console.error('Failed to generate insight:', error);
@@ -208,34 +250,211 @@
         📊 Metrics ({activeStep.label})
       </h4>
       {#if candles.length > 0}
+        {@const firstCandle = candles[0]}
+        {@const lastCandle = candles[candles.length - 1]}
+        {@const highMax = Math.max(...candles.map((c) => c.high))}
+        {@const lowMin = Math.min(...candles.map((c) => c.low))}
+        {@const priceChange = ((lastCandle.close - firstCandle.open) / firstCandle.open) * 100}
+        {@const volatility = ((highMax - lowMin) / lastCandle.close) * 100}
+        {@const totalVolume = candles.reduce((sum, c) => sum + c.volume, 0)}
+        {@const dateFrom = new Date(firstCandle.openTime).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: 'short',
+          year: '2-digit',
+        })}
+        {@const dateTo = new Date(lastCandle.closeTime).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: 'short',
+          year: '2-digit',
+        })}
+
         <div class="grid grid-cols-2 gap-3 text-sm">
+          <!-- Fetched data -->
+          <div
+            class="col-span-2 flex items-center gap-2 text-xs text-white/30 border-b border-white/10 pb-2 mb-1"
+          >
+            <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-semibold"
+              >📡 Fetched</span
+            >
+            <span>{dateFrom} → {dateTo}</span>
+          </div>
           <div>
-            <span class="text-white/50">Candles:</span>
+            <span class="text-white/50">Velas:</span>
             <span class="font-bold text-white">{candles.length}</span>
           </div>
           <div>
-            <span class="text-white/50">Latest:</span>
+            <span class="text-white/50">Intervalo:</span>
+            <span class="font-bold text-cyan-400">{activeStep.interval}</span>
+          </div>
+          <div>
+            <span class="text-white/50">Último:</span>
             <span class="font-bold text-amber-400">
-              ${candles[candles.length - 1]?.close.toLocaleString() || '—'}
+              ${lastCandle.close.toLocaleString()}
             </span>
+          </div>
+          <div>
+            <span class="text-white/50">Volumen Total:</span>
+            <span class="font-bold text-white"
+              >{totalVolume >= 1000
+                ? (totalVolume / 1000).toFixed(1) + 'K'
+                : totalVolume.toFixed(1)}</span
+            >
+          </div>
+
+          <!-- Calculated data -->
+          <div
+            class="col-span-2 flex items-center gap-2 text-xs text-white/30 border-b border-white/10 pb-2 mb-1 mt-2"
+          >
+            <span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-semibold"
+              >🔢 Calculated</span
+            >
           </div>
           <div>
             <span class="text-white/50">High:</span>
             <span class="font-bold text-green-400">
-              ${Math.max(...candles.map((c) => c.high)).toLocaleString()}
+              ${highMax.toLocaleString()}
             </span>
           </div>
           <div>
             <span class="text-white/50">Low:</span>
             <span class="font-bold text-red-400">
-              ${Math.min(...candles.map((c) => c.low)).toLocaleString()}
+              ${lowMin.toLocaleString()}
             </span>
+          </div>
+          <div>
+            <span class="text-white/50">Variación:</span>
+            <span class="font-bold {priceChange >= 0 ? 'text-green-400' : 'text-red-400'}">
+              {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
+            </span>
+          </div>
+          <div>
+            <span class="text-white/50">Volatilidad:</span>
+            <span class="font-bold text-orange-400">{volatility.toFixed(2)}%</span>
           </div>
         </div>
       {:else}
         <p class="text-white/30">No data available</p>
       {/if}
     </div>
+
+    <!-- Analysis Data (from backend computation) -->
+    {#if stepAnalysis[activeStep.label]}
+      {@const analysis = stepAnalysis[activeStep.label]}
+      <div class="glass p-4 rounded-xl">
+        <div class="flex items-center gap-2 mb-3">
+          <h4 class="text-sm font-semibold text-white/40 uppercase tracking-wider">
+            🖥️ Análisis Técnico ({activeStep.label})
+          </h4>
+          <span
+            class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-semibold"
+            >Backend</span
+          >
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+          {#if analysis.regime_analysis}
+            <div>
+              <span class="text-white/50">Régimen:</span>
+              <span
+                class="font-bold {analysis.regime_analysis.classification === 'TRENDING'
+                  ? 'text-cyan-400'
+                  : analysis.regime_analysis.classification === 'RANGING'
+                    ? 'text-yellow-400'
+                    : 'text-white/60'}"
+              >
+                {analysis.regime_analysis.classification}
+              </span>
+            </div>
+            <div>
+              <span class="text-white/50">Hurst:</span>
+              <span class="font-bold text-white">{analysis.regime_analysis.hurst_exponent}</span>
+            </div>
+            <div>
+              <span class="text-white/50">Dim. Fractal:</span>
+              <span class="font-bold text-white">{analysis.regime_analysis.fractal_dimension}</span>
+            </div>
+          {/if}
+          {#if analysis.fractal_structure}
+            <div>
+              <span class="text-white/50">Resistencia:</span>
+              <span class="font-bold text-red-400">
+                {typeof analysis.fractal_structure.nearest_resistance === 'number'
+                  ? '$' + analysis.fractal_structure.nearest_resistance.toLocaleString()
+                  : analysis.fractal_structure.nearest_resistance}
+              </span>
+              <span class="text-[10px] text-white/30"
+                >({analysis.fractal_structure.distance_to_resistance})</span
+              >
+            </div>
+            <div>
+              <span class="text-white/50">Soporte:</span>
+              <span class="font-bold text-green-400">
+                {typeof analysis.fractal_structure.nearest_support === 'number'
+                  ? '$' + analysis.fractal_structure.nearest_support.toLocaleString()
+                  : analysis.fractal_structure.nearest_support}
+              </span>
+              <span class="text-[10px] text-white/30"
+                >({analysis.fractal_structure.distance_to_support})</span
+              >
+            </div>
+            <div>
+              <span class="text-white/50">Toques S/R:</span>
+              <span class="font-bold text-white">
+                S:{analysis.fractal_structure.support_touch_count} / R:{analysis.fractal_structure
+                  .resistance_touch_count}
+              </span>
+            </div>
+          {/if}
+          {#if analysis.indicators}
+            {#if analysis.indicators.rsi && analysis.indicators.rsi !== 'N/A'}
+              <div>
+                <span class="text-white/50">RSI:</span>
+                <span
+                  class="font-bold {parseFloat(analysis.indicators.rsi) > 70
+                    ? 'text-red-400'
+                    : parseFloat(analysis.indicators.rsi) < 30
+                      ? 'text-green-400'
+                      : 'text-white'}"
+                >
+                  {analysis.indicators.rsi}
+                </span>
+              </div>
+            {/if}
+            {#if analysis.indicators.macd}
+              <div>
+                <span class="text-white/50">MACD:</span>
+                <span
+                  class="font-bold {parseFloat(analysis.indicators.macd.histogram) > 0
+                    ? 'text-green-400'
+                    : 'text-red-400'}"
+                >
+                  H: {analysis.indicators.macd.histogram}
+                </span>
+              </div>
+              <div>
+                <span class="text-white/50">MACD Bias:</span>
+                <span
+                  class="font-bold {analysis.indicators.macd.bias === 'Bullish'
+                    ? 'text-green-400'
+                    : 'text-red-400'}"
+                >
+                  {analysis.indicators.macd.bias}
+                </span>
+              </div>
+            {/if}
+          {/if}
+          {#if analysis.candle_patterns}
+            <div class="col-span-2 md:col-span-3">
+              <span class="text-white/50">Patrones:</span>
+              <span class="font-bold text-amber-400">
+                {Array.isArray(analysis.candle_patterns)
+                  ? analysis.candle_patterns.join(', ')
+                  : 'N/A'}
+              </span>
+            </div>
+          {/if}
+        </div>
+      </div>
+    {/if}
 
     <!-- Insight for this step -->
     <div class="glass p-4 rounded-xl">

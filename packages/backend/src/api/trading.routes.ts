@@ -1,6 +1,8 @@
 import { Elysia, t } from 'elysia';
-import { getTradingService, getMentorService } from '@app/trading';
+import { getTradingService, getMentorService, getSynthesizerService } from '@app/trading';
+import { AnalystService } from '@app/trading';
 import { fetchKlines, type KlineInterval } from '@infra/adapters/binance';
+import { createLLMClient } from '@infra/llm';
 import {
   getLastNCandles,
   getLastNFractalNodes,
@@ -240,6 +242,128 @@ export function createTradingRoutes() {
           message: 'Insight generated successfully',
         };
       })
+
+      // ============================================
+      // Wizard Insight (Cascade Wizard)
+      // ============================================
+
+      /** Generate insight using wizard-specific klines (not stream data) */
+      .post(
+        '/wizard/insight',
+        async ({ body }) => {
+          const symbol = body.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT';
+          const interval = (body.interval || '1d') as KlineInterval;
+          const limit = body.limit || 100;
+          const stepLabel = body.stepLabel || interval;
+          const promptContext = body.promptContext || '';
+          const previousInsightsRaw = body.previousInsights || [];
+
+          try {
+            // 1. Fetch klines from Binance
+            console.log(`[WizardInsight] Fetching ${limit} ${interval} klines for ${symbol}...`);
+            const candles = await fetchKlines(symbol, interval, limit);
+
+            if (!candles.length) {
+              return { success: false, error: 'No candles returned from Binance' };
+            }
+
+            // 2. Analyze the wizard's candles (not stream data!)
+            const marketState = AnalystService.analyzeCandles(
+              candles.map((c) => ({
+                openTime: c.openTime,
+                open: c.open,
+                high: c.high,
+                low: c.low,
+                close: c.close,
+                volume: c.volume,
+              })),
+              symbol,
+            );
+
+            if (!marketState) {
+              return { success: false, error: 'Insufficient candle data for analysis' };
+            }
+
+            // 3. Build the enriched analysis data (for UI display)
+            const synthesizer = getSynthesizerService();
+            const enrichedAnalysis = synthesizer.enrichMarketState(marketState);
+
+            // 4. Build LLM prompt with wizard context
+            let userContent = promptContext
+              ? `## Wizard Step: ${stepLabel}\n${promptContext}\n\n`
+              : '';
+
+            // Add matrioshka context from previous steps
+            if (previousInsightsRaw.length > 0) {
+              userContent += `## Context from previous timeframes:\n`;
+              for (const prev of previousInsightsRaw) {
+                userContent += `\n### ${prev.label} Analysis:\n`;
+                userContent += `- **Bias**: ${prev.insight?.sentiment_bias || 'NEUTRAL'}\n`;
+                userContent += `- **Insight**: ${prev.insight?.mentor_tip || 'N/A'}\n`;
+              }
+              userContent += `\n`;
+            }
+
+            userContent += `## Current Market State (${interval} candles, ${candles.length} total):\n\n`;
+            userContent += JSON.stringify(enrichedAnalysis, null, 2);
+
+            const { messages } = synthesizer.buildMessages(marketState);
+            // Replace the auto-generated user message with our wizard-specific one
+            messages[messages.length - 1] = { role: 'user', content: userContent };
+
+            // 5. Call LLM
+            const llm = createLLMClient();
+
+            console.log(`[WizardInsight] Calling LLM for ${stepLabel}...`);
+            const response = await llm.generate({
+              messages,
+              temperature: 0.7,
+              maxTokens: 8192, // gemini-2.5-flash is a thinking model, needs headroom for reasoning + output
+            });
+
+            let clean = response.content
+              .replace(/```json/g, '')
+              .replace(/```/g, '')
+              .trim();
+            const jsonMatch = clean.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+              return { success: false, error: 'Failed to parse LLM response as JSON' };
+            }
+
+            const insight = JSON.parse(jsonMatch[0]);
+
+            console.log(`[WizardInsight] ${stepLabel} insight generated (${response.latencyMs}ms)`);
+
+            return {
+              success: true,
+              insight,
+              analysis: enrichedAnalysis,
+              meta: {
+                interval,
+                candleCount: candles.length,
+                tokensUsed: response.usage.totalTokens,
+                latencyMs: response.latencyMs,
+              },
+            };
+          } catch (error) {
+            console.error('[WizardInsight] Failed:', error);
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : 'Wizard insight generation failed',
+            };
+          }
+        },
+        {
+          body: t.Object({
+            symbol: t.Optional(t.String()),
+            interval: t.Optional(t.String()),
+            limit: t.Optional(t.Number()),
+            stepLabel: t.Optional(t.String()),
+            promptContext: t.Optional(t.String()),
+            previousInsights: t.Optional(t.Array(t.Any())),
+          }),
+        },
+      )
 
       // ============================================
       // SSE Stream (Real-time updates)

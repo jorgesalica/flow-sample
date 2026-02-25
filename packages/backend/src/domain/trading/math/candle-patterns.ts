@@ -44,11 +44,7 @@ export function detectCandlePatterns(candles: Candle[]): CandlePattern[] {
 
   // 2. HAMMER: Small body at top, long lower wick (2x+ body), minimal upper wick
   // Bullish reversal signal when found at support
-  if (
-    lowerWick >= body * 2 &&
-    upperWick < body * 0.5 &&
-    body / totalRange < 0.4
-  ) {
+  if (lowerWick >= body * 2 && upperWick < body * 0.5 && body / totalRange < 0.4) {
     patterns.push({
       name: isBullish ? 'Hammer' : 'Hanging Man',
       type: isBullish ? 'bullish' : 'bearish',
@@ -57,11 +53,7 @@ export function detectCandlePatterns(candles: Candle[]): CandlePattern[] {
   }
 
   // 3. INVERTED HAMMER: Small body at bottom, long upper wick
-  if (
-    upperWick >= body * 2 &&
-    lowerWick < body * 0.5 &&
-    body / totalRange < 0.4
-  ) {
+  if (upperWick >= body * 2 && lowerWick < body * 0.5 && body / totalRange < 0.4) {
     patterns.push({
       name: isBullish ? 'Inverted Hammer' : 'Shooting Star',
       type: isBullish ? 'bullish' : 'bearish',
@@ -104,11 +96,7 @@ export function detectCandlePatterns(candles: Candle[]): CandlePattern[] {
   }
 
   // 5. MARUBOZU: Full body candle with minimal wicks (strong momentum)
-  if (
-    body / totalRange > 0.9 &&
-    upperWick / totalRange < 0.05 &&
-    lowerWick / totalRange < 0.05
-  ) {
+  if (body / totalRange > 0.9 && upperWick / totalRange < 0.05 && lowerWick / totalRange < 0.05) {
     patterns.push({
       name: isBullish ? 'Bullish Marubozu' : 'Bearish Marubozu',
       type: isBullish ? 'bullish' : 'bearish',
@@ -125,7 +113,5 @@ export function detectCandlePatterns(candles: Candle[]): CandlePattern[] {
 export function summarizeCandlePatterns(patterns: CandlePattern[]): string {
   if (patterns.length === 0) return 'No significant patterns';
 
-  return patterns
-    .map((p) => `${p.name} (${p.significance} ${p.type})`)
-    .join(', ');
+  return patterns.map((p) => `${p.name} (${p.significance} ${p.type})`).join(', ');
 }

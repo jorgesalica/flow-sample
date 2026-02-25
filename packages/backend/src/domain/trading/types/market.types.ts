@@ -48,4 +48,3 @@ export interface FractalNode {
   price: number;
   candleOpenTime: number;
 }
-
