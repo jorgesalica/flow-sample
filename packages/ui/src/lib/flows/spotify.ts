@@ -5,7 +5,6 @@ import SpotifyFlow from '@lib/pages/SpotifyFlow.svelte';
 
 async function getSpotifyStats(): Promise<FlowStats> {
   try {
-     
     const { data, error } = await api.api.spotify.stats.get();
     if (error) throw new Error('Failed to fetch stats');
     const stats = data as Record<string, unknown>;

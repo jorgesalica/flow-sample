@@ -14,7 +14,7 @@ import { showError, showSuccess, showLoading, dismissToast } from './toast';
 
 export async function loadTracks(
   options?: Partial<SearchOptions>,
-  append: boolean = false,
+  append: boolean = false
 ): Promise<void> {
   isLoading.set(true);
 
@@ -70,7 +70,7 @@ export async function updateStats(): Promise<void> {
     topStats.set({
       total: (stats.totalTracks as number) || 0,
       artists: 0,
-      topGenre: ((stats.topGenres as Array<{ genre: string }>)?.[0]?.genre) || '—',
+      topGenre: (stats.topGenres as Array<{ genre: string }>)?.[0]?.genre || '—',
       genres: (stats.topGenres as Array<{ genre: string; count: number }>) || [],
       decadeDistribution: (stats.decadeDistribution as Record<string, number>) || {},
     });

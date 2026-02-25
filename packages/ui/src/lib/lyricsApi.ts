@@ -49,7 +49,7 @@ export async function getLyricsStats(): Promise<LyricsStats> {
 export async function getLyricsLibrary(
   page = 1,
   limit = 50,
-  status?: LyricsStatus,
+  status?: LyricsStatus
 ): Promise<
   Array<{
     id: string;

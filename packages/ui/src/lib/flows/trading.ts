@@ -4,13 +4,7 @@ import { writable } from 'svelte/store';
 import { showError, showSuccess } from '@lib/toast';
 import { api } from '@lib/client';
 import TradingFlow from '@lib/pages/TradingFlow.svelte';
-import type {
-  Candle,
-  FractalNode,
-  AdvisorNote,
-  TradingState,
-  AdvisorState,
-} from '@flows/shared';
+import type { Candle, FractalNode, AdvisorNote, TradingState, AdvisorState } from '@flows/shared';
 
 // Re-export types from shared for UI consumers
 export type { Candle, FractalNode, AdvisorNote, TradingState, AdvisorState };
