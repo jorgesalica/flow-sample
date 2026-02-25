@@ -1,0 +1,81 @@
+/**
+ * Binance REST API Client
+ *
+ * Fetches historical kline (candlestick) data from Binance REST API.
+ * Used for multi-timeframe analysis in the Cascade Wizard.
+ */
+
+import type { Candle } from './types';
+
+const BINANCE_REST_BASE = 'https://api.binance.com/api/v3';
+
+export type KlineInterval = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w';
+
+interface BinanceKline {
+  0: number; // Open time
+  1: string; // Open
+  2: string; // High
+  3: string; // Low
+  4: string; // Close
+  5: string; // Volume
+  6: number; // Close time
+  7: string; // Quote asset volume
+  8: number; // Number of trades
+  9: string; // Taker buy base asset volume
+  10: string; // Taker buy quote asset volume
+  11: string; // Ignore
+}
+
+/**
+ * Fetch historical klines from Binance REST API.
+ *
+ * @param symbol Trading pair (e.g., 'BTCUSDT')
+ * @param interval Kline interval (e.g., '1d', '4h', '1h', '15m')
+ * @param limit Number of klines to fetch (max 1000)
+ * @returns Array of Candle objects
+ */
+export async function fetchKlines(
+  symbol: string,
+  interval: KlineInterval,
+  limit: number = 100,
+): Promise<Candle[]> {
+  const url = new URL(`${BINANCE_REST_BASE}/klines`);
+  url.searchParams.set('symbol', symbol.toUpperCase());
+  url.searchParams.set('interval', interval);
+  url.searchParams.set('limit', Math.min(limit, 1000).toString());
+
+  console.log(`[BinanceREST] Fetching ${limit} klines for ${symbol}@${interval}`);
+
+  try {
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[BinanceREST] API error: ${response.status} - ${errorText}`);
+      throw new Error(`Binance API error: ${response.status}`);
+    }
+
+    const data = (await response.json()) as BinanceKline[];
+
+    const candles: Candle[] = data.map((kline) => ({
+      symbol: symbol.toUpperCase(),
+      interval,
+      openTime: kline[0],
+      closeTime: kline[6],
+      open: parseFloat(kline[1]),
+      high: parseFloat(kline[2]),
+      low: parseFloat(kline[3]),
+      close: parseFloat(kline[4]),
+      volume: parseFloat(kline[5]),
+      isClosed: true, // Historical klines are always closed
+    }));
+
+    console.log(`[BinanceREST] Fetched ${candles.length} klines successfully`);
+    return candles;
+  } catch (error) {
+    console.error(`[BinanceREST] Failed to fetch klines:`, error);
+    throw error;
+  }
+}
+
+export default { fetchKlines };

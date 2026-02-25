@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto';
 import { loadConfig } from './config';
 import { createSpotifyRoutes } from './spotify.routes';
 import { createLyricsRoutes } from './lyrics.routes';
+import { createTradingRoutes } from './trading.routes';
 import { logger } from '@infra/logger';
 
 const config = loadConfig();
@@ -48,6 +49,9 @@ const app = new Elysia({ adapter: node() })
 
   // Lyrics routes
   .use(createLyricsRoutes())
+
+  // Trading routes
+  .use(createTradingRoutes())
 
   // Serve outputs directory
   .use(

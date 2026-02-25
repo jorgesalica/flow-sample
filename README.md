@@ -5,6 +5,7 @@ A playground for data flows — extract, transform, and visualize data from vari
 ## ✨ Features
 
 - **Spotify Flow**: Sync your saved tracks, explore genres, decades, and discover patterns
+- **Trading Bot Flow**: Real-time advisor with Fractal Analysis and AI-driven "Matrioshka" reasoning
 - **Cosmic UI**: Dark space-themed interface with glassmorphism and subtle animations
 - **Charts & Insights**: Genre distribution, decade analysis, and more
 - **Smart Caching**: 5-minute API cache with auto-invalidation
@@ -12,7 +13,7 @@ A playground for data flows — extract, transform, and visualize data from vari
 
 ## Current Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │  @flows/ui (Svelte 5 + Charts)       → http://localhost:5173 │
 │       ↓                                                      │
@@ -39,7 +40,7 @@ pnpm dev                # Runs backend (:4173) and UI (:5173) in parallel
 
 ## Project Structure
 
-```
+```text
 flow-sample/
 ├── packages/
 │   ├── backend/        # API, Infrastructure, Domain (@flows/backend)

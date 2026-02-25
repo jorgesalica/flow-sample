@@ -7,11 +7,13 @@ Changelog for the backend (API, persistence, domain logic).
 ## 2025-12-09 — Lyrics Flow (Backend)
 
 ### Infrastructure
+
 - **Schema**: Added `lyrics` table with `plain_lyrics`, `synced_lyrics`, `status` (pending/found/not_found), and `fetched_at`.
 - **Adapter**: `LrcLibAdapter` for fetching lyrics from `lrclib.net` (no auth required).
 - **Repository**: `SQLiteLyricsRepository` with helper to fetching pending track IDs.
 
 ### API & Logic
+
 - **Cache-First Strategy**: `GET /api/lyrics/:trackId` strictly returns cached data if found.
 - **Force Fetch**: Added `?force=true` param to bypass cache and re-fetch from LrcLib.
 - **Batch Processing**: `POST /api/lyrics/fetch-all` endpoint to process only pending tracks.
@@ -22,17 +24,19 @@ Changelog for the backend (API, persistence, domain logic).
 ## 2025-12-07 — Backend Refactoring & Aliases
 
 ### Import Aliases & Build Tools
+
 - Refactored 27+ files to use path aliases (`@domain`, `@infra`, `@app`, `@api`) instead of relative imports.
 - Configured build tools to support aliases:
-    - Installed `tsc-alias` for production build path resolution.
-    - Installed `tsconfig-paths` for `ts-node` runtime resolution (dev/start).
-    - Updated `package.json` scripts and `tsconfig.json`.
-    - Updated `vitest.config.ts` to map aliases for tests.
+  - Installed `tsc-alias` for production build path resolution.
+  - Installed `tsconfig-paths` for `ts-node` runtime resolution (dev/start).
+  - Updated `package.json` scripts and `tsconfig.json`.
+  - Updated `vitest.config.ts` to map aliases for tests.
 - Split TypeScript config:
-    - `tsconfig.json`: For IDE and typechecking (includes `src/` + `tests/`).
-    - `tsconfig.build.json`: For production build (only `src/`, preserves `dist/` structure).
+  - `tsconfig.json`: For IDE and typechecking (includes `src/` + `tests/`).
+  - `tsconfig.build.json`: For production build (only `src/`, preserves `dist/` structure).
 
 ### Type Refactoring
+
 - Centralized `YearRange` and `GenreCount` in `@flows/shared` (removed local definitions).
 - Updated various services and repositories to import shared types.
 
@@ -41,16 +45,19 @@ Changelog for the backend (API, persistence, domain logic).
 ## 2025-12-07 — OAuth Flow, Husky, Test Refactoring
 
 ### OAuth 2.0 Flow
+
 - Replaced manual `SPOTIFY_REFRESH_TOKEN` with user-friendly OAuth flow
 - New routes: `/auth/login`, `/auth/callback`, `/auth/status`
 - Token storage in SQLite `token_cache` table
 - Auto token refresh with rotation support
 
 ### Husky Git Hooks
+
 - Pre-commit: runs `lint` and `format`
 - Pre-push: runs `check` and `test`
 
 ### Test Reorganization
+
 - Backend tests organized by domain: `tests/unit/spotify/`, `tests/integration/spotify/`
 - Added stub tests for future: API contract, error handling, auth flow
 - 14 tests passing, 15 TODOs for expansion
@@ -72,6 +79,7 @@ log.debug({ page, limit, query }, 'Searching tracks');
 ```
 
 **Logged operations:**
+
 - `SQLiteTrackRepository`: save, findPaginated
 - `SpotifyApiAdapter`: fetchTracks, fetchArtistDetails
 - `app.ts`: Server startup, request handling
@@ -95,6 +103,7 @@ Updated mocks to use `fetchArtistDetails`:
 In-memory cache with 5-minute TTL:
 
 **Cached endpoints:**
+
 - `GET /api/spotify/genres`
 - `GET /api/spotify/years`
 - `GET /api/spotify/stats`
@@ -107,24 +116,24 @@ Cache invalidated after sync (`POST /run`).
 
 ---
 
-
-
 ## 2025-12-05 (Later) — pnpm Workspaces Monorepo
 
 Restructured project to pnpm workspaces:
 
-```
+```text
 Before: src/              → After: packages/backend/src/
 Before: ui/               → After: packages/ui/
 New:    packages/shared/  → Shared types
 ```
 
 **Package Names:**
+
 - `@flows/backend` - API + domain
 - `@flows/ui` - Svelte frontend
 - `@flows/shared` - Track, Artist, Album, SearchOptions
 
 **Key Commands:**
+
 ```bash
 pnpm install                       # All packages
 pnpm --filter @flows/backend dev   # Run backend
@@ -139,7 +148,7 @@ pnpm -r run lint                   # Lint all
 ### New API Fields
 
 | Entity | New Field | Source |
-|--------|-----------|--------|
+| ------ | --------- | ------ |
 | `Track` | `previewUrl` | Spotify 30s audio clip |
 | `Track` | `spotifyUrl` | Deep link to Spotify app |
 | `Album` | `imageUrl` | Album cover (300px) |
@@ -148,7 +157,7 @@ pnpm -r run lint                   # Lint all
 ### New Filters
 
 | Filter | Param |
-|--------|-------|
+| ------ | ----- |
 | Has Preview | `?hasPreview=true` |
 | Min Popularity | `?minPopularity=30` |
 
@@ -176,6 +185,7 @@ CREATE VIRTUAL TABLE tracks_fts USING fts5(
 ```
 
 **Features:**
+
 - Prefix matching (`linkin*` finds "Linkin Park")
 - Searches across title, album, and artists
 - Auto-rebuild on startup and after sync
@@ -209,7 +219,7 @@ async fetchArtistGenres(artistIds: string[]): Promise<Map<string, string[]>>
 ### New API Endpoints
 
 | Endpoint | Description |
-|----------|-------------|
+| -------- | ----------- |
 | `GET /api/spotify/tracks/search` | Paginated, filterable search |
 | `GET /api/spotify/tracks/:id` | Single track by ID |
 | `GET /api/spotify/genres` | All genres with counts |
@@ -255,12 +265,13 @@ const app = new Elysia({ adapter: node() })
 
 ### Persistence: JSON → SQLite
 
-```
+```text
 Before: outputs/spotify/liked_songs.json
 After:  data/flow.db (SQLite)
 ```
 
 **Schema:**
+
 - `tracks` — Main track data
 - `artists` — Artist information
 - `track_artists` — Many-to-many relationship
@@ -268,7 +279,7 @@ After:  data/flow.db (SQLite)
 
 ### Architecture: Layered
 
-```
+```text
 src/
 ├── api/            # HTTP layer (Elysia routes)
 ├── application/    # Use cases
@@ -282,7 +293,7 @@ src/
 
 The backend was restructured to follow **Hexagonal Architecture** (Ports & Adapters):
 
-```
+```text
 Before:  Monolithic script
 After:   ├── core/     (FlowEngine, Ports)
          ├── adapters/ (SpotifyAdapter, FileSystemAdapter)
@@ -290,6 +301,7 @@ After:   ├── core/     (FlowEngine, Ports)
 ```
 
 **Tooling:**
+
 - Zod for config validation
 - Pino for logging
 - Vitest for testing

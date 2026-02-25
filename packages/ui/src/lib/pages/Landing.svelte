@@ -99,11 +99,12 @@
         {/each}
       {:else}
         {#each flows as flow (flow.id)}
-          {@const isActive = flow.stats?.status === 'active'}
+          {@const isClickable =
+            flow.stats?.status === 'active' || flow.stats?.status === 'configured'}
           <a
-            href={isActive ? flow.route : undefined}
+            href={isClickable ? flow.route : undefined}
             class="glass glass-hover p-6 transition-all duration-300
-                   {isActive
+                   {isClickable
               ? 'hover:scale-[1.02] cursor-pointer'
               : 'opacity-40 cursor-not-allowed'}"
           >

@@ -17,6 +17,7 @@ export default defineConfig({
             '@domain': '/src/domain',
             '@infra': '/src/infrastructure',
             '@app': '/src/application',
+            '@config': '/src/config',
         },
     },
 });

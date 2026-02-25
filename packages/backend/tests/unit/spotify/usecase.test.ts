@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SpotifyUseCase, SpotifySourcePort, ArtistDetails } from '@app/spotify.usecase';
+import { SpotifyUseCase, SpotifySourcePort, ArtistDetails } from '@app/spotify';
 import { TrackRepository, Track } from '@domain/flows/spotify';
 
 const mockTrack: Track = {

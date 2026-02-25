@@ -27,7 +27,8 @@
       "@domain/*": ["../backend/src/domain/*"],
       "@infra/*": ["../backend/src/infrastructure/*"],
       "@app/*": ["../backend/src/application/*"],
-      "@api/*": ["../backend/src/api/*"]
+      "@api/*": ["../backend/src/api/*"],
+      "@config/*": ["../backend/src/config/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]

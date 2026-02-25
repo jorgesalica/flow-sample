@@ -3,7 +3,7 @@
 ## Tech Stack
 
 | Technology | Version | Purpose |
-|------------|---------|---------|
+| ---------- | ------- | ------- |
 | **Svelte** | 5.x | Reactive UI framework |
 | **Vite** | 7.x | Build tool & dev server |
 | **Tailwind CSS** | 4.x | Utility-first styling |
@@ -11,7 +11,7 @@
 
 ## Directory Structure
 
-```
+```text
 ui/
 ├── src/
 │   ├── App.svelte              # Router (hash-based)
@@ -43,7 +43,7 @@ ui/
 ## Pages
 
 | Page | Route | Description |
-|------|-------|-------------|
+| ---- | ----- | ----------- |
 | **Landing** | `#/` | Flow selection (toolbox) |
 | **SpotifyFlow** | `#/spotify` | Track explorer with filters, infinite scroll, and charts |
 
@@ -68,7 +68,7 @@ export const topStats = writable({
 ## API Client
 
 | Function | Purpose |
-|----------|---------|
+| -------- | ------- |
 | `loadTracks(options, append)` | Fetch tracks (append=true for infinite scroll) |
 | `updateStats()` | Fetch summary statistics and chart data |
 | `fetchFromSpotify()` | Trigger sync from Spotify API |
@@ -117,7 +117,7 @@ sequenceDiagram
 ## Tooling
 
 | Script | Command | Purpose |
-|--------|---------|---------|
+| ------ | ------- | ------- |
 | `dev` | `pnpm --filter @flows/ui run dev` | Start dev server (port 5173) |
 | `build` | `pnpm --filter @flows/ui run build` | Production build |
 | `lint` | `pnpm --filter @flows/ui run lint` | ESLint check |

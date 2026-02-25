@@ -15,7 +15,7 @@ cp packages/backend/.env.example packages/backend/.env
 ```
 
 | Variable | Description |
-|----------|-------------|
+| -------- | ----------- |
 | `SPOTIFY_CLIENT_ID` | Client ID from [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) |
 | `SPOTIFY_CLIENT_SECRET` | Client Secret (keep private) |
 | `SPOTIFY_REDIRECT_URI` | Must be `http://127.0.0.1:4173/api/spotify/auth/callback` |
@@ -37,7 +37,7 @@ pnpm dev
 ```
 
 | Service | URL | Stack |
-|---------|-----|-------|
+| ------- | --- | ----- |
 | **Backend** | `http://localhost:4173` | ElysiaJS + SQLite |
 | **Frontend** | `http://localhost:5173` | Svelte 5 + Vite + Tailwind 4 |
 
@@ -60,6 +60,7 @@ pnpm dev
 Click **"Sync with Spotify"** to fetch your liked songs.
 
 The sync process:
+
 1. Fetches all liked tracks (paginated)
 2. Enriches with artist genres and images
 3. Stores in `data/flow.db` (SQLite)
@@ -72,7 +73,7 @@ The sync process:
 ### Dashboard Features
 
 | Feature | Description |
-|---------|-------------|
+| ------- | ----------- |
 | **Infinite Scroll** | Scroll to load more tracks automatically |
 | **Search** | Real-time full-text search (title, artist, album) |
 | **Filters** | Genre, Year, Popularity, Sort order |
@@ -81,7 +82,7 @@ The sync process:
 ### Insights (Charts)
 
 | Chart | Description |
-|-------|-------------|
+| ----- | ----------- |
 | **Genre Distribution** | Doughnut chart of your top genres |
 | **Eras Timeline** | Bar chart showing decades (60s → 2020s) |
 
@@ -90,7 +91,7 @@ The sync process:
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
+| ----- | ---------- |
 | **Frontend** | Svelte 5 (Runes), Tailwind CSS 4, Chart.js, Vite 7 |
 | **Backend** | ElysiaJS, SQLite (FTS5), Pino logger |
 | **Shared** | TypeScript, Eden client (end-to-end types) |
@@ -101,7 +102,7 @@ The sync process:
 ## Useful Scripts
 
 | Command | Description |
-|---------|-------------|
+| ------- | ----------- |
 | `pnpm dev` | Start full stack (backend + frontend) |
 | `pnpm -r run lint` | Lint all packages |
 | `pnpm -r run check` | Type-check all packages |

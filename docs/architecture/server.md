@@ -3,7 +3,7 @@
 ## Tech Stack
 
 | Technology | Purpose |
-|------------|---------|
+| ---------- | ------- |
 | **Elysia** | Web framework (TypeBox validation, plugin system) |
 | **@elysiajs/node** | Node.js adapter |
 | **@elysiajs/static** | Static file serving |
@@ -19,7 +19,7 @@
 
 ## Directory Structure
 
-```
+```text
 src/api/
 ├── app.ts              # Main Elysia server
 ├── spotify.routes.ts   # Spotify route group
@@ -30,7 +30,7 @@ src/api/
 ## API Endpoints
 
 | Method | Path | Description |
-|--------|------|-------------|
+| ------ | ---- | ----------- |
 | `GET` | `/api/status` | Health check |
 | `POST` | `/api/spotify/run` | Fetch tracks and save to SQLite |
 | `GET` | `/api/spotify/tracks` | Get all tracks from SQLite |
@@ -41,6 +41,7 @@ src/api/
 ## Request/Response Examples
 
 ### Health Check
+
 ```http
 GET /api/status
 
@@ -48,6 +49,7 @@ GET /api/status
 ```
 
 ### Run Spotify Flow
+
 ```http
 POST /api/spotify/run
 Content-Type: application/json
@@ -56,6 +58,7 @@ Content-Type: application/json
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -66,6 +69,7 @@ Response:
 ```
 
 ### Get All Tracks
+
 ```http
 GET /api/spotify/tracks
 

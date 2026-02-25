@@ -1,5 +1,5 @@
 import type { Track, TrackRepository } from '@domain/flows/spotify';
-import { logger } from './logger';
+import { logger } from '../logger';
 
 const log = logger.child({ module: 'SpotifyUseCase' });
 
@@ -50,7 +50,7 @@ export class SpotifyUseCase {
     log.info('Saved tracks to repository');
 
     // Rebuild FTS index for search
-    const { rebuildFtsIndex } = await import('../infrastructure/persistence/sqlite/database');
+    const { rebuildFtsIndex } = await import('../../infrastructure/persistence/sqlite/database');
     rebuildFtsIndex();
     log.info('Rebuilt FTS search index');
 
