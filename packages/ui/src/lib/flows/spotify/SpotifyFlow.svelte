@@ -5,7 +5,7 @@
   import SearchBar from '@lib/components/common/SearchBar.svelte';
   import FilterPanel from './components/FilterPanel.svelte';
   import InfiniteScroll from '@lib/components/common/InfiniteScroll.svelte';
-  import { Navbar } from '@lib/components';
+  import { FlowLayout } from '@lib/components';
   import SpotifyHeader from './components/SpotifyHeader.svelte';
   import InsightsPanel from './components/InsightsPanel.svelte';
   import { tracks, topStats, isLoading, totalTracks, searchOptions } from './stores';
@@ -43,10 +43,8 @@
   <title>{pageTitle}</title>
 </svelte:head>
 
-<Navbar />
-
-<div class="min-h-screen pt-28 p-4 md:p-8">
-  <div class="max-w-7xl mx-auto flex flex-col gap-6">
+<FlowLayout>
+  <div class="flex flex-col gap-6">
     <!-- Header -->
     <SpotifyHeader stats={$topStats} />
 
@@ -113,4 +111,4 @@
       Cosmic Flow — Spotify Edition
     </footer>
   </div>
-</div>
+</FlowLayout>

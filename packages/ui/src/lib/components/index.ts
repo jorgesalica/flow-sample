@@ -6,3 +6,4 @@ export { default as MetricCard } from './common/MetricCard.svelte';
 
 // Layout components
 export { default as Navbar } from './layout/Navbar.svelte';
+export { default as FlowLayout } from './layout/FlowLayout.svelte';
