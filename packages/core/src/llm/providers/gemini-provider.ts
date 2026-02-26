@@ -66,11 +66,12 @@ export class GeminiProvider extends BaseLLMProvider {
         try {
             const modelsResult = await this.client.models.list();
             const list: string[] = [];
-            // @ts-ignore - Iterator typing on the SDK can be tricky
-            for await (const m of modelsResult) {
-                if (m.name && (m as any).supportedGenerationMethods?.includes('generateContent')) {
+            for await (const m of modelsResult as any) {
+                const name = m.name || m.model || '';
+                // Keep only gemini models, ignore embeddings and other services
+                if (name && name.includes('gemini') && !name.includes('embedding')) {
                     // Extract model name without the "models/" prefix
-                    list.push(m.name.replace('models/', ''));
+                    list.push(name.replace('models/', ''));
                 }
             }
             return list.length ? list : [this.defaultModel];
