@@ -4,10 +4,16 @@
  * This package is just the Elysia server that composes
  * route modules from each flow package.
  */
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load .env from monorepo root (2 levels up from packages/backend/)
+dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
+
 import { Elysia } from 'elysia';
+import { node } from '@elysiajs/node';
 import { cors } from '@elysiajs/cors';
 import { staticPlugin } from '@elysiajs/static';
-import * as path from 'path';
 import * as fs from 'fs';
 import { createSpotifyRoutes } from '@flows/spotify';
 import { createLyricsRoutes } from '@flows/lyrics';
@@ -31,7 +37,7 @@ const config = {
 const uiDistPath = path.resolve(__dirname, '../../ui/dist');
 const hasUiDist = fs.existsSync(uiDistPath);
 
-export const app = new Elysia()
+export const app = new Elysia({ adapter: node() })
   // CORS
   .use(
     cors({
@@ -44,12 +50,12 @@ export const app = new Elysia()
   .use(
     hasUiDist
       ? staticPlugin({
-          assets: uiDistPath,
-          prefix: '/',
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        })
+        assets: uiDistPath,
+        prefix: '/',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      })
       : new Elysia(),
   )
 
