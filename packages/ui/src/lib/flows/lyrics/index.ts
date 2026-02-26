@@ -1,6 +1,6 @@
-import type { FlowDefinition, FlowStats } from './registry';
-import { getLyricsStats } from '@lib/lyricsApi';
-import LyricsFlow from '@lib/pages/LyricsFlow.svelte';
+import type { FlowDefinition, FlowStats } from '../registry';
+import { getLyricsStats } from './api';
+import LyricsFlow from './LyricsFlow.svelte';
 
 async function getStats(): Promise<FlowStats> {
   try {

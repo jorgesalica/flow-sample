@@ -1,4 +1,4 @@
-import type { Track, PaginatedResult, SearchOptions } from './types';
+import type { Track, PaginatedResult, SearchOptions } from '@lib/types';
 import {
   tracks,
   totalTracks,
@@ -9,8 +9,8 @@ import {
   isAuthenticated,
 } from './stores';
 import { get } from 'svelte/store';
-import { api } from './client';
-import { showError, showSuccess, showLoading, dismissToast } from './toast';
+import { api } from '@lib/client';
+import { showError, showSuccess, showLoading, dismissToast } from '@lib/toast';
 
 export async function loadTracks(
   options?: Partial<SearchOptions>,

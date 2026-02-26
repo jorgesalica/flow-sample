@@ -1,7 +1,7 @@
 // Spotify Flow Registration
-import { registerFlow, type FlowStats } from './registry';
+import { registerFlow, type FlowStats } from '../registry';
 import { api } from '@lib/client';
-import SpotifyFlow from '@lib/pages/SpotifyFlow.svelte';
+import SpotifyFlow from './SpotifyFlow.svelte';
 
 async function getSpotifyStats(): Promise<FlowStats> {
   try {

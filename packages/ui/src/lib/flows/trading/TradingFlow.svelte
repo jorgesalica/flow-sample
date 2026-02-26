@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import StepWizard from '../components/StepWizard.svelte';
+  import StepWizard from './components/StepWizard.svelte';
   import {
     tradingState,
     advisorState,
@@ -19,7 +19,7 @@
     connectToStream,
     disconnectFromStream,
     type AdvisorNote,
-  } from '../flows/trading';
+  } from './trading';
 
   // Local interface extension to bypass potential type-check caching issues
   interface EnhancedAdvisorNote extends AdvisorNote {

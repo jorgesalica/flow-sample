@@ -10,7 +10,7 @@
     type CandlestickData,
     type LineData,
   } from 'lightweight-charts';
-  import type { Candle } from '../flows/trading';
+  import type { Candle } from '../trading';
 
   interface Props {
     candles: Candle[];

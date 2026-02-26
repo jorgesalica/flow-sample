@@ -1,5 +1,5 @@
 import type { Lyrics, LyricsStats, LyricsStatus } from '@flows/shared';
-import { api } from './client';
+import { api } from '@lib/client';
 
 /**
  * Fetch lyrics for a specific track

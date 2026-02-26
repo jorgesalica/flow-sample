@@ -1,17 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import {
-    Controls,
-    TrackCard,
-    SearchBar,
-    FilterPanel,
-    InfiniteScroll,
-    Navbar,
-    SpotifyHeader,
-    InsightsPanel,
-  } from '@lib/components';
-  import { tracks, topStats, isLoading, totalTracks, searchOptions } from '@lib/stores';
-  import { loadTracks, checkAuthStatus } from '@lib/api';
+  import Controls from './components/Controls.svelte';
+  import TrackCard from './components/TrackCard.svelte';
+  import SearchBar from '@lib/components/common/SearchBar.svelte';
+  import FilterPanel from './components/FilterPanel.svelte';
+  import InfiniteScroll from '@lib/components/common/InfiniteScroll.svelte';
+  import { Navbar } from '@lib/components';
+  import SpotifyHeader from './components/SpotifyHeader.svelte';
+  import InsightsPanel from './components/InsightsPanel.svelte';
+  import { tracks, topStats, isLoading, totalTracks, searchOptions } from './stores';
+  import { loadTracks, checkAuthStatus } from './api';
 
   // Page title
   const pageTitle = 'Spotify Flow - Your Music Library';

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { searchOptions } from '@lib/stores';
-  import { loadTracks } from '@lib/api';
+  import { searchOptions } from '../stores';
+  import { loadTracks } from '../api';
   import { api } from '@lib/client';
   import type { YearCount } from '@lib/types';
 

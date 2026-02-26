@@ -1,6 +1,6 @@
 <script lang="ts">
   import CandleChart from './CandleChart.svelte';
-  import type { Candle, AdvisorNote } from '../flows/trading';
+  import type { Candle, AdvisorNote } from '../trading';
 
   interface TimeframeStep {
     id: number;

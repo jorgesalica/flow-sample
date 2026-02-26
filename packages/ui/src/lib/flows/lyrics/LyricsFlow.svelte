@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { LyricsStats, LyricsStatus, Track } from '@flows/shared';
-  import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from '@lib/lyricsApi';
+  import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from './api';
   import { toast } from '@lib/toast';
   import { Navbar } from '@lib/components';
-  import LyricsModal from '@lib/components/common/LyricsModal.svelte';
+  import LyricsModal from './components/LyricsModal.svelte';
 
   let stats = $state<LyricsStats | null>(null);
   let tracks = $state<

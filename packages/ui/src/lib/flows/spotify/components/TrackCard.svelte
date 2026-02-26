@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Track } from '@lib/types';
-  import AlbumArt from '@components/track/AlbumArt.svelte';
-  import GenreBadges from '@components/track/GenreBadges.svelte';
-  import LyricsModal from '@components/common/LyricsModal.svelte';
+  import AlbumArt from './AlbumArt.svelte';
+  import GenreBadges from './GenreBadges.svelte';
+  import LyricsModal from '@lib/flows/lyrics/components/LyricsModal.svelte';
 
   interface Props {
     track: Track;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Track, Lyrics } from '@lib/types';
-  import { getLyrics } from '@lib/lyricsApi';
+  import { getLyrics } from '../api';
 
   interface Props {
     track: Track;
