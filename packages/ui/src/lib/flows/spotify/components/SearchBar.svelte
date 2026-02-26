@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { searchOptions } from '@lib/flows/spotify/stores';
-  import { loadTracks } from '@lib/flows/spotify/api';
+  import { searchOptions } from '../stores';
+  import { loadTracks } from '../api';
 
   let value = $state($searchOptions.q || '');
   let timer: ReturnType<typeof setTimeout> | null = null;

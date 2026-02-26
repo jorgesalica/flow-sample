@@ -1,6 +1,4 @@
 // Common shared components
-export { default as SearchBar } from './common/SearchBar.svelte';
-export { default as Pagination } from './common/Pagination.svelte';
 export { default as InfiniteScroll } from './common/InfiniteScroll.svelte';
 export { default as MetricCard } from './common/MetricCard.svelte';
 

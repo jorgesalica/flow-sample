@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import Controls from './components/Controls.svelte';
   import TrackCard from './components/TrackCard.svelte';
-  import SearchBar from '@lib/components/common/SearchBar.svelte';
+  import SearchBar from './components/SearchBar.svelte';
   import FilterPanel from './components/FilterPanel.svelte';
   import InfiniteScroll from '@lib/components/common/InfiniteScroll.svelte';
   import { FlowLayout } from '@lib/components';
