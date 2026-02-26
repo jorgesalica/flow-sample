@@ -6,7 +6,21 @@ import { logger } from '@flows/core';
 const log = logger.child({ module: 'LrcLibAdapter' });
 
 const LRCLIB_BASE_URL = 'https://lrclib.net/api';
-const REQUEST_DELAY_MS = 150; // Delay between requests to be nice to the API
+const DEFAULT_CONCURRENCY = 10;
+
+export interface LyricsTrackParams {
+  trackId: string;
+  trackName: string;
+  artistName: string;
+  albumName: string;
+  durationSeconds: number;
+}
+
+export interface BatchLyricsResult {
+  trackId: string;
+  result: LyricsResult | null;
+  error?: string;
+}
 
 /**
  * Adapter for LrcLib lyrics API
@@ -14,11 +28,11 @@ const REQUEST_DELAY_MS = 150; // Delay between requests to be nice to the API
  */
 export class LrcLibAdapter {
   private client: AxiosInstance;
-  private lastRequestTime = 0;
 
   constructor() {
     this.client = axios.create({
       baseURL: LRCLIB_BASE_URL,
+      timeout: 10000,
       headers: {
         'User-Agent': 'flow-sample/1.0.0 (https://github.com/flow-sample)',
       },
@@ -26,21 +40,7 @@ export class LrcLibAdapter {
   }
 
   /**
-   * Delay to avoid overwhelming the API
-   */
-  private async throttle(): Promise<void> {
-    const now = Date.now();
-    const timeSinceLastRequest = now - this.lastRequestTime;
-    if (timeSinceLastRequest < REQUEST_DELAY_MS) {
-      await new Promise((resolve) => setTimeout(resolve, REQUEST_DELAY_MS - timeSinceLastRequest));
-    }
-    this.lastRequestTime = Date.now();
-  }
-
-  /**
-   * Fetch lyrics for a track by its signature (title, artist, album, duration)
-   * @param params Track identification parameters
-   * @returns Lyrics result or null if not found
+   * Fetch lyrics for a single track
    */
   async fetchLyrics(params: {
     trackName: string;
@@ -48,21 +48,9 @@ export class LrcLibAdapter {
     albumName: string;
     durationSeconds: number;
   }): Promise<LyricsResult | null> {
-    // Validation: Don't request if essential data is missing or invalid
     if (!params.trackName || params.durationSeconds <= 0) {
-      log.warn(
-        { trackName: params.trackName, duration: params.durationSeconds },
-        'Skipping lyrics fetch: Invalid track data',
-      );
       return null;
     }
-
-    await this.throttle();
-
-    log.debug(
-      { trackName: params.trackName, artistName: params.artistName },
-      'Fetching lyrics from LrcLib',
-    );
 
     try {
       const response = await this.client.get<LrcLibResponse>('/get', {
@@ -77,18 +65,8 @@ export class LrcLibAdapter {
       const data = response.data;
 
       if (!data.plainLyrics && !data.syncedLyrics) {
-        log.debug({ trackName: params.trackName }, 'No lyrics content in response');
         return null;
       }
-
-      log.info(
-        {
-          trackName: params.trackName,
-          hasPlain: !!data.plainLyrics,
-          hasSynced: !!data.syncedLyrics,
-        },
-        'Lyrics found',
-      );
 
       return {
         plainLyrics: data.plainLyrics,
@@ -100,21 +78,75 @@ export class LrcLibAdapter {
         axios.isAxiosError(error) &&
         (error.response?.status === 404 || error.response?.status === 400)
       ) {
-        log.debug(
-          { trackName: params.trackName, code: error.response?.status },
-          'Lyrics not found (404/400)',
-        );
         return null;
       }
-
-      log.error(
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          trackName: params.trackName,
-        },
-        'Failed to fetch lyrics',
-      );
       throw error;
     }
+  }
+
+  /**
+   * Fetch lyrics for multiple tracks concurrently using a semaphore pool.
+   * Default concurrency is 10 parallel requests.
+   */
+  async fetchLyricsBatch(
+    tracks: LyricsTrackParams[],
+    onProgress?: (completed: number, total: number) => void,
+    concurrency: number = DEFAULT_CONCURRENCY,
+  ): Promise<BatchLyricsResult[]> {
+    log.info({ total: tracks.length, concurrency }, 'Starting batch lyrics fetch');
+
+    const results: BatchLyricsResult[] = [];
+    let completed = 0;
+    let running = 0;
+    let index = 0;
+    let lastLoggedPct = 0;
+
+    return new Promise((resolve) => {
+      const next = () => {
+        // All done
+        if (completed === tracks.length) {
+          resolve(results);
+          return;
+        }
+
+        // Launch tasks up to concurrency limit
+        while (running < concurrency && index < tracks.length) {
+          const track = tracks[index++];
+          running++;
+
+          this.fetchLyrics({
+            trackName: track.trackName,
+            artistName: track.artistName,
+            albumName: track.albumName,
+            durationSeconds: track.durationSeconds,
+          })
+            .then((result) => {
+              results.push({ trackId: track.trackId, result });
+            })
+            .catch((error) => {
+              results.push({
+                trackId: track.trackId,
+                result: null,
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+            })
+            .finally(() => {
+              running--;
+              completed++;
+
+              const pct = Math.floor((completed / tracks.length) * 100);
+              if (pct >= lastLoggedPct + 5 || completed === tracks.length) {
+                log.info({ progress: `${pct}%`, completed, total: tracks.length }, 'Lyrics fetch progress');
+                lastLoggedPct = pct;
+              }
+
+              if (onProgress) onProgress(completed, tracks.length);
+              next();
+            });
+        }
+      };
+
+      next();
+    });
   }
 }

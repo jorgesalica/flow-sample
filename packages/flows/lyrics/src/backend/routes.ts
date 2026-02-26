@@ -90,42 +90,47 @@ export function createLyricsRoutes() {
         const pendingIds = await lyricsRepository.getPendingTrackIds();
         log.info({ count: pendingIds.length }, 'Starting batch lyrics fetch');
 
+        // Resolve all track data upfront
+        const batchParams = [];
+        for (const trackId of pendingIds) {
+          const track = await trackRepository.findById(trackId);
+          if (!track) continue;
+
+          batchParams.push({
+            trackId,
+            trackName: track.title,
+            artistName: track.artists[0]?.name || '',
+            albumName: track.album.name,
+            durationSeconds: Math.round(track.durationMs / 1000),
+          });
+        }
+
+        // Fetch concurrently (10 parallel by default)
+        const results = await lrcLibAdapter.fetchLyricsBatch(batchParams);
+
         let found = 0;
         let notFound = 0;
         let errors = 0;
 
-        for (const trackId of pendingIds) {
-          const track = await trackRepository.findById(trackId);
-          if (!track) {
+        for (const { trackId, result, error } of results) {
+          if (error) {
             errors++;
             continue;
           }
 
-          try {
-            const result = await lrcLibAdapter.fetchLyrics({
-              trackName: track.title,
-              artistName: track.artists[0]?.name || '',
-              albumName: track.album.name,
-              durationSeconds: Math.round(track.durationMs / 1000),
+          if (result && (result.plainLyrics || result.syncedLyrics)) {
+            await lyricsRepository.save(trackId, {
+              plainLyrics: result.plainLyrics,
+              syncedLyrics: result.syncedLyrics,
             });
-
-            if (result && (result.plainLyrics || result.syncedLyrics)) {
-              await lyricsRepository.save(trackId, {
-                plainLyrics: result.plainLyrics,
-                syncedLyrics: result.syncedLyrics,
-              });
-              found++;
-            } else {
-              await lyricsRepository.markNotFound(trackId);
-              notFound++;
-            }
-          } catch (error) {
-            log.warn({ trackId, error }, 'Failed to fetch lyrics for track');
-            errors++;
+            found++;
+          } else {
+            await lyricsRepository.markNotFound(trackId);
+            notFound++;
           }
         }
 
-        log.info({ found, notFound, errors }, 'Batch lyrics fetch complete');
+        log.info({ found, notFound, errors, total: pendingIds.length }, 'Batch lyrics fetch complete');
 
         return {
           processed: pendingIds.length,
