@@ -2,39 +2,39 @@
 import type { Candle, AdvisorNote, TradingState, AdvisorState, FractalNode } from '@flows/shared';
 
 export interface StatusResponse {
-    trading: TradingState;
-    advisor: AdvisorState;
+  trading: TradingState;
+  advisor: AdvisorState;
 }
 
 export interface StateResponse {
-    state: TradingState;
-    message: string;
+  state: TradingState;
+  message: string;
 }
 
 export interface CandlesResponse {
-    candles: Candle[];
+  candles: Candle[];
 }
 
 export interface FractalsResponse {
-    nodes: FractalNode[];
+  nodes: FractalNode[];
 }
 
 export interface AdvisorToggleResponse {
-    active: boolean;
-    message: string;
+  active: boolean;
+  message: string;
 }
 
 export interface InsightResponse {
-    success?: boolean;
-    insight?: AdvisorNote & { _debugContext?: unknown };
-    debugContext?: unknown;
-    error?: string;
+  success?: boolean;
+  insight?: AdvisorNote & { _debugContext?: unknown };
+  debugContext?: unknown;
+  error?: string;
 }
 
 export interface WizardInsightResponse {
-    success: boolean;
-    insight?: AdvisorNote;
-    analysis?: Record<string, unknown>;
-    meta?: Record<string, unknown>;
-    error?: string;
+  success: boolean;
+  insight?: AdvisorNote;
+  analysis?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+  error?: string;
 }
