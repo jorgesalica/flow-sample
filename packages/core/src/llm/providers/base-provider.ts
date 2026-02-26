@@ -55,6 +55,11 @@ export abstract class BaseLLMProvider {
      * Get the provider name.
      */
     abstract get providerName(): string;
+
+    /**
+     * List dynamically fetchable models from this provider, if supported.
+     */
+    abstract listModels(): Promise<string[]>;
 }
 
 export default BaseLLMProvider;

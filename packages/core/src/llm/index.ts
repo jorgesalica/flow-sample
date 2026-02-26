@@ -51,6 +51,13 @@ export class LLMClient {
     }
 
     /**
+     * List available models dynamically from the provider.
+     */
+    async listModels(): Promise<string[]> {
+        return this.provider.listModels();
+    }
+
+    /**
      * Get the default model for the current provider.
      */
     get defaultModel(): string {

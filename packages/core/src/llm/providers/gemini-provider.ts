@@ -62,6 +62,31 @@ export class GeminiProvider extends BaseLLMProvider {
         };
     }
 
+    async listModels(): Promise<string[]> {
+        try {
+            const modelsResult = await this.client.models.list();
+            const list: string[] = [];
+            // @ts-ignore - Iterator typing on the SDK can be tricky
+            for await (const m of modelsResult) {
+                if (m.name && (m as any).supportedGenerationMethods?.includes('generateContent')) {
+                    // Extract model name without the "models/" prefix
+                    list.push(m.name.replace('models/', ''));
+                }
+            }
+            return list.length ? list : [this.defaultModel];
+        } catch (e) {
+            console.error('[GeminiProvider] Error listing models:', e);
+            // Fallback to defaults if SDK list fails or lacks permission
+            return [
+                'gemini-2.5-flash',
+                'gemini-2.5-pro',
+                'gemini-2.0-flash',
+                'gemini-1.5-flash',
+                'gemini-1.5-pro'
+            ];
+        }
+    }
+
     /**
      * Format messages for Gemini API.
      * Gemini uses a different format than OpenAI-style messages.

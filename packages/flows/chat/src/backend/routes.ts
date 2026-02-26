@@ -8,8 +8,8 @@ const chatService = new ChatService();
  */
 export const chatRoutes = new Elysia({ prefix: '/chat' })
     // Models Support
-    .get('/models', () => {
-        return chatService.getModels();
+    .get('/models', async () => {
+        return await chatService.getModels();
     })
 
     // Conversation Management

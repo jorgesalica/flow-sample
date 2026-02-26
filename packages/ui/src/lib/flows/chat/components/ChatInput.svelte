@@ -31,7 +31,6 @@
   }
 </script>
 
-```
 <div class="p-4 bg-slate-900 border-t border-cosmic-800">
   <div
     class="max-w-4xl mx-auto relative flex items-end bg-slate-800 rounded-xl border border-slate-700 focus-within:border-cosmic-500 focus-within:shadow-glow transition-all"

@@ -11,15 +11,20 @@ export class ChatService {
     }
 
     /**
-     * Get available models (using predefined list for now)
+     * Get available models dynamically from the connected LLM provider
      */
-    getModels(): ChatProviderOption[] {
-        return [
-            { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Fast)', provider: 'gemini' },
-            { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Powerful)', provider: 'gemini' },
-            { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (Experimental)', provider: 'gemini' }
-            // Future: can expose models from other providers when supported in core LLMClient
-        ];
+    async getModels(): Promise<ChatProviderOption[]> {
+        try {
+            const models = await this.llmClient.listModels();
+            return models.map(id => {
+                // Formatting name nicely e.g. gemini-2.5-flash -> Gemini 2.5 Flash
+                let name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                return { id, name, provider: this.llmClient.providerName };
+            });
+        } catch (e) {
+            console.error('[ChatService] Failed to list models:', e);
+            return [];
+        }
     }
 
     /**
