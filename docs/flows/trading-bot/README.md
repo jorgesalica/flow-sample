@@ -82,51 +82,31 @@ TRADING_INTERVAL=1m
 ## 📁 Code Structure
 
 ```text
-packages/backend/src/
-├── api/
-│   └── trading.routes.ts           # Trading API endpoints (SSE, start/stop, insights)
-├── application/
-│   ├── trading/                    # Trading Flow services (with index.ts barrel)
-│   │   ├── trading.service.ts      # N1+N2: Data ingestion & persistence
-│   │   ├── analyst.service.ts      # N3: Hurst + Fractals (Fractal State Machine)
-│   │   ├── synthesizer.service.ts  # N4: LLM prompt builder
-│   │   └── mentor.service.ts       # N5: LLM orchestration
-│   ├── spotify/                    # Spotify Flow services
-│   │   └── spotify.usecase.ts
-│   └── stats.service.ts            # Shared flow stats service
-├── config/
-│   └── trading.config.ts           # Centralized trading configuration
-├── domain/
-│   └── trading/
-│       ├── math/
-│       │   ├── hurst.ts            # Hurst exponent calculation
-│       │   └── fractals.ts         # Bill Williams fractal detection
-│       ├── types/                  # Shared domain types
-│       │   ├── market.types.ts
-│       │   └── advisor.types.ts
-│       └── errors.ts               # Custom error classes
-└── infrastructure/
-    ├── adapters/
-    │   └── binance/
-    │       ├── binance-stream.ts   # WebSocket client
-    │       └── types.ts
-    ├── llm/                        # LLM abstraction layer
-    │   ├── llm-client.ts           # Provider factory
-    │   └── providers/
-    │       ├── base-provider.ts
-    │       └── gemini-provider.ts
-    └── persistence/
-        └── sqlite/
-            └── trading-database.ts # SQLite schema & prepared statements
+packages/flows/trading/src/
+├── adapters/
+│   └── binance/                    # Binance WebSocket client
+├── backend/
+│   ├── config.ts                   # Centralized trading configuration
+│   ├── database.ts                 # SQLite schema & prepared statements
+│   ├── routes.ts                   # Trading API endpoints (SSE, start/stop, insights)
+│   └── services/                   # Trading Flow services
+│       ├── trading.service.ts      # N1+N2: Data ingestion & persistence
+│       ├── analyst.service.ts      # N3: Hurst + Fractals (Fractal State Machine)
+│       ├── synthesizer.service.ts  # N4: LLM prompt builder
+│       └── mentor.service.ts       # N5: LLM orchestration
+└── domain/
+    ├── math/
+    │   ├── hurst.ts                # Hurst exponent calculation
+    │   └── fractals.ts             # Bill Williams fractal detection
+    ├── types/                      # Shared domain types
+    └── errors.ts                   # Custom error classes
 
 packages/ui/src/lib/
 ├── components/
-│   ├── CandleChart.svelte      # Lightweight Charts wrapper
-│   └── StepWizard.svelte       # Multi-timeframe analysis wizard
-├── flows/
-│   └── trading.ts              # Svelte store & API functions
-└── pages/
-    └── TradingFlow.svelte      # Dashboard UI
+│   ├── CandleChart.svelte          # Lightweight Charts wrapper
+│   └── StepWizard.svelte           # Multi-timeframe analysis wizard
+├── flows/trading/                  # Svelte stores & API functions
+└── pages/TradingFlow.svelte        # Dashboard UI
 ```
 
 ## 🧠 LLM Choice

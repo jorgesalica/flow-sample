@@ -2,169 +2,77 @@
 
 ## Overview
 
-The backend follows **Layered Architecture** with clear separation of concerns.
+The backend has been refactored from a monolithic layered architecture into isolated **Bounded Contexts (Flows)**. Each flow is distributed as its own workspace package under `packages/flows/*`.
 
-## Layers
+The central `packages/backend` workspace now acts strictly as an **Application Host**: it initializes the Elysia server, sets up global middleware (CORS, static files), and mounts the independent flow routes.
 
-```text
-┌─────────────────────────────────────────┐
-│  API Layer (src/api/)                   │
-│  - HTTP routes, validation              │
-├─────────────────────────────────────────┤
-│  Application Layer (src/application/)   │
-│  - Use cases, orchestration             │
-├─────────────────────────────────────────┤
-│  Domain Layer (src/domain/)             │
-│  - Entities, ports, business rules      │
-├─────────────────────────────────────────┤
-│  Infrastructure Layer (src/infra/)      │
-│  - Adapters, repositories, persistence  │
-└─────────────────────────────────────────┘
-```
+## Bounded Contexts (Flows)
 
-## Directory Structure
+Each flow encapsulates its own Domain, Infrastructure, and API layers. They are isolated from one another and share only core infrastructure and types.
 
 ```text
-src/
-├── domain/                     # Pure domain logic (no external deps)
-│   ├── flows/spotify/
-│   │   ├── entities.ts         # Track, Artist, Album
-│   │   └── repository.ts       # TrackRepository interface
-│   └── shared/
-│       ├── ports.ts            # SourcePort, StoragePort
-│       └── errors.ts           # Domain errors
-│
-├── infrastructure/             # External integrations
-│   ├── adapters/
-│   │   └── spotify-api/        # Spotify Web API client
-│   ├── persistence/
-│   │   └── sqlite/             # Database connection + schema
-│   └── repositories/
-│       └── sqlite-track.repository.ts
-│
-├── application/                # Use cases
-│   ├── spotify.usecase.ts      # SpotifyUseCase
-│   └── logger.ts               # Pino logger
-│
-└── api/                        # HTTP layer
-    ├── app.ts                  # Elysia server
-    └── spotify.routes.ts       # Route definitions
+packages/flows/
+├── shared/         # Shared Types and DTOs (Track, Artist)
+├── spotify/        # Spotify Sync & Search Flow
+├── lyrics/         # LrcLib Lyrics Fetcher Flow
+└── trading/        # Binance real-time Trading & AI Advisor Flow
 ```
 
-## Domain Layer
+### Layered Architecture per Flow
 
-### Entities
+Within each flow, we maintain a strict separation of concerns:
 
-```typescript
-// domain/flows/spotify/entities.ts
-interface Track {
-  id: string;
-  title: string;
-  artists: Artist[];
-  album: Album;
-  addedAt: string;
-  durationMs: number;
-  popularity?: number;
-}
+```text
+flow-package/
+├── src/
+│   ├── api/                # Elysia HTTP routes & validation
+│   ├── domain/             # Pure math, business rules, entities
+│   └── infrastructure/     # API clients, Repositories, DB queries
 ```
 
-### Ports (Interfaces)
+## Shared Infrastructure
+
+To avoid duplicating database connections and logging setup, we use a `core` package:
 
 ```typescript
-// domain/shared/ports.ts
-interface SourcePort {
-  fetchTracks(limit?: number): Promise<Track[]>;
-}
-
-interface StoragePort {
-  saveTracks(tracks: Track[]): Promise<void>;
-  loadTracks(): Promise<Track[] | null>;
-}
+// packages/core/src/db.ts
+import Database from 'better-sqlite3';
+export const db = new Database('data/database.sqlite');
 ```
 
-## Infrastructure Layer
-
-### SQLite Persistence
+Flows import the shared database instance:
 
 ```typescript
-// infrastructure/persistence/sqlite/database.ts
-db.exec(`
-  CREATE TABLE IF NOT EXISTS tracks (...);
-  CREATE TABLE IF NOT EXISTS artists (...);
-  CREATE TABLE IF NOT EXISTS track_artists (...);
-`);
+import { db } from '@flows/core';
 ```
 
-### Repository Implementation
+## Data Flow (Example: Spotify Sync)
 
-```typescript
-// infrastructure/repositories/sqlite-track.repository.ts
-class SQLiteTrackRepository implements TrackRepository {
-  async save(tracks: Track[]): Promise<void> { ... }
-  async findAll(): Promise<Track[]> { ... }
-  async count(): Promise<number> { ... }
-}
-```
+```mermaid
+sequenceDiagram
+    participant API as Backend (Elysia)
+    participant Route as Flow Route
+    participant Adapter as Flow Infrastructure
+    participant SQLite as Core DB
 
-## Application Layer
-
-### Use Cases
-
-```typescript
-// application/spotify.usecase.ts
-class SpotifyUseCase {
-  constructor(
-    private source: SourcePort,
-    private repository: TrackRepository
-  ) {}
-
-  async fetchAndSave(options: { limit?: number }): Promise<{ count: number }> {
-    const tracks = await this.source.fetchTracks(options.limit);
-    await this.repository.save(tracks);
-    return { count: tracks.length };
-  }
-
-  async getTracks(): Promise<Track[]> {
-    return this.repository.findAll();
-  }
-}
+    API->>Route: POST /api/spotify/sync
+    Route->>Adapter: fetchTracks(50)
+    Adapter->>Adapter: OAuth + pagination
+    Adapter-->>Route: Track[]
+    Route->>SQLite: INSERT INTO tracks...
+    SQLite-->>Route: void
+    Route-->>API: { count: 1247 }
 ```
 
 ## Error Handling
 
-| Error | When Thrown |
-| ----- | ----------- |
-| `SpotifyAuthError` | OAuth token invalid/expired |
-| `SpotifyRateLimitError` | Rate limited (429) |
-| `StorageError` | Database operations failed |
-
-## Data Flow
-
-```mermaid
-sequenceDiagram
-    participant API
-    participant UseCase
-    participant Adapter
-    participant Repository
-    participant SQLite
-
-    API->>UseCase: fetchAndSave({ limit: 50 })
-    UseCase->>Adapter: fetchTracks(50)
-    Adapter->>Adapter: OAuth + pagination
-    Adapter-->>UseCase: Track[]
-    UseCase->>Repository: save(tracks)
-    Repository->>SQLite: INSERT INTO tracks...
-    SQLite-->>Repository: void
-    Repository-->>UseCase: void
-    UseCase-->>API: { count: 1247 }
-```
+Each flow defines its own domain errors extending the standard JS `Error` class, which are then caught and transformed by Elysia's error handlers in the `api/` layer.
 
 ## CLI Usage
 
-```bash
-# Run with default limit (20 pages = ~1000 tracks)
-npm start
+The backend application host provides a CLI for local development:
 
-# Run with custom limit
-npm start -- --limit 50
+```bash
+# Run the complete API server (mounts all flows)
+pnpm run --filter @flows/backend dev
 ```

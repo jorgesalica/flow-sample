@@ -20,14 +20,15 @@ graph TD
     Infra --> SpotifyAPI["Spotify API"]
 ```
 
-## Layered Architecture
+## Layered Architecture (per Flow)
+
+Each independent flow package (`packages/flows/*`) follows a layered architecture pattern:
 
 | Layer | Location | Responsibility |
 | ----- | -------- | -------------- |
-| **API** | `packages/backend/src/api/` | HTTP routes, validation, serialization |
-| **Application** | `packages/backend/src/application/` | Use cases, orchestration |
-| **Domain** | `packages/backend/src/domain/` | Entities, ports, business rules |
-| **Infrastructure** | `packages/backend/src/infrastructure/` | External integrations (DB, APIs) |
+| **API** | `src/api/` | HTTP routes (Elysia), validation |
+| **Domain** | `src/domain/` | Pure business logic, equations, entities |
+| **Infrastructure** | `src/infrastructure/` | External API clients, repositories |
 
 ## Tech Stack
 
@@ -44,18 +45,18 @@ graph TD
 ```text
 flow-sample/
 ├── packages/
-│   ├── backend/
-│   │   ├── src/
-│   │   │   ├── api/                    # HTTP Layer (Elysia)
-│   │   │   ├── application/            # Use Cases
-│   │   │   ├── domain/                 # Pure Business Logic
-│   │   │   └── infrastructure/         # External Integrations
-│   ├── ui/                             # Frontend (Svelte)
-│   └── shared/                         # Shared Types
-├── data/                       # SQLite database
-├── outputs/                    # Generated data
+│   ├── core/                           # shared infrastructure (DB connection, Logger)
+│   ├── backend/                        # API server host (Elysia app init)
+│   ├── flows/                          # Independent bounded contexts
+│   │   ├── shared/                     # Shared types and DTOs
+│   │   ├── spotify/                    # Spotify Flow (API + DB + Domain)
+│   │   ├── lyrics/                     # Lyrics Flow (API + DB + Domain)
+│   │   └── trading/                    # Trading Flow (API + SSE + Domain)
+│   └── ui/                             # Frontend application (Svelte 5)
+├── data/                               # SQLite database volume
+├── outputs/                            # Generated data
 └── docs/
-    └── architecture/           # This documentation
+    └── architecture/                   # This documentation
 ```
 
 ## Detailed Documentation
