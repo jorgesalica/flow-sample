@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SelectOption } from '@lib/types';
+  import type { SelectOption } from '@flows/shared';
 
   interface Props {
     id: string;

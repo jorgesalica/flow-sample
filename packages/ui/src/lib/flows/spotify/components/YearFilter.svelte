@@ -3,7 +3,7 @@
   import { searchOptions } from '../stores';
   import { loadTracks } from '../api';
   import { api } from '@lib/client';
-  import type { YearCount } from '@lib/types';
+  import type { YearCount } from '@flows/shared';
 
   let years: YearCount[] = $state([]);
   let selectedYear = $state($searchOptions.year?.toString() || '');

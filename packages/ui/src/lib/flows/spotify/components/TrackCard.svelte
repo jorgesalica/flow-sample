@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Track } from '@lib/types';
+  import type { Track } from '@flows/shared';
   import AlbumArt from './AlbumArt.svelte';
   import GenreBadges from './GenreBadges.svelte';
   import LyricsModal from '@lib/flows/lyrics/components/LyricsModal.svelte';

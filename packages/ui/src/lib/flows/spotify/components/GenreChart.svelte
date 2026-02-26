@@ -10,7 +10,7 @@
     CategoryScale,
     type ChartConfiguration,
   } from 'chart.js';
-  import type { GenreCount } from '@lib/types';
+  import type { GenreCount } from '@flows/shared';
 
   Chart.register(Title, Tooltip, Legend, ArcElement, DoughnutController, CategoryScale);
 

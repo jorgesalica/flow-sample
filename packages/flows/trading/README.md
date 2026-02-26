@@ -4,7 +4,7 @@ Trading bot flow — real-time BTC/USDT analysis using Binance WebSocket, fracta
 
 ## Architecture
 
-```
+```text
 adapter/    → Binance WebSocket client, candle aggregation
 analysis/   → Hurst exponent, fractal detection, ATR calculation
 advisor/    → AI insight generation (OpenRouter LLM integration)

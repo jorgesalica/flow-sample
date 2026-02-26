@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
-import type { Track, SearchOptions, TopStats, StatusMessage } from '@lib/types';
+import type { Track, SearchOptions, StatusMessage } from '@flows/shared';
+import type { TopStats } from '@lib/types';
 
 // Track Data
 export const tracks = writable<Track[]>([]);

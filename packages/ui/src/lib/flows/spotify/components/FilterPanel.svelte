@@ -3,7 +3,7 @@
   import { searchOptions } from '../stores';
   import { loadTracks } from '../api';
   import { api } from '@lib/client';
-  import type { GenreCount, YearCount } from '@lib/types';
+  import type { GenreCount, YearCount } from '@flows/shared';
 
   // Local state for the panel
   let isOpen = $state(false);

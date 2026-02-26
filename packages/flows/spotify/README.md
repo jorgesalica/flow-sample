@@ -4,7 +4,7 @@ Spotify integration flow — syncs liked tracks, enriches artist metadata (genre
 
 ## Architecture
 
-```
+```text
 adapter/    → Spotify Web API client (axios), OAuth2 auth flow
 repository  → SQLite storage (tracks, artists, genres)
 routes      → Elysia API routes (/api/spotify/*)

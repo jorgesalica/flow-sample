@@ -4,7 +4,7 @@ Lyrics integration flow — fetches lyrics from [LRCLIB](https://lrclib.net) and
 
 ## Architecture
 
-```
+```text
 adapter/    → LrcLib API client with concurrent batch fetcher
 repository  → SQLite storage (lyrics status tracking)
 routes      → Elysia API routes (/api/lyrics/*)

@@ -3,7 +3,7 @@
   import { searchOptions } from '../stores';
   import { loadTracks } from '../api';
   import { api } from '@lib/client';
-  import type { GenreCount } from '@lib/types';
+  import type { GenreCount } from '@flows/shared';
 
   let genres: GenreCount[] = $state([]);
   let selectedGenre = $state($searchOptions.genre || '');

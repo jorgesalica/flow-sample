@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Track, Lyrics } from '@lib/types';
+  import type { Track, Lyrics } from '@flows/shared';
   import { getLyrics } from '../api';
 
   interface Props {

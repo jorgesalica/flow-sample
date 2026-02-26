@@ -1,4 +1,4 @@
-import type { Track, PaginatedResult, SearchOptions } from '@lib/types';
+import type { Track, PaginatedResult, SearchOptions } from '@flows/shared';
 import {
   tracks,
   totalTracks,
