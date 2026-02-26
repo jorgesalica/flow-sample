@@ -5,7 +5,9 @@ export { registerFlow, getFlows, getFlow, type FlowDefinition, type FlowStats } 
 import './spotify';
 import './trading/trading';
 import { lyricsFlow } from './lyrics';
+import { chatFlow } from './chat';
 import { registerFlow } from './registry';
 
 // Register
 registerFlow(lyricsFlow);
+registerFlow(chatFlow);

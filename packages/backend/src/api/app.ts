@@ -18,6 +18,7 @@ import * as fs from 'fs';
 import { createSpotifyRoutes } from '@flows/spotify';
 import { createLyricsRoutes } from '@flows/lyrics';
 import { createTradingRoutes } from '@flows/trading';
+import { chatRoutes } from '@flows/chat';
 import { logger } from '@flows/core';
 
 const log = logger.child({ module: 'Server' });
@@ -75,6 +76,7 @@ export const app = new Elysia({ adapter: node() })
   .use(createSpotifyRoutes(config))
   .use(createLyricsRoutes())
   .use(createTradingRoutes())
+  .use(chatRoutes)
 
   // Error handler
   .onError(({ error, code, set }) => {

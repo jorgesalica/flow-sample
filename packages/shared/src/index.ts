@@ -42,3 +42,11 @@ export type {
     SelectOption,
     YearRange,
 } from './common.types';
+
+// Chat types
+export type {
+    ChatConversation,
+    ChatMessage,
+    ChatProviderOption,
+    ChatRequest,
+} from './chat.types';
