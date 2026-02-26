@@ -71,11 +71,11 @@
     <a href="#/" class="inline-block mb-4 text-white/50 hover:text-amber-400 transition-colors"
       >← Back</a
     >
-    <h1
-      class="text-4xl md:text-5xl font-bold flex items-center justify-center gap-3"
-    >
+    <h1 class="text-4xl md:text-5xl font-bold flex items-center justify-center gap-3">
       <span>📈</span>
-      <span class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Trading Bot</span>
+      <span class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent"
+        >Trading Bot</span
+      >
     </h1>
     <p class="text-white/40 mt-2">
       Real-time BTC analysis with Hurst exponent, fractals, and AI insights
