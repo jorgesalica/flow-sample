@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { LyricsStats, LyricsStatus } from '@flows/shared';
+  import type { LyricsStats, LyricsStatus, Track } from '@flows/shared';
   import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from '@lib/lyricsApi';
   import { toast } from '@lib/toast';
   import { Navbar } from '@lib/components';
+  import LyricsModal from '@lib/components/common/LyricsModal.svelte';
 
   let stats = $state<LyricsStats | null>(null);
   let tracks = $state<
@@ -13,6 +14,7 @@
   let error = $state<string | null>(null);
   let isFetchingLyrics = $state(false);
   let isRetryingFailed = $state(false);
+  let selectedTrack = $state<Track | null>(null);
 
   // Filter state
   let currentFilter = $state<string>(''); // '' = all
@@ -337,7 +339,28 @@
             </thead>
             <tbody class="divide-y divide-white/5">
               {#each tracks as track (track.id)}
-                <tr class="hover:bg-white/5 transition-colors group">
+                <tr
+                  class="hover:bg-white/5 transition-colors group {track.status === 'found'
+                    ? 'cursor-pointer'
+                    : ''}"
+                  onclick={() => {
+                    if (track.status === 'found') {
+                      selectedTrack = {
+                        id: track.id,
+                        title: track.title,
+                        artists: [{ id: '', name: track.artist, genres: [] }],
+                        album: {
+                          id: '',
+                          name: '',
+                          releaseDate: '',
+                          imageUrl: track.imageUrl ?? undefined,
+                        },
+                        addedAt: '',
+                        durationMs: 0,
+                      };
+                    }
+                  }}
+                >
                   <td class="p-4">
                     {#if track.imageUrl}
                       <img
@@ -406,3 +429,7 @@
     </div>
   {/if}
 </div>
+
+{#if selectedTrack}
+  <LyricsModal track={selectedTrack} onclose={() => (selectedTrack = null)} />
+{/if}

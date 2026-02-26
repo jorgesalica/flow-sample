@@ -61,10 +61,10 @@
     </h3>
 
     <!-- Album + Year -->
-    <p class="text-nebula/60 text-xs mt-1 line-clamp-1">
+    <p class="text-white/50 text-xs mt-1 line-clamp-1">
       {track.album.name}
       {#if track.album.releaseYear}
-        <span class="opacity-60">• {track.album.releaseYear}</span>
+        <span>• {track.album.releaseYear}</span>
       {/if}
     </p>
 
