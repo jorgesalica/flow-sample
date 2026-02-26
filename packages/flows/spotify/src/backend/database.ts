@@ -36,14 +36,14 @@ musicDb.exec(`
     artist_id TEXT NOT NULL,
     PRIMARY KEY (track_id, artist_id),
     FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
-    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+    FOREIGN KEY (artist_id) REFERENCES artists(id)
   );
 
   CREATE TABLE IF NOT EXISTS artist_genres (
     artist_id TEXT NOT NULL,
     genre TEXT NOT NULL,
     PRIMARY KEY (artist_id, genre),
-    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+    FOREIGN KEY (artist_id) REFERENCES artists(id)
   );
 
   -- Indexes for common queries

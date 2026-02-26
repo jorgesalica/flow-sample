@@ -65,17 +65,27 @@ export class SpotifyUseCase {
 
     // Fetch details from Spotify (genres + images)
     const detailsMap = await this.source.fetchArtistDetails(artistIds);
-    log.info({ enrichedCount: detailsMap.size }, 'Fetched artist details');
+    log.info({
+      requested: artistIds.length,
+      received: detailsMap.size
+    }, 'Batch enrichment summary');
 
     // Map details back to tracks
     return tracks.map((track) => ({
       ...track,
       artists: track.artists.map((artist) => {
         const details = detailsMap.get(artist.id);
+
+        if (!details) {
+          log.warn({ artistId: artist.id, artistName: artist.name }, 'No enrichment data for artist');
+          return artist; // Keep original if no details found
+        }
+
+        // Merge original with enriched details, but don't wipe name or id
         return {
           ...artist,
-          genres: details?.genres || [],
-          imageUrl: details?.imageUrl,
+          genres: details.genres && details.genres.length > 0 ? details.genres : (artist.genres || []),
+          imageUrl: details.imageUrl || artist.imageUrl,
         };
       }),
     }));

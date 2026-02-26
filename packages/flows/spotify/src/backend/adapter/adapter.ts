@@ -196,7 +196,15 @@ export class SpotifyApiAdapter implements SourcePort {
         await this.client.get(nextUrl);
       const data = response.data;
 
-      const pageTracks = data.items.map((item) => this.mapToTrack(item));
+      const pageTracks = data.items.map((item) => {
+        try {
+          return this.mapToTrack(item);
+        } catch (e) {
+          log.error({ error: e instanceof Error ? e.message : String(e) }, 'Failed to map track');
+          return null;
+        }
+      }).filter((t): t is Track => t !== null);
+
       tracks.push(...pageTracks);
 
       nextUrl = data.next ? data.next.replace('https://api.spotify.com/v1', '') : null;
@@ -209,25 +217,36 @@ export class SpotifyApiAdapter implements SourcePort {
 
   private mapToTrack(item: SpotifySavedTrack): Track {
     const t = item.track;
+    if (!t) {
+      throw new Error('Track object is missing in Spotify response');
+    }
+
     // Get the medium-sized image (300x300) or fallback to first available
-    const albumImage = t.album.images.find((img) => img.width === 300) || t.album.images[0];
+    const albumImage = t.album?.images?.find((img) => img.width === 300) || t.album?.images?.[0];
+
+    if (!t.artists || t.artists.length === 0) {
+      log.warn({ trackId: t.id, trackName: t.name }, 'Track has no artists listed');
+    }
 
     return {
-      id: t.id,
-      title: t.name,
-      artists: t.artists.map((a) => ({ id: a.id, name: a.name })),
+      id: t.id || `local-${t.name}-${t.album?.name}`.replace(/\s+/g, '-'), // Fallback for local files
+      title: t.name || 'Unknown Title',
+      artists: (t.artists || []).map((a) => ({
+        id: a.id || `local-artist-${a.name}`.replace(/\s+/g, '-'),
+        name: a.name || 'Unknown Artist'
+      })),
       album: {
-        id: t.album.id,
-        name: t.album.name,
-        releaseDate: t.album.release_date,
-        releaseYear: parseInt(t.album.release_date.split('-')[0]) || undefined,
+        id: t.album?.id || '',
+        name: t.album?.name || 'Unknown Album',
+        releaseDate: t.album?.release_date || '',
+        releaseYear: t.album?.release_date ? parseInt(t.album.release_date.split('-')[0]) : undefined,
         imageUrl: albumImage?.url,
       },
       addedAt: item.added_at,
-      durationMs: t.duration_ms,
+      durationMs: t.duration_ms || 0,
       popularity: t.popularity,
       previewUrl: t.preview_url || undefined,
-      spotifyUrl: `https://open.spotify.com/track/${t.id}`,
+      spotifyUrl: t.id ? `https://open.spotify.com/track/${t.id}` : undefined,
     };
   }
 
@@ -257,12 +276,16 @@ export class SpotifyApiAdapter implements SourcePort {
           `/artists?ids=${ids}`,
         );
 
+        if (!response.data?.artists) {
+          continue;
+        }
+
         for (const artist of response.data.artists) {
           if (artist) {
             // Get small image (160px) for artist avatar
-            const image = artist.images.find((img) => img.width === 160) || artist.images[0];
+            const image = artist.images?.find((img) => img.width === 160) || artist.images?.[0];
             detailsMap.set(artist.id, {
-              genres: artist.genres,
+              genres: artist.genres || [],
               imageUrl: image?.url,
             });
           }

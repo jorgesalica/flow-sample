@@ -75,26 +75,28 @@ export class SQLiteTrackRepository implements TrackRepository {
       VALUES (@id, @name, @imageUrl)
     `);
 
+    const deleteTrackArtists = musicDb.prepare(`DELETE FROM track_artists WHERE track_id = ?`);
     const insertTrackArtist = musicDb.prepare(`
-      INSERT OR IGNORE INTO track_artists (track_id, artist_id)
-      VALUES (@trackId, @artistId)
+      INSERT OR REPLACE INTO track_artists (track_id, artist_id)
+      VALUES (?, ?)
     `);
 
     const insertGenre = musicDb.prepare(`
-      INSERT OR IGNORE INTO artist_genres (artist_id, genre)
-      VALUES (@artistId, @genre)
+      INSERT OR REPLACE INTO artist_genres (artist_id, genre)
+      VALUES (?, ?)
     `);
 
-    const transaction = musicDb.transaction(() => {
-      for (const track of tracks) {
+    const transaction = musicDb.transaction((allTracks: Track[]) => {
+      for (const track of allTracks) {
+        // 1. Safe Track Insert
         insertTrack.run({
           id: track.id,
-          title: track.title,
+          title: track.title || 'Unknown Title',
           addedAt: track.addedAt,
           durationMs: track.durationMs,
           popularity: track.popularity ?? null,
           albumId: track.album.id,
-          albumName: track.album.name,
+          albumName: track.album.name || 'Unknown Album',
           releaseDate: track.album.releaseDate,
           releaseYear: track.album.releaseYear ?? null,
           imageUrl: track.album.imageUrl ?? null,
@@ -102,28 +104,39 @@ export class SQLiteTrackRepository implements TrackRepository {
           spotifyUrl: track.spotifyUrl ?? null,
         });
 
-        for (const artist of track.artists) {
-          insertArtist.run({
-            id: artist.id,
-            name: artist.name,
-            imageUrl: artist.imageUrl ?? null,
-          });
-          insertTrackArtist.run({
-            trackId: track.id,
-            artistId: artist.id,
-          });
+        // 2. Clean up existing links to avoid orphans/duplicates
+        deleteTrackArtists.run(track.id);
 
-          if (artist.genres) {
-            for (const genre of artist.genres) {
-              insertGenre.run({ artistId: artist.id, genre });
+        // 3. Insert Artists and Links
+        if (track.artists && track.artists.length > 0) {
+          for (const artist of track.artists) {
+            if (!artist.id) continue;
+
+            insertArtist.run({
+              id: artist.id,
+              name: artist.name || 'Unknown Artist',
+              imageUrl: artist.imageUrl ?? null,
+            });
+
+            insertTrackArtist.run(track.id, artist.id);
+
+            if (artist.genres && artist.genres.length > 0) {
+              for (const genre of artist.genres) {
+                insertGenre.run(artist.id, genre);
+              }
             }
           }
         }
       }
     });
 
-    transaction();
-    log.info({ count: tracks.length }, 'Saved tracks');
+    try {
+      transaction(tracks);
+      log.info({ count: tracks.length }, 'Saved tracks');
+    } catch (e) {
+      log.error({ error: e instanceof Error ? e.message : String(e) }, 'Transaction failed');
+      throw e;
+    }
   }
 
   async findAll(): Promise<Track[]> {

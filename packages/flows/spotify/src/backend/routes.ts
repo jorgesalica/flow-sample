@@ -44,7 +44,7 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
 
       // --- Auth Routes ---
 
-      .get('/auth/login', ({ redirect, config }) => {
+      .get('/auth/login', ({ set, config }) => {
         const scope = 'user-library-read user-read-email';
         const params = new URLSearchParams({
           response_type: 'code',
@@ -53,12 +53,13 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
           redirect_uri: 'http://127.0.0.1:4173/api/spotify/auth/callback',
         });
 
-        return redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
+        set.status = 302;
+        set.headers['Location'] = `https://accounts.spotify.com/authorize?${params.toString()}`;
       })
 
       .get(
         '/auth/callback',
-        async ({ query, adapter, set, redirect }) => {
+        async ({ query, adapter, set }) => {
           const code = query.code;
           if (!code) {
             set.status = 400;
@@ -67,7 +68,8 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
 
           try {
             await adapter.exchangeCode(code);
-            return redirect('http://localhost:5173/?connected=true#/spotify');
+            set.status = 302;
+            set.headers['Location'] = 'http://localhost:5173/?connected=true#/spotify';
           } catch {
             set.status = 500;
             return { error: 'Failed to exchange token' };
