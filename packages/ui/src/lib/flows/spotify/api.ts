@@ -30,7 +30,6 @@ export async function loadTracks(
         q: newOptions.q,
         genre: newOptions.genre,
         year: newOptions.year,
-        minPopularity: newOptions.minPopularity,
         sortBy: newOptions.sortBy,
         sortOrder: newOptions.sortOrder,
       },

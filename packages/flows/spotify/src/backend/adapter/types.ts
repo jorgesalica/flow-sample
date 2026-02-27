@@ -24,7 +24,6 @@ export interface SpotifyTrack {
   name: string;
   uri: string;
   duration_ms: number;
-  popularity: number;
   preview_url: string | null;
   album: SpotifyAlbumSimple;
   artists: SpotifyArtistSimple[];
@@ -57,8 +56,6 @@ export interface SpotifyArtistFull {
   id: string;
   name: string;
   genres: string[];
-  popularity: number;
-  followers: { total: number };
   images: SpotifyImage[];
 }
 

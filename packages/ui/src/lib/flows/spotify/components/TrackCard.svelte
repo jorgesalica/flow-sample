@@ -73,19 +73,6 @@
 
     <!-- Footer Stats -->
     <div class="flex justify-between items-center mt-auto pt-3">
-      <!-- Popularity Bar -->
-      {#if track.popularity !== undefined}
-        <div class="flex items-center gap-2 flex-grow" title="Popularity: {track.popularity}%">
-          <div class="w-full max-w-[60px] h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div
-              class="h-full bg-gradient-to-r from-aurora to-cyan-400"
-              style="width: {track.popularity}%"
-            ></div>
-          </div>
-          <span class="text-[10px] text-pulsar font-medium">{track.popularity}</span>
-        </div>
-      {/if}
-
       <!-- Lyrics Button -->
       <button
         class="text-[10px] text-white/90 hover:text-aurora transition-colors px-2 py-1 bg-white/5 hover:bg-white/10 rounded font-medium"

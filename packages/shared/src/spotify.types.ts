@@ -24,7 +24,6 @@ export interface Track {
     album: Album;
     addedAt: string;
     durationMs: number;
-    popularity?: number;
     previewUrl?: string;
     spotifyUrl?: string;
 }

@@ -21,7 +21,6 @@ interface TrackRow {
   title: string;
   added_at: string | null;
   duration_ms: number | null;
-  popularity: number | null;
   album_id: string | null;
   album_name: string | null;
   album_release_date: string | null;
@@ -50,8 +49,7 @@ export interface SearchOptions extends PaginationOptions {
   query?: string;
   genre?: string;
   year?: number;
-  minPopularity?: number;
-  sortBy?: 'added_at' | 'popularity' | 'title';
+  sortBy?: 'added_at' | 'title';
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -66,8 +64,8 @@ export interface PaginatedResult<T> {
 export class SQLiteTrackRepository implements TrackRepository {
   async save(tracks: Track[]): Promise<void> {
     const insertTrack = musicDb.prepare(`
-      INSERT OR REPLACE INTO tracks (id, title, added_at, duration_ms, popularity, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
-      VALUES (@id, @title, @addedAt, @durationMs, @popularity, @albumId, @albumName, @releaseDate, @releaseYear, @imageUrl, @previewUrl, @spotifyUrl)
+      INSERT OR REPLACE INTO tracks (id, title, added_at, duration_ms, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
+      VALUES (@id, @title, @addedAt, @durationMs, @albumId, @albumName, @releaseDate, @releaseYear, @imageUrl, @previewUrl, @spotifyUrl)
     `);
 
     const insertArtist = musicDb.prepare(`
@@ -94,7 +92,6 @@ export class SQLiteTrackRepository implements TrackRepository {
           title: track.title || 'Unknown Title',
           addedAt: track.addedAt,
           durationMs: track.durationMs,
-          popularity: track.popularity ?? null,
           albumId: track.album.id,
           albumName: track.album.name || 'Unknown Album',
           releaseDate: track.album.releaseDate,
@@ -173,12 +170,6 @@ export class SQLiteTrackRepository implements TrackRepository {
       params.push(options.year);
     }
 
-    // Min popularity
-    if (options.minPopularity) {
-      conditions.push(`t.popularity >= ?`);
-      params.push(options.minPopularity);
-    }
-
     if (conditions.length > 0) {
       whereClause = `WHERE ${conditions.join(' AND ')}`;
     }
@@ -188,9 +179,6 @@ export class SQLiteTrackRepository implements TrackRepository {
     if (options.sortBy) {
       const dir = options.sortOrder === 'asc' ? 'ASC' : 'DESC';
       switch (options.sortBy) {
-        case 'popularity':
-          orderClause = `ORDER BY t.popularity ${dir}`;
-          break;
         case 'title':
           orderClause = `ORDER BY t.title ${dir}`;
           break;
@@ -312,7 +300,6 @@ export class SQLiteTrackRepository implements TrackRepository {
       },
       addedAt: row.added_at || '',
       durationMs: row.duration_ms || 0,
-      popularity: row.popularity ?? undefined,
       previewUrl: row.preview_url ?? undefined,
       spotifyUrl: row.spotify_url ?? undefined,
     };
