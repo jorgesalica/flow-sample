@@ -281,8 +281,12 @@ export class SpotifyApiAdapter implements SourcePort {
       'Fetching uncached artist details individually',
     );
 
-    // 2. Fetch misses individually in controlled batches of 5
-    const concurrency = 5;
+    // 2. Fetch misses individually — conservative to avoid 429s
+    //    First sync is slow (~10 min for 2000+ artists) but subsequent syncs are instant from cache.
+    const concurrency = 2;
+    const delayMs = 500;
+    let fetched = 0;
+
     for (let i = 0; i < misses.length; i += concurrency) {
       const batch = misses.slice(i, i + concurrency);
 
@@ -304,15 +308,22 @@ export class SpotifyApiAdapter implements SourcePort {
           const imageUrl = image?.url;
 
           detailsMap.set(artist.id, { genres, imageUrl });
-
-          // Save to cache
           this.artistCache.set(artist.id, genres, imageUrl);
+          fetched++;
         }
       }
 
-      // Small delay between batches to respect rate limits
+      // Progress logging every 50 artists
+      if (fetched % 50 < concurrency && fetched > 0) {
+        log.info(
+          { fetched, total: misses.length, pct: Math.round((fetched / misses.length) * 100) },
+          'Artist fetch progress',
+        );
+      }
+
+      // Respectful delay between requests
       if (i + concurrency < misses.length) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
 
