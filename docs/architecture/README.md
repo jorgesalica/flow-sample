@@ -45,10 +45,11 @@ Each independent flow package (`packages/flows/*`) follows a layered architectur
 ```text
 flow-sample/
 ├── packages/
-│   ├── core/                           # shared infrastructure (DB connection, Logger)
+│   ├── core/                           # Shared infrastructure (DB connection, Logger, LLM integration)
 │   ├── backend/                        # API server host (Elysia app init)
 │   ├── flows/                          # Independent bounded contexts
 │   │   ├── shared/                     # Shared types and DTOs
+│   │   ├── chat/                       # Chat Flow (Dynamic LLM provider integration)
 │   │   ├── spotify/                    # Spotify Flow (API + DB + Domain)
 │   │   ├── lyrics/                     # Lyrics Flow (API + DB + Domain)
 │   │   └── trading/                    # Trading Flow (API + SSE + Domain)
