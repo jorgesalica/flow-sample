@@ -1,0 +1,26 @@
+{
+    "name": "@flows/lyrics",
+    "version": "0.1.0",
+    "private": true,
+    "type": "commonjs",
+    "main": "./src/index.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@flows/core": "workspace:*",
+        "@flows/shared": "workspace:*",
+        "@flows/spotify": "workspace:*",
+        "axios": "^1.13.2",
+        "better-sqlite3": "^12.5.0",
+        "elysia": "^1.4.18"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.13",
+        "@types/node": "^22.19.1",
+        "typescript": "^5.6.3",
+        "vitest": "^4.0.15"
+    }
+}

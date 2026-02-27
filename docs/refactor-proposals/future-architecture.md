@@ -8,9 +8,14 @@ This document outlines the planned evolution of Flow Sample's architecture.
 
 ```text
 packages/
-├── backend/         @flows/backend (Elysia + SQLite)
-├── ui/              @flows/ui (Svelte 5 + Tailwind)
-└── shared/          @flows/shared (Shared types)
+├── core/            @flows/core (DB, Logger)
+├── backend/         @flows/backend (Elysia Host)
+├── flows/           
+│   ├── shared/      @flows/shared (Shared Types)
+│   ├── spotify/     @flows/spotify (Spotify Flow)
+│   ├── lyrics/      @flows/lyrics (Lyrics Flow)
+│   └── trading/     @flows/trading (Trading Flow)
+└── ui/              @flows/ui (Svelte 5 + Tailwind)
 ```
 
 ### Completed Features

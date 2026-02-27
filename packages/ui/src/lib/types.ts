@@ -1,24 +1,6 @@
-// Re-export types from shared package
-export type {
-  Artist,
-  Album,
-  Track,
-  SearchOptions,
-  PaginatedResult,
-  GenreCount,
-  YearCount,
-  StatusTone,
-  StatusMessage,
-  SelectOption,
-  YearRange,
-  Lyrics,
-  LyricsStatus,
-  LyricsStats,
-} from '@flows/shared';
-
+// UI-specific types (not shared with backend)
 import type { Track, StatusTone, GenreCount } from '@flows/shared';
 
-// UI-specific types
 export type TimeFilter = 'all' | 'this_month' | 'last_month' | 'this_year' | 'last_year';
 
 export interface AppState {

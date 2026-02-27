@@ -41,7 +41,11 @@
   "dependencies": {
     "@elysiajs/eden": "^1.4.5",
     "@flows/backend": "workspace:*",
+    "@flows/core": "workspace:*",
+    "@flows/lyrics": "workspace:*",
     "@flows/shared": "workspace:*",
+    "@flows/spotify": "workspace:*",
+    "@flows/trading": "workspace:*",
     "chart.js": "^4.5.1",
     "lightweight-charts": "^5.1.0",
     "svelte-5-french-toast": "^2.0.6",

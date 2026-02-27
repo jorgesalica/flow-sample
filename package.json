@@ -8,7 +8,7 @@
     "dev": "pnpm -r --parallel run dev",
     "build": "pnpm -r run build",
     "build:shared": "pnpm --filter @flows/shared run build",
-    "test": "pnpm --filter @flows/backend run test",
+    "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "check": "pnpm -r run check",
     "typecheck": "pnpm -r run typecheck",
