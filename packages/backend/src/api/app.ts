@@ -51,12 +51,12 @@ export const app = new Elysia({ adapter: node() })
   .use(
     hasUiDist
       ? staticPlugin({
-        assets: uiDistPath,
-        prefix: '/',
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-      })
+          assets: uiDistPath,
+          prefix: '/',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        })
       : new Elysia(),
   )
 

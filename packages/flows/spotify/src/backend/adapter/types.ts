@@ -58,7 +58,3 @@ export interface SpotifyArtistFull {
   genres: string[];
   images: SpotifyImage[];
 }
-
-export interface SpotifyArtistsResponse {
-  artists: SpotifyArtistFull[];
-}
