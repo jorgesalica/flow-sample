@@ -85,7 +85,9 @@ export class ChatService {
         const llmMessages = [
             {
                 role: 'system' as const,
-                content: 'You are a helpful AI assistant. Format your replies using standard Markdown.',
+                content:
+                    'You are a helpful AI assistant. Format your replies using standard Markdown. ' +
+                    'Never start your reply with a heading (# or ## or ###). Begin with normal text.',
             },
             ...history.map((msg) => ({
                 role: msg.role === 'user' ? ('user' as const) : ('assistant' as const),

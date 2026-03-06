@@ -1,10 +1,11 @@
 import type { ModelInfo } from '../types';
 
 /**
- * OpenRouter model catalog — Aggregator (24+ free models)
+ * OpenRouter model catalog — Aggregator (free :free models)
  *
  * Free tier: 50 RPD (no credits) / 1K RPD (with $10 deposit, not consumed).
- * Use `:free` suffix on model IDs. Or `openrouter/free` auto-router.
+ * Use `:free` suffix on model IDs.
+ * Docs: https://openrouter.ai/models/?q=free
  * Base URL: https://openrouter.ai/api
  */
 export const OPENROUTER_MODELS: ModelInfo[] = [
@@ -14,23 +15,7 @@ export const OPENROUTER_MODELS: ModelInfo[] = [
         tier: 'high',
         pricing: 'free',
         contextWindow: 128_000,
-        description: 'MMLU 86%. Strong generalist via Meta.',
-    },
-    {
-        id: 'qwen/qwen3-coder-480b-a35b:free',
-        name: 'Qwen3 Coder 480B',
-        tier: 'high',
-        pricing: 'free',
-        contextWindow: 128_000,
-        description: 'Top coding model. 480B MoE, 35B active.',
-    },
-    {
-        id: 'deepseek/deepseek-r1-zero:free',
-        name: 'DeepSeek R1 Zero',
-        tier: 'high',
-        pricing: 'free',
-        contextWindow: 128_000,
-        description: 'Strong reasoning via pure RL training.',
+        description: 'MMLU 86%. Strong generalist.',
     },
     {
         id: 'openai/gpt-oss-120b:free',
@@ -38,15 +23,7 @@ export const OPENROUTER_MODELS: ModelInfo[] = [
         tier: 'high',
         pricing: 'free',
         contextWindow: 128_000,
-        description: 'OpenAI open-weight. MMLU-Pro 90%, MoE 5.1B active.',
-    },
-    {
-        id: 'mistralai/devstral-2512:free',
-        name: 'Devstral 2',
-        tier: 'medium',
-        pricing: 'free',
-        contextWindow: 128_000,
-        description: '123B agentic coding model from Mistral.',
+        description: 'OpenAI open-weight. MoE 5.1B active.',
     },
     {
         id: 'qwen/qwq-32b:free',
@@ -73,12 +50,12 @@ export const OPENROUTER_MODELS: ModelInfo[] = [
         description: 'Google open-weight, solid generalist.',
     },
     {
-        id: 'nvidia/llama-3.1-nemotron-nano-12b-v2:free',
-        name: 'Nemotron Nano 12B',
-        tier: 'low',
+        id: 'mistralai/devstral-2512:free',
+        name: 'Devstral 2',
+        tier: 'medium',
         pricing: 'free',
         contextWindow: 128_000,
-        description: 'NVIDIA edge-optimized, very fast.',
+        description: '123B agentic coding model.',
     },
     {
         id: 'google/gemma-3-4b-it:free',

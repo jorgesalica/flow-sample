@@ -22,7 +22,6 @@
     }
   }
 
-  // Close dropdown on click outside
   function handleClickOutside(e: MouseEvent) {
     const target = e.target as HTMLElement;
     if (!target.closest('.model-selector-container')) {
@@ -30,7 +29,6 @@
     }
   }
 
-  // Parse "provider:model" into display parts
   function parseSelected(sel: string): { provider: string; model: string } {
     const idx = sel.indexOf(':');
     if (idx === -1) return { provider: '', model: sel };
@@ -42,9 +40,9 @@
       const found = group.models.find((m) => m.id === modelId);
       if (found) return found.name;
     }
-    // Fallback: format the raw ID nicely
     return modelId
-      .split('-')
+      .split(/[-/]/)
+      .filter((w) => w !== 'free' && w !== '')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
   }
@@ -52,15 +50,15 @@
   function tierColor(tier: string): string {
     switch (tier) {
       case 'very_high':
-        return 'text-amber-400 bg-amber-400/10';
+        return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
       case 'high':
-        return 'text-emerald-400 bg-emerald-400/10';
+        return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
       case 'medium':
-        return 'text-blue-400 bg-blue-400/10';
+        return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
       case 'low':
-        return 'text-slate-400 bg-slate-400/10';
+        return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
       default:
-        return 'text-slate-500 bg-slate-500/10';
+        return 'text-slate-500 bg-slate-500/10 border-slate-500/20';
     }
   }
 
@@ -86,47 +84,76 @@
 <svelte:window on:click={handleClickOutside} />
 
 <div class="model-selector-container relative flex items-center gap-1.5">
-  <!-- Mode Toggle -->
-  <div class="flex bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+  <!-- Mode Toggle (labeled) -->
+  <div
+    class="flex bg-slate-800 rounded-lg border border-slate-700 overflow-hidden text-xs font-medium"
+  >
     <button
-      class="px-2.5 py-1.5 text-xs font-medium transition-colors"
+      class="flex items-center gap-1 px-3 py-1.5 transition-all"
       class:bg-cosmic-600={$chatStore.chatMode === 'rotation'}
       class:text-white={$chatStore.chatMode === 'rotation'}
       class:text-slate-400={$chatStore.chatMode !== 'rotation'}
       class:hover:text-slate-200={$chatStore.chatMode !== 'rotation'}
       on:click={() => setMode('rotation')}
-      title="Rotate through free providers"
+      title="Round-robin across free providers"
     >
-      🔄
+      <svg
+        class="w-3.5 h-3.5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+        />
+      </svg>
+      <span class="hidden sm:inline">Rotate</span>
     </button>
     <button
-      class="px-2.5 py-1.5 text-xs font-medium transition-colors"
+      class="flex items-center gap-1 px-3 py-1.5 transition-all"
       class:bg-cosmic-600={$chatStore.chatMode === 'specific'}
       class:text-white={$chatStore.chatMode === 'specific'}
       class:text-slate-400={$chatStore.chatMode !== 'specific'}
       class:hover:text-slate-200={$chatStore.chatMode !== 'specific'}
       on:click={() => setMode('specific')}
-      title="Choose a specific model"
+      title="Choose a specific provider and model"
     >
-      🎯
+      <svg
+        class="w-3.5 h-3.5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
+        />
+      </svg>
+      <span class="hidden sm:inline">Specific</span>
     </button>
   </div>
 
-  <!-- Current Selection / Badge -->
+  <!-- Badge / Selector -->
   {#if $chatStore.chatMode === 'rotation'}
     <div
       class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/50 rounded-lg border border-slate-700/50 text-xs"
     >
       {#if $chatStore.lastProvider}
-        <span class="text-cosmic-400 font-medium">{$chatStore.lastProvider}</span>
+        <span class="text-cosmic-400 font-medium capitalize">{$chatStore.lastProvider}</span>
         <span class="text-slate-600">/</span>
-        <span class="text-slate-300 truncate max-w-[120px]">{$chatStore.lastModel}</span>
+        <span class="text-slate-300 truncate max-w-[140px]">
+          {getModelDisplayName($chatStore.lastModel, $chatStore.catalog)}
+        </span>
       {:else}
-        <span class="text-slate-400">Auto-rotate</span>
+        <span class="text-slate-400 italic">Auto-rotate</span>
       {/if}
     </div>
   {:else}
-    <!-- Specific: Clickable selector -->
     <button
       class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 rounded-lg border border-slate-700 hover:border-cosmic-600 transition-colors text-xs cursor-pointer"
       on:click={toggleDropdown}
@@ -147,7 +174,7 @@
     </button>
   {/if}
 
-  <!-- Dropdown: Grouped by Provider -->
+  <!-- Dropdown -->
   {#if dropdownOpen}
     <div
       transition:slide={{ duration: 150 }}
@@ -156,7 +183,6 @@
       <div class="max-h-[360px] overflow-y-auto scrollbar-thin">
         {#each $chatStore.catalog as group (group.provider)}
           {#if group.models.length > 0}
-            <!-- Provider Header -->
             <div
               class="sticky top-0 px-3 py-2 bg-slate-800/95 backdrop-blur-sm border-b border-slate-700/50"
             >
@@ -165,7 +191,6 @@
               >
             </div>
 
-            <!-- Models -->
             {#each group.models as model (model.id)}
               {@const fullId = `${group.provider}:${model.id}`}
               {@const isSelected = $chatStore.selectedModel === fullId}
@@ -175,14 +200,12 @@
                   : ''}"
                 on:click={() => selectModel(group.provider, model.id)}
               >
-                <!-- Selection indicator -->
                 <span
-                  class="w-1.5 h-1.5 rounded-full shrink-0"
-                  class:bg-cosmic-500={isSelected}
-                  class:bg-transparent={!isSelected}
+                  class="w-1.5 h-1.5 rounded-full shrink-0 {isSelected
+                    ? 'bg-cosmic-500'
+                    : 'bg-transparent'}"
                 ></span>
 
-                <!-- Model info -->
                 <div class="flex-1 min-w-0">
                   <div class="text-sm text-slate-200 truncate">{model.name}</div>
                   {#if model.description}
@@ -190,9 +213,8 @@
                   {/if}
                 </div>
 
-                <!-- Tier badge -->
                 <span
-                  class="text-[10px] font-bold px-1.5 py-0.5 rounded {tierColor(model.tier)}"
+                  class="text-[10px] font-bold px-1.5 py-0.5 rounded border {tierColor(model.tier)}"
                   title={model.tier}
                 >
                   {tierLabel(model.tier)}

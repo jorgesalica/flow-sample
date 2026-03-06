@@ -1,5 +1,6 @@
 import { writable, get } from 'svelte/store';
 import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
+import { showError } from '@lib/toast';
 import * as api from './api';
 
 function createChatStore() {
@@ -13,7 +14,6 @@ function createChatStore() {
     activeConversationId: string | null;
     messages: ChatMessage[];
     isLoading: boolean;
-    error: string | null;
   }>({
     catalog: [],
     selectedModel: '',
@@ -24,7 +24,6 @@ function createChatStore() {
     activeConversationId: null,
     messages: [],
     isLoading: false,
-    error: null,
   });
 
   return {
@@ -50,7 +49,7 @@ function createChatStore() {
           conversations,
         }));
       } catch (e: unknown) {
-        update((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }));
+        showError(e instanceof Error ? e.message : String(e));
       }
     },
 
@@ -68,17 +67,13 @@ function createChatStore() {
         isLoading: true,
         activeConversationId: id,
         messages: [],
-        error: null,
       }));
       try {
         const messages = await api.fetchMessages(id);
         update((s) => ({ ...s, messages, isLoading: false }));
       } catch (e: unknown) {
-        update((s) => ({
-          ...s,
-          error: e instanceof Error ? e.message : String(e),
-          isLoading: false,
-        }));
+        showError(e instanceof Error ? e.message : String(e));
+        update((s) => ({ ...s, isLoading: false }));
       }
     },
 
@@ -103,7 +98,7 @@ function createChatStore() {
           return { ...s, conversations, activeConversationId, messages };
         });
       } catch (e: unknown) {
-        update((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }));
+        showError(e instanceof Error ? e.message : String(e));
       }
     },
 
@@ -162,10 +157,10 @@ function createChatStore() {
           return {
             ...s,
             messages: msgs,
-            error: e instanceof Error ? e.message : String(e),
             isLoading: false,
           };
         });
+        showError(e instanceof Error ? e.message : String(e));
       }
     },
   };

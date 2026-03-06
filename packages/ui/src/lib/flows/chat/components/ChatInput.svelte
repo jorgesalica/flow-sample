@@ -64,9 +64,7 @@
       </svg>
     </button>
   </div>
-  <div class="text-center mt-2">
-    <span class="text-[11px] text-slate-500"
-      >AI can make mistakes. Consider verifying important information.</span
-    >
-  </div>
+  <p class="text-center mt-2 text-[11px] text-slate-500 cursor-default select-none">
+    AI can make mistakes. Consider verifying important information.
+  </p>
 </div>
