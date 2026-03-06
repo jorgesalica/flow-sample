@@ -20,6 +20,7 @@
     "@tailwindcss/postcss": "^4.1.17",
     "@tailwindcss/vite": "^4.1.17",
     "@tsconfig/svelte": "^5.0.6",
+    "@types/dompurify": "^3.2.0",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
@@ -47,7 +48,9 @@
     "@flows/spotify": "workspace:*",
     "@flows/trading": "workspace:*",
     "chart.js": "^4.5.1",
+    "dompurify": "^3.3.2",
     "lightweight-charts": "^5.1.0",
+    "marked": "^17.0.4",
     "svelte-5-french-toast": "^2.0.6",
     "svelte-lightweight-charts": "^2.2.0"
   }

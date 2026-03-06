@@ -1,4 +1,4 @@
-import type { LLMRequest, LLMResponse, ModelInfo } from './providers/types';
+import type { LLMRequest, LLMResponse, LLMStreamEvent, ModelInfo } from './providers/types';
 import { BaseLLMProvider } from './providers/base-provider';
 import { GeminiProvider } from './providers/gemini/gemini-provider';
 import { GroqProvider } from './providers/groq/groq-provider';
@@ -94,6 +94,15 @@ export class LLMClient {
         return this.provider.generate(request);
     }
 
+    /** Generate a streaming completion. Yields text deltas, then a final done event. */
+    async *generateStream(request: LLMRequest): AsyncGenerator<LLMStreamEvent> {
+        if (this.rotationProviders) {
+            yield* this.generateStreamWithRotation(request);
+        } else {
+            yield* this.provider.generateStream(request);
+        }
+    }
+
     /** List available models dynamically from the current provider. */
     async listModels(): Promise<string[]> {
         return this.provider.listModels();
@@ -159,6 +168,23 @@ export class LLMClient {
         providerAndModel: string,
         request: LLMRequest,
     ): Promise<LLMResponse> {
+        const { provider, modelId } = LLMClient.parseProviderModel(providerAndModel);
+        return provider.generate({ ...request, model: modelId });
+    }
+
+    /**
+     * One-shot streaming generate with a specific provider + model.
+     * Parses "provider:model" format.
+     */
+    static async *generateStreamForProvider(
+        providerAndModel: string,
+        request: LLMRequest,
+    ): AsyncGenerator<LLMStreamEvent> {
+        const { provider, modelId } = LLMClient.parseProviderModel(providerAndModel);
+        yield* provider.generateStream({ ...request, model: modelId });
+    }
+
+    private static parseProviderModel(providerAndModel: string): { provider: BaseLLMProvider; modelId: string } {
         const colonIdx = providerAndModel.indexOf(':');
         if (colonIdx === -1) {
             throw new Error(
@@ -174,8 +200,7 @@ export class LLMClient {
             throw new Error(`API key not configured for provider: ${providerType}`);
         }
 
-        const provider = LLMClient.getOrCreateProvider(providerType, key);
-        return provider.generate({ ...request, model: modelId });
+        return { provider: LLMClient.getOrCreateProvider(providerType, key), modelId };
     }
 
     private static getOrCreateProvider(type: LLMProviderType, apiKey: string): BaseLLMProvider {
@@ -200,7 +225,6 @@ export class LLMClient {
 
             try {
                 const response = await provider.generate(request);
-                // Advance to next provider for next call (round-robin)
                 this.rotationIndex = (idx + 1) % providers.length;
                 this.provider = providers[this.rotationIndex];
                 return response;
@@ -217,6 +241,42 @@ export class LLMClient {
 
         throw new Error(
             `[LLMClient] All ${providers.length} rotation providers failed. ` +
+            `Last error: ${lastError?.message}`,
+        );
+    }
+
+    private async *generateStreamWithRotation(request: LLMRequest): AsyncGenerator<LLMStreamEvent> {
+        const providers = this.rotationProviders!;
+        const startIdx = this.rotationIndex;
+        let lastError: Error | null = null;
+
+        for (let i = 0; i < providers.length; i++) {
+            const idx = (startIdx + i) % providers.length;
+            const provider = providers[idx];
+
+            try {
+                const gen = provider.generateStream(request);
+                let started = false;
+
+                for await (const event of gen) {
+                    started = true;
+                    yield event;
+                }
+
+                if (started) {
+                    this.rotationIndex = (idx + 1) % providers.length;
+                    this.provider = providers[this.rotationIndex];
+                    return;
+                }
+            } catch (error) {
+                const errMsg = error instanceof Error ? error.message : String(error);
+                console.warn(`[LLMClient] ${provider.providerName} stream failed: ${errMsg}`);
+                lastError = error instanceof Error ? error : new Error(errMsg);
+            }
+        }
+
+        throw new Error(
+            `[LLMClient] All ${providers.length} rotation providers failed (stream). ` +
             `Last error: ${lastError?.message}`,
         );
     }

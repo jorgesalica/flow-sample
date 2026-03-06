@@ -3,6 +3,7 @@ export type {
     LLMMessage,
     LLMRequest,
     LLMResponse,
+    LLMStreamEvent,
     LLMUsage,
     ModelTier,
     ModelPricing,

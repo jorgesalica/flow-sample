@@ -14,6 +14,8 @@ function createChatStore() {
     activeConversationId: string | null;
     messages: ChatMessage[];
     isLoading: boolean;
+    isStreaming: boolean;
+    streamingContent: string; // partial content being streamed
   }>({
     catalog: [],
     selectedModel: '',
@@ -24,6 +26,8 @@ function createChatStore() {
     activeConversationId: null,
     messages: [],
     isLoading: false,
+    isStreaming: false,
+    streamingContent: '',
   });
 
   return {
@@ -113,7 +117,7 @@ function createChatStore() {
       const mode = currentState.chatMode;
       const model = mode === 'specific' ? currentState.selectedModel : undefined;
 
-      // Optimistic update
+      // Optimistic user message
       const tempUserMsg: ChatMessage = {
         id: 'temp-' + Date.now(),
         conversationId: convId,
@@ -127,29 +131,56 @@ function createChatStore() {
         ...s,
         messages: [...s.messages, tempUserMsg],
         isLoading: true,
+        isStreaming: true,
+        streamingContent: '',
       }));
 
       try {
-        const { userMessage, assistantMessage } = await api.sendMessage(
-          convId,
-          content,
-          mode,
-          model
-        );
+        await api.sendMessageStream(convId, content, mode, model, (event) => {
+          switch (event.type) {
+            case 'user_message':
+              // Replace temp user message with server version
+              update((s) => ({
+                ...s,
+                messages: s.messages.map((m) =>
+                  m.id === tempUserMsg.id ? event.message : m
+                ),
+              }));
+              break;
 
-        update((s) => {
-          const msgs = s.messages.filter((m) => m.id !== tempUserMsg.id);
-          api.fetchConversations().then((conversations) => {
-            update((inner) => ({ ...inner, conversations }));
-          });
+            case 'delta':
+              update((s) => ({
+                ...s,
+                streamingContent: s.streamingContent + event.delta,
+              }));
+              break;
 
-          return {
-            ...s,
-            messages: [...msgs, userMessage, assistantMessage],
-            lastProvider: assistantMessage.providerUsed || '',
-            lastModel: assistantMessage.modelUsed || '',
-            isLoading: false,
-          };
+            case 'done':
+              update((s) => ({
+                ...s,
+                messages: [...s.messages, event.message],
+                lastProvider: event.message.providerUsed || '',
+                lastModel: event.message.modelUsed || '',
+                isLoading: false,
+                isStreaming: false,
+                streamingContent: '',
+              }));
+              // Refresh conversation list in background
+              api.fetchConversations().then((conversations) => {
+                update((inner) => ({ ...inner, conversations }));
+              });
+              break;
+
+            case 'error':
+              showError(event.error);
+              update((s) => ({
+                ...s,
+                isLoading: false,
+                isStreaming: false,
+                streamingContent: '',
+              }));
+              break;
+          }
         });
       } catch (e: unknown) {
         update((s) => {
@@ -158,6 +189,8 @@ function createChatStore() {
             ...s,
             messages: msgs,
             isLoading: false,
+            isStreaming: false,
+            streamingContent: '',
           };
         });
         showError(e instanceof Error ? e.message : String(e));

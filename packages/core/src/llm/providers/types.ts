@@ -14,6 +14,7 @@ export interface LLMRequest {
     temperature?: number;
     maxTokens?: number;
     model?: string; // Optional override for default model
+    streaming?: boolean; // Whether to stream the response
 }
 
 export interface LLMUsage {
@@ -28,6 +29,16 @@ export interface LLMResponse {
     provider: string;
     usage: LLMUsage;
     latencyMs: number;
+}
+
+/** A single chunk yielded during streaming. */
+export interface LLMStreamEvent {
+    /** Text delta for this chunk (empty on final event). */
+    delta: string;
+    /** Whether this is the final event. */
+    done: boolean;
+    /** Full response, only present on the final event. */
+    response?: LLMResponse;
 }
 
 // ── Model catalog ────────────────────────────────────────────────────

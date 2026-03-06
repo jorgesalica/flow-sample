@@ -5,7 +5,7 @@
  * Enables provider-agnostic LLM calls across all flows.
  */
 
-import type { LLMRequest, LLMResponse, ModelInfo } from './types';
+import type { LLMRequest, LLMResponse, LLMStreamEvent, ModelInfo } from './types';
 
 export abstract class BaseLLMProvider {
     protected apiKey: string;
@@ -16,6 +16,18 @@ export abstract class BaseLLMProvider {
 
     /** Generate a completion from the LLM. */
     abstract generate(request: LLMRequest): Promise<LLMResponse>;
+
+    /**
+     * Generate a streaming completion from the LLM.
+     * Yields text deltas, then a final event with the complete response.
+     *
+     * Default implementation: falls back to `generate()` and yields the full content at once.
+     */
+    async *generateStream(request: LLMRequest): AsyncGenerator<LLMStreamEvent> {
+        const response = await this.generate(request);
+        yield { delta: response.content, done: false };
+        yield { delta: '', done: true, response };
+    }
 
     /** Get the default model for this provider. */
     abstract get defaultModel(): string;

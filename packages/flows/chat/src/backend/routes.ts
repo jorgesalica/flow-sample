@@ -40,7 +40,7 @@ export const chatRoutes = new Elysia({ prefix: '/chat' })
         },
     )
 
-    // Interaction
+    // Non-streaming message (fallback)
     .post(
         '/message',
         async ({ body }) => {
@@ -50,6 +50,54 @@ export const chatRoutes = new Elysia({ prefix: '/chat' })
                 body.mode,
                 body.model,
             );
+        },
+        {
+            body: t.Object({
+                conversationId: t.String(),
+                message: t.String(),
+                mode: t.Optional(t.Union([t.Literal('rotation'), t.Literal('specific')])),
+                model: t.Optional(t.String()),
+            }),
+        },
+    )
+
+    // Streaming message (SSE)
+    .post(
+        '/message/stream',
+        async ({ body }) => {
+            const stream = chatService.sendMessageStream(
+                body.conversationId,
+                body.message,
+                body.mode,
+                body.model,
+            );
+
+            const readable = new ReadableStream({
+                async start(controller) {
+                    try {
+                        for await (const chunk of stream) {
+                            controller.enqueue(new TextEncoder().encode(chunk));
+                        }
+                    } catch (error) {
+                        const errMsg = error instanceof Error ? error.message : String(error);
+                        controller.enqueue(
+                            new TextEncoder().encode(
+                                `data: ${JSON.stringify({ type: 'error', error: errMsg })}\n\n`,
+                            ),
+                        );
+                    } finally {
+                        controller.close();
+                    }
+                },
+            });
+
+            return new Response(readable, {
+                headers: {
+                    'Content-Type': 'text/event-stream',
+                    'Cache-Control': 'no-cache',
+                    Connection: 'keep-alive',
+                },
+            });
         },
         {
             body: t.Object({

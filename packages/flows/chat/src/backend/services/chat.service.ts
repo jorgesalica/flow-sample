@@ -45,10 +45,7 @@ export class ChatService {
     }
 
     /**
-     * Send a message and get an AI response.
-     *
-     * @param mode — 'rotation' cycles free providers, 'specific' uses the given model
-     * @param model — 'provider:model' format for specific mode (e.g. "groq:llama-3.3-70b-versatile")
+     * Send a message and get an AI response (non-streaming).
      */
     async sendMessage(
         conversationId: string,
@@ -58,7 +55,97 @@ export class ChatService {
     ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
         console.log(`[ChatService] mode=${mode} model=${model || 'auto'} conv=${conversationId}`);
 
-        // 1. Create or ensure conversation exists
+        this.ensureConversation(conversationId, content);
+
+        // Save user message
+        const userMsg = this.createUserMessage(conversationId, content);
+        chatDb.addMessage(userMsg);
+
+        // Build context and generate
+        const llmMessages = this.buildLLMMessages(conversationId);
+
+        const response =
+            mode === 'rotation'
+                ? await this.getRotationClient().generate({ messages: llmMessages })
+                : await LLMClient.generateForProvider(model!, { messages: llmMessages });
+
+        console.log(
+            `[ChatService] ${response.provider}/${response.model} responded in ${response.latencyMs}ms (${response.usage.totalTokens} tokens)`,
+        );
+
+        const assistantMsg: ChatMessage = {
+            id: randomUUID(),
+            conversationId,
+            role: 'assistant',
+            content: response.content,
+            modelUsed: response.model,
+            providerUsed: response.provider,
+            createdAt: Date.now(),
+        };
+        chatDb.addMessage(assistantMsg);
+
+        return { userMessage: userMsg, assistantMessage: assistantMsg };
+    }
+
+    /**
+     * Streaming version of sendMessage.
+     * Yields SSE `data: {...}\n\n` lines which the route writes to the response stream.
+     */
+    async *sendMessageStream(
+        conversationId: string,
+        content: string,
+        mode: ChatMode = 'specific',
+        model?: string,
+    ): AsyncGenerator<string> {
+        console.log(`[ChatService] STREAM mode=${mode} model=${model || 'auto'} conv=${conversationId}`);
+
+        this.ensureConversation(conversationId, content);
+
+        // Save user message
+        const userMsg = this.createUserMessage(conversationId, content);
+        chatDb.addMessage(userMsg);
+        yield `data: ${JSON.stringify({ type: 'user_message', message: userMsg })}\n\n`;
+
+        // Build context and stream
+        const llmMessages = this.buildLLMMessages(conversationId);
+        const stream =
+            mode === 'rotation'
+                ? this.getRotationClient().generateStream({ messages: llmMessages })
+                : LLMClient.generateStreamForProvider(model!, { messages: llmMessages });
+
+        let fullContent = '';
+        let providerUsed = '';
+        let modelUsed = '';
+
+        for await (const event of stream) {
+            if (event.done && event.response) {
+                providerUsed = event.response.provider;
+                modelUsed = event.response.model;
+            } else if (event.delta) {
+                fullContent += event.delta;
+                yield `data: ${JSON.stringify({ type: 'delta', delta: event.delta })}\n\n`;
+            }
+        }
+
+        // Save assistant message
+        const assistantMsg: ChatMessage = {
+            id: randomUUID(),
+            conversationId,
+            role: 'assistant',
+            content: fullContent,
+            modelUsed,
+            providerUsed,
+            createdAt: Date.now(),
+        };
+        chatDb.addMessage(assistantMsg);
+
+        console.log(`[ChatService] STREAM complete ${providerUsed}/${modelUsed} (${fullContent.length} chars)`);
+        yield `data: ${JSON.stringify({ type: 'done', message: assistantMsg })}\n\n`;
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────
+
+    private ensureConversation(conversationId: string, content: string): void {
         const existing = chatDb.getConversations().find((c) => c.id === conversationId);
         if (!existing) {
             chatDb.createConversation({
@@ -68,9 +155,10 @@ export class ChatService {
                 updatedAt: Date.now(),
             });
         }
+    }
 
-        // 2. Save user message
-        const userMsg: ChatMessage = {
+    private createUserMessage(conversationId: string, content: string): ChatMessage {
+        return {
             id: randomUUID(),
             conversationId,
             role: 'user',
@@ -78,11 +166,11 @@ export class ChatService {
             modelUsed: '',
             createdAt: Date.now(),
         };
-        chatDb.addMessage(userMsg);
+    }
 
-        // 3. Build context
+    private buildLLMMessages(conversationId: string) {
         const history = chatDb.getMessages(conversationId);
-        const llmMessages = [
+        return [
             {
                 role: 'system' as const,
                 content:
@@ -94,38 +182,7 @@ export class ChatService {
                 content: msg.content,
             })),
         ];
-
-        // 4. Generate based on mode
-        try {
-            const response =
-                mode === 'rotation'
-                    ? await this.getRotationClient().generate({ messages: llmMessages })
-                    : await LLMClient.generateForProvider(model!, { messages: llmMessages });
-
-            console.log(
-                `[ChatService] ${response.provider}/${response.model} responded in ${response.latencyMs}ms (${response.usage.totalTokens} tokens)`,
-            );
-
-            // 5. Save assistant message
-            const assistantMsg: ChatMessage = {
-                id: randomUUID(),
-                conversationId,
-                role: 'assistant',
-                content: response.content,
-                modelUsed: response.model,
-                providerUsed: response.provider,
-                createdAt: Date.now(),
-            };
-            chatDb.addMessage(assistantMsg);
-
-            return { userMessage: userMsg, assistantMessage: assistantMsg };
-        } catch (error) {
-            console.error('[ChatService] LLM error:', error);
-            throw error;
-        }
     }
-
-    // ── Private ──────────────────────────────────────────────────────
 
     private getRotationClient(): LLMClient {
         if (!this.rotationClient) {

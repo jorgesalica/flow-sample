@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { BaseLLMProvider } from '../base-provider';
-import type { LLMRequest, LLMResponse, LLMMessage, ModelInfo } from '../types';
+import type { LLMRequest, LLMResponse, LLMStreamEvent, LLMMessage, ModelInfo } from '../types';
 import { GEMINI_MODELS, GEMINI_DEFAULT_MODEL } from './models';
 
 /**
@@ -57,6 +57,48 @@ export class GeminiProvider extends BaseLLMProvider {
                 totalTokens: response.usageMetadata?.totalTokenCount ?? 0,
             },
             latencyMs,
+        };
+    }
+
+    async *generateStream(request: LLMRequest): AsyncGenerator<LLMStreamEvent> {
+        const startTime = Date.now();
+        const modelName = request.model || this.defaultModel;
+        const contents = this.formatMessages(request.messages);
+
+        const stream = await this.client.models.generateContentStream({
+            model: modelName,
+            contents,
+            config: {
+                temperature: request.temperature ?? 0.5,
+                maxOutputTokens: request.maxTokens ?? 1024,
+            },
+        });
+
+        let fullContent = '';
+
+        for await (const chunk of stream) {
+            const text = chunk.text ?? '';
+            if (text) {
+                fullContent += text;
+                yield { delta: text, done: false };
+            }
+        }
+
+        const latencyMs = Date.now() - startTime;
+        yield {
+            delta: '',
+            done: true,
+            response: {
+                content: fullContent,
+                model: modelName,
+                provider: this.providerName,
+                usage: {
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    totalTokens: 0,
+                },
+                latencyMs,
+            },
         };
     }
 

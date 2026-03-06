@@ -46,6 +46,7 @@ export async function deleteConversation(conversationId: string): Promise<void> 
   if (error) throw extractError(error);
 }
 
+/** Non-streaming message send (fallback). */
 export async function sendMessage(
   conversationId: string,
   message: string,
@@ -60,4 +61,59 @@ export async function sendMessage(
   });
   if (error) throw extractError(error);
   return data as { userMessage: ChatMessage; assistantMessage: ChatMessage };
+}
+
+/** SSE event types from the backend. */
+export type StreamEvent =
+  | { type: 'user_message'; message: ChatMessage }
+  | { type: 'delta'; delta: string }
+  | { type: 'done'; message: ChatMessage }
+  | { type: 'error'; error: string };
+
+/**
+ * Streaming message send via SSE.
+ * Calls a callback for each event as it arrives.
+ */
+export async function sendMessageStream(
+  conversationId: string,
+  message: string,
+  mode: ChatMode,
+  model: string | undefined,
+  onEvent: (event: StreamEvent) => void
+): Promise<void> {
+  const response = await fetch('http://localhost:4173/chat/message/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ conversationId, message, mode, model }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Stream error ${response.status}: ${text}`);
+  }
+
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n\n');
+    buffer = lines.pop()!;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data: ')) continue;
+
+      try {
+        const event = JSON.parse(trimmed.slice(6)) as StreamEvent;
+        onEvent(event);
+      } catch {
+        // skip malformed SSE
+      }
+    }
+  }
 }
