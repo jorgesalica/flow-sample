@@ -1,10 +1,5 @@
 import { api } from '@lib/client';
-import type {
-  ChatConversation,
-  ChatMessage,
-  ChatProviderGroup,
-  ChatMode,
-} from '@flows/shared';
+import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
 
 // Typed Eden client for the chat routes
 const chatApi = api.chat;
@@ -55,7 +50,7 @@ export async function sendMessage(
   conversationId: string,
   message: string,
   mode: ChatMode,
-  model?: string,
+  model?: string
 ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
   const { data, error } = await chatApi.message.post({
     conversationId,

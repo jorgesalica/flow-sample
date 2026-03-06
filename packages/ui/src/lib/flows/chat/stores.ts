@@ -1,10 +1,5 @@
 import { writable, get } from 'svelte/store';
-import type {
-  ChatConversation,
-  ChatMessage,
-  ChatProviderGroup,
-  ChatMode,
-} from '@flows/shared';
+import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
 import * as api from './api';
 
 function createChatStore() {
@@ -144,7 +139,7 @@ function createChatStore() {
           convId,
           content,
           mode,
-          model,
+          model
         );
 
         update((s) => {
