@@ -6,16 +6,27 @@ export { logger } from './logger';
 // Cache
 export { SimpleCache } from './cache';
 
-// LLM
+// LLM — Client
 export { LLMClient, createLLMClient, type LLMProviderType } from './llm';
-export {
-    BaseLLMProvider,
-    type LLMMessage,
-    type LLMRequest,
-    type LLMResponse,
-    type LLMUsage,
+
+// LLM — Types
+export type {
+    LLMMessage,
+    LLMRequest,
+    LLMResponse,
+    LLMUsage,
+    ModelTier,
+    ModelPricing,
+    ModelInfo,
 } from './llm/providers';
+
+// LLM — Providers
+export { BaseLLMProvider } from './llm/providers';
 export { GeminiProvider } from './llm/providers';
+export { GroqProvider } from './llm/providers';
+export { OpenRouterProvider } from './llm/providers';
+export { CerebrasProvider } from './llm/providers';
+export { MistralProvider } from './llm/providers';
 
 // Database
 export { createDatabase } from './db';
