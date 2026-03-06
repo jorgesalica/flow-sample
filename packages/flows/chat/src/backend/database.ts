@@ -29,6 +29,7 @@ export class ChatDatabase {
                 role TEXT NOT NULL,
                 content TEXT NOT NULL,
                 model_used TEXT NOT NULL,
+                provider_used TEXT DEFAULT '',
                 created_at INTEGER NOT NULL,
                 FOREIGN KEY(conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE
             );
@@ -80,8 +81,8 @@ export class ChatDatabase {
 
     addMessage(message: ChatMessage): void {
         const stmt = this.db.prepare(`
-            INSERT INTO chat_messages (id, conversation_id, role, content, model_used, created_at)
-            VALUES (@id, @conversationId, @role, @content, @modelUsed, @createdAt)
+            INSERT INTO chat_messages (id, conversation_id, role, content, model_used, provider_used, created_at)
+            VALUES (@id, @conversationId, @role, @content, @modelUsed, @providerUsed, @createdAt)
         `);
         stmt.run({
             id: message.id,
@@ -89,7 +90,8 @@ export class ChatDatabase {
             role: message.role,
             content: message.content,
             modelUsed: message.modelUsed,
-            createdAt: message.createdAt
+            providerUsed: message.providerUsed || '',
+            createdAt: message.createdAt,
         });
 
         // Bump conversation updated_at
@@ -104,6 +106,7 @@ export class ChatDatabase {
                 role, 
                 content, 
                 model_used as modelUsed, 
+                provider_used as providerUsed,
                 created_at as createdAt 
             FROM chat_messages 
             WHERE conversation_id = ? 

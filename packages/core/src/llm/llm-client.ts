@@ -125,6 +125,68 @@ export class LLMClient {
         return this.rotationProviders !== null;
     }
 
+    // ── Static helpers for per-request usage ─────────────────────────
+
+    /** Cache of provider instances by type (avoids re-creating on every call). */
+    private static providerCache = new Map<LLMProviderType, BaseLLMProvider>();
+
+    /**
+     * Get model catalogs grouped by provider.
+     * Returns all providers that have API keys configured.
+     */
+    static getModelCatalogGrouped(): { provider: string; models: ModelInfo[] }[] {
+        const groups: { provider: string; models: ModelInfo[] }[] = [];
+        const ALL_PROVIDERS: LLMProviderType[] = ['gemini', 'groq', 'openrouter', 'cerebras', 'mistral'];
+
+        for (const type of ALL_PROVIDERS) {
+            const key = getApiKeyForProvider(type);
+            if (!key) continue;
+
+            const provider = LLMClient.getOrCreateProvider(type, key);
+            groups.push({
+                provider: provider.providerName,
+                models: provider.listModelCatalog(),
+            });
+        }
+        return groups;
+    }
+
+    /**
+     * One-shot generate with a specific provider + model.
+     * Parses "provider:model" format (e.g. "groq:llama-3.3-70b-versatile").
+     */
+    static async generateForProvider(
+        providerAndModel: string,
+        request: LLMRequest,
+    ): Promise<LLMResponse> {
+        const colonIdx = providerAndModel.indexOf(':');
+        if (colonIdx === -1) {
+            throw new Error(
+                `Invalid model format "${providerAndModel}". Expected "provider:model" (e.g. "groq:llama-3.3-70b-versatile").`,
+            );
+        }
+
+        const providerType = providerAndModel.slice(0, colonIdx) as LLMProviderType;
+        const modelId = providerAndModel.slice(colonIdx + 1);
+
+        const key = getApiKeyForProvider(providerType);
+        if (!key) {
+            throw new Error(`API key not configured for provider: ${providerType}`);
+        }
+
+        const provider = LLMClient.getOrCreateProvider(providerType, key);
+        return provider.generate({ ...request, model: modelId });
+    }
+
+    private static getOrCreateProvider(type: LLMProviderType, apiKey: string): BaseLLMProvider {
+        let provider = LLMClient.providerCache.get(type);
+        if (!provider) {
+            provider = createProviderInstance(type, apiKey);
+            LLMClient.providerCache.set(type, provider);
+        }
+        return provider;
+    }
+
     // ── Private ──────────────────────────────────────────────────────
 
     private async generateWithRotation(request: LLMRequest): Promise<LLMResponse> {

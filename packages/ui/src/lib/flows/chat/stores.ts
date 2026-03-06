@@ -1,19 +1,30 @@
 import { writable, get } from 'svelte/store';
-import type { ChatConversation, ChatMessage, ChatProviderOption } from '@flows/shared';
+import type {
+  ChatConversation,
+  ChatMessage,
+  ChatProviderGroup,
+  ChatMode,
+} from '@flows/shared';
 import * as api from './api';
 
 function createChatStore() {
   const { subscribe, update } = writable<{
-    models: ChatProviderOption[];
-    selectedModel: string;
+    catalog: ChatProviderGroup[];
+    selectedModel: string; // "provider:modelId" format
+    chatMode: ChatMode;
+    lastProvider: string; // provider that answered last (for rotation badge)
+    lastModel: string; // model that answered last
     conversations: ChatConversation[];
     activeConversationId: string | null;
     messages: ChatMessage[];
     isLoading: boolean;
     error: string | null;
   }>({
-    models: [],
+    catalog: [],
     selectedModel: '',
+    chatMode: 'specific',
+    lastProvider: '',
+    lastModel: '',
     conversations: [],
     activeConversationId: null,
     messages: [],
@@ -26,19 +37,20 @@ function createChatStore() {
 
     async init() {
       try {
-        const [models, conversations] = await Promise.all([
-          api.fetchModels(),
+        const [catalog, conversations] = await Promise.all([
+          api.fetchModelCatalog(),
           api.fetchConversations(),
         ]);
 
+        // Default: first model of first provider
         let defaultModel = '';
-        if (models.length > 0) {
-          defaultModel = models[0].id; // default to first
+        if (catalog.length > 0 && catalog[0].models.length > 0) {
+          defaultModel = `${catalog[0].provider}:${catalog[0].models[0].id}`;
         }
 
         update((s) => ({
           ...s,
-          models,
+          catalog,
           selectedModel: defaultModel,
           conversations,
         }));
@@ -47,8 +59,12 @@ function createChatStore() {
       }
     },
 
-    setModel(modelId: string) {
-      update((s) => ({ ...s, selectedModel: modelId }));
+    setModel(providerAndModel: string) {
+      update((s) => ({ ...s, selectedModel: providerAndModel }));
+    },
+
+    setMode(mode: ChatMode) {
+      update((s) => ({ ...s, chatMode: mode }));
     },
 
     async loadConversation(id: string) {
@@ -72,7 +88,6 @@ function createChatStore() {
     },
 
     startNewConversation() {
-      // we don't save to DB until first message, just reset UI
       const newId = crypto.randomUUID();
       update((s) => ({
         ...s,
@@ -103,12 +118,12 @@ function createChatStore() {
         this.startNewConversation();
       }
 
-      // get updated state
       const currentState = get(this);
       const convId = currentState.activeConversationId!;
-      const model = currentState.selectedModel;
+      const mode = currentState.chatMode;
+      const model = mode === 'specific' ? currentState.selectedModel : undefined;
 
-      // Optimistic update for user message
+      // Optimistic update
       const tempUserMsg: ChatMessage = {
         id: 'temp-' + Date.now(),
         conversationId: convId,
@@ -125,13 +140,15 @@ function createChatStore() {
       }));
 
       try {
-        const { userMessage, assistantMessage } = await api.sendMessage(convId, content, model);
+        const { userMessage, assistantMessage } = await api.sendMessage(
+          convId,
+          content,
+          mode,
+          model,
+        );
 
-        // Real update
         update((s) => {
-          // Update messages: replace temp with real user msg, add assistant msg
           const msgs = s.messages.filter((m) => m.id !== tempUserMsg.id);
-          // Also refresh conversations (title might have changed or it's new)
           api.fetchConversations().then((conversations) => {
             update((inner) => ({ ...inner, conversations }));
           });
@@ -139,12 +156,13 @@ function createChatStore() {
           return {
             ...s,
             messages: [...msgs, userMessage, assistantMessage],
+            lastProvider: assistantMessage.providerUsed || '',
+            lastModel: assistantMessage.modelUsed || '',
             isLoading: false,
           };
         });
       } catch (e: unknown) {
         update((s) => {
-          // Remove temp on failure
           const msgs = s.messages.filter((m) => m.id !== tempUserMsg.id);
           return {
             ...s,

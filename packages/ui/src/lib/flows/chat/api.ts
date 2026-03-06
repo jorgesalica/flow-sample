@@ -1,5 +1,10 @@
 import { api } from '@lib/client';
-import type { ChatConversation, ChatMessage, ChatProviderOption } from '@flows/shared';
+import type {
+  ChatConversation,
+  ChatMessage,
+  ChatProviderGroup,
+  ChatMode,
+} from '@flows/shared';
 
 // Typed Eden client for the chat routes
 const chatApi = api.chat;
@@ -10,9 +15,7 @@ const chatApi = api.chat;
 function extractError(error: unknown): Error {
   if (!error) return new Error('Unknown API Error');
 
-  // Convert to a generic object to safely check properties
   const errObj = error as Record<string, unknown>;
-
   const valueObj = errObj?.value as Record<string, unknown> | undefined;
 
   const msg =
@@ -25,10 +28,10 @@ function extractError(error: unknown): Error {
   return new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
 }
 
-export async function fetchModels(): Promise<ChatProviderOption[]> {
+export async function fetchModelCatalog(): Promise<ChatProviderGroup[]> {
   const { data, error } = await chatApi.models.get();
   if (error) throw extractError(error);
-  return data as ChatProviderOption[];
+  return data as ChatProviderGroup[];
 }
 
 export async function fetchConversations(): Promise<ChatConversation[]> {
@@ -51,11 +54,13 @@ export async function deleteConversation(conversationId: string): Promise<void> 
 export async function sendMessage(
   conversationId: string,
   message: string,
-  model?: string
+  mode: ChatMode,
+  model?: string,
 ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
   const { data, error } = await chatApi.message.post({
     conversationId,
     message,
+    mode,
     model,
   });
   if (error) throw extractError(error);

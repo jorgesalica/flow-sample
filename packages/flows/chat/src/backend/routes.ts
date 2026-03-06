@@ -7,38 +7,56 @@ const chatService = new ChatService();
  * Chat Flow API Routes
  */
 export const chatRoutes = new Elysia({ prefix: '/chat' })
-    // Models Support
-    .get('/models', async () => {
-        return await chatService.getModels();
+    // Model catalog (grouped by provider)
+    .get('/models', () => {
+        return chatService.getModelCatalog();
     })
 
     // Conversation Management
     .get('/conversations', () => {
         return chatService.getConversations();
     })
-    .get('/conversations/:id', ({ params }) => {
-        return chatService.getMessages(params.id);
-    }, {
-        params: t.Object({
-            id: t.String()
-        })
-    })
-    .delete('/conversations/:id', ({ params }) => {
-        chatService.deleteConversation(params.id);
-        return { success: true };
-    }, {
-        params: t.Object({
-            id: t.String()
-        })
-    })
+    .get(
+        '/conversations/:id',
+        ({ params }) => {
+            return chatService.getMessages(params.id);
+        },
+        {
+            params: t.Object({
+                id: t.String(),
+            }),
+        },
+    )
+    .delete(
+        '/conversations/:id',
+        ({ params }) => {
+            chatService.deleteConversation(params.id);
+            return { success: true };
+        },
+        {
+            params: t.Object({
+                id: t.String(),
+            }),
+        },
+    )
 
     // Interaction
-    .post('/message', async ({ body }) => {
-        return await chatService.sendMessage(body.conversationId, body.message, body.model);
-    }, {
-        body: t.Object({
-            conversationId: t.String(),
-            message: t.String(),
-            model: t.Optional(t.String())
-        })
-    });
+    .post(
+        '/message',
+        async ({ body }) => {
+            return await chatService.sendMessage(
+                body.conversationId,
+                body.message,
+                body.mode,
+                body.model,
+            );
+        },
+        {
+            body: t.Object({
+                conversationId: t.String(),
+                message: t.String(),
+                mode: t.Optional(t.Union([t.Literal('rotation'), t.Literal('specific')])),
+                model: t.Optional(t.String()),
+            }),
+        },
+    );
