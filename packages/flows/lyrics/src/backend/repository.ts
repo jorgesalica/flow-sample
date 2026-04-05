@@ -10,6 +10,7 @@ interface LyricsRow {
   synced_lyrics: string | null;
   status: LyricsStatus;
   fetched_at: string | null;
+  interpretation: string | null;
 }
 
 export interface LyricsData {
@@ -23,16 +24,27 @@ export interface LyricsRecord {
   syncedLyrics: string | null;
   status: LyricsStatus;
   fetchedAt: string | null;
+  interpretation: string | null;
 }
 
 export class SQLiteLyricsRepository {
+  constructor() {
+    // Migration: add interpretation column if missing
+    try {
+      musicDb.exec(`ALTER TABLE lyrics ADD COLUMN interpretation TEXT DEFAULT NULL`);
+      log.info('Added interpretation column to lyrics table');
+    } catch {
+      // Column already exists — expected after first run
+    }
+  }
+
   /**
    * Find lyrics by track ID
    */
   async findByTrackId(trackId: string): Promise<LyricsRecord | null> {
     const row = musicDb
       .prepare(
-        `SELECT track_id, plain_lyrics, synced_lyrics, status, fetched_at 
+        `SELECT track_id, plain_lyrics, synced_lyrics, status, fetched_at, interpretation 
          FROM lyrics WHERE track_id = ?`,
       )
       .get(trackId) as LyricsRow | undefined;
@@ -184,6 +196,26 @@ export class SQLiteLyricsRepository {
     }));
   }
 
+  /**
+   * Get cached interpretation for a track
+   */
+  async getInterpretation(trackId: string): Promise<string | null> {
+    const row = musicDb
+      .prepare(`SELECT interpretation FROM lyrics WHERE track_id = ?`)
+      .get(trackId) as { interpretation: string | null } | undefined;
+    return row?.interpretation ?? null;
+  }
+
+  /**
+   * Save AI-generated interpretation for a track
+   */
+  async saveInterpretation(trackId: string, interpretation: string): Promise<void> {
+    musicDb
+      .prepare(`UPDATE lyrics SET interpretation = ? WHERE track_id = ?`)
+      .run(interpretation, trackId);
+    log.debug({ trackId }, 'Saved interpretation');
+  }
+
   private hydrate(row: LyricsRow): LyricsRecord {
     return {
       trackId: row.track_id,
@@ -191,6 +223,7 @@ export class SQLiteLyricsRepository {
       syncedLyrics: row.synced_lyrics,
       status: row.status,
       fetchedAt: row.fetched_at,
+      interpretation: row.interpretation,
     };
   }
 }

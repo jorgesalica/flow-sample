@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia';
 import { LrcLibAdapter } from './adapter';
 import { SQLiteLyricsRepository } from './repository';
 import { SQLiteTrackRepository } from '@flows/spotify/src/backend/repository';
-import { logger } from '@flows/core';
+import { logger, LLMClient } from '@flows/core';
 import type { LyricsStatus } from '@flows/shared';
 
 const log = logger.child({ module: 'LyricsRoutes' });
@@ -164,5 +164,93 @@ export function createLyricsRoutes() {
       .get('/stats', async ({ lyricsRepository }) => {
         return lyricsRepository.getStats();
       })
+
+      // ── AI Interpretation (SSE) ────────────────────────────────────
+      .post(
+        '/:trackId/interpret',
+        async ({ params, lyricsRepository, trackRepository }) => {
+          const { trackId } = params;
+
+          // Check if we already have a cached interpretation
+          const cached = await lyricsRepository.getInterpretation(trackId);
+          if (cached) {
+            log.debug({ trackId }, 'Returning cached interpretation');
+            const encoder = new TextEncoder();
+            return new Response(
+              new ReadableStream({
+                start(controller) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'cached', interpretation: cached })}\n\n`));
+                  controller.close();
+                },
+              }),
+              { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' } },
+            );
+          }
+
+          // Need lyrics + track info
+          const lyrics = await lyricsRepository.findByTrackId(trackId);
+          if (!lyrics || lyrics.status !== 'found' || !lyrics.plainLyrics) {
+            return new Response(JSON.stringify({ error: 'Lyrics not found for this track' }), { status: 404 });
+          }
+
+          const track = await trackRepository.findById(trackId);
+          const artist = track?.artists?.[0]?.name || 'Unknown Artist';
+          const title = track?.title || 'Unknown Song';
+
+          log.info({ trackId, artist, title }, 'Generating AI interpretation');
+
+          const client = LLMClient.createRotation();
+          const stream = client.generateStream({
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are a music analyst. Analyze the following song lyrics. ' +
+                  'Explain what the song is about, its themes, emotions, and any notable metaphors or references. ' +
+                  'Write in the same language as the lyrics. Be concise but insightful. ' +
+                  'Use Markdown formatting for structure.',
+              },
+              {
+                role: 'user',
+                content: `Song: "${title}" by ${artist}\n\nLyrics:\n${lyrics.plainLyrics}`,
+              },
+            ],
+          });
+
+          const readable = new ReadableStream({
+            async start(controller) {
+              const encoder = new TextEncoder();
+              let fullText = '';
+              try {
+                for await (const event of stream) {
+                  if (event.done && event.response) {
+                    // Save to DB
+                    await lyricsRepository.saveInterpretation(trackId, fullText);
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+                  } else if (event.delta) {
+                    fullText += event.delta;
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', delta: event.delta })}\n\n`));
+                  }
+                }
+              } catch (error) {
+                const errMsg = error instanceof Error ? error.message : String(error);
+                log.error({ trackId, error: errMsg }, 'Interpretation stream error');
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: errMsg })}\n\n`));
+              } finally {
+                controller.close();
+              }
+            },
+          });
+
+          return new Response(readable, {
+            headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
+          });
+        },
+        {
+          params: t.Object({
+            trackId: t.String(),
+          }),
+        },
+      )
   );
 }

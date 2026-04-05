@@ -10,6 +10,7 @@ export interface Lyrics {
     syncedLyrics: string | null;
     status: LyricsStatus;
     fetchedAt: string | null;
+    interpretation?: string | null;
 }
 
 export interface LyricsStats {
