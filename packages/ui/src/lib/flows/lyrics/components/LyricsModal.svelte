@@ -11,7 +11,11 @@
 
   let { track, onclose }: Props = $props();
 
-  let lyrics = $state<{ plainLyrics: string | null; status: string; interpretation?: string | null } | null>(null);
+  let lyrics = $state<{
+    plainLyrics: string | null;
+    status: string;
+    interpretation?: string | null;
+  } | null>(null);
   let loading = $state(true);
   let error = $state<string | null>(null);
 
@@ -155,8 +159,18 @@
                    hover:shadow-lg hover:shadow-aurora/10 active:scale-95"
             onclick={handleInterpret}
           >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
+              />
             </svg>
             Interpret
           </button>
@@ -224,12 +238,26 @@
           <div class="border-t border-white/10 pt-4">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-aurora" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                <svg
+                  class="w-4 h-4 text-aurora"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
+                  />
                 </svg>
-                <h3 class="text-sm font-semibold text-aurora uppercase tracking-wider">AI Interpretation</h3>
+                <h3 class="text-sm font-semibold text-aurora uppercase tracking-wider">
+                  AI Interpretation
+                </h3>
                 {#if isInterpreting}
-                  <div class="w-3 h-3 border-2 border-aurora border-t-transparent rounded-full animate-spin"></div>
+                  <div
+                    class="w-3 h-3 border-2 border-aurora border-t-transparent rounded-full animate-spin"
+                  ></div>
                 {/if}
               </div>
               {#if interpretDone}
@@ -243,26 +271,41 @@
             </div>
 
             {#if interpretError}
-              <div class="text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20">
+              <div
+                class="text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20"
+              >
                 {interpretError}
               </div>
             {:else if interpretContent}
-              <div class="prose prose-invert prose-sm max-w-none leading-relaxed
+              <div
+                class="prose prose-invert prose-sm max-w-none leading-relaxed
                           prose-p:my-1.5 prose-pre:bg-black/30 prose-pre:border prose-pre:border-white/10
                           prose-code:text-aurora prose-code:before:content-[''] prose-code:after:content-['']
                           prose-headings:text-cosmic prose-strong:text-cosmic/90
-                          bg-white/[0.02] rounded-xl p-4 border border-white/5">
+                          bg-white/[0.02] rounded-xl p-4 border border-white/5"
+              >
                 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                 {@html renderMarkdown(interpretContent)}
                 {#if isInterpreting}
-                  <span class="inline-block w-0.5 h-4 bg-aurora animate-pulse ml-0.5 align-text-bottom"></span>
+                  <span
+                    class="inline-block w-0.5 h-4 bg-aurora animate-pulse ml-0.5 align-text-bottom"
+                  ></span>
                 {/if}
               </div>
             {:else if isInterpreting}
               <div class="flex items-center gap-1.5 py-4 justify-center">
-                <div class="w-2 h-2 bg-aurora rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-                <div class="w-2 h-2 bg-aurora rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-                <div class="w-2 h-2 bg-aurora rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                <div
+                  class="w-2 h-2 bg-aurora rounded-full animate-bounce"
+                  style="animation-delay: 0ms"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-aurora rounded-full animate-bounce"
+                  style="animation-delay: 150ms"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-aurora rounded-full animate-bounce"
+                  style="animation-delay: 300ms"
+                ></div>
               </div>
             {/if}
           </div>
