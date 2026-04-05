@@ -142,9 +142,7 @@ function createChatStore() {
               // Replace temp user message with server version
               update((s) => ({
                 ...s,
-                messages: s.messages.map((m) =>
-                  m.id === tempUserMsg.id ? event.message : m
-                ),
+                messages: s.messages.map((m) => (m.id === tempUserMsg.id ? event.message : m)),
               }));
               break;
 
@@ -172,6 +170,7 @@ function createChatStore() {
               break;
 
             case 'error':
+              console.error('[ChatStore] Stream error:', event.error);
               showError(event.error);
               update((s) => ({
                 ...s,

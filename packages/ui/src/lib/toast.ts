@@ -18,6 +18,7 @@ export const showError = (message: string) => {
   toast.error(message, {
     duration: 5000,
     position: 'bottom-right',
+    style: 'word-break: break-word; max-width: 450px;',
   });
 };
 

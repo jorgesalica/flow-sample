@@ -21,8 +21,19 @@
 
   /** Render markdown → sanitized HTML. */
   function renderMarkdown(text: string): string {
-    const rawHtml = marked.parse(text, { async: false }) as string;
-    return DOMPurify.sanitize(rawHtml);
+    // Transform <think> tags into a collapsible details block
+    const processedText = text
+      .replace(
+        /<think>/g,
+        '\n<details class="mb-3 border border-slate-700 rounded-md bg-slate-800/40 overflow-hidden"><summary class="px-3 py-2 cursor-pointer text-[10px] uppercase tracking-wider font-semibold text-slate-400 hover:text-slate-300 bg-slate-800/80 select-none flex items-center gap-2"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Thought Process</summary><div class="px-4 py-3 text-sm text-slate-400 border-t border-slate-700/50 italic">\n\n'
+      )
+      .replace(/<\/think>/g, '\n\n</div></details>\n');
+
+    const rawHtml = marked.parse(processedText, { async: false }) as string;
+    return DOMPurify.sanitize(rawHtml, {
+      ADD_TAGS: ['details', 'summary'],
+      ADD_ATTR: ['class'],
+    });
   }
 
   function getModelDisplayName(msg: { modelUsed?: string; providerUsed?: string }): string {
