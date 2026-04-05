@@ -69,18 +69,21 @@ export class SQLiteTrackRepository implements TrackRepository {
     `);
 
     const insertArtist = musicDb.prepare(`
-      INSERT OR REPLACE INTO artists (id, name, image_url)
+      INSERT INTO artists (id, name, image_url)
       VALUES (@id, @name, @imageUrl)
+      ON CONFLICT(id) DO UPDATE SET 
+        name = excluded.name,
+        image_url = excluded.image_url
     `);
 
     const deleteTrackArtists = musicDb.prepare(`DELETE FROM track_artists WHERE track_id = ?`);
     const insertTrackArtist = musicDb.prepare(`
-      INSERT OR REPLACE INTO track_artists (track_id, artist_id)
+      INSERT OR IGNORE INTO track_artists (track_id, artist_id)
       VALUES (?, ?)
     `);
 
     const insertGenre = musicDb.prepare(`
-      INSERT OR REPLACE INTO artist_genres (artist_id, genre)
+      INSERT OR IGNORE INTO artist_genres (artist_id, genre)
       VALUES (?, ?)
     `);
 
