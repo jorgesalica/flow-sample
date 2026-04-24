@@ -13,9 +13,9 @@
     }, {} as Record<string, Annotation[]>);
 
     // Filter annotations for a specific token that belong to active layers
-    function getActiveAnnotations(tokenId: string): Annotation[] {
+    function getActiveAnnotations(tokenId: string, currentActiveLayers: string[]): Annotation[] {
         const tokenAnns = annotationsByToken[tokenId] || [];
-        return tokenAnns.filter((ann: Annotation) => activeLayers.includes(ann.layerId));
+        return tokenAnns.filter((ann: Annotation) => currentActiveLayers.includes(ann.layerId));
     }
 </script>
 
@@ -30,7 +30,7 @@
                 {#each section.lines as line}
                     <div class="canvas-line">
                         {#each line as token}
-                            {@const activeAnns = getActiveAnnotations(token.id)}
+                            {@const activeAnns = getActiveAnnotations(token.id, activeLayers)}
                             
                             <span 
                                 class="token" 
@@ -93,7 +93,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
-        line-height: 2.5; /* Extra space for annotations */
+        line-height: 3.5; /* Extra space for annotations */
     }
 
     .token {

@@ -128,15 +128,19 @@
 
   async function handleIndividualRetry(trackId: string, e: Event) {
     e.stopPropagation();
-    const toastId = toast.loading('Retrying...');
+    const toastId = toast.loading('Fetching...');
     try {
       await getLyrics(trackId, { force: true });
       toast.dismiss(toastId);
-      toast.success('Retry complete');
-      await refreshAll(); // Refresh list to update status
+      toast.success('Fetch complete');
+      
+      tracks = tracks.map(t => t.id === trackId ? { ...t, status: 'found' } : t);
+      stats = await getLyricsStats();
     } catch {
       toast.dismiss(toastId);
-      toast.error('Retry failed');
+      toast.error('Fetch failed or not found');
+      
+      tracks = tracks.map(t => t.id === trackId ? { ...t, status: 'not_found' } : t);
     }
   }
 

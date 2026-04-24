@@ -37,19 +37,20 @@
 <style>
     .tooltip-container {
         position: fixed;
-        z-index: 1000;
+        z-index: 9999;
         transform: translate(-50%, 10px);
         pointer-events: none;
     }
 
     .tooltip-content {
-        background: var(--surface-900);
-        border: 1px solid var(--surface-700);
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--aurora);
         border-radius: 0.5rem;
         padding: 0.75rem;
         width: max-content;
         max-width: 300px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 8px 10px -6px rgba(0, 0, 0, 0.8);
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
