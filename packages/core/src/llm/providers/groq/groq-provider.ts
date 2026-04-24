@@ -15,7 +15,7 @@ export class GroqProvider extends BaseLLMProvider {
 
     constructor(apiKey: string) {
         super(apiKey);
-        this._defaultModel = process.env.LLM_MODEL || GROQ_DEFAULT_MODEL;
+        this._defaultModel = GROQ_DEFAULT_MODEL;
         this.baseUrl = GROQ_BASE_URL;
         console.log(`[GroqProvider] Initialized with model: ${this._defaultModel}`);
     }

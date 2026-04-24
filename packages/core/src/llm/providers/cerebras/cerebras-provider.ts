@@ -15,7 +15,7 @@ export class CerebrasProvider extends BaseLLMProvider {
 
     constructor(apiKey: string) {
         super(apiKey);
-        this._defaultModel = process.env.LLM_MODEL || CEREBRAS_DEFAULT_MODEL;
+        this._defaultModel = CEREBRAS_DEFAULT_MODEL;
         this.baseUrl = CEREBRAS_BASE_URL;
         console.log(`[CerebrasProvider] Initialized with model: ${this._defaultModel}`);
     }

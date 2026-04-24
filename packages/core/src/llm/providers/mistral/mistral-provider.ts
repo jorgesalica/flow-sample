@@ -15,7 +15,7 @@ export class MistralProvider extends BaseLLMProvider {
 
     constructor(apiKey: string) {
         super(apiKey);
-        this._defaultModel = process.env.LLM_MODEL || MISTRAL_DEFAULT_MODEL;
+        this._defaultModel = MISTRAL_DEFAULT_MODEL;
         this.baseUrl = MISTRAL_BASE_URL;
         console.log(`[MistralProvider] Initialized with model: ${this._defaultModel}`);
     }

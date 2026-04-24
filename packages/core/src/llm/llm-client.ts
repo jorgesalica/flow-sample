@@ -139,7 +139,19 @@ export class LLMClient {
         const response = await this.generate(structuredRequest);
 
         try {
-            const parsed = JSON.parse(response.content);
+            let content = response.content.trim();
+            if (content.startsWith('```json')) {
+                content = content.replace(/^```json\n?/, '');
+                if (content.endsWith('```')) {
+                    content = content.replace(/```$/, '');
+                }
+            } else if (content.startsWith('```')) {
+                content = content.replace(/^```\n?/, '');
+                if (content.endsWith('```')) {
+                    content = content.replace(/```$/, '');
+                }
+            }
+            const parsed = JSON.parse(content.trim());
             return schema.parse(parsed) as T;
         } catch (firstError) {
             console.warn(
@@ -167,7 +179,21 @@ export class LLMClient {
             };
 
             const retryResponse = await this.generate(retryRequest);
-            const retryParsed = JSON.parse(retryResponse.content);
+            
+            let retryContent = retryResponse.content.trim();
+            if (retryContent.startsWith('```json')) {
+                retryContent = retryContent.replace(/^```json\n?/, '');
+                if (retryContent.endsWith('```')) {
+                    retryContent = retryContent.replace(/```$/, '');
+                }
+            } else if (retryContent.startsWith('```')) {
+                retryContent = retryContent.replace(/^```\n?/, '');
+                if (retryContent.endsWith('```')) {
+                    retryContent = retryContent.replace(/```$/, '');
+                }
+            }
+            
+            const retryParsed = JSON.parse(retryContent.trim());
             return schema.parse(retryParsed) as T;
         }
     }
