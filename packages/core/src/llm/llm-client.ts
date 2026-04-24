@@ -125,7 +125,7 @@ export class LLMClient {
      * ```
      */
     async generateObject<T>(request: LLMRequest, schema: ZodType<T>): Promise<T> {
-        const jsonSchema = zodToJsonSchema(schema) as Record<string, unknown>;
+        const jsonSchema = zodToJsonSchema(schema as any) as Record<string, unknown>;
 
         const structuredRequest: LLMRequest = {
             ...request,

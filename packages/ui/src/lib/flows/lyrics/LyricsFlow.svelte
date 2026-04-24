@@ -5,8 +5,10 @@
   import { toast } from '@lib/toast';
   import { FlowLayout } from '@lib/components';
   import LyricsModal from './components/LyricsModal.svelte';
+  import LyricsCanvas from './LyricsCanvas.svelte';
 
   let stats = $state<LyricsStats | null>(null);
+  let canvasTrackId = $state<string | null>(null);
   let tracks = $state<
     Array<{ id: string; title: string; artist: string; imageUrl: string | null; status: string }>
   >([]);
@@ -246,6 +248,21 @@
           </button>
         </div>
       </div>
+    {:else if canvasTrackId}
+      <div class="flex flex-col h-full">
+        <div class="p-4 border-b border-white/5">
+          <button
+            class="text-pulsar hover:text-white transition-colors flex items-center gap-2"
+            onclick={() => (canvasTrackId = null)}
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Back to Dashboard
+          </button>
+        </div>
+        <div class="flex-grow overflow-hidden relative">
+          <LyricsCanvas trackId={canvasTrackId} />
+        </div>
+      </div>
     {:else if stats}
       <!-- Stats Grid -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
@@ -336,7 +353,7 @@
                   <th class="p-4 font-medium">Title</th>
                   <th class="p-4 font-medium">Artist</th>
                   <th class="p-4 font-medium text-right">Status</th>
-                  <th class="p-4 font-medium w-10"></th>
+                  <th class="p-4 font-medium w-24 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5">
@@ -392,22 +409,36 @@
                       </span>
                     </td>
                     <td class="p-4 text-right">
-                      {#if track.status === 'not_found'}
-                        <button
-                          class="text-pulsar hover:text-white transition-colors p-1 rounded hover:bg-white/10"
-                          title="Retry Fetching"
-                          onclick={(e) => handleIndividualRetry(track.id, e)}
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            ><path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                            /></svg
+                      <div class="flex justify-end gap-2">
+                        {#if track.status === 'found'}
+                          <button
+                            class="text-cosmic hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+                            title="Open Canvas"
+                            onclick={(e) => {
+                              e.stopPropagation();
+                              canvasTrackId = track.id;
+                            }}
                           >
-                        </button>
-                      {/if}
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          </button>
+                        {/if}
+                        {#if track.status === 'not_found'}
+                          <button
+                            class="text-pulsar hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+                            title="Retry Fetching"
+                            onclick={(e) => handleIndividualRetry(track.id, e)}
+                          >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                              ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                              /></svg
+                            >
+                          </button>
+                        {/if}
+                      </div>
                     </td>
                   </tr>
                 {/each}

@@ -99,6 +99,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@flows/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@google/genai':
         specifier: ^1.39.0
         version: 1.39.0
@@ -179,6 +182,9 @@ importers:
       elysia:
         specifier: ^1.4.18
         version: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.2.5(@sinclair/typebox@0.34.41))(file-type@21.1.1)(openapi-types@12.1.3)(typescript@5.9.3)
+      zod:
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@types/better-sqlite3':
         specifier: ^7.6.13

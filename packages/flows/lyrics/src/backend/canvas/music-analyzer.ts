@@ -1,0 +1,76 @@
+import { LLMClient, logger } from '@flows/core';
+import type { TokenAST, Annotation } from '@flows/shared';
+import { musicalAnalysisSchema, type MusicalAnalysisResult } from './schemas';
+
+const log = logger.child({ module: 'CanvasMusicAnalyzer' });
+
+/**
+ * Formats the TokenAST into a flat, readable string with token IDs.
+ * This teaches the LLM which exact ID corresponds to which word.
+ */
+function formatAstForPrompt(ast: TokenAST): string {
+    let output = '';
+    
+    for (const section of ast.sections) {
+        output += `\n[${section.type}] (ID: ${section.id})\n`;
+        
+        for (const line of section.lines) {
+            const lineTokens = line.map(t => `${t.text}[${t.id}]`).join(' ');
+            output += `${lineTokens}\n`;
+        }
+    }
+    
+    return output.trim();
+}
+
+/**
+ * Analyzes the lyrics using the LLM to generate musical annotations.
+ */
+export async function analyzeLyrics(ast: TokenAST, trackTitle: string, artistName: string): Promise<MusicalAnalysisResult> {
+    const client = LLMClient.createRotation();
+    
+    const tokenizedLyrics = formatAstForPrompt(ast);
+    
+    const prompt = `
+You are an expert music producer and arranger. Your task is to analyze the lyrics of "${trackTitle}" by ${artistName} and provide musical annotations.
+
+I am providing you the lyrics where every word has a unique token ID attached to it, like this: word[t_001].
+When you want to annotate a word with a chord change or vocal technique, you MUST use the exact token ID provided.
+
+Here are the tokenized lyrics:
+---
+${tokenizedLyrics}
+---
+
+Your task:
+1. Provide CHORD annotations where harmonic changes typically occur. Use standard notation (e.g. Am, G, F#m).
+2. Provide VOCAL annotations where the singer uses specific techniques (e.g. Belt, Falsetto, Vibrato).
+3. Provide an overall META analysis (key, bpm, mood).
+
+Return the exact JSON structure requested. Do not invent token IDs. Only use the IDs present in the text above.
+`;
+
+    log.info({ trackTitle, artistName }, 'Starting LLM musical analysis');
+    
+    const startTime = Date.now();
+    
+    try {
+        const result = await client.generateObject(
+            {
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.2, // Low temperature for deterministic/factual analysis
+            },
+            musicalAnalysisSchema
+        );
+        
+        log.info({ 
+            latencyMs: Date.now() - startTime,
+            annotationsCount: result.annotations.length
+        }, 'LLM analysis completed successfully');
+        
+        return result;
+    } catch (error) {
+        log.error({ error, trackTitle }, 'Failed to generate musical analysis');
+        throw error;
+    }
+}
