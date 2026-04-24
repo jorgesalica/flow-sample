@@ -46,6 +46,7 @@ Your task:
 1. Provide CHORD annotations where harmonic changes typically occur. Use standard notation (e.g. Am, G, F#m). (At least 15-20 chords per song)
 2. Provide VOCAL annotations where the singer uses specific techniques (e.g. Belt, Falsetto, Vibrato). (At least 10-15 vocal techniques per song)
 3. Provide MEANING annotations to highlight lyrical context, metaphors, historical references, or thematic focus on specific phrases. (At least 10-15 meaning annotations per song)
+   - **CRITICAL RULE FOR MEANINGS**: If a meaning applies to an entire phrase or sentence, you MUST create a separate annotation for **EVERY SINGLE WORD** in that phrase with the exact same label and detail. Do NOT just annotate the first word.
 4. Provide an overall META analysis (key, bpm, mood).
 
 IMPORTANT DENSITY RULE: You are analyzing at a word-by-word level. Do NOT be sparse. Provide a dense, rich analysis. It is perfectly fine to have multiple annotations (from different layers) on the exact same token, or annotations on adjacent tokens.

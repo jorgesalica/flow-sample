@@ -82,7 +82,27 @@
   }
 
   onMount(() => {
+    // Restore canvas state from URL if present
+    const hash = window.location.hash;
+    if (hash.includes('?')) {
+      const query = new URLSearchParams(hash.split('?')[1]);
+      const trackId = query.get('canvasTrackId');
+      if (trackId) {
+        canvasTrackId = trackId;
+      }
+    }
     loadData(true);
+  });
+
+  // Sync state to URL
+  $effect(() => {
+    const hash = window.location.hash;
+    const basePath = hash.split('?')[0];
+    if (canvasTrackId) {
+      window.history.replaceState(null, '', `${basePath}?canvasTrackId=${canvasTrackId}`);
+    } else if (hash.includes('canvasTrackId')) {
+      window.history.replaceState(null, '', basePath);
+    }
   });
 
   async function handleFetchAllLyrics(retryFailed = false) {

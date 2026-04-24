@@ -23,7 +23,7 @@
     {#each tokenAst.sections as section}
         <section class="canvas-section">
             <header class="section-header">
-                <span class="section-type">{section.type}</span>
+                <span class="section-type">[ {section.type} ]</span>
             </header>
 
             <div class="section-content">
@@ -80,9 +80,9 @@
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        font-weight: 700;
-        color: var(--cosmic);
-        background: var(--surface-800);
+        font-weight: 800;
+        color: var(--primary-400);
+        background: rgba(30, 41, 59, 0.5);
         padding: 0.25rem 0.75rem;
         border-radius: 1rem;
         border: 1px solid var(--surface-700);
@@ -92,14 +92,14 @@
     .section-content {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.5rem;
     }
 
     .canvas-line {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
-        line-height: 3.5; /* Extra space for annotations */
+        column-gap: 0.5rem;
+        row-gap: 3.5rem; /* Separates wrapped lines far enough to prevent badge overlap */
     }
 
     .token {
@@ -126,8 +126,8 @@
 
     .layer-badge {
         position: absolute;
-        font-size: 0.65rem;
-        font-weight: 600;
+        font-size: 0.75rem; /* Increased for readability */
+        font-weight: 700;
         white-space: nowrap;
         pointer-events: none;
         opacity: 0.9;
@@ -141,7 +141,7 @@
 
     .layer-vocal {
         bottom: -1rem;
-        font-size: 0.5rem;
+        font-size: 0.7rem;
         color: #f59e0b;
     }
 
@@ -154,14 +154,20 @@
     .layer-meaning {
         bottom: -1rem;
         left: 0;
-        font-size: 0.5rem;
+        font-size: 0.7rem;
         color: #22d3ee;
-        opacity: 0.7;
+        opacity: 0.8;
+    }
+
+    .token.has-meaning {
+        /* Add a small margin to make dashed lines continuous if adjacent */
+        margin-right: -2px;
+        padding-right: 2px;
     }
 
     .token.has-meaning .token-text {
         border-bottom: 2px dashed rgba(34, 211, 238, 0.5);
-        padding-bottom: 2px;
+        padding-bottom: 4px;
     }
 
     .token.has-meaning:hover .token-text {
