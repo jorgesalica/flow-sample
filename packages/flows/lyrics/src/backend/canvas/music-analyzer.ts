@@ -43,10 +43,12 @@ ${tokenizedLyrics}
 ---
 
 Your task:
-1. Provide CHORD annotations where harmonic changes typically occur. Use standard notation (e.g. Am, G, F#m).
-2. Provide VOCAL annotations where the singer uses specific techniques (e.g. Belt, Falsetto, Vibrato).
-3. Provide MEANING annotations to highlight lyrical context, metaphors, historical references, or thematic focus on specific phrases.
+1. Provide CHORD annotations where harmonic changes typically occur. Use standard notation (e.g. Am, G, F#m). (At least 15-20 chords per song)
+2. Provide VOCAL annotations where the singer uses specific techniques (e.g. Belt, Falsetto, Vibrato). (At least 10-15 vocal techniques per song)
+3. Provide MEANING annotations to highlight lyrical context, metaphors, historical references, or thematic focus on specific phrases. (At least 10-15 meaning annotations per song)
 4. Provide an overall META analysis (key, bpm, mood).
+
+IMPORTANT DENSITY RULE: You are analyzing at a word-by-word level. Do NOT be sparse. Provide a dense, rich analysis. It is perfectly fine to have multiple annotations (from different layers) on the exact same token, or annotations on adjacent tokens.
 
 5. Return the exact JSON structure requested. Do not invent token IDs. Only use the IDs present in the text above.
 

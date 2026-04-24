@@ -33,7 +33,7 @@
                             {@const activeAnns = getActiveAnnotations(token.id, activeLayers)}
                             
                             <span 
-                                class="token" 
+                                class="token {activeAnns.map(a => 'has-' + a.layerId).join(' ')}" 
                                 class:annotated={activeAnns.length > 0}
                                 data-id={token.id}
                             >
@@ -79,8 +79,14 @@
     .section-type {
         font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--surface-400);
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        color: var(--cosmic);
+        background: var(--surface-800);
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        border: 1px solid var(--surface-700);
+        display: inline-block;
     }
 
     .section-content {
@@ -150,6 +156,16 @@
         left: 0;
         font-size: 0.5rem;
         color: #22d3ee;
-        border-bottom: 2px dashed #22d3ee;
+        opacity: 0.7;
+    }
+
+    .token.has-meaning .token-text {
+        border-bottom: 2px dashed rgba(34, 211, 238, 0.5);
+        padding-bottom: 2px;
+    }
+
+    .token.has-meaning:hover .token-text {
+        border-bottom-color: rgba(34, 211, 238, 1);
+        text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
     }
 </style>
