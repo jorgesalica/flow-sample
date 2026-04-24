@@ -209,6 +209,7 @@
         margin: 0;
         background: linear-gradient(to right, var(--primary-400), var(--secondary-400));
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
     }
 
