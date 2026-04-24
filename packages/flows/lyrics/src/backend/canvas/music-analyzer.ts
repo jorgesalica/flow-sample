@@ -47,7 +47,34 @@ Your task:
 2. Provide VOCAL annotations where the singer uses specific techniques (e.g. Belt, Falsetto, Vibrato).
 3. Provide an overall META analysis (key, bpm, mood).
 
-Return the exact JSON structure requested. Do not invent token IDs. Only use the IDs present in the text above.
+4. Return the exact JSON structure requested. Do not invent token IDs. Only use the IDs present in the text above.
+
+EXAMPLE JSON OUTPUT:
+\`\`\`json
+{
+  "annotations": [
+    {
+      "tokenId": "t_005",
+      "layerId": "chords",
+      "label": "Am",
+      "detail": "Sets a melancholic tone",
+      "symbol": "Am"
+    },
+    {
+      "tokenId": "t_012",
+      "layerId": "vocal",
+      "label": "Falsetto",
+      "detail": "Breathy voice to convey vulnerability",
+      "technique": "Falsetto"
+    }
+  ],
+  "meta": {
+    "key": "A minor",
+    "bpm": 120,
+    "mood": "Melancholic"
+  }
+}
+\`\`\`
 `;
 
     log.info({ trackTitle, artistName }, 'Starting LLM musical analysis');
