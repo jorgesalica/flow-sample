@@ -1,10 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { getCanvasAnalysis, analyzeCanvas, type CanvasStatusResponse } from './canvas-api';
+    import { getLyrics, interpretLyrics } from './api';
     import type { CanvasAnalysis } from '@flows/shared';
     import TokenRenderer from '@components/canvas/TokenRenderer.svelte';
     import LayerToggle from '@components/canvas/LayerToggle.svelte';
     import TokenTooltip from '@components/canvas/TokenTooltip.svelte';
+    import { marked } from 'marked';
+    import DOMPurify from 'dompurify';
 
     export let trackId: string;
 
@@ -16,13 +19,24 @@
     let statusInfo: CanvasStatusResponse['source'] | null = null;
     
     // UI State
-    let activeLayers: string[] = ['chords', 'vocal'];
+    let activeLayers: string[] = ['chords', 'vocal', 'meaning'];
     
     // Tooltip State
     let tooltipX = 0;
     let tooltipY = 0;
     let tooltipVisible = false;
     let tooltipAnnotations: any[] = [];
+
+    // Interpretation State
+    let interpretation: string | null = null;
+    let isInterpreting = false;
+
+    marked.setOptions({ breaks: true, gfm: true });
+
+    function renderMarkdown(text: string): string {
+        const rawHtml = marked.parse(text, { async: false }) as string;
+        return DOMPurify.sanitize(rawHtml);
+    }
 
     onMount(async () => {
         await loadData();
@@ -32,7 +46,15 @@
         loading = true;
         error = null;
         try {
-            const result = await getCanvasAnalysis(trackId);
+            const [result, lyricsResult] = await Promise.all([
+                getCanvasAnalysis(trackId),
+                getLyrics(trackId).catch(() => null)
+            ]);
+            
+            if (lyricsResult?.interpretation) {
+                interpretation = lyricsResult.interpretation;
+            }
+
             if ('needsAnalysis' in result) {
                 statusInfo = result.source || null;
             } else {
@@ -54,6 +76,33 @@
             error = err.message;
         } finally {
             analyzing = false;
+        }
+    }
+
+    async function handleGenerateMeaning() {
+        if (isInterpreting) return;
+        isInterpreting = true;
+        interpretation = '';
+        
+        try {
+            await interpretLyrics(trackId, (event) => {
+                switch (event.type) {
+                    case 'cached':
+                        interpretation = event.interpretation;
+                        isInterpreting = false;
+                        break;
+                    case 'delta':
+                        interpretation += event.delta;
+                        break;
+                    case 'done':
+                    case 'error':
+                        isInterpreting = false;
+                        break;
+                }
+            });
+        } catch (e) {
+            console.error('Interpretation failed:', e);
+            isInterpreting = false;
         }
     }
 
@@ -169,15 +218,46 @@
 
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <main 
-            class="canvas-main" 
+            class="canvas-layout" 
             on:mousemove={handleTokenHover}
             on:mouseleave={handleMouseLeave}
         >
-            <TokenRenderer 
-                tokenAst={analysis.tokenAst} 
-                annotations={analysis.annotations}
-                activeLayers={activeLayers}
-            />
+            <div class="canvas-main">
+                <TokenRenderer 
+                    tokenAst={analysis.tokenAst} 
+                    annotations={analysis.annotations}
+                    activeLayers={activeLayers}
+                />
+            </div>
+            
+            <aside class="canvas-sidebar">
+                <div class="sidebar-header">
+                    <h3>Song Meaning</h3>
+                </div>
+                
+                <div class="sidebar-content">
+                    {#if interpretation}
+                        <div class="prose prose-invert prose-sm">
+                            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                            {@html renderMarkdown(interpretation)}
+                            {#if isInterpreting}
+                                <span class="inline-block w-0.5 h-4 bg-aurora animate-pulse ml-0.5 align-text-bottom"></span>
+                            {/if}
+                        </div>
+                    {:else}
+                        <div class="empty-meaning">
+                            <p>No overarching meaning analysis found.</p>
+                            <button class="btn small mt-4" on:click={handleGenerateMeaning} disabled={isInterpreting}>
+                                {#if isInterpreting}
+                                    <div class="spinner small"></div> Generating...
+                                {:else}
+                                    Generate Meaning
+                                {/if}
+                            </button>
+                        </div>
+                    {/if}
+                </div>
+            </aside>
         </main>
         
         <TokenTooltip 
@@ -340,10 +420,53 @@
         color: var(--surface-300);
     }
 
-    .canvas-main {
-        max-width: 1000px;
+    .canvas-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        max-width: 1400px;
         margin: 0 auto;
         padding: 2rem;
         width: 100%;
+        align-items: flex-start;
+    }
+
+    .canvas-main {
+        width: 100%;
+    }
+
+    .canvas-sidebar {
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid var(--surface-800);
+        border-radius: 1rem;
+        overflow: hidden;
+        position: sticky;
+        top: 120px; /* offset from header */
+    }
+
+    .sidebar-header {
+        background: rgba(15, 23, 42, 0.8);
+        border-bottom: 1px solid var(--surface-800);
+        padding: 1rem 1.5rem;
+    }
+
+    .sidebar-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--aurora);
+    }
+
+    .sidebar-content {
+        padding: 1.5rem;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .empty-meaning {
+        text-align: center;
+        color: var(--surface-400);
+        padding: 2rem 0;
     }
 </style>

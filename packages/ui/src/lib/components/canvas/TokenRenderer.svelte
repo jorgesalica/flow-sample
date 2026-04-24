@@ -144,4 +144,12 @@
         right: -1rem;
         color: #818cf8;
     }
+
+    .layer-meaning {
+        bottom: -1rem;
+        left: 0;
+        font-size: 0.5rem;
+        color: #22d3ee;
+        border-bottom: 2px dashed #22d3ee;
+    }
 </style>

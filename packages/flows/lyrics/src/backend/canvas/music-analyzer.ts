@@ -45,9 +45,10 @@ ${tokenizedLyrics}
 Your task:
 1. Provide CHORD annotations where harmonic changes typically occur. Use standard notation (e.g. Am, G, F#m).
 2. Provide VOCAL annotations where the singer uses specific techniques (e.g. Belt, Falsetto, Vibrato).
-3. Provide an overall META analysis (key, bpm, mood).
+3. Provide MEANING annotations to highlight lyrical context, metaphors, historical references, or thematic focus on specific phrases.
+4. Provide an overall META analysis (key, bpm, mood).
 
-4. Return the exact JSON structure requested. Do not invent token IDs. Only use the IDs present in the text above.
+5. Return the exact JSON structure requested. Do not invent token IDs. Only use the IDs present in the text above.
 
 EXAMPLE JSON OUTPUT:
 \`\`\`json
@@ -66,6 +67,13 @@ EXAMPLE JSON OUTPUT:
       "label": "Falsetto",
       "detail": "Breathy voice to convey vulnerability",
       "technique": "Falsetto"
+    },
+    {
+      "tokenId": "t_015",
+      "layerId": "meaning",
+      "label": "Metaphor",
+      "detail": "The 'dark water' represents the singer's struggle with depression.",
+      "context": "Mental Health"
     }
   ],
   "meta": {

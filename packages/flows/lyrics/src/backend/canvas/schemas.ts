@@ -24,10 +24,19 @@ export const productionAnnotationSchema = z.object({
     effect: z.string(),
 });
 
+export const meaningAnnotationSchema = z.object({
+    tokenId: z.string(),
+    layerId: z.literal('meaning'),
+    label: z.string().describe('Short label for the meaning (e.g. Metaphor, Reference, Theme)'),
+    detail: z.string().describe('Detailed explanation of the lyrical meaning context for this specific phrase'),
+    context: z.string().describe('The broad theme this relates to'),
+});
+
 export const musicAnnotationSchema = z.discriminatedUnion('layerId', [
     chordAnnotationSchema,
     vocalAnnotationSchema,
     productionAnnotationSchema,
+    meaningAnnotationSchema,
 ]);
 
 export const musicalAnalysisSchema = z.object({

@@ -101,7 +101,8 @@ export const canvasRoutes = new Elysia({ prefix: '/:trackId/canvas' })
         const layers = [
             { id: 'chords', name: 'Chords', icon: '🎸', color: '#4ade80' },
             { id: 'vocal', name: 'Vocal', icon: '🎤', color: '#f59e0b' },
-            { id: 'production', name: 'Production', icon: '🎛️', color: '#818cf8' }
+            { id: 'production', name: 'Production', icon: '🎛️', color: '#818cf8' },
+            { id: 'meaning', name: 'Meaning', icon: '💡', color: '#22d3ee' }
         ];
 
         const analysis: CanvasAnalysis = {
