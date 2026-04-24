@@ -96,6 +96,7 @@ EXAMPLE JSON OUTPUT:
             {
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.2, // Low temperature for deterministic/factual analysis
+                maxTokens: 8192,  // Ensure the model has enough tokens for high density output
             },
             musicalAnalysisSchema
         );

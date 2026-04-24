@@ -72,6 +72,11 @@
         error = null;
         try {
             analysis = await analyzeCanvas(trackId);
+            
+            // Auto-generate the overarching meaning if it doesn't exist
+            if (!interpretation && !isInterpreting) {
+                handleGenerateMeaning(); // fire and forget (streams into UI)
+            }
         } catch (err: any) {
             error = err.message;
         } finally {
