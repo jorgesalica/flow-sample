@@ -1,37 +1,32 @@
 import { randomUUID } from 'crypto';
-import { createLLMClient } from '@flows/core';
-import type { ChatConversation, ChatMessage, ChatProviderOption } from '@flows/shared';
+import { LLMClient } from '@flows/core';
+import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
 import { chatDb } from '../database';
 
 export class ChatService {
-    private llmClient;
-
-    constructor() {
-        this.llmClient = createLLMClient();
-    }
+    private rotationClient: LLMClient | null = null;
 
     /**
-     * Get available models dynamically from the connected LLM provider
+     * Get model catalog grouped by provider (for the provider/model selector).
      */
-    async getModels(): Promise<ChatProviderOption[]> {
-        try {
-            const models = await this.llmClient.listModels();
-            return models.map(id => {
-                // Formatting name nicely e.g. gemini-2.5-flash -> Gemini 2.5 Flash
-                let name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                return { id, name, provider: this.llmClient.providerName };
-            });
-        } catch (e) {
-            console.error('[ChatService] Failed to list models:', e);
-            return [];
-        }
+    getModelCatalog(): ChatProviderGroup[] {
+        return LLMClient.getModelCatalogGrouped().map((g) => ({
+            provider: g.provider,
+            models: g.models.map((m) => ({
+                id: m.id,
+                name: m.name,
+                tier: m.tier,
+                pricing: m.pricing,
+                contextWindow: m.contextWindow,
+                description: m.description,
+            })),
+        }));
     }
 
     /**
      * Fetch all conversations.
      */
     getConversations(): ChatConversation[] {
-        console.log('[ChatService] Fetching all conversations...');
         return chatDb.getConversations();
     }
 
@@ -46,80 +41,153 @@ export class ChatService {
      * Fetch messages for a conversation.
      */
     getMessages(conversationId: string): ChatMessage[] {
-        console.log(`[ChatService] Fetching messages for conversation: ${conversationId}`);
         return chatDb.getMessages(conversationId);
     }
 
     /**
-     * Send a message and get an AI response.
+     * Send a message and get an AI response (non-streaming).
      */
-    async sendMessage(conversationId: string, content: string, requestedModel?: string): Promise<{ userMessage: ChatMessage, assistantMessage: ChatMessage }> {
-        console.log(`[ChatService] Sending message to ${conversationId} using model ${requestedModel || this.llmClient.defaultModel}...`);
+    async sendMessage(
+        conversationId: string,
+        content: string,
+        mode: ChatMode = 'specific',
+        model?: string,
+    ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
+        console.log(`[ChatService] mode=${mode} model=${model || 'auto'} conv=${conversationId}`);
 
-        // 1. Create or ensure conversation exists
-        let isNew = false;
-        try {
-            const existing = chatDb.getConversations().find(c => c.id === conversationId);
-            if (!existing) {
-                isNew = true;
-                chatDb.createConversation({
-                    id: conversationId,
-                    title: content.slice(0, 30) + (content.length > 30 ? '...' : ''), // Auto-title from first msg
-                    createdAt: Date.now(),
-                    updatedAt: Date.now()
-                });
+        this.ensureConversation(conversationId, content);
+
+        // Save user message
+        const userMsg = this.createUserMessage(conversationId, content);
+        chatDb.addMessage(userMsg);
+
+        // Build context and generate
+        const llmMessages = this.buildLLMMessages(conversationId);
+
+        const response =
+            mode === 'rotation'
+                ? await this.getRotationClient().generate({ messages: llmMessages })
+                : await LLMClient.generateForProvider(model!, { messages: llmMessages });
+
+        console.log(
+            `[ChatService] ${response.provider}/${response.model} responded in ${response.latencyMs}ms (${response.usage.totalTokens} tokens)`,
+        );
+
+        const assistantMsg: ChatMessage = {
+            id: randomUUID(),
+            conversationId,
+            role: 'assistant',
+            content: response.content,
+            modelUsed: response.model,
+            providerUsed: response.provider,
+            createdAt: Date.now(),
+        };
+        chatDb.addMessage(assistantMsg);
+
+        return { userMessage: userMsg, assistantMessage: assistantMsg };
+    }
+
+    /**
+     * Streaming version of sendMessage.
+     * Yields SSE `data: {...}\n\n` lines which the route writes to the response stream.
+     */
+    async *sendMessageStream(
+        conversationId: string,
+        content: string,
+        mode: ChatMode = 'specific',
+        model?: string,
+    ): AsyncGenerator<string> {
+        console.log(`[ChatService] STREAM mode=${mode} model=${model || 'auto'} conv=${conversationId}`);
+
+        this.ensureConversation(conversationId, content);
+
+        // Save user message
+        const userMsg = this.createUserMessage(conversationId, content);
+        chatDb.addMessage(userMsg);
+        yield `data: ${JSON.stringify({ type: 'user_message', message: userMsg })}\n\n`;
+
+        // Build context and stream
+        const llmMessages = this.buildLLMMessages(conversationId);
+        const stream =
+            mode === 'rotation'
+                ? this.getRotationClient().generateStream({ messages: llmMessages })
+                : LLMClient.generateStreamForProvider(model!, { messages: llmMessages });
+
+        let fullContent = '';
+        let providerUsed = '';
+        let modelUsed = '';
+
+        for await (const event of stream) {
+            if (event.done && event.response) {
+                providerUsed = event.response.provider;
+                modelUsed = event.response.model;
+            } else if (event.delta) {
+                fullContent += event.delta;
+                yield `data: ${JSON.stringify({ type: 'delta', delta: event.delta })}\n\n`;
             }
-        } catch (e) {
-            console.error("Error creating conversation", e);
-            throw e;
         }
 
-        // 2. Save user message
-        const userMsg: ChatMessage = {
+        // Save assistant message
+        const assistantMsg: ChatMessage = {
+            id: randomUUID(),
+            conversationId,
+            role: 'assistant',
+            content: fullContent,
+            modelUsed,
+            providerUsed,
+            createdAt: Date.now(),
+        };
+        chatDb.addMessage(assistantMsg);
+
+        console.log(`[ChatService] STREAM complete ${providerUsed}/${modelUsed} (${fullContent.length} chars)`);
+        yield `data: ${JSON.stringify({ type: 'done', message: assistantMsg })}\n\n`;
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────
+
+    private ensureConversation(conversationId: string, content: string): void {
+        const existing = chatDb.getConversations().find((c) => c.id === conversationId);
+        if (!existing) {
+            chatDb.createConversation({
+                id: conversationId,
+                title: content.slice(0, 30) + (content.length > 30 ? '...' : ''),
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+            });
+        }
+    }
+
+    private createUserMessage(conversationId: string, content: string): ChatMessage {
+        return {
             id: randomUUID(),
             conversationId,
             role: 'user',
             content,
-            modelUsed: '', // User messages don't use models
-            createdAt: Date.now()
+            modelUsed: '',
+            createdAt: Date.now(),
         };
-        chatDb.addMessage(userMsg);
+    }
 
-        // 3. Build context from previous messages + system prompt
+    private buildLLMMessages(conversationId: string) {
         const history = chatDb.getMessages(conversationId);
-
-        const llmMessages = [
-            { role: 'system' as const, content: 'You are a helpful AI assistant. Format your replies using standard Markdown.' },
-            ...history.map(msg => ({
-                role: msg.role === 'system' ? 'system' as const : msg.role === 'user' ? 'user' as const : 'assistant' as const,
-                content: msg.content
-            }))
+        return [
+            {
+                role: 'system' as const,
+                content:
+                    'You are a helpful AI assistant. Format your replies using standard Markdown. ' +
+                    'Never start your reply with a heading (# or ## or ###). Begin with normal text.',
+            },
+            ...history.map((msg) => ({
+                role: msg.role === 'user' ? ('user' as const) : ('assistant' as const),
+                content: msg.content,
+            })),
         ];
+    }
 
-        // 4. Generate LLM response
-        console.log(`[ChatService] Calling LLM API (${llmMessages.length} messages in context)...`);
-        try {
-            const response = await this.llmClient.generate({
-                messages: llmMessages,
-                model: requestedModel || this.llmClient.defaultModel
-            });
-            console.log(`[ChatService] LLM API responded in ${response.latencyMs}ms (${response.usage.totalTokens} tokens)`);
-
-            // 5. Save assistant message
-            const assistantMsg: ChatMessage = {
-                id: randomUUID(),
-                conversationId,
-                role: 'assistant',
-                content: response.content,
-                modelUsed: response.model,
-                createdAt: Date.now()
-            };
-            chatDb.addMessage(assistantMsg);
-
-            return { userMessage: userMsg, assistantMessage: assistantMsg };
-        } catch (error) {
-            console.error('[ChatService] Error generating LLM response:', error);
-            throw error;
+    private getRotationClient(): LLMClient {
+        if (!this.rotationClient) {
+            this.rotationClient = LLMClient.createRotation();
         }
+        return this.rotationClient;
     }
 }

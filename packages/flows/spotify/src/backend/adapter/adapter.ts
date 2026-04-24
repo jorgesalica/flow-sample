@@ -7,9 +7,10 @@ import type {
   SpotifySavedTrack,
   SpotifyPaging,
   SpotifyTokenResponse,
-  SpotifyArtistsResponse,
+  SpotifyArtistFull,
 } from './types.js';
 import { logger } from '@flows/core';
+import { ArtistCacheRepository } from '../artist-cache.repository';
 
 const log = logger.child({ module: 'SpotifyApiAdapter' });
 
@@ -25,12 +26,14 @@ export class SpotifyApiAdapter implements SourcePort {
   private client: AxiosInstance;
   private accessToken: string | null = null;
   private tokenRepository?: SQLiteTokenRepository;
+  private artistCache: ArtistCacheRepository;
 
   constructor(
     private config: SpotifyConfig,
     tokenRepository?: SQLiteTokenRepository,
   ) {
     this.tokenRepository = tokenRepository;
+    this.artistCache = new ArtistCacheRepository();
     this.client = axios.create({
       baseURL: 'https://api.spotify.com/v1',
     });
@@ -244,7 +247,6 @@ export class SpotifyApiAdapter implements SourcePort {
       },
       addedAt: item.added_at,
       durationMs: t.duration_ms || 0,
-      popularity: t.popularity,
       previewUrl: t.preview_url || undefined,
       spotifyUrl: t.id ? `https://open.spotify.com/track/${t.id}` : undefined,
     };
@@ -252,8 +254,8 @@ export class SpotifyApiAdapter implements SourcePort {
 
   /**
    * Fetch genres and images for a list of artist IDs.
-   * Spotify API allows up to 50 artists per request.
-   * Returns a Map of artistId -> { genres: string[], imageUrl?: string }
+   * Uses SQLite cache first, then fetches misses individually via GET /artists/{id}.
+   * (Feb 2026 migration: batch GET /artists was removed)
    */
   async fetchArtistDetails(
     artistIds: string[],
@@ -263,39 +265,65 @@ export class SpotifyApiAdapter implements SourcePort {
     const detailsMap = new Map<string, { genres: string[]; imageUrl?: string }>();
     const uniqueIds = [...new Set(artistIds)];
 
-    log.info({ artistCount: uniqueIds.length }, 'Fetching artist details from Spotify');
+    // 1. Check cache first
+    const { cached, misses } = this.artistCache.getMany(uniqueIds);
+    for (const [id, entry] of cached) {
+      detailsMap.set(id, { genres: entry.genres, imageUrl: entry.imageUrl });
+    }
 
-    // Batch in chunks of 50 (Spotify limit)
-    const batchSize = 50;
-    for (let i = 0; i < uniqueIds.length; i += batchSize) {
-      const batch = uniqueIds.slice(i, i + batchSize);
-      const ids = batch.join(',');
+    if (misses.length === 0) {
+      log.info({ artistCount: uniqueIds.length, allCached: true }, 'All artist details from cache');
+      return detailsMap;
+    }
 
-      try {
-        const response: AxiosResponse<SpotifyArtistsResponse> = await this.client.get(
-          `/artists?ids=${ids}`,
-        );
+    log.info(
+      { total: uniqueIds.length, cached: cached.size, toFetch: misses.length },
+      'Fetching uncached artist details individually',
+    );
 
-        if (!response.data?.artists) {
-          continue;
+    // 2. Fetch misses individually — conservative to avoid 429s
+    //    First sync is slow (~10 min for 2000+ artists) but subsequent syncs are instant from cache.
+    const concurrency = 2;
+    const delayMs = 500;
+    let fetched = 0;
+
+    for (let i = 0; i < misses.length; i += concurrency) {
+      const batch = misses.slice(i, i + concurrency);
+
+      const results = await Promise.allSettled(
+        batch.map(async (id) => {
+          const response: AxiosResponse<SpotifyArtistFull> = await this.client.get(
+            `/artists/${id}`,
+          );
+          return response.data;
+        }),
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          const artist = result.value;
+          const image =
+            artist.images?.find((img) => img.width === 160) || artist.images?.[0];
+          const genres = artist.genres || [];
+          const imageUrl = image?.url;
+
+          detailsMap.set(artist.id, { genres, imageUrl });
+          this.artistCache.set(artist.id, genres, imageUrl);
+          fetched++;
         }
+      }
 
-        for (const artist of response.data.artists) {
-          if (artist) {
-            // Get small image (160px) for artist avatar
-            const image = artist.images?.find((img) => img.width === 160) || artist.images?.[0];
-            detailsMap.set(artist.id, {
-              genres: artist.genres || [],
-              imageUrl: image?.url,
-            });
-          }
-        }
-      } catch (error) {
-        // Log but don't fail the whole operation
-        log.error(
-          { batchStart: i, error: error instanceof Error ? error.message : 'Unknown' },
-          'Failed to fetch artist details batch',
+      // Progress logging every 50 artists
+      if (fetched % 50 < concurrency && fetched > 0) {
+        log.info(
+          { fetched, total: misses.length, pct: Math.round((fetched / misses.length) * 100) },
+          'Artist fetch progress',
         );
+      }
+
+      // Respectful delay between requests
+      if (i + concurrency < misses.length) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
 

@@ -1,24 +1,33 @@
 import { writable, get } from 'svelte/store';
-import type { ChatConversation, ChatMessage, ChatProviderOption } from '@flows/shared';
+import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
+import { showError } from '@lib/toast';
 import * as api from './api';
 
 function createChatStore() {
   const { subscribe, update } = writable<{
-    models: ChatProviderOption[];
-    selectedModel: string;
+    catalog: ChatProviderGroup[];
+    selectedModel: string; // "provider:modelId" format
+    chatMode: ChatMode;
+    lastProvider: string; // provider that answered last (for rotation badge)
+    lastModel: string; // model that answered last
     conversations: ChatConversation[];
     activeConversationId: string | null;
     messages: ChatMessage[];
     isLoading: boolean;
-    error: string | null;
+    isStreaming: boolean;
+    streamingContent: string; // partial content being streamed
   }>({
-    models: [],
+    catalog: [],
     selectedModel: '',
+    chatMode: 'specific',
+    lastProvider: '',
+    lastModel: '',
     conversations: [],
     activeConversationId: null,
     messages: [],
     isLoading: false,
-    error: null,
+    isStreaming: false,
+    streamingContent: '',
   });
 
   return {
@@ -26,29 +35,34 @@ function createChatStore() {
 
     async init() {
       try {
-        const [models, conversations] = await Promise.all([
-          api.fetchModels(),
+        const [catalog, conversations] = await Promise.all([
+          api.fetchModelCatalog(),
           api.fetchConversations(),
         ]);
 
+        // Default: first model of first provider
         let defaultModel = '';
-        if (models.length > 0) {
-          defaultModel = models[0].id; // default to first
+        if (catalog.length > 0 && catalog[0].models.length > 0) {
+          defaultModel = `${catalog[0].provider}:${catalog[0].models[0].id}`;
         }
 
         update((s) => ({
           ...s,
-          models,
+          catalog,
           selectedModel: defaultModel,
           conversations,
         }));
       } catch (e: unknown) {
-        update((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }));
+        showError(e instanceof Error ? e.message : String(e));
       }
     },
 
-    setModel(modelId: string) {
-      update((s) => ({ ...s, selectedModel: modelId }));
+    setModel(providerAndModel: string) {
+      update((s) => ({ ...s, selectedModel: providerAndModel }));
+    },
+
+    setMode(mode: ChatMode) {
+      update((s) => ({ ...s, chatMode: mode }));
     },
 
     async loadConversation(id: string) {
@@ -57,22 +71,17 @@ function createChatStore() {
         isLoading: true,
         activeConversationId: id,
         messages: [],
-        error: null,
       }));
       try {
         const messages = await api.fetchMessages(id);
         update((s) => ({ ...s, messages, isLoading: false }));
       } catch (e: unknown) {
-        update((s) => ({
-          ...s,
-          error: e instanceof Error ? e.message : String(e),
-          isLoading: false,
-        }));
+        showError(e instanceof Error ? e.message : String(e));
+        update((s) => ({ ...s, isLoading: false }));
       }
     },
 
     startNewConversation() {
-      // we don't save to DB until first message, just reset UI
       const newId = crypto.randomUUID();
       update((s) => ({
         ...s,
@@ -93,7 +102,7 @@ function createChatStore() {
           return { ...s, conversations, activeConversationId, messages };
         });
       } catch (e: unknown) {
-        update((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }));
+        showError(e instanceof Error ? e.message : String(e));
       }
     },
 
@@ -103,12 +112,12 @@ function createChatStore() {
         this.startNewConversation();
       }
 
-      // get updated state
       const currentState = get(this);
       const convId = currentState.activeConversationId!;
-      const model = currentState.selectedModel;
+      const mode = currentState.chatMode;
+      const model = mode === 'specific' ? currentState.selectedModel : undefined;
 
-      // Optimistic update for user message
+      // Optimistic user message
       const tempUserMsg: ChatMessage = {
         id: 'temp-' + Date.now(),
         conversationId: convId,
@@ -122,37 +131,68 @@ function createChatStore() {
         ...s,
         messages: [...s.messages, tempUserMsg],
         isLoading: true,
+        isStreaming: true,
+        streamingContent: '',
       }));
 
       try {
-        const { userMessage, assistantMessage } = await api.sendMessage(convId, content, model);
+        await api.sendMessageStream(convId, content, mode, model, (event) => {
+          switch (event.type) {
+            case 'user_message':
+              // Replace temp user message with server version
+              update((s) => ({
+                ...s,
+                messages: s.messages.map((m) => (m.id === tempUserMsg.id ? event.message : m)),
+              }));
+              break;
 
-        // Real update
-        update((s) => {
-          // Update messages: replace temp with real user msg, add assistant msg
-          const msgs = s.messages.filter((m) => m.id !== tempUserMsg.id);
-          // Also refresh conversations (title might have changed or it's new)
-          api.fetchConversations().then((conversations) => {
-            update((inner) => ({ ...inner, conversations }));
-          });
+            case 'delta':
+              update((s) => ({
+                ...s,
+                streamingContent: s.streamingContent + event.delta,
+              }));
+              break;
 
-          return {
-            ...s,
-            messages: [...msgs, userMessage, assistantMessage],
-            isLoading: false,
-          };
+            case 'done':
+              update((s) => ({
+                ...s,
+                messages: [...s.messages, event.message],
+                lastProvider: event.message.providerUsed || '',
+                lastModel: event.message.modelUsed || '',
+                isLoading: false,
+                isStreaming: false,
+                streamingContent: '',
+              }));
+              // Refresh conversation list in background
+              api.fetchConversations().then((conversations) => {
+                update((inner) => ({ ...inner, conversations }));
+              });
+              break;
+
+            case 'error':
+              console.error('[ChatStore] Stream error:', event.error);
+              showError(event.error);
+              update((s) => ({
+                ...s,
+                isLoading: false,
+                isStreaming: false,
+                streamingContent: '',
+              }));
+              break;
+          }
         });
       } catch (e: unknown) {
         update((s) => {
-          // Remove temp on failure
           const msgs = s.messages.filter((m) => m.id !== tempUserMsg.id);
           return {
             ...s,
             messages: msgs,
-            error: e instanceof Error ? e.message : String(e),
             isLoading: false,
+            isStreaming: false,
+            streamingContent: '',
           };
         });
+        showError(e instanceof Error ? e.message : String(e));
       }
     },
   };

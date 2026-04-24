@@ -17,8 +17,7 @@ export interface SearchOptions {
     q?: string;
     genre?: string;
     year?: number;
-    minPopularity?: number;
-    sortBy?: 'added_at' | 'popularity' | 'title';
+    sortBy?: 'added_at' | 'title';
     sortOrder?: 'asc' | 'desc';
 }
 

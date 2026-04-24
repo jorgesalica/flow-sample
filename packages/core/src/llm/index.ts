@@ -1,99 +1,54 @@
-import { BaseLLMProvider, type LLMRequest, type LLMResponse } from './providers/base-provider';
-import { GeminiProvider } from './providers/gemini-provider';
-
-export type LLMProviderType = 'gemini' | 'groq' | 'openai';
-
 /**
- * LLMClient: Factory for creating LLM provider instances.
+ * @flows/core/llm — Entry point
  *
- * Usage:
- * ```ts
- * const client = new LLMClient('gemini', process.env.GEMINI_API_KEY!);
- * const response = await client.generate({ messages: [...] });
- * ```
+ * Re-exports the LLMClient, factory, types, and all providers.
  */
-export class LLMClient {
-    private provider: BaseLLMProvider;
 
-    constructor(providerType: LLMProviderType = 'gemini', apiKey?: string) {
-        const key = apiKey || this.getApiKeyForProvider(providerType);
+// ── Client ───────────────────────────────────────────────────────────
+export { LLMClient, type LLMProviderType } from './llm-client';
 
-        if (!key) {
-            throw new Error(
-                `API key not found for provider: ${providerType}. Set the appropriate environment variable.`,
-            );
-        }
-
-        switch (providerType) {
-            case 'gemini':
-                this.provider = new GeminiProvider(key);
-                break;
-            case 'groq':
-                // Groq provider not implemented yet, fall back to Gemini
-                console.warn('[LLMClient] Groq provider not implemented, falling back to Gemini');
-                this.provider = new GeminiProvider(key);
-                break;
-            case 'openai':
-                // OpenAI provider not implemented yet, fall back to Gemini
-                console.warn('[LLMClient] OpenAI provider not implemented, falling back to Gemini');
-                this.provider = new GeminiProvider(key);
-                break;
-            default:
-                throw new Error(`Unsupported LLM provider: ${providerType}`);
-        }
-    }
-
-    /**
-     * Generate a completion from the LLM.
-     */
-    async generate(request: LLMRequest): Promise<LLMResponse> {
-        return this.provider.generate(request);
-    }
-
-    /**
-     * List available models dynamically from the provider.
-     */
-    async listModels(): Promise<string[]> {
-        return this.provider.listModels();
-    }
-
-    /**
-     * Get the default model for the current provider.
-     */
-    get defaultModel(): string {
-        return this.provider.defaultModel;
-    }
-
-    /**
-     * Get the provider name.
-     */
-    get providerName(): string {
-        return this.provider.providerName;
-    }
-
-    /**
-     * Get API key from environment variables based on provider type.
-     */
-    private getApiKeyForProvider(providerType: LLMProviderType): string | undefined {
-        switch (providerType) {
-            case 'gemini':
-                return process.env.GEMINI_API_KEY;
-            case 'groq':
-                return process.env.GROQ_API_KEY;
-            case 'openai':
-                return process.env.OPENAI_API_KEY;
-            default:
-                return undefined;
-        }
-    }
-}
+// ── Factory ──────────────────────────────────────────────────────────
+import { LLMClient, type LLMProviderType } from './llm-client';
 
 /**
- * Create an LLMClient using environment variables for configuration.
+ * Create an LLMClient using environment variables.
+ *
+ * - LLM_PROVIDER=rotation → rotates across free providers
+ * - LLM_PROVIDER=groq     → uses Groq directly
+ * - Defaults to gemini
  */
 export function createLLMClient(): LLMClient {
-    const providerType = (process.env.LLM_PROVIDER || 'gemini') as LLMProviderType;
-    return new LLMClient(providerType);
+    const providerType = process.env.LLM_PROVIDER || 'gemini';
+
+    if (providerType === 'rotation') {
+        return LLMClient.createRotation();
+    }
+
+    return new LLMClient(providerType as LLMProviderType);
 }
 
-export default LLMClient;
+// ── Types ────────────────────────────────────────────────────────────
+export type {
+    LLMMessage,
+    LLMRequest,
+    LLMResponse,
+    LLMUsage,
+    ModelTier,
+    ModelPricing,
+    ModelInfo,
+} from './providers/types';
+
+// ── Providers ────────────────────────────────────────────────────────
+export { BaseLLMProvider } from './providers/base-provider';
+export { GeminiProvider } from './providers/gemini/gemini-provider';
+export { GroqProvider } from './providers/groq/groq-provider';
+export { OpenRouterProvider } from './providers/openrouter/openrouter-provider';
+export { CerebrasProvider } from './providers/cerebras/cerebras-provider';
+export { MistralProvider } from './providers/mistral/mistral-provider';
+
+// ── Model catalogs ──────────────────────────────────────────────────
+export { GEMINI_MODELS } from './providers/gemini/models';
+export { GROQ_MODELS } from './providers/groq/models';
+export { OPENROUTER_MODELS } from './providers/openrouter/models';
+export { CEREBRAS_MODELS } from './providers/cerebras/models';
+export { MISTRAL_MODELS } from './providers/mistral/models';

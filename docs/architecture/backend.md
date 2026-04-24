@@ -46,6 +46,43 @@ Flows import the shared database instance:
 import { db } from '@flows/core';
 ```
 
+## LLM Provider Architecture
+
+The `@flows/core/llm` module provides a unified interface for multiple LLM providers.
+
+```text
+@flows/core/src/llm/
+├── llm-client.ts          # LLMClient class (Direct + Rotation modes)
+├── index.ts               # Barrel: re-exports + createLLMClient() factory
+└── providers/
+    ├── types.ts            # Shared types (LLMMessage, ModelInfo, ModelTier, etc.)
+    ├── base-provider.ts    # Abstract BaseLLMProvider
+    ├── gemini/             # Google Gemini (paid, @google/genai SDK)
+    ├── groq/               # GroqCloud (free, OpenAI-compatible)
+    ├── openrouter/         # OpenRouter aggregator (free :free models)
+    ├── cerebras/           # Cerebras (free, 1M tokens/day)
+    └── mistral/            # Mistral La Plateforme (free experiment tier)
+```
+
+Each provider has:
+
+- `models.ts` — Static catalog with `{ id, name, tier, pricing, contextWindow }`
+- `*-provider.ts` — Extends `BaseLLMProvider`, implements `generate()`, `listModels()`, etc.
+
+**Model tiers:** `very_high` (frontier), `high` (near-frontier), `medium` (generalist), `low` (fast/light).
+
+**Two client modes:**
+
+```typescript
+// Direct: use specific provider
+const client = new LLMClient('groq');
+
+// Rotation: round-robin across free providers (fallback on 429)
+const client = LLMClient.createRotation();
+```
+
+Configure via `.env`: `LLM_PROVIDER=rotation` or `LLM_PROVIDER=groq`.
+
 ## Data Flow (Example: Spotify Sync)
 
 ```mermaid

@@ -13,7 +13,6 @@
   // Local filter values (synced with store)
   let selectedGenre = $state($searchOptions.genre || '');
   let selectedYear = $state($searchOptions.year?.toString() || '');
-  let minPopularity = $state($searchOptions.minPopularity || 0);
   let sortBy = $state($searchOptions.sortBy || 'added_at');
   let sortOrder = $state($searchOptions.sortOrder || 'desc');
 
@@ -21,7 +20,6 @@
   let activeFilterCount = $derived(
     (selectedGenre ? 1 : 0) +
       (selectedYear ? 1 : 0) +
-      (minPopularity > 0 ? 1 : 0) +
       (sortBy !== 'added_at' || sortOrder !== 'desc' ? 1 : 0)
   );
 
@@ -42,8 +40,7 @@
     loadTracks({
       genre: selectedGenre || undefined,
       year: selectedYear ? parseInt(selectedYear) : undefined,
-      minPopularity: minPopularity > 0 ? minPopularity : undefined,
-      sortBy: sortBy as 'added_at' | 'popularity' | 'title',
+      sortBy: sortBy as 'added_at' | 'title',
       sortOrder: sortOrder as 'asc' | 'desc',
       page: 1,
     });
@@ -53,11 +50,9 @@
   function clearFilters() {
     selectedGenre = '';
     selectedYear = '';
-    minPopularity = 0;
     sortBy = 'added_at';
     sortOrder = 'desc';
     loadTracks({ page: 1 });
-    // isOpen = false; // Keep panel open for better UX
   }
 
   function togglePanel() {
@@ -141,7 +136,6 @@
           bind:value={sortBy}
         >
           <option value="added_at" class="bg-void">Date Added</option>
-          <option value="popularity" class="bg-void">Popularity</option>
           <option value="title" class="bg-void">Title</option>
         </select>
       </div>
@@ -157,22 +151,6 @@
           <option value="desc" class="bg-void">Descending</option>
           <option value="asc" class="bg-void">Ascending</option>
         </select>
-      </div>
-
-      <!-- Min Popularity -->
-      <div class="flex flex-col gap-1">
-        <label for="filter-popularity" class="text-xs text-pulsar uppercase tracking-wide"
-          >Min Popularity: {minPopularity}</label
-        >
-        <input
-          id="filter-popularity"
-          type="range"
-          min="0"
-          max="100"
-          step="10"
-          bind:value={minPopularity}
-          class="w-full accent-aurora"
-        />
       </div>
     </div>
 

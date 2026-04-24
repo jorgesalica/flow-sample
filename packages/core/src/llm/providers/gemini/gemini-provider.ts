@@ -1,10 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
-import {
-    BaseLLMProvider,
-    type LLMRequest,
-    type LLMResponse,
-    type LLMMessage,
-} from './base-provider';
+import { BaseLLMProvider } from '../base-provider';
+import type { LLMRequest, LLMResponse, LLMStreamEvent, LLMMessage, ModelInfo } from '../types';
+import { GEMINI_MODELS, GEMINI_DEFAULT_MODEL } from './models';
 
 /**
  * Gemini LLM Provider
@@ -19,7 +16,7 @@ export class GeminiProvider extends BaseLLMProvider {
     constructor(apiKey: string) {
         super(apiKey);
         this.client = new GoogleGenAI({ apiKey });
-        this._defaultModel = process.env.LLM_MODEL || 'gemini-2.5-flash';
+        this._defaultModel = process.env.LLM_MODEL || GEMINI_DEFAULT_MODEL;
         console.log(`[GeminiProvider] Initialized with model: ${this._defaultModel}`);
     }
 
@@ -53,12 +50,55 @@ export class GeminiProvider extends BaseLLMProvider {
         return {
             content: text,
             model: modelName,
+            provider: this.providerName,
             usage: {
                 inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
                 outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
                 totalTokens: response.usageMetadata?.totalTokenCount ?? 0,
             },
             latencyMs,
+        };
+    }
+
+    async *generateStream(request: LLMRequest): AsyncGenerator<LLMStreamEvent> {
+        const startTime = Date.now();
+        const modelName = request.model || this.defaultModel;
+        const contents = this.formatMessages(request.messages);
+
+        const stream = await this.client.models.generateContentStream({
+            model: modelName,
+            contents,
+            config: {
+                temperature: request.temperature ?? 0.5,
+                maxOutputTokens: request.maxTokens ?? 1024,
+            },
+        });
+
+        let fullContent = '';
+
+        for await (const chunk of stream) {
+            const text = chunk.text ?? '';
+            if (text) {
+                fullContent += text;
+                yield { delta: text, done: false };
+            }
+        }
+
+        const latencyMs = Date.now() - startTime;
+        yield {
+            delta: '',
+            done: true,
+            response: {
+                content: fullContent,
+                model: modelName,
+                provider: this.providerName,
+                usage: {
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    totalTokens: 0,
+                },
+                latencyMs,
+            },
         };
     }
 
@@ -77,15 +117,12 @@ export class GeminiProvider extends BaseLLMProvider {
             return list.length ? list : [this.defaultModel];
         } catch (e) {
             console.error('[GeminiProvider] Error listing models:', e);
-            // Fallback to defaults if SDK list fails or lacks permission
-            return [
-                'gemini-2.5-flash',
-                'gemini-2.5-pro',
-                'gemini-2.0-flash',
-                'gemini-1.5-flash',
-                'gemini-1.5-pro'
-            ];
+            return GEMINI_MODELS.map((m) => m.id);
         }
+    }
+
+    listModelCatalog(): ModelInfo[] {
+        return GEMINI_MODELS;
     }
 
     /**

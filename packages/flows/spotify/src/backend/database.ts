@@ -15,7 +15,6 @@ musicDb.exec(`
     title TEXT NOT NULL,
     added_at TEXT,
     duration_ms INTEGER,
-    popularity INTEGER,
     album_id TEXT,
     album_name TEXT,
     album_release_date TEXT,
@@ -48,10 +47,17 @@ musicDb.exec(`
 
   -- Indexes for common queries
   CREATE INDEX IF NOT EXISTS idx_tracks_added_at ON tracks(added_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_tracks_popularity ON tracks(popularity DESC);
   CREATE INDEX IF NOT EXISTS idx_tracks_album_year ON tracks(album_release_year DESC);
   CREATE INDEX IF NOT EXISTS idx_artists_name ON artists(name);
   CREATE INDEX IF NOT EXISTS idx_artist_genres_genre ON artist_genres(genre);
+
+  -- Artist cache for individual Spotify API lookups (Feb 2026 migration)
+  CREATE TABLE IF NOT EXISTS artist_cache (
+    id TEXT PRIMARY KEY,
+    genres TEXT,
+    image_url TEXT,
+    cached_at INTEGER
+  );
 
   -- Token cache for Spotify access tokens
   CREATE TABLE IF NOT EXISTS token_cache (

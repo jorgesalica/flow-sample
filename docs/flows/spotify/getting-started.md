@@ -62,8 +62,8 @@ Click **"Sync with Spotify"** to fetch your liked songs.
 The sync process:
 
 1. Fetches all liked tracks (paginated)
-2. Enriches with artist genres and images
-3. Stores in `data/flow.db` (SQLite)
+2. Enriches with artist genres and images (cached in SQLite for performance)
+3. Stores in `data/music.db` (SQLite)
 4. Rebuilds the full-text search index
 
 ---
@@ -76,7 +76,7 @@ The sync process:
 | ------- | ----------- |
 | **Infinite Scroll** | Scroll to load more tracks automatically |
 | **Search** | Real-time full-text search (title, artist, album) |
-| **Filters** | Genre, Year, Popularity, Sort order |
+| **Filters** | Genre, Year, Sort order |
 | **Track Cards** | Album art, artist avatar, genre badges, Spotify link |
 
 ### Insights (Charts)
@@ -107,5 +107,5 @@ The sync process:
 | `pnpm -r run lint` | Lint all packages |
 | `pnpm -r run check` | Type-check all packages |
 | `pnpm -r run test` | Run all tests |
-| `pnpm --filter @flows/backend test` | Run backend tests only |
+| `pnpm --filter @flows/spotify test` | Run Spotify tests only |
 | `pnpm --filter @flows/ui test:e2e` | Run Playwright E2E tests |

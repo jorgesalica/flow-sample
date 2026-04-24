@@ -127,8 +127,7 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
             query: query.q,
             genre: query.genre,
             year: query.year,
-            minPopularity: query.minPopularity,
-            sortBy: query.sortBy as 'added_at' | 'popularity' | 'title' | undefined,
+            sortBy: query.sortBy as 'added_at' | 'title' | undefined,
             sortOrder: query.sortOrder as 'asc' | 'desc' | undefined,
           });
         },
@@ -139,7 +138,6 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
             q: t.Optional(t.String()),
             genre: t.Optional(t.String()),
             year: t.Optional(t.Numeric()),
-            minPopularity: t.Optional(t.Numeric()),
             sortBy: t.Optional(t.String()),
             sortOrder: t.Optional(t.String()),
           }),

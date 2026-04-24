@@ -48,5 +48,8 @@ export type {
     ChatConversation,
     ChatMessage,
     ChatProviderOption,
+    ChatModelCatalogEntry,
+    ChatProviderGroup,
+    ChatMode,
     ChatRequest,
 } from './chat.types';
