@@ -1,6 +1,8 @@
 import type { LyricsStatus } from '@flows/shared';
-import { musicDb } from '@flows/spotify/src/backend/database';
+import { createDatabase } from '@flows/core';
 import { logger } from '@flows/core';
+
+const musicDb = createDatabase('music.db');
 
 const log = logger.child({ module: 'SQLiteLyricsRepository' });
 
@@ -29,6 +31,21 @@ export interface LyricsRecord {
 
 export class SQLiteLyricsRepository {
   constructor() {
+    // Ensure foreign keys are on for cascading deletes
+    musicDb.pragma('foreign_keys = ON');
+    
+    // Initialize schema
+    musicDb.exec(`
+      CREATE TABLE IF NOT EXISTS lyrics (
+        track_id TEXT PRIMARY KEY,
+        plain_lyrics TEXT,
+        synced_lyrics TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        fetched_at TEXT,
+        FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE
+      );
+    `);
+
     // Migration: add interpretation column if missing
     try {
       musicDb.exec(`ALTER TABLE lyrics ADD COLUMN interpretation TEXT DEFAULT NULL`);
