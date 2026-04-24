@@ -32,18 +32,24 @@ export class MistralProvider extends BaseLLMProvider {
         const startTime = Date.now();
         const modelName = request.model || this.defaultModel;
 
+        const body: Record<string, any> = {
+            model: modelName,
+            messages: request.messages,
+            temperature: request.temperature ?? 0.5,
+            max_tokens: request.maxTokens ?? 1024,
+        };
+
+        if (request.structuredOutput) {
+            body.response_format = { type: 'json_object' };
+        }
+
         const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.apiKey}`,
             },
-            body: JSON.stringify({
-                model: modelName,
-                messages: request.messages,
-                temperature: request.temperature ?? 0.5,
-                max_tokens: request.maxTokens ?? 1024,
-            }),
+            body: JSON.stringify(body),
         });
 
         if (!response.ok) {
