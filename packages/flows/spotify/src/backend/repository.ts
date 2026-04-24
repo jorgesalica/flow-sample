@@ -64,8 +64,19 @@ export interface PaginatedResult<T> {
 export class SQLiteTrackRepository implements TrackRepository {
   async save(tracks: Track[]): Promise<void> {
     const insertTrack = musicDb.prepare(`
-      INSERT OR REPLACE INTO tracks (id, title, added_at, duration_ms, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
+      INSERT INTO tracks (id, title, added_at, duration_ms, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
       VALUES (@id, @title, @addedAt, @durationMs, @albumId, @albumName, @releaseDate, @releaseYear, @imageUrl, @previewUrl, @spotifyUrl)
+      ON CONFLICT(id) DO UPDATE SET
+        title = excluded.title,
+        added_at = excluded.added_at,
+        duration_ms = excluded.duration_ms,
+        album_id = excluded.album_id,
+        album_name = excluded.album_name,
+        album_release_date = excluded.album_release_date,
+        album_release_year = excluded.album_release_year,
+        album_image_url = excluded.album_image_url,
+        preview_url = excluded.preview_url,
+        spotify_url = excluded.spotify_url
     `);
 
     const insertArtist = musicDb.prepare(`
