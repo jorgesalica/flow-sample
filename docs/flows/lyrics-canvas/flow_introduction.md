@@ -43,47 +43,52 @@ flowchart TD
 4. **Explore**: Toggle layers on/off. Hover annotated tokens for rich detail tooltips
 5. **Persist**: Analysis cached in DB. Next visit loads instantly, no re-analysis needed
 
-## Architecture
+## Architecture: Three Pillars
 
-### Data Model
+The system is built around three independent centers of gravity. Each evolves separately, can be reused across different contexts, and is tested in isolation.
 
-The Canvas introduces a **two-phase data pipeline**:
+| Pillar | Responsibility | Location | Reusable for |
+| ------ | -------------- | -------- | ------------ |
+| **Structured Intelligence** | `generateObject<T>()`, Zod validation, provider-agnostic | `@flows/core/llm` | Any flow needing structured JSON from an LLM |
+| **Musical Domain** | Tokenizer, musical schemas, prompts, domain types | `@flows/lyrics` (backend) | Different analyses, song sources, contextual meaning |
+| **Canvas Renderer** | Token rendering, layer toggles, tooltips, interactions | `@flows/ui` (components) | User-written text, poetry, any tokenized content |
 
-**Phase 1 — Tokenization** (deterministic, no AI):
-Plain lyrics text → AST of sections, lines, and word tokens with unique IDs.
+> The Canvas Renderer doesn't know about music. It knows about **tokens with typed annotations and toggleable layers**. This is what enables extending to user-written text in the future.
 
-**Phase 2 — Annotation** (AI, structured output):
-Token AST → LLM with JSON schema → annotations mapped to token IDs.
+### Data Pipeline
 
 ```mermaid
 flowchart LR
-    A["plainLyrics<br/>(string)"] -->|"Tokenizer<br/>(server-side)"| B["Token AST<br/>(sections + tokens)"]
-    B -->|"LLM<br/>(structured output)"| C["Annotations<br/>(by token ID)"]
-    B --> D["Canvas UI<br/>(renders tokens)"]
+    A["plainLyrics<br/>(string)"] -->|"Tokenizer<br/>(Pillar 2)"| B["Token AST<br/>(sections + tokens)"]
+    B -->|"LLM structured output<br/>(Pillar 1)"| C["Annotations<br/>(by token ID)"]
+    B --> D["Canvas Renderer<br/>(Pillar 3)"]
     C --> D
 ```
 
 ### Persistence Strategy
 
-The analysis result is **persisted alongside the lyrics data**. This provides:
+**Separated databases** — canvas concerns don't pollute music data:
 
-- **Instant reload**: No re-calling the LLM on revisit
-- **Trail / history**: The analysis becomes a baseline that can evolve
-- **Reset capability**: User can re-analyze to get fresh annotations
+| Database | Stores | Owned by |
+| -------- | ------ | -------- |
+| `music.db` | Tracks, artists, lyrics, interpretation | Spotify + Lyrics Flow (existing) |
+| `canvas.db` | Token ASTs, annotations, analysis metadata | Canvas (new, independent) |
 
-Storage: A dedicated `canvas_analyses` table linked to `track_id`, storing:
-- The tokenized AST (the structural skeleton)
-- The LLM annotations (the musical intelligence)
-- Metadata (model used, timestamp, version)
+Both inputs (token AST) and outputs (annotations) are persisted. This creates a **trail** — the analysis becomes a baseline that evolves with use. The canvas DB can be reset independently without affecting lyrics data.
+
+A `source_text_hash` field detects if the underlying lyrics changed since last analysis, auto-triggering re-analysis when needed.
 
 ### Integration Points
 
 ```
-@flows/core/llm        → Extended with structured output (generateObject)
+@flows/core/llm        → Extended with generateObject<T>() (Pillar 1)
 @flows/shared           → New canvas types (TokenAnnotation, SongCanvas, etc.)
-@flows/lyrics (backend) → New service + route for canvas analysis
-@flows/lyrics (UI)      → New Canvas page component + token renderer
+@flows/lyrics (backend) → New canvas module: tokenizer, service, routes (Pillar 2)
+@flows/lyrics (UI)      → New Canvas components: TokenRenderer, LayerToggle (Pillar 3)
 ```
+
+For the full technical breakdown, see [architecture.md](./architecture.md).
+For a concrete example with a real song, see [use-case.md](./use-case.md).
 
 > [!IMPORTANT]
 > The Canvas **extends** the Lyrics Flow. It does not replace any existing functionality. The current lyrics modal and AI interpretation feature remain untouched.
