@@ -1,0 +1,147 @@
+<script lang="ts">
+    import type { TokenAST, Annotation } from '@flows/shared';
+
+    export let tokenAst: TokenAST;
+    export let annotations: Annotation[] = [];
+    export let activeLayers: string[] = [];
+    
+    // Group annotations by token ID for O(1) lookup during render
+    $: annotationsByToken = annotations.reduce((acc, ann) => {
+        if (!acc[ann.tokenId]) acc[ann.tokenId] = [];
+        acc[ann.tokenId].push(ann);
+        return acc;
+    }, {} as Record<string, Annotation[]>);
+
+    // Filter annotations for a specific token that belong to active layers
+    function getActiveAnnotations(tokenId: string): Annotation[] {
+        const tokenAnns = annotationsByToken[tokenId] || [];
+        return tokenAnns.filter((ann: Annotation) => activeLayers.includes(ann.layerId));
+    }
+</script>
+
+<div class="canvas-renderer" class:has-layers={activeLayers.length > 0}>
+    {#each tokenAst.sections as section}
+        <section class="canvas-section">
+            <header class="section-header">
+                <span class="section-type">{section.type}</span>
+            </header>
+
+            <div class="section-content">
+                {#each section.lines as line}
+                    <div class="canvas-line">
+                        {#each line as token}
+                            {@const activeAnns = getActiveAnnotations(token.id)}
+                            
+                            <span 
+                                class="token" 
+                                class:annotated={activeAnns.length > 0}
+                                data-id={token.id}
+                            >
+                                <!-- Render layer badges above/below based on active annotations -->
+                                {#each activeAnns as ann}
+                                    <span class="layer-badge layer-{ann.layerId}">
+                                        {ann.label}
+                                    </span>
+                                {/each}
+                                
+                                <span class="token-text">{token.text}</span>
+                            </span>
+                        {/each}
+                    </div>
+                {/each}
+            </div>
+        </section>
+    {/each}
+</div>
+
+<style>
+    .canvas-renderer {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        font-family: var(--font-mono);
+        color: var(--surface-100);
+        padding: 1rem;
+    }
+
+    .canvas-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .section-header {
+        border-bottom: 1px solid var(--surface-800);
+        padding-bottom: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .section-type {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--surface-400);
+    }
+
+    .section-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .canvas-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        line-height: 2.5; /* Extra space for annotations */
+    }
+
+    .token {
+        position: relative;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .token.annotated {
+        color: var(--primary-400);
+    }
+
+    .token:hover .token-text {
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+
+    .token-text {
+        z-index: 1;
+    }
+
+    .layer-badge {
+        position: absolute;
+        font-size: 0.65rem;
+        font-weight: 600;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0.9;
+    }
+
+    /* specific layer positioning logic will be extended later */
+    .layer-chords {
+        top: -1.2rem;
+        color: #4ade80;
+    }
+
+    .layer-vocal {
+        bottom: -1rem;
+        font-size: 0.5rem;
+        color: #f59e0b;
+    }
+
+    .layer-production {
+        top: -1.2rem;
+        right: -1rem;
+        color: #818cf8;
+    }
+</style>

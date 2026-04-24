@@ -35,13 +35,21 @@ export class GeminiProvider extends BaseLLMProvider {
         // Format messages for Gemini
         const contents = this.formatMessages(request.messages);
 
+        const config: Record<string, unknown> = {
+            temperature: request.temperature ?? 0.5,
+            maxOutputTokens: request.maxTokens ?? 1024,
+        };
+
+        // Structured output: pass JSON schema to Gemini
+        if (request.structuredOutput) {
+            config.responseMimeType = request.structuredOutput.mimeType || 'application/json';
+            config.responseJsonSchema = request.structuredOutput.jsonSchema;
+        }
+
         const response = await this.client.models.generateContent({
             model: modelName,
             contents,
-            config: {
-                temperature: request.temperature ?? 0.5,
-                maxOutputTokens: request.maxTokens ?? 1024,
-            },
+            config,
         });
 
         const latencyMs = Date.now() - startTime;
@@ -65,13 +73,20 @@ export class GeminiProvider extends BaseLLMProvider {
         const modelName = request.model || this.defaultModel;
         const contents = this.formatMessages(request.messages);
 
+        const streamConfig: Record<string, unknown> = {
+            temperature: request.temperature ?? 0.5,
+            maxOutputTokens: request.maxTokens ?? 1024,
+        };
+
+        if (request.structuredOutput) {
+            streamConfig.responseMimeType = request.structuredOutput.mimeType || 'application/json';
+            streamConfig.responseJsonSchema = request.structuredOutput.jsonSchema;
+        }
+
         const stream = await this.client.models.generateContentStream({
             model: modelName,
             contents,
-            config: {
-                temperature: request.temperature ?? 0.5,
-                maxOutputTokens: request.maxTokens ?? 1024,
-            },
+            config: streamConfig,
         });
 
         let fullContent = '';

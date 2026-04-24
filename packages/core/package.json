@@ -25,6 +25,10 @@
         "./db": {
             "types": "./dist/db/index.d.ts",
             "require": "./dist/db/index.js"
+        },
+        "./canvas": {
+            "types": "./dist/canvas/index.d.ts",
+            "require": "./dist/canvas/index.js"
         }
     },
     "scripts": {
@@ -36,7 +40,9 @@
         "@google/genai": "^1.39.0",
         "better-sqlite3": "^12.5.0",
         "pino": "^10.1.0",
-        "pino-pretty": "^13.1.3"
+        "pino-pretty": "^13.1.3",
+        "zod": "^4.1.13",
+        "zod-to-json-schema": "^3.25.2"
     },
     "devDependencies": {
         "@types/better-sqlite3": "^7.6.13",

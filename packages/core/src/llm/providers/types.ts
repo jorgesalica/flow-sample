@@ -9,12 +9,21 @@ export interface LLMMessage {
     content: string;
 }
 
+export interface StructuredOutputConfig {
+    /** JSON Schema that the response must conform to. */
+    jsonSchema: Record<string, unknown>;
+    /** MIME type for the response. Defaults to 'application/json'. */
+    mimeType?: string;
+}
+
 export interface LLMRequest {
     messages: LLMMessage[];
     temperature?: number;
     maxTokens?: number;
     model?: string; // Optional override for default model
     streaming?: boolean; // Whether to stream the response
+    /** When set, the LLM will produce JSON conforming to the given schema. */
+    structuredOutput?: StructuredOutputConfig;
 }
 
 export interface LLMUsage {

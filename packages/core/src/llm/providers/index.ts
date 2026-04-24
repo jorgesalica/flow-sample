@@ -5,6 +5,7 @@ export type {
     LLMResponse,
     LLMStreamEvent,
     LLMUsage,
+    StructuredOutputConfig,
     ModelTier,
     ModelPricing,
     ModelInfo,

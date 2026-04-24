@@ -53,3 +53,26 @@ export type {
     ChatMode,
     ChatRequest,
 } from './chat.types';
+
+// Canvas types (Generic)
+export type {
+    Token,
+    Section,
+    TokenAST,
+    Annotation,
+    AnnotationLayer,
+    CanvasSourceType,
+    CanvasSource,
+    CanvasAnalysis,
+} from './canvas.types';
+
+// Canvas types (Musical)
+export type {
+    ChordAnnotation,
+    VocalAnnotation,
+    ProductionAnnotation,
+    MusicAnnotation,
+    SongMeta,
+} from './canvas-music.types';
+export { MUSIC_LAYERS } from './canvas-music.types';
+

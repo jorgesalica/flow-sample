@@ -1,4 +1,6 @@
 import type { LLMRequest, LLMResponse, LLMStreamEvent, ModelInfo } from './providers/types';
+import type { ZodType } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { BaseLLMProvider } from './providers/base-provider';
 import { GeminiProvider } from './providers/gemini/gemini-provider';
 import { GroqProvider } from './providers/groq/groq-provider';
@@ -100,6 +102,73 @@ export class LLMClient {
             yield* this.generateStreamWithRotation(request);
         } else {
             yield* this.provider.generateStream(request);
+        }
+    }
+
+    /**
+     * Generate a typed object from the LLM using structured output.
+     *
+     * Converts the Zod schema to JSON Schema, sends it to the provider,
+     * parses and validates the response. Retries once on validation failure.
+     *
+     * @param request - Standard LLM request (messages, temperature, etc.)
+     * @param schema  - Zod schema defining the expected response shape
+     * @returns Validated, typed object
+     *
+     * @example
+     * ```ts
+     * const result = await client.generateObject(
+     *   { messages: [{ role: 'user', content: 'Analyze this text' }] },
+     *   z.object({ sentiment: z.string(), score: z.number() })
+     * );
+     * // result is typed as { sentiment: string; score: number }
+     * ```
+     */
+    async generateObject<T>(request: LLMRequest, schema: ZodType<T>): Promise<T> {
+        const jsonSchema = zodToJsonSchema(schema) as Record<string, unknown>;
+
+        const structuredRequest: LLMRequest = {
+            ...request,
+            structuredOutput: {
+                jsonSchema,
+                mimeType: 'application/json',
+            },
+        };
+
+        // First attempt
+        const response = await this.generate(structuredRequest);
+
+        try {
+            const parsed = JSON.parse(response.content);
+            return schema.parse(parsed) as T;
+        } catch (firstError) {
+            console.warn(
+                `[LLMClient] generateObject validation failed, retrying once. Error: ${
+                    firstError instanceof Error ? firstError.message : String(firstError)
+                }`,
+            );
+
+            // Retry with corrective prompt
+            const retryRequest: LLMRequest = {
+                ...structuredRequest,
+                messages: [
+                    ...request.messages,
+                    {
+                        role: 'assistant',
+                        content: response.content,
+                    },
+                    {
+                        role: 'user',
+                        content:
+                            'Your previous response did not match the required JSON schema. ' +
+                            'Please try again, ensuring the output is valid JSON matching the schema exactly.',
+                    },
+                ],
+            };
+
+            const retryResponse = await this.generate(retryRequest);
+            const retryParsed = JSON.parse(retryResponse.content);
+            return schema.parse(retryParsed) as T;
         }
     }
 
