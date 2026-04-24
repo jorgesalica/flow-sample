@@ -47,9 +47,9 @@
         backdrop-filter: blur(8px);
         border: 1px solid var(--aurora);
         border-radius: 0.5rem;
-        padding: 0.75rem;
+        padding: 1rem;
         width: max-content;
-        max-width: 300px;
+        max-width: 450px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 8px 10px -6px rgba(0, 0, 0, 0.8);
         display: flex;
         flex-direction: column;
@@ -59,7 +59,7 @@
     .annotation-detail {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.5rem;
     }
 
     .annotation-detail:not(:last-child) {
@@ -71,7 +71,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
     }
 
     .layer-name {
@@ -82,16 +82,16 @@
 
     .label {
         color: var(--surface-100);
-        font-weight: 500;
+        font-weight: 600;
         margin-left: auto;
         background: var(--surface-800);
-        padding: 0.1rem 0.4rem;
+        padding: 0.2rem 0.5rem;
         border-radius: 0.25rem;
     }
 
     .detail {
-        font-size: 0.875rem;
-        color: var(--surface-300);
-        line-height: 1.4;
+        font-size: 0.95rem;
+        color: var(--surface-200);
+        line-height: 1.5;
     }
 </style>
