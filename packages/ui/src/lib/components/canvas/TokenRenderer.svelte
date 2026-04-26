@@ -1,10 +1,15 @@
 <script lang="ts">
     import type { TokenAST, Annotation } from '@flows/shared';
+    import { createEventDispatcher } from 'svelte';
 
     export let tokenAst: TokenAST;
     export let annotations: Annotation[] = [];
     export let activeLayers: string[] = [];
     
+    const dispatch = createEventDispatcher<{
+        tokenhover: { tokenId: string; el: HTMLElement } | null;
+    }>();
+
     // Group annotations by token ID for O(1) lookup during render
     $: annotationsByToken = annotations.reduce((acc, ann) => {
         if (!acc[ann.tokenId]) acc[ann.tokenId] = [];
@@ -16,6 +21,69 @@
     function getActiveAnnotations(tokenId: string, currentActiveLayers: string[]): Annotation[] {
         const tokenAnns = annotationsByToken[tokenId] || [];
         return tokenAnns.filter((ann: Annotation) => currentActiveLayers.includes(ann.layerId));
+    }
+
+    // Get annotations split by position: top (chords/production) vs bottom (vocal)
+    function getTopAnnotations(anns: Annotation[]): Annotation[] {
+        return anns.filter(a => a.layerId === 'chords' || a.layerId === 'production');
+    }
+
+    function getBottomAnnotations(anns: Annotation[]): Annotation[] {
+        return anns.filter(a => a.layerId === 'vocal');
+    }
+
+    function hasMeaning(anns: Annotation[]): boolean {
+        return anns.some(a => a.layerId === 'meaning');
+    }
+
+    // Line-level meaning highlight: track which line group is hovered
+    let hoveredMeaningGroup: string | null = null;
+
+    // Group meaning annotations by their label+detail to identify phrase groups
+    $: meaningGroups = (() => {
+        const groups: Record<string, Set<string>> = {};
+        for (const ann of annotations) {
+            if (ann.layerId !== 'meaning') continue;
+            const key = `${ann.label}:::${ann.detail}`;
+            if (!groups[key]) groups[key] = new Set();
+            groups[key].add(ann.tokenId);
+        }
+        return groups;
+    })();
+
+    // Reverse lookup: tokenId → meaning group key
+    $: tokenMeaningGroup = (() => {
+        const map: Record<string, string> = {};
+        for (const [key, tokenIds] of Object.entries(meaningGroups)) {
+            for (const tid of tokenIds) {
+                map[tid] = key;
+            }
+        }
+        return map;
+    })();
+
+    // Check if a token is part of the currently hovered meaning group
+    function isInHoveredMeaningGroup(tokenId: string): boolean {
+        if (!hoveredMeaningGroup) return false;
+        const group = meaningGroups[hoveredMeaningGroup];
+        return group?.has(tokenId) ?? false;
+    }
+
+    function handleTokenMouseEnter(tokenId: string, anns: Annotation[], el: HTMLElement) {
+        // If this token has a meaning annotation, highlight its whole group
+        const groupKey = tokenMeaningGroup[tokenId];
+        if (groupKey && activeLayers.includes('meaning')) {
+            hoveredMeaningGroup = groupKey;
+        }
+        
+        if (anns.length > 0) {
+            dispatch('tokenhover', { tokenId, el });
+        }
+    }
+
+    function handleTokenMouseLeave() {
+        hoveredMeaningGroup = null;
+        dispatch('tokenhover', null);
     }
 </script>
 
@@ -31,20 +99,44 @@
                     <div class="canvas-line">
                         {#each line as token}
                             {@const activeAnns = getActiveAnnotations(token.id, activeLayers)}
+                            {@const topAnns = getTopAnnotations(activeAnns)}
+                            {@const bottomAnns = getBottomAnnotations(activeAnns)}
+                            {@const tokenHasMeaning = hasMeaning(activeAnns)}
+                            {@const meaningHighlighted = isInHoveredMeaningGroup(token.id)}
                             
+                            <!-- svelte-ignore a11y-no-static-element-interactions -->
                             <span 
-                                class="token {activeAnns.map(a => 'has-' + a.layerId).join(' ')}" 
+                                class="token"
                                 class:annotated={activeAnns.length > 0}
+                                class:has-meaning={tokenHasMeaning && activeLayers.includes('meaning')}
+                                class:meaning-highlighted={meaningHighlighted}
                                 data-id={token.id}
+                                on:mouseenter={(e) => handleTokenMouseEnter(token.id, activeAnns, e.currentTarget)}
+                                on:mouseleave={handleTokenMouseLeave}
                             >
-                                <!-- Render layer badges above/below based on active annotations -->
-                                {#each activeAnns as ann}
-                                    <span class="layer-badge layer-{ann.layerId}">
-                                        {ann.label}
+                                <!-- Top badges: Chords + Production, stacked vertically -->
+                                {#if topAnns.length > 0}
+                                    <span class="badge-stack top">
+                                        {#each topAnns as ann}
+                                            <span class="layer-badge layer-{ann.layerId}">
+                                                {ann.label}
+                                            </span>
+                                        {/each}
                                     </span>
-                                {/each}
+                                {/if}
                                 
                                 <span class="token-text">{token.text}</span>
+                                
+                                <!-- Bottom badges: Vocal only (meaning is hover-only, no badge) -->
+                                {#if bottomAnns.length > 0}
+                                    <span class="badge-stack bottom">
+                                        {#each bottomAnns as ann}
+                                            <span class="layer-badge layer-{ann.layerId}">
+                                                {ann.label}
+                                            </span>
+                                        {/each}
+                                    </span>
+                                {/if}
                             </span>
                         {/each}
                     </div>
@@ -77,13 +169,13 @@
     }
 
     .section-type {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         font-weight: 800;
         color: var(--primary-400);
         background: rgba(30, 41, 59, 0.5);
-        padding: 0.25rem 0.75rem;
+        padding: 0.3rem 0.85rem;
         border-radius: 1rem;
         border: 1px solid var(--surface-700);
         display: inline-block;
@@ -92,24 +184,24 @@
     .section-content {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 0.75rem;
     }
 
     .canvas-line {
         display: flex;
         flex-wrap: wrap;
-        column-gap: 0.5rem;
-        row-gap: 3.5rem; /* Separates wrapped lines far enough to prevent badge overlap */
+        column-gap: 0.4rem;
+        row-gap: 0.5rem;
     }
 
+    /* ── Token layout: flex column with badge stacks ── */
     .token {
-        position: relative;
         display: inline-flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
         cursor: pointer;
         transition: color 0.2s;
+        gap: 0.15rem;
     }
 
     .token.annotated {
@@ -122,56 +214,60 @@
 
     .token-text {
         z-index: 1;
+        line-height: 1.4;
+    }
+
+    /* ── Badge stacks: replace absolute positioning with flex flow ── */
+    .badge-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.1rem;
+        min-height: 0.9rem; /* Reserve space even when empty so layout stays stable */
+    }
+
+    .badge-stack.top {
+        order: -1; /* Render above token-text */
+    }
+
+    .badge-stack.bottom {
+        order: 1; /* Render below token-text */
     }
 
     .layer-badge {
-        position: absolute;
-        font-size: 0.75rem; /* Increased for readability */
+        font-size: 0.7rem;
         font-weight: 700;
         white-space: nowrap;
         pointer-events: none;
         opacity: 0.9;
+        line-height: 1;
     }
 
-    /* specific layer positioning logic will be extended later */
     .layer-chords {
-        top: -1.2rem;
         color: #4ade80;
+        font-size: 0.75rem;
     }
 
     .layer-vocal {
-        bottom: -1rem;
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         color: #f59e0b;
     }
 
     .layer-production {
-        top: -1.2rem;
-        right: -1rem;
         color: #818cf8;
+        font-size: 0.65rem;
     }
 
-    .layer-meaning {
-        bottom: -1rem;
-        left: 0;
-        font-size: 0.7rem;
-        color: #22d3ee;
-        opacity: 0.8;
-    }
-
-    .token.has-meaning {
-        /* Add a small margin to make dashed lines continuous if adjacent */
-        margin-right: -2px;
-        padding-right: 2px;
-    }
-
+    /* ── Meaning: visual-only (underline + glow), no badge ── */
     .token.has-meaning .token-text {
-        border-bottom: 2px dashed rgba(34, 211, 238, 0.5);
-        padding-bottom: 4px;
+        border-bottom: 2px dashed rgba(34, 211, 238, 0.4);
+        padding-bottom: 2px;
     }
 
-    .token.has-meaning:hover .token-text {
+    .token.meaning-highlighted .token-text {
         border-bottom-color: rgba(34, 211, 238, 1);
-        text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+        background: rgba(34, 211, 238, 0.08);
+        text-shadow: 0 0 12px rgba(34, 211, 238, 0.5);
+        border-radius: 2px;
     }
 </style>

@@ -111,17 +111,15 @@
         }
     }
 
-    function handleTokenHover(e: MouseEvent) {
-        const target = e.target as HTMLElement;
-        const tokenEl = target.closest('.token');
+    function handleTokenHover(e: CustomEvent<{ tokenId: string; el: HTMLElement } | null>) {
+        const detail = e.detail;
         
-        if (!tokenEl || !analysis) {
+        if (!detail || !analysis) {
             tooltipVisible = false;
             return;
         }
 
-        const tokenId = tokenEl.getAttribute('data-id');
-        if (!tokenId) return;
+        const { tokenId, el } = detail;
 
         // Find active annotations for this token
         const anns = analysis.annotations.filter(
@@ -129,7 +127,7 @@
         );
 
         if (anns.length > 0) {
-            const rect = tokenEl.getBoundingClientRect();
+            const rect = el.getBoundingClientRect();
             tooltipX = rect.left + (rect.width / 2);
             tooltipY = rect.bottom + 10;
             tooltipAnnotations = anns;
@@ -222,16 +220,13 @@
         </header>
 
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <main 
-            class="canvas-layout" 
-            on:mousemove={handleTokenHover}
-            on:mouseleave={handleMouseLeave}
-        >
+        <main class="canvas-layout">
             <div class="canvas-main">
                 <TokenRenderer 
                     tokenAst={analysis.tokenAst} 
                     annotations={analysis.annotations}
                     activeLayers={activeLayers}
+                    on:tokenhover={handleTokenHover}
                 />
             </div>
             

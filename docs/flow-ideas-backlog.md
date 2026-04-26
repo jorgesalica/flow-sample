@@ -15,3 +15,11 @@ Este documento recopila de manera concisa ideas para expandir y agregar nuevos "
 ### 4. Art Flow (Mural / Diario)
 - **Idea**: Crear un "sub baúl" del baúl principal para volcar creatividad pura. No es un flujo con reglas estrictas.
 - **Objetivos**: Servir como diario, repositorio de escritos, terreno para improvisación computacional (fractales, rendering), y ser un espacio (mural/tablero) para tirar ideas sueltas en código y simplemente jugar.
+
+### 5. Tech Debt: Testing Strategy & Philosophy
+- **Idea**: Implementar una suite de testing robusta (Vitest/Playwright) de manera incremental, capa por capa, para evitar regresiones en futuros refactors.
+- **Flujo propuesto**:
+  1. `shared`: Tipos, utilidades y lógica pura.
+  2. `core`: Infraestructura (LLM, DB, Cache, Tokenizer).
+  3. `flows`: Lógica de dominio y adaptadores.
+  4. `ui`: Componentes compartidos y páginas.
