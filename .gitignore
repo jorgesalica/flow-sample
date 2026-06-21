@@ -145,9 +145,11 @@ vite.config.ts.timestamp-*
 # Project outputs
 outputs/
 
-# SQLite database
+# SQLite database files in any package
 data/*
-packages/backend/data/*
+**/data/*.db
+**/data/*.db-shm
+**/data/*.db-wal
 
 # Playwright
 packages/ui/playwright-report/
