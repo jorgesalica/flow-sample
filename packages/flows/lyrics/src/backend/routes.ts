@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { LrcLibAdapter } from './adapter';
 import { SQLiteLyricsRepository } from './repository';
-import { SQLiteTrackRepository } from '@flows/spotify/src/backend/repository';
+import { SQLiteTrackRepository } from '@flows/spotify';
 import { logger, LLMClient } from '@flows/core';
 import type { LyricsStatus } from '@flows/shared';
 
