@@ -69,7 +69,7 @@ export const app = new Elysia({ adapter: node() })
   .get('/api/health', () => ({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    flows: ['spotify', 'lyrics', 'trading'],
+    flows: ['spotify', 'lyrics', 'trading', 'chat'],
   }))
 
   // Flow routes (from flow packages)

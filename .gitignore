@@ -41,6 +41,10 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Wrong-package-manager lockfiles — this is a pnpm workspace (source of truth: pnpm-lock.yaml)
+package-lock.json
+yarn.lock
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
