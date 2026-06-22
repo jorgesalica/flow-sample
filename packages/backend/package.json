@@ -6,7 +6,7 @@
     "main": "./dist/api/app.js",
     "scripts": {
         "dev": "ts-node src/api/app.ts",
-        "start": "ts-node src/cli/index.ts run",
+        "start": "node dist/api/app.js",
         "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
         "typecheck": "tsc --noEmit",
         "lint": "eslint src --ext .ts",
