@@ -35,7 +35,7 @@ export class MentorService {
   private symbol: string;
 
   constructor(symbol?: string) {
-    this.symbol = symbol || process.env.TRADING_SYMBOL || 'BTCUSDT';
+    this.symbol = symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
 
     // Auto-start based on environment
     const autoStart = process.env.ADVISOR_AUTO_START === 'true';

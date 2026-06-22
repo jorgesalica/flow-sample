@@ -1,7 +1,10 @@
 import { Elysia, t } from 'elysia';
 import { getTradingService, getMentorService, getSynthesizerService, AnalystService } from './services';
 import { fetchKlines, type KlineInterval } from '../adapters/binance';
-import { createLLMClient } from '@flows/core';
+import { createLLMClient, logger } from '@flows/core';
+import { TRADING_CONFIG } from './config';
+
+const log = logger.child({ module: 'TradingRoutes' });
 import {
   getLastNCandles,
   getLastNFractalNodes,
@@ -65,8 +68,8 @@ export function createTradingRoutes() {
         '/candles',
         ({ query }) => {
           const limit = query.limit ? parseInt(query.limit, 10) : 100;
-          const symbol = query.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT';
-          const interval = query.interval || process.env.TRADING_INTERVAL || '1m';
+          const symbol = query.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
+          const interval = query.interval || TRADING_CONFIG.DEFAULTS.INTERVAL;
 
           const candleRows = getLastNCandles.all(symbol, interval, limit) as CandleRow[];
 
@@ -113,7 +116,7 @@ export function createTradingRoutes() {
       .get(
         '/klines',
         async ({ query }) => {
-          const symbol = query.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT';
+          const symbol = query.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
           const interval = (query.interval || '1d') as KlineInterval;
           const limit = query.limit ? parseInt(query.limit, 10) : 100;
 
@@ -151,7 +154,7 @@ export function createTradingRoutes() {
         '/fractals',
         ({ query }) => {
           const limit = query.limit ? parseInt(query.limit, 10) : 50;
-          const symbol = query.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT';
+          const symbol = query.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
 
           const nodes = getLastNFractalNodes.all(symbol, limit) as FractalNodeRow[];
 
@@ -195,10 +198,10 @@ export function createTradingRoutes() {
       .get(
         '/insight',
         ({ query }) => {
-          const symbol = query.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT';
-          const log = getLatestAdvisorLog.get(symbol) as AdvisorLogRow | null;
+          const symbol = query.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
+          const advisorLog = getLatestAdvisorLog.get(symbol) as AdvisorLogRow | null;
 
-          if (!log) {
+          if (!advisorLog) {
             return {
               success: true,
               insight: null,
@@ -208,12 +211,12 @@ export function createTradingRoutes() {
 
           return {
             success: true,
-            insight: JSON.parse(log.insight_json),
-            debugContext: log.market_state_json ? JSON.parse(log.market_state_json) : null,
-            timestamp: log.timestamp,
-            regime: log.regime,
-            tokensUsed: log.tokens_used,
-            latencyMs: log.latency_ms,
+            insight: JSON.parse(advisorLog.insight_json),
+            debugContext: advisorLog.market_state_json ? JSON.parse(advisorLog.market_state_json) : null,
+            timestamp: advisorLog.timestamp,
+            regime: advisorLog.regime,
+            tokensUsed: advisorLog.tokens_used,
+            latencyMs: advisorLog.latency_ms,
           };
         },
         {
@@ -249,7 +252,7 @@ export function createTradingRoutes() {
       .post(
         '/wizard/insight',
         async ({ body }) => {
-          const symbol = body.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT';
+          const symbol = body.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
           const interval = (body.interval || '1d') as KlineInterval;
           const limit = body.limit || 100;
           const stepLabel = body.stepLabel || interval;
@@ -257,7 +260,7 @@ export function createTradingRoutes() {
           const previousInsightsRaw = body.previousInsights || [];
 
           try {
-            console.log(`[WizardInsight] Fetching ${limit} ${interval} klines for ${symbol}...`);
+            log.info({ symbol, interval, limit }, 'WizardInsight: fetching klines');
             const candles = await fetchKlines(symbol, interval, limit);
 
             if (!candles.length) {
@@ -305,7 +308,7 @@ export function createTradingRoutes() {
 
             const llm = createLLMClient();
 
-            console.log(`[WizardInsight] Calling LLM for ${stepLabel}...`);
+            log.info({ stepLabel }, 'WizardInsight: calling LLM');
             const response = await llm.generate({
               messages,
               temperature: 0.7,
@@ -323,7 +326,7 @@ export function createTradingRoutes() {
 
             const insight = JSON.parse(jsonMatch[0]);
 
-            console.log(`[WizardInsight] ${stepLabel} insight generated (${response.latencyMs}ms)`);
+            log.info({ stepLabel, latencyMs: response.latencyMs }, 'WizardInsight: insight generated');
 
             return {
               success: true,
@@ -337,7 +340,7 @@ export function createTradingRoutes() {
               },
             };
           } catch (error) {
-            console.error('[WizardInsight] Failed:', error);
+            log.error({ error: error instanceof Error ? error.message : String(error) }, 'WizardInsight: failed');
             return {
               success: false,
               error: error instanceof Error ? error.message : 'Wizard insight generation failed',
