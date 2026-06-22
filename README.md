@@ -62,7 +62,7 @@ pnpm dev                # Runs backend (:4173) and UI (:5173) in parallel
 | **UI** | Svelte 5, Vite 7, Tailwind CSS 4, Chart.js |
 | **Server** | Elysia (with Node.js adapter) |
 | **Database** | SQLite (better-sqlite3) |
-| **Validation** | Zod, TypeBox |
+| **Validation** | TypeBox (Elysia `t`) |
 | **Testing** | Vitest, Playwright |
 | **Logging** | Pino |
 

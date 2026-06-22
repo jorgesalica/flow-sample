@@ -91,5 +91,5 @@ import { logger, createLLMClient, SimpleCache } from '@flows/core';
 
 const log = logger.child({ module: 'MyFlow' });
 const llm = createLLMClient();
-const cache = new SimpleCache<string>(300); // 5 min TTL
+const cache = new SimpleCache(5 * 60 * 1000); // 5 min TTL (constructor takes milliseconds)
 ```
