@@ -1,4 +1,4 @@
-import type { LLMStreamEvent, LLMResponse } from './types';
+import type { LLMStreamEvent, LLMResponse } from '../types';
 
 /**
  * Parse an OpenAI-compatible SSE stream (used by Groq, OpenRouter, Cerebras, Mistral).

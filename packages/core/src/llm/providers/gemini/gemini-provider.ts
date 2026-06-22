@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { BaseLLMProvider } from '../base-provider';
-import type { LLMRequest, LLMResponse, LLMStreamEvent, LLMMessage, ModelInfo } from '../types';
+import type { LLMRequest, LLMResponse, LLMStreamEvent, LLMMessage, ModelInfo } from '../../types';
 import { GEMINI_MODELS, GEMINI_DEFAULT_MODEL } from './models';
 import { logger } from '../../../logger';
 

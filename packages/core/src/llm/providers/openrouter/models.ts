@@ -1,4 +1,4 @@
-import type { ModelInfo } from '../types';
+import type { ModelInfo } from '../../types';
 
 /**
  * OpenRouter model catalog — Aggregator (free :free models)

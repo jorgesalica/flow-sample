@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { LLMClient } from '../../src/llm/llm-client';
-import type { LLMRequest, LLMResponse, LLMStreamEvent, ModelInfo } from '../../src/llm/providers/types';
+import { LLMClient } from '../../src/llm/client';
+import type { LLMRequest, LLMResponse, LLMStreamEvent, ModelInfo } from '../../src/llm/types';
 
 // ── Mock helpers ──────────────────────────────────────────────────────
 
@@ -298,5 +298,72 @@ describe('LLMClient.parseProviderModel', () => {
         } finally {
             if (orig !== undefined) process.env.GROQ_API_KEY = orig;
         }
+    });
+
+    it('extracts only the first colon — model IDs with colons are preserved', async () => {
+        // openrouter model IDs contain a colon: "meta-llama/...:free"
+        // parseProviderModel should split on the FIRST colon only
+        process.env.OPENROUTER_API_KEY = 'test-key';
+        const req: LLMRequest = { messages: [] };
+        // We can't call generate (no real API), but we can verify the error comes from
+        // an API call attempt (meaning parsing succeeded), not from a format error.
+        try {
+            await LLMClient.generateForProvider('openrouter:meta-llama/llama-3.3-70b-instruct:free', req);
+        } catch (err) {
+            const msg = (err as Error).message;
+            expect(msg).not.toMatch(/Invalid model format/);
+        } finally {
+            delete process.env.OPENROUTER_API_KEY;
+            (LLMClient as any).providerCache.clear();
+        }
+    });
+});
+
+// ── listModelCatalog in direct mode ──────────────────────────────────
+
+describe('LLMClient listModelCatalog', () => {
+    it('returns catalog from the current provider in direct mode', () => {
+        const p1 = makeTestProvider('groq');
+        const client = Object.create(LLMClient.prototype) as any;
+        client.provider = p1;
+        client.rotationProviders = null;
+        client.rotationIndex = 0;
+        const catalog = client.listModelCatalog();
+        expect(catalog).toHaveLength(1);
+        expect(catalog[0].id).toBe('groq-id');
+    });
+});
+
+// ── Rotation error messages ───────────────────────────────────────────
+
+describe('LLMClient rotation — error messages', () => {
+    const req: LLMRequest = { messages: [{ role: 'user', content: 'hi' }] };
+
+    it('all-failed error includes the last error text', async () => {
+        const p1 = makeTestProvider('groq');
+        const p2 = makeTestProvider('openrouter');
+        p1.generate.mockRejectedValue(new Error('groq-fail'));
+        p2.generate.mockRejectedValue(new Error('the-last-error'));
+        const client = makeRotationClient([p1, p2]);
+
+        await expect(client.generate(req)).rejects.toThrow('the-last-error');
+    });
+
+    it('all-failed stream error includes the last error text', async () => {
+        const fail = (msg: string) =>
+            (async function* (): AsyncGenerator<LLMStreamEvent> {
+                throw new Error(msg);
+            })();
+
+        const p1 = makeTestProvider('groq');
+        const p2 = makeTestProvider('openrouter');
+        p1.generateStream.mockReturnValue(fail('stream-fail-1'));
+        p2.generateStream.mockReturnValue(fail('stream-fail-final'));
+        const client = makeRotationClient([p1, p2]);
+
+        const events: LLMStreamEvent[] = [];
+        await expect(
+            (async () => { for await (const e of client.generateStream(req)) events.push(e); })()
+        ).rejects.toThrow('stream-fail-final');
     });
 });

@@ -1,4 +1,4 @@
-import type { ModelInfo } from '../types';
+import type { ModelInfo } from '../../types';
 
 /**
  * Cerebras model catalog — Fast inference

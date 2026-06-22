@@ -5,10 +5,10 @@
  */
 
 // ── Client ───────────────────────────────────────────────────────────
-export { LLMClient, type LLMProviderType } from './llm-client';
+export { LLMClient, type LLMProviderType } from './client';
 
 // ── Factory ──────────────────────────────────────────────────────────
-import { LLMClient, type LLMProviderType } from './llm-client';
+import { LLMClient, type LLMProviderType } from './client';
 
 /**
  * Create an LLMClient using environment variables.
@@ -33,13 +33,16 @@ export type {
     LLMRequest,
     LLMResponse,
     LLMUsage,
+    LLMStreamEvent,
     ModelTier,
     ModelPricing,
     ModelInfo,
-} from './providers/types';
+} from './types';
 
 // ── Providers ────────────────────────────────────────────────────────
 export { BaseLLMProvider } from './providers/base-provider';
+export { OpenAICompatibleProvider } from './providers/openai-compatible';
+export type { OpenAICompatibleConfig } from './providers/openai-compatible';
 export { GeminiProvider } from './providers/gemini/gemini-provider';
 export { GroqProvider } from './providers/groq/groq-provider';
 export { OpenRouterProvider } from './providers/openrouter/openrouter-provider';
