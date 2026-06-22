@@ -1,0 +1,7 @@
+# Normalize line endings to LF across the repo.
+* text=auto eol=lf
+
+# Husky hooks and shell scripts MUST be LF — a stray CR breaks the
+# command parsing (e.g. `pnpm test\r` → "Command 'test' not found").
+.husky/** text eol=lf
+*.sh text eol=lf
