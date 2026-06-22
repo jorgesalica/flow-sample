@@ -13,6 +13,7 @@
     },
     "dependencies": {
         "@flows/core": "workspace:*",
+        "@flows/shared": "workspace:*",
         "better-sqlite3": "^12.5.0",
         "elysia": "^1.4.18",
         "technicalindicators": "^3.1.0",
