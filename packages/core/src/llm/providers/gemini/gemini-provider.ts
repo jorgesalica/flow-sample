@@ -1,7 +1,10 @@
 import { GoogleGenAI } from '@google/genai';
 import { BaseLLMProvider } from '../base-provider';
-import type { LLMRequest, LLMResponse, LLMStreamEvent, LLMMessage, ModelInfo } from '../types';
+import type { LLMRequest, LLMResponse, LLMStreamEvent, LLMMessage, ModelInfo } from '../../types';
 import { GEMINI_MODELS, GEMINI_DEFAULT_MODEL } from './models';
+import { logger } from '../../../logger';
+
+const log = logger.child({ module: 'GeminiProvider' });
 
 /**
  * Gemini LLM Provider
@@ -17,7 +20,7 @@ export class GeminiProvider extends BaseLLMProvider {
         super(apiKey);
         this.client = new GoogleGenAI({ apiKey });
         this._defaultModel = process.env.LLM_MODEL || GEMINI_DEFAULT_MODEL;
-        console.log(`[GeminiProvider] Initialized with model: ${this._defaultModel}`);
+        log.debug({ model: this._defaultModel }, 'GeminiProvider initialized');
     }
 
     get defaultModel(): string {
@@ -106,17 +109,15 @@ export class GeminiProvider extends BaseLLMProvider {
         try {
             const modelsResult = await this.client.models.list();
             const list: string[] = [];
-            for await (const m of modelsResult as any) {
+            for await (const m of modelsResult as AsyncIterable<{ name?: string; model?: string }>) {
                 const name = m.name || m.model || '';
-                // Keep only gemini models, ignore embeddings and other services
                 if (name && name.includes('gemini') && !name.includes('embedding')) {
-                    // Extract model name without the "models/" prefix
                     list.push(name.replace('models/', ''));
                 }
             }
             return list.length ? list : [this.defaultModel];
-        } catch (e) {
-            console.error('[GeminiProvider] Error listing models:', e);
+        } catch (error) {
+            log.error({ error }, 'Error listing Gemini models');
             return GEMINI_MODELS.map((m) => m.id);
         }
     }

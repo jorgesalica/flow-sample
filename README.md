@@ -7,6 +7,7 @@ A playground for data flows — extract, transform, and visualize data from vari
 - **Spotify Flow**: Sync your saved tracks, explore genres, decades, and discover patterns
 - **Lyrics Flow**: Batch-fetch lyrics from LrcLib with concurrent requests, view inline
 - **Trading Bot Flow**: Real-time BTC advisor with Fractal Analysis and AI-driven "Cascade Wizard"
+- **Chat Flow**: Multi-provider LLM chat (Gemini, Groq, Cerebras, Mistral, OpenRouter) with rotation fallback and SSE streaming
 - **Cosmic UI**: Dark space-themed interface with glassmorphism and subtle animations
 - **Charts & Insights**: Genre distribution, decade analysis, and more
 - **Smart Caching**: 5-minute API cache with auto-invalidation
@@ -23,7 +24,8 @@ flow-sample/
 │   └── flows/
 │       ├── spotify/        # Spotify API adapter + SQLite (@flows/spotify)
 │       ├── lyrics/         # LrcLib adapter + batch fetcher (@flows/lyrics)
-│       └── trading/        # Binance WebSocket + AI advisor (@flows/trading)
+│       ├── trading/        # Binance WebSocket + AI advisor (@flows/trading)
+│       └── chat/           # Multi-provider LLM chat + SSE (@flows/chat)
 ├── data/                   # SQLite databases
 ├── docs/                   # Documentation
 └── package.json            # pnpm workspace root
@@ -60,7 +62,7 @@ pnpm dev                # Runs backend (:4173) and UI (:5173) in parallel
 | **UI** | Svelte 5, Vite 7, Tailwind CSS 4, Chart.js |
 | **Server** | Elysia (with Node.js adapter) |
 | **Database** | SQLite (better-sqlite3) |
-| **Validation** | Zod, TypeBox |
+| **Validation** | TypeBox (Elysia `t`) |
 | **Testing** | Vitest, Playwright |
 | **Logging** | Pino |
 

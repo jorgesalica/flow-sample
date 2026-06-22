@@ -1,5 +1,5 @@
 import type { LyricsStatus } from '@flows/shared';
-import { musicDb } from '@flows/spotify/src/backend/database';
+import { musicDb } from '@flows/spotify';
 import { logger } from '@flows/core';
 
 const log = logger.child({ module: 'SQLiteLyricsRepository' });

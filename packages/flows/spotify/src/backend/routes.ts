@@ -14,6 +14,8 @@ export interface SpotifyRoutesConfig {
   spotify: {
     clientId: string;
     clientSecret: string;
+    redirectUri: string;
+    successUrl: string;
     refreshToken?: string;
     pageLimit: number;
   };
@@ -27,6 +29,7 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
     {
       clientId: config.spotify.clientId,
       clientSecret: config.spotify.clientSecret,
+      redirectUri: config.spotify.redirectUri,
       refreshToken: config.spotify.refreshToken,
     },
     tokenRepository,
@@ -50,7 +53,7 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
           response_type: 'code',
           client_id: config.spotify.clientId,
           scope,
-          redirect_uri: 'http://127.0.0.1:4173/api/spotify/auth/callback',
+          redirect_uri: config.spotify.redirectUri,
         });
 
         set.status = 302;
@@ -69,8 +72,9 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
           try {
             await adapter.exchangeCode(code);
             set.status = 302;
-            set.headers['Location'] = 'http://localhost:5173/?connected=true#/spotify';
-          } catch {
+            set.headers['Location'] = config.spotify.successUrl;
+          } catch (error) {
+            log.error({ error }, 'Failed to exchange Spotify auth code');
             set.status = 500;
             return { error: 'Failed to exchange token' };
           }

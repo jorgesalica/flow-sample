@@ -5,7 +5,7 @@
  * Enables provider-agnostic LLM calls across all flows.
  */
 
-import type { LLMRequest, LLMResponse, LLMStreamEvent, ModelInfo } from './types';
+import type { LLMRequest, LLMResponse, LLMStreamEvent, ModelInfo } from '../types';
 
 export abstract class BaseLLMProvider {
     protected apiKey: string;

@@ -19,6 +19,7 @@ import type { SQLiteTokenRepository } from '../token.repository';
 export interface SpotifyConfig {
   clientId: string;
   clientSecret: string;
+  redirectUri: string;
   refreshToken?: string;
 }
 
@@ -78,8 +79,10 @@ export class SpotifyApiAdapter implements SourcePort {
               originalRequest.headers['Authorization'] = `Bearer ${this.accessToken}`;
             }
             return this.client(originalRequest);
-          } catch {
-            throw new SpotifyAuthError('Token refresh failed');
+          } catch (refreshError) {
+            throw new SpotifyAuthError(
+              `Token refresh failed: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`,
+            );
           }
         }
 
@@ -156,7 +159,7 @@ export class SpotifyApiAdapter implements SourcePort {
         new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: 'http://127.0.0.1:4173/api/spotify/auth/callback',
+          redirect_uri: this.config.redirectUri,
         }),
         {
           headers: {
