@@ -34,14 +34,6 @@ export const CEREBRAS_MODELS: ModelInfo[] = [
         contextWindow: 65_536,
         description: 'Preview. Largest free model, MoE 22B active.',
     },
-    {
-        id: 'qwen-3-235b-a22b-instruct-2507',
-        name: 'Qwen 3 235B',
-        tier: 'high',
-        pricing: 'free',
-        contextWindow: 65_536,
-        description: 'Preview. Largest free model, MoE 22B active.',
-    },
 ];
 
 export const CEREBRAS_DEFAULT_MODEL = 'llama3.1-8b';
