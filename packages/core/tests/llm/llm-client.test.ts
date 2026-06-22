@@ -299,7 +299,6 @@ describe('LLMClient.parseProviderModel', () => {
             if (orig !== undefined) process.env.GROQ_API_KEY = orig;
         }
     });
-<<<<<<< HEAD
 
     it('extracts only the first colon — model IDs with colons are preserved', async () => {
         // openrouter model IDs contain a colon: "meta-llama/...:free"
@@ -367,6 +366,4 @@ describe('LLMClient rotation — error messages', () => {
             (async () => { for await (const e of client.generateStream(req)) events.push(e); })()
         ).rejects.toThrow('stream-fail-final');
     });
-=======
->>>>>>> 53b6f5d (test(core): add 68-test suite for SimpleCache, stream-parser, model catalogs, and LLMClient rotation)
 });
