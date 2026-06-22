@@ -10,6 +10,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "lint": "eslint src",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "echo 'No unit tests (use test:e2e for e2e)'",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"

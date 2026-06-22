@@ -29,10 +29,20 @@ const config = {
   spotify: {
     clientId: process.env.SPOTIFY_CLIENT_ID || '',
     clientSecret: process.env.SPOTIFY_CLIENT_SECRET || '',
+    redirectUri:
+      process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:4173/api/spotify/auth/callback',
+    successUrl: process.env.SPOTIFY_SUCCESS_URL || 'http://localhost:5173/?connected=true#/spotify',
     refreshToken: process.env.SPOTIFY_REFRESH_TOKEN,
     pageLimit: parseInt(process.env.SPOTIFY_PAGE_LIMIT || '5'),
   },
 };
+
+// Warn about missing Spotify credentials at startup (non-fatal — other flows work without them)
+if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+  log.warn(
+    'SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET not set — Spotify flow will not authenticate',
+  );
+}
 
 // Check if UI dist folder exists for static serving
 const uiDistPath = path.resolve(__dirname, '../../ui/dist');

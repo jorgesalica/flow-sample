@@ -1,6 +1,6 @@
 import { getAnalystService } from './analyst.service';
 import { getSynthesizerService } from './synthesizer.service';
-import { createLLMClient, type LLMClient } from '@flows/core';
+import { createLLMClient, type LLMClient, logger } from '@flows/core';
 import { type AdvisorNote } from '../../domain/types';
 import {
   insertAdvisorLog,
@@ -9,6 +9,8 @@ import {
 } from '../database';
 import { TRADING_CONFIG } from '../config';
 import { LLMQuotaError } from '../../domain/errors';
+
+const log = logger.child({ module: 'MentorService' });
 
 export interface MentorServiceState {
   isEnabled: boolean;
@@ -51,9 +53,9 @@ export class MentorService {
     try {
       this.llm = createLLMClient();
       this.isEnabled = true;
-      console.log(`[MentorService] Enabled with provider: ${this.llm.providerName}`);
+      log.info({ provider: this.llm.providerName }, 'MentorService enabled');
     } catch (error) {
-      console.error('[MentorService] Failed to enable:', error);
+      log.error({ error }, 'Failed to enable MentorService');
       this.llm = null;
       this.isEnabled = false;
     }
@@ -65,7 +67,7 @@ export class MentorService {
   disable(): void {
     this.isEnabled = false;
     this.llm = null;
-    console.log('[MentorService] Disabled');
+    log.info('MentorService disabled');
   }
 
   /**
@@ -106,48 +108,35 @@ export class MentorService {
    * @returns AdvisorNote object or null if generation failed (no data, error, etc)
    */
   async generateInsight(): Promise<AdvisorNote | null> {
-    console.log('[MentorService] generateInsight() called');
+    log.debug('generateInsight() called');
 
-    // Get current market state from analyst
     const analyst = getAnalystService();
-    console.log('[MentorService] Got analyst service, calling analyze()...');
     const marketState = analyst.analyze();
 
     if (!marketState) {
-      console.log('[MentorService] ❌ No market state available - need more candles!');
+      log.info('No market state available — need more candles');
       return null;
     }
-    console.log('[MentorService] ✓ Market state:', {
-      regime: marketState.regime,
-      hurst: marketState.hurst,
-      price: marketState.price,
-    });
+    log.debug(
+      { regime: marketState.regime, hurst: marketState.hurst, price: marketState.price.current },
+      'Market state ready',
+    );
 
-    // If LLM not available, skip
     if (!this.llm) {
-      // Try to create LLM client for one-off request
-      console.log('[MentorService] LLM not initialized, creating client...');
       try {
         this.llm = createLLMClient();
-        console.log('[MentorService] ✓ LLM client created:', this.llm.providerName);
+        log.info({ provider: this.llm.providerName }, 'LLM client created on demand');
       } catch (error) {
-        console.error('[MentorService] ❌ LLM client creation failed:', error);
+        log.error({ error }, 'LLM client creation failed');
         return null;
       }
     }
 
-    // Build prompt via synthesizer
     const synthesizer = getSynthesizerService();
-    // Destructure messages and contextJson
     const { messages, contextJson } = synthesizer.buildMessages(marketState);
 
     try {
-      // Call LLM
-      console.log('[MentorService] Calling LLM with', messages.length, 'messages...');
-      console.log(
-        '[MentorService] Prompt preview:',
-        messages[messages.length - 1]?.content?.slice(0, 200) + '...',
-      );
+      log.debug({ messageCount: messages.length }, 'Calling LLM');
 
       const response = await this.llm.generate({
         messages,
@@ -155,28 +144,24 @@ export class MentorService {
         maxTokens: TRADING_CONFIG.LLM.MAX_TOKENS,
       });
 
-      console.log('[MentorService] ✓ LLM response received:', {
-        contentLength: response.content.length,
-        tokens: response.usage.totalTokens,
-        latency: response.latencyMs,
-      });
-      console.log('[MentorService] Raw response preview:', response.content.slice(0, 300) + '...');
+      log.debug(
+        { contentLength: response.content.length, tokens: response.usage.totalTokens, latency: response.latencyMs },
+        'LLM response received',
+      );
 
-      // Parse response as JSON
       const insight = this.parseInsight(response.content);
 
       if (!insight) {
-        console.error('[MentorService] Failed to parse insight from LLM response');
+        log.error('Failed to parse insight from LLM response');
         return null;
       }
 
-      // Persist to database
       insertAdvisorLog.run({
         timestamp: Date.now(),
         symbol: this.symbol,
         regime: marketState.regime,
         insightJson: JSON.stringify(insight),
-        marketStateJson: contextJson, // Persist debug context
+        marketStateJson: contextJson,
         tokensUsed: response.usage.totalTokens,
         latencyMs: response.latencyMs,
       });
@@ -184,17 +169,15 @@ export class MentorService {
       this.lastInsightAt = new Date();
       this.insightCount++;
 
-      console.log(
-        `[MentorService] Insight generated (${response.latencyMs}ms, ${response.usage.totalTokens} tokens)`,
-      );
+      log.info({ latencyMs: response.latencyMs, tokens: response.usage.totalTokens }, 'Insight generated');
 
       return insight;
-    } catch (error: any) {
-      if (error?.status === 429 || error?.message?.includes('quota')) {
-        const quotaError = new LLMQuotaError();
-        console.error(`[MentorService] ${quotaError.message}`);
+    } catch (error: unknown) {
+      const err = error as { status?: number; message?: string };
+      if (err?.status === 429 || err?.message?.includes('quota')) {
+        log.error(new LLMQuotaError().message);
       } else {
-        console.error('[MentorService] LLM call failed:', error);
+        log.error({ error }, 'LLM call failed');
       }
       return null;
     }
@@ -204,20 +187,21 @@ export class MentorService {
    * Get the latest insight from the database.
    */
   getLatestInsight(): { insight: AdvisorNote; timestamp: number; regime: string } | null {
-    const log = getLatestAdvisorLog.get(this.symbol) as AdvisorLogRow | null;
+    const row = getLatestAdvisorLog.get(this.symbol) as AdvisorLogRow | null;
 
-    if (!log) {
+    if (!row) {
       return null;
     }
 
     try {
-      const insight = JSON.parse(log.insight_json) as AdvisorNote;
+      const insight = JSON.parse(row.insight_json) as AdvisorNote;
       return {
         insight,
-        timestamp: log.timestamp,
-        regime: log.regime || 'unknown',
+        timestamp: row.timestamp,
+        regime: row.regime || 'unknown',
       };
-    } catch {
+    } catch (error) {
+      log.error({ error }, 'Failed to parse stored insight JSON');
       return null;
     }
   }
@@ -226,63 +210,60 @@ export class MentorService {
    * Parse LLM response into AdvisorNote structure.
    */
   private parseInsight(content: string): AdvisorNote | null {
-    console.log('[MentorService] Parsing insight from LLM response...');
     try {
-      // Robust cleaning: remove markdown code blocks and find first { to last }
       let clean = content
         .replace(/```json/g, '')
         .replace(/```/g, '')
         .trim();
       const jsonMatch = clean.match(/\{[\s\S]*\}/);
 
-      if (jsonMatch) {
-        clean = jsonMatch[0];
-      } else {
-        console.error('[MentorService] ❌ No JSON found in response!');
-        console.debug('[MentorService] Full content:', content);
+      if (!jsonMatch) {
+        log.error({ contentPreview: content.slice(0, 200) }, 'No JSON found in LLM response');
         return null;
       }
 
-      console.log('[MentorService] Found JSON match:', clean.slice(0, 200) + '...');
-      const parsed = JSON.parse(clean);
-      console.log('[MentorService] Parsed object keys:', Object.keys(parsed));
+      clean = jsonMatch[0];
+      const parsed = JSON.parse(clean) as Record<string, unknown>;
 
-      // Validate required fields
       if (!parsed.title || !parsed.mentor_tip) {
-        console.error(
-          '[MentorService] ❌ Missing required fields! Has title:',
-          !!parsed.title,
-          'Has mentor_tip:',
-          !!parsed.mentor_tip,
+        log.error(
+          { hasTitle: !!parsed.title, hasMentorTip: !!parsed.mentor_tip },
+          'LLM response missing required fields',
         );
         return null;
       }
 
-      console.log('[MentorService] ✓ Insight parsed successfully:', parsed.title);
+      log.debug({ title: parsed.title }, 'Insight parsed successfully');
       return {
-        title: parsed.title,
-        sentiment_bias: ['LONG', 'SHORT', 'NEUTRAL'].includes(parsed.sentiment_bias)
-          ? parsed.sentiment_bias
+        title: parsed.title as string,
+        sentiment_bias: ['LONG', 'SHORT', 'NEUTRAL'].includes(parsed.sentiment_bias as string)
+          ? (parsed.sentiment_bias as 'LONG' | 'SHORT' | 'NEUTRAL')
           : undefined,
-        regime_context: parsed.regime_context || '',
-        scenario_bullish: parsed.scenario_bullish || '',
-        scenario_bearish: parsed.scenario_bearish || '',
-        risk_management: parsed.risk_management?.recommended_sl
-          ? {
-            recommended_sl: parsed.risk_management.recommended_sl,
-            invalidation_reason: parsed.risk_management.invalidation_reason || 'Structural level',
-          }
-          : undefined,
-        mentor_tip: parsed.mentor_tip,
+        regime_context: (parsed.regime_context as string) || '',
+        scenario_bullish: (parsed.scenario_bullish as string) || '',
+        scenario_bearish: (parsed.scenario_bearish as string) || '',
+        risk_management:
+          parsed.risk_management &&
+          typeof parsed.risk_management === 'object' &&
+          (parsed.risk_management as Record<string, unknown>).recommended_sl
+            ? {
+                recommended_sl: Number(
+                  (parsed.risk_management as Record<string, unknown>).recommended_sl,
+                ),
+                invalidation_reason:
+                  ((parsed.risk_management as Record<string, unknown>)
+                    .invalidation_reason as string) || 'Structural level',
+              }
+            : undefined,
+        mentor_tip: parsed.mentor_tip as string,
         reasoning_key_factors: Array.isArray(parsed.reasoning_key_factors)
-          ? parsed.reasoning_key_factors
+          ? (parsed.reasoning_key_factors as string[])
           : [],
         confidence_score:
           typeof parsed.confidence_score === 'number' ? parsed.confidence_score : 50,
       };
     } catch (error) {
-      console.error('[MentorService] ❌ JSON parse error:', error);
-      console.error('[MentorService] Raw content was:', content.slice(0, 500));
+      log.error({ error, contentPreview: content.slice(0, 500) }, 'Failed to parse insight JSON');
       return null;
     }
   }
