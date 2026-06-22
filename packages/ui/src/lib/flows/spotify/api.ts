@@ -65,7 +65,7 @@ export async function updateStats(): Promise<void> {
     const { data, error } = await api.api.spotify.stats.get();
     if (error) return;
 
-    const stats = data as Record<string, unknown>;
+    const stats = data as unknown as Record<string, unknown>;
     topStats.set({
       total: (stats.totalTracks as number) || 0,
       artists: 0,
