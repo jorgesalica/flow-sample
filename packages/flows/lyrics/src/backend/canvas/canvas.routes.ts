@@ -73,7 +73,7 @@ export const canvasRoutes = new Elysia({ prefix: '/:trackId/canvas' })
             }
         };
     })
-    .post('/analyze', async ({ params, set }) => {
+    .post('/analyze', async ({ params, set, lyricsRepository }: any) => {
         const { trackId } = params;
         
         const track = getTrackDetails(trackId);
@@ -83,11 +83,14 @@ export const canvasRoutes = new Elysia({ prefix: '/:trackId/canvas' })
             return { error: 'Track or lyrics not available' };
         }
 
+        // Fetch overarching interpretation if it exists
+        const interpretation = await lyricsRepository.getInterpretation(trackId);
+
         // 1. Tokenize the text (Deterministic)
         const tokenAst = tokenize(track.plainLyrics);
         
         // 2. Analyze with LLM
-        const analysisResult = await analyzeLyrics(tokenAst, track.title, track.artist);
+        const analysisResult = await analyzeLyrics(tokenAst, track.title, track.artist, interpretation);
         
         // 3. Construct the CanvasAnalysis object
         // We need the MUSIC_LAYERS from shared

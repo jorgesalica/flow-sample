@@ -25,7 +25,8 @@ export const productionAnnotationSchema = z.object({
 });
 
 export const meaningAnnotationSchema = z.object({
-    tokenId: z.string(),
+    tokenIds: z.array(z.string()).optional().describe('List of token IDs this meaning applies to. Use this for phrases.'),
+    tokenId: z.string().optional().describe('Fallback: single token ID if it only applies to one word.'),
     layerId: z.literal('meaning'),
     label: z.string().describe('Short label for the meaning (e.g. Metaphor, Reference, Theme)'),
     detail: z.string().describe('Detailed explanation of the lyrical meaning context for this specific phrase'),
@@ -40,7 +41,7 @@ export const musicAnnotationSchema = z.discriminatedUnion('layerId', [
 ]);
 
 export const musicalAnalysisSchema = z.object({
-    annotations: z.array(musicAnnotationSchema).describe('List of musical annotations tied to specific tokens'),
+    annotations: z.array(musicAnnotationSchema).describe('List of musical annotations'),
     meta: z.object({
         key: z.string().nullable(),
         bpm: z.number().nullable(),

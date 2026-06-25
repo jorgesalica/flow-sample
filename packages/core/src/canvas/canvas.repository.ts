@@ -112,3 +112,30 @@ export function deleteAnalysisBySourceId(sourceId: string): void {
     const db = getDb();
     db.prepare('DELETE FROM canvas_analyses WHERE source_id = ?').run(sourceId);
 }
+
+export const deleteAnalysis = deleteAnalysisBySourceId;
+
+/**
+ * Get all analyses by source type
+ */
+export function getAllAnalysesBySourceType(sourceType: string): CanvasAnalysis[] {
+    const db = getDb();
+    const rows = db
+        .prepare('SELECT * FROM canvas_analyses WHERE source_type = ? ORDER BY created_at DESC')
+        .all(sourceType) as Record<string, unknown>[];
+
+    return rows.map(row => ({
+        id: row.id as string,
+        sourceId: row.source_id as string,
+        sourceType: row.source_type as string,
+        sourceTextHash: row.source_text_hash as string,
+        tokenAst: JSON.parse(row.token_ast as string),
+        annotations: JSON.parse(row.annotations as string),
+        layers: JSON.parse(row.layers as string),
+        meta: row.meta ? JSON.parse(row.meta as string) : undefined,
+        modelUsed: row.model_used as string,
+        providerUsed: row.provider_used as string,
+        createdAt: row.created_at as string,
+        updatedAt: row.updated_at as string,
+    }));
+}

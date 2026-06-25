@@ -37,43 +37,12 @@
     }
 
     // Line-level meaning highlight: track which line group is hovered
-    let hoveredMeaningGroup: string | null = null;
+    let hoveredLineId: string | null = null;
 
-    // Group meaning annotations by their label+detail to identify phrase groups
-    $: meaningGroups = (() => {
-        const groups: Record<string, Set<string>> = {};
-        for (const ann of annotations) {
-            if (ann.layerId !== 'meaning') continue;
-            const key = `${ann.label}:::${ann.detail}`;
-            if (!groups[key]) groups[key] = new Set();
-            groups[key].add(ann.tokenId);
-        }
-        return groups;
-    })();
-
-    // Reverse lookup: tokenId → meaning group key
-    $: tokenMeaningGroup = (() => {
-        const map: Record<string, string> = {};
-        for (const [key, tokenIds] of Object.entries(meaningGroups)) {
-            for (const tid of tokenIds) {
-                map[tid] = key;
-            }
-        }
-        return map;
-    })();
-
-    // Check if a token is part of the currently hovered meaning group
-    function isInHoveredMeaningGroup(tokenId: string): boolean {
-        if (!hoveredMeaningGroup) return false;
-        const group = meaningGroups[hoveredMeaningGroup];
-        return group?.has(tokenId) ?? false;
-    }
-
-    function handleTokenMouseEnter(tokenId: string, anns: Annotation[], el: HTMLElement) {
-        // If this token has a meaning annotation, highlight its whole group
-        const groupKey = tokenMeaningGroup[tokenId];
-        if (groupKey && activeLayers.includes('meaning')) {
-            hoveredMeaningGroup = groupKey;
+    function handleTokenMouseEnter(tokenId: string, anns: Annotation[], el: HTMLElement, lineId: string) {
+        // If this token has a meaning annotation, highlight its whole line
+        if (hasMeaning(anns) && activeLayers.includes('meaning')) {
+            hoveredLineId = lineId;
         }
         
         if (anns.length > 0) {
@@ -82,8 +51,12 @@
     }
 
     function handleTokenMouseLeave() {
-        hoveredMeaningGroup = null;
+        hoveredLineId = null;
         dispatch('tokenhover', null);
+    }
+
+    function abbreviateVocal(label: string): string {
+        return label.charAt(0).toUpperCase();
     }
 </script>
 
@@ -95,48 +68,44 @@
             </header>
 
             <div class="section-content">
-                {#each section.lines as line}
-                    <div class="canvas-line">
+                {#each section.lines as line, lineIndex}
+                    {@const lineId = `${section.id}_${lineIndex}`}
+                    {@const lineMeaningAnns = Array.from(new Map(
+                        line.flatMap(t => getActiveAnnotations(t.id, activeLayers).filter(a => a.layerId === 'meaning'))
+                            .map(a => [a.detail, a])
+                    ).values())}
+                    {@const lineHasMeaning = lineMeaningAnns.length > 0 && activeLayers.includes('meaning')}
+
+                    <div class="canvas-line" class:line-highlighted={hoveredLineId === lineId}>
                         {#each line as token}
                             {@const activeAnns = getActiveAnnotations(token.id, activeLayers)}
-                            {@const topAnns = getTopAnnotations(activeAnns)}
-                            {@const bottomAnns = getBottomAnnotations(activeAnns)}
-                            {@const tokenHasMeaning = hasMeaning(activeAnns)}
-                            {@const meaningHighlighted = isInHoveredMeaningGroup(token.id)}
+                            {@const displayAnns = activeAnns.filter(a => a.layerId !== 'meaning')}
+                            {@const tokenHoverAnns = [...displayAnns, ...lineMeaningAnns]}
                             
                             <!-- svelte-ignore a11y-no-static-element-interactions -->
                             <span 
                                 class="token"
-                                class:annotated={activeAnns.length > 0}
-                                class:has-meaning={tokenHasMeaning && activeLayers.includes('meaning')}
-                                class:meaning-highlighted={meaningHighlighted}
+                                class:annotated={displayAnns.length > 0}
+                                class:has-meaning={lineHasMeaning}
                                 data-id={token.id}
-                                on:mouseenter={(e) => handleTokenMouseEnter(token.id, activeAnns, e.currentTarget)}
+                                on:mouseenter={(e) => handleTokenMouseEnter(token.id, tokenHoverAnns, e.currentTarget, lineId)}
                                 on:mouseleave={handleTokenMouseLeave}
                             >
-                                <!-- Top badges: Chords + Production, stacked vertically -->
-                                {#if topAnns.length > 0}
-                                    <span class="badge-stack top">
-                                        {#each topAnns as ann}
+                                <!-- All badges inline ABOVE the text -->
+                                {#if displayAnns.length > 0}
+                                    <span class="badge-row">
+                                        {#each displayAnns as ann, i}
                                             <span class="layer-badge layer-{ann.layerId}">
-                                                {ann.label}
+                                                {ann.layerId === 'vocal' ? abbreviateVocal(ann.label) : ann.label}
                                             </span>
+                                            {#if i < displayAnns.length - 1}
+                                                <span class="badge-separator">·</span>
+                                            {/if}
                                         {/each}
                                     </span>
                                 {/if}
                                 
                                 <span class="token-text">{token.text}</span>
-                                
-                                <!-- Bottom badges: Vocal only (meaning is hover-only, no badge) -->
-                                {#if bottomAnns.length > 0}
-                                    <span class="badge-stack bottom">
-                                        {#each bottomAnns as ann}
-                                            <span class="layer-badge layer-{ann.layerId}">
-                                                {ann.label}
-                                            </span>
-                                        {/each}
-                                    </span>
-                                {/if}
                             </span>
                         {/each}
                     </div>
@@ -192,13 +161,24 @@
         flex-wrap: wrap;
         column-gap: 0.4rem;
         row-gap: 0.5rem;
+        border-radius: 4px;
+        transition: background 0.2s;
+        padding: 0.2rem 0.5rem;
+        margin-left: -0.5rem;
+        align-items: flex-end; /* Align to bottom baseline */
     }
 
-    /* ── Token layout: flex column with badge stacks ── */
+    .canvas-line.line-highlighted {
+        background: rgba(34, 211, 238, 0.08);
+        box-shadow: inset 2px 0 0 rgba(34, 211, 238, 0.5);
+    }
+
+    /* ── Token layout: flex column ── */
     .token {
         display: inline-flex;
         flex-direction: column;
         align-items: center;
+        justify-content: flex-end; /* Push text to bottom */
         cursor: pointer;
         transition: color 0.2s;
         gap: 0.15rem;
@@ -217,21 +197,18 @@
         line-height: 1.4;
     }
 
-    /* ── Badge stacks: replace absolute positioning with flex flow ── */
-    .badge-stack {
+    /* ── Badge row: inline below text ── */
+    .badge-row {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
-        gap: 0.1rem;
-        min-height: 0.9rem; /* Reserve space even when empty so layout stays stable */
+        gap: 0.2rem;
+        min-height: 0.9rem;
     }
 
-    .badge-stack.top {
-        order: -1; /* Render above token-text */
-    }
-
-    .badge-stack.bottom {
-        order: 1; /* Render below token-text */
+    .badge-separator {
+        color: var(--surface-500);
+        font-size: 0.6rem;
     }
 
     .layer-badge {
@@ -258,16 +235,14 @@
         font-size: 0.65rem;
     }
 
-    /* ── Meaning: visual-only (underline + glow), no badge ── */
+    /* ── Meaning: visual-only (underline) ── */
     .token.has-meaning .token-text {
         border-bottom: 2px dashed rgba(34, 211, 238, 0.4);
         padding-bottom: 2px;
     }
 
-    .token.meaning-highlighted .token-text {
+    .canvas-line.line-highlighted .token.has-meaning .token-text {
         border-bottom-color: rgba(34, 211, 238, 1);
-        background: rgba(34, 211, 238, 0.08);
         text-shadow: 0 0 12px rgba(34, 211, 238, 0.5);
-        border-radius: 2px;
     }
 </style>

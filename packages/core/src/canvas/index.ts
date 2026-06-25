@@ -5,4 +5,6 @@ export {
     saveAnalysis,
     findAnalysisBySourceId,
     deleteAnalysisBySourceId,
+    getAllAnalysesBySourceType,
+    deleteAnalysis
 } from './canvas.repository';

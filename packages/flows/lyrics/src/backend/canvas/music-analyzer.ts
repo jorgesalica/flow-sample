@@ -26,14 +26,23 @@ function formatAstForPrompt(ast: TokenAST): string {
 /**
  * Analyzes the lyrics using the LLM to generate musical annotations.
  */
-export async function analyzeLyrics(ast: TokenAST, trackTitle: string, artistName: string): Promise<MusicalAnalysisResult> {
+export async function analyzeLyrics(
+    ast: TokenAST, 
+    trackTitle: string, 
+    artistName: string, 
+    interpretation?: string | null
+): Promise<{ annotations: Annotation[]; meta: MusicalAnalysisResult['meta'] }> {
     const client = LLMClient.createRotation();
     
     const tokenizedLyrics = formatAstForPrompt(ast);
     
+    const interpretationContext = interpretation 
+        ? `\nOVERARCHING SONG MEANING:\n${interpretation}\n\n`
+        : '';
+    
     const prompt = `
 You are an expert music producer and arranger. Your task is to analyze the lyrics of "${trackTitle}" by ${artistName} and provide musical annotations.
-
+${interpretationContext}
 I am providing you the lyrics where every word has a unique token ID attached to it, like this: word[t_001].
 When you want to annotate a word with a chord change or vocal technique, you MUST use the exact token ID provided.
 
@@ -46,7 +55,9 @@ Your task:
 1. Provide CHORD annotations where harmonic changes typically occur. Use standard notation (e.g. Am, G, F#m). (At least 15-20 chords per song)
 2. Provide VOCAL annotations where the singer uses specific techniques (e.g. Belt, Falsetto, Vibrato). (At least 10-15 vocal techniques per song)
 3. Provide MEANING annotations to highlight lyrical context, metaphors, historical references, or thematic focus on specific phrases. (At least 10-15 meaning annotations per song)
-   - **CRITICAL RULE FOR MEANINGS**: If a meaning applies to an entire phrase or sentence, you MUST create a separate annotation for **EVERY SINGLE WORD** in that phrase with the exact same label and detail. Do NOT just annotate the first word.
+   - **DO NOT STATE THE OBVIOUS**. Do not just paraphrase the lyrics (e.g. if the lyric is "I am crazy", do not say "The singer is crazy"). 
+   - Connect the phrase to the overarching song meaning, its deeper emotional context, or cultural references.
+   - **CRITICAL RULE FOR MEANINGS**: If a meaning applies to an entire phrase or sentence, you MUST include ALL token IDs from that phrase in the \`tokenIds\` array. Do NOT just annotate the first word.
 4. Provide an overall META analysis (key, bpm, mood).
 
 IMPORTANT DENSITY RULE: You are analyzing at a word-by-word level. Do NOT be sparse. Provide a dense, rich analysis. It is perfectly fine to have multiple annotations (from different layers) on the exact same token, or annotations on adjacent tokens.
@@ -72,7 +83,7 @@ EXAMPLE JSON OUTPUT:
       "technique": "Falsetto"
     },
     {
-      "tokenId": "t_015",
+      "tokenIds": ["t_015", "t_016", "t_017"],
       "layerId": "meaning",
       "label": "Metaphor",
       "detail": "The 'dark water' represents the singer's struggle with depression.",
@@ -102,12 +113,33 @@ EXAMPLE JSON OUTPUT:
             musicalAnalysisSchema
         );
         
+        // Expand meaning tokenIds arrays back into individual annotations
+        const expandedAnnotations: any[] = [];
+        
+        for (const ann of result.annotations) {
+            if (ann.layerId === 'meaning') {
+                const tids = ann.tokenIds || (ann.tokenId ? [ann.tokenId] : []);
+                for (const tid of tids) {
+                    expandedAnnotations.push({
+                        ...ann,
+                        tokenIds: undefined,
+                        tokenId: tid
+                    });
+                }
+            } else {
+                expandedAnnotations.push(ann);
+            }
+        }
+        
         log.info({ 
             latencyMs: Date.now() - startTime,
-            annotationsCount: result.annotations.length
+            annotationsCount: expandedAnnotations.length
         }, 'LLM analysis completed successfully');
         
-        return result;
+        return {
+            ...result,
+            annotations: expandedAnnotations
+        };
     } catch (error) {
         log.error({ error, trackTitle }, 'Failed to generate musical analysis');
         throw error;

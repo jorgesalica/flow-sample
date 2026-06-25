@@ -32,4 +32,11 @@ export { MistralProvider } from './llm/providers';
 export { createDatabase } from './db';
 
 // Canvas
-export { tokenize, saveAnalysis, findAnalysisBySourceId, deleteAnalysisBySourceId } from './canvas';
+export { 
+    tokenize, 
+    saveAnalysis, 
+    findAnalysisBySourceId, 
+    deleteAnalysisBySourceId,
+    getAllAnalysesBySourceType,
+    deleteAnalysis 
+} from './canvas';
