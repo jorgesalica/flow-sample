@@ -5,7 +5,7 @@
 //   - stores.ts  → Svelte stores
 //   - api.ts     → API functions + SSE streaming
 
-import { registerFlow, type FlowStats } from '../registry';
+import { type FlowStats, type FlowDefinition } from '../registry';
 import { api } from '@lib/client';
 import TradingFlow from './TradingFlow.svelte';
 import type { StatusResponse } from './types';
@@ -59,8 +59,8 @@ async function getTradingStats(): Promise<FlowStats> {
   }
 }
 
-// Auto-register on import
-registerFlow({
+// Flow definition — hung on the board centrally in flows/index.ts
+export const tradingFlow: FlowDefinition = {
   id: 'trading',
   name: 'Trading Bot',
   icon: '📈',
@@ -69,6 +69,6 @@ registerFlow({
   color: 'from-amber-400 to-orange-500',
   component: TradingFlow,
   getStats: getTradingStats,
-});
+};
 
 export { getTradingStats };

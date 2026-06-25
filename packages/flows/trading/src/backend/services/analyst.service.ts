@@ -21,6 +21,9 @@ import { RSI, MACD } from 'technicalindicators';
 // Re-export types for convenience
 export type { MarketState } from '../../domain/types';
 import { InsufficientDataError } from '../../domain/errors';
+import { logger } from '@flows/core';
+
+const log = logger.child({ module: 'AnalystService' });
 
 export interface AnalystServiceConfig {
   symbol: string;
@@ -42,8 +45,8 @@ export class AnalystService {
 
   constructor(config?: Partial<AnalystServiceConfig>) {
     this.config = {
-      symbol: config?.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT',
-      interval: config?.interval || process.env.TRADING_INTERVAL || '1m',
+      symbol: config?.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL,
+      interval: config?.interval || TRADING_CONFIG.DEFAULTS.INTERVAL,
       hurstWindowSize: config?.hurstWindowSize || TRADING_CONFIG.HURST.WINDOW_SIZE,
       candleLookback: config?.candleLookback || 500,
     };
@@ -65,10 +68,10 @@ export class AnalystService {
     ) as CandleRow[];
 
     if (candleRows.length < TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS) {
-      const error = new InsufficientDataError(
-        `Not enough candles for analysis. Need ${TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS}, got ${candleRows.length}`,
+      log.warn(
+        { needed: TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS, got: candleRows.length },
+        'Not enough candles for analysis',
       );
-      console.warn(`[AnalystService] ${error.message}`);
       return null;
     }
 
@@ -93,8 +96,10 @@ export class AnalystService {
             candleOpenTime: fractal.candleOpenTime,
             detectedAt: Date.now(),
           });
-        } catch {
-          // Ignore duplicates (UNIQUE constraint)
+        } catch (error: unknown) {
+          if (!(error instanceof Error) || !error.message.includes('UNIQUE constraint failed')) {
+            throw error;
+          }
         }
       }
     });
@@ -118,8 +123,9 @@ export class AnalystService {
     onFractalsDetected?: (fractals: FractalNode[]) => void,
   ): MarketState | null {
     if (candles.length < TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS) {
-      console.warn(
-        `[AnalystService] Not enough candles for analysis. Need ${TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS}, got ${candles.length}`,
+      log.warn(
+        { needed: TRADING_CONFIG.CANDLES.MIN_FOR_ANALYSIS, got: candles.length },
+        'Not enough candles for analysis',
       );
       return null;
     }

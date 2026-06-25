@@ -1,5 +1,5 @@
 // Spotify Flow Registration
-import { registerFlow, type FlowStats } from '../registry';
+import { type FlowStats, type FlowDefinition } from '../registry';
 import { api } from '@lib/client';
 import SpotifyFlow from './SpotifyFlow.svelte';
 
@@ -7,7 +7,7 @@ async function getSpotifyStats(): Promise<FlowStats> {
   try {
     const { data, error } = await api.api.spotify.stats.get();
     if (error) throw new Error('Failed to fetch stats');
-    const stats = data as Record<string, unknown>;
+    const stats = data as unknown as Record<string, unknown>;
     return {
       count: (stats.totalTracks as number) || 0,
       status: 'active',
@@ -22,8 +22,8 @@ async function getSpotifyStats(): Promise<FlowStats> {
   }
 }
 
-// Auto-register on import
-registerFlow({
+// Flow definition — hung on the board centrally in flows/index.ts
+export const spotifyFlow: FlowDefinition = {
   id: 'spotify',
   name: 'Spotify Flow',
   icon: '🎵',
@@ -32,6 +32,6 @@ registerFlow({
   color: 'from-green-400 to-emerald-500',
   component: SpotifyFlow,
   getStats: getSpotifyStats,
-});
+};
 
 export { getSpotifyStats };

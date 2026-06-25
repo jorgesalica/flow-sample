@@ -19,6 +19,7 @@ import type { SQLiteTokenRepository } from '../token.repository';
 export interface SpotifyConfig {
   clientId: string;
   clientSecret: string;
+  redirectUri: string;
   refreshToken?: string;
 }
 
@@ -78,8 +79,10 @@ export class SpotifyApiAdapter implements SourcePort {
               originalRequest.headers['Authorization'] = `Bearer ${this.accessToken}`;
             }
             return this.client(originalRequest);
-          } catch {
-            throw new SpotifyAuthError('Token refresh failed');
+          } catch (refreshError) {
+            throw new SpotifyAuthError(
+              `Token refresh failed: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`,
+            );
           }
         }
 
@@ -122,23 +125,7 @@ export class SpotifyApiAdapter implements SourcePort {
 
       this.accessToken = response.data.access_token;
       this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
-
-      // 2. Save new tokens to DB if we have a repository
-      if (this.tokenRepository) {
-        // Expire slightly before actual expiration (e.g. 1 min buffer)
-        const expiresAt = Date.now() + (response.data.expires_in - 60) * 1000;
-        this.tokenRepository.set('spotify:access_token', this.accessToken, expiresAt);
-
-        // Update refresh token if provided (it might rotate)
-        if (response.data.refresh_token) {
-          // Refresh tokens last a long time, but let's give it 30 days default or just ignore exp for logic
-          this.tokenRepository.set(
-            'spotify:refresh_token',
-            response.data.refresh_token,
-            Date.now() + 30 * 24 * 60 * 60 * 1000,
-          );
-        }
-      }
+      this.saveTokens(response.data);
     } catch (error) {
       if (error instanceof SpotifyAuthError) throw error;
       throw new SpotifyAuthError('Failed to refresh access token');
@@ -156,7 +143,7 @@ export class SpotifyApiAdapter implements SourcePort {
         new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: 'http://127.0.0.1:4173/api/spotify/auth/callback',
+          redirect_uri: this.config.redirectUri,
         }),
         {
           headers: {
@@ -168,21 +155,23 @@ export class SpotifyApiAdapter implements SourcePort {
 
       this.accessToken = response.data.access_token;
       this.client.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
-
-      if (this.tokenRepository) {
-        const expiresAt = Date.now() + (response.data.expires_in - 60) * 1000;
-        this.tokenRepository.set('spotify:access_token', this.accessToken, expiresAt);
-        if (response.data.refresh_token) {
-          this.tokenRepository.set(
-            'spotify:refresh_token',
-            response.data.refresh_token,
-            Date.now() + 30 * 24 * 60 * 60 * 1000,
-          );
-        }
-      }
+      this.saveTokens(response.data);
     } catch (error) {
       log.error({ error }, 'Failed to exchange code');
       throw new SpotifyAuthError('Failed to exchange code');
+    }
+  }
+
+  private saveTokens(tokenData: SpotifyTokenResponse): void {
+    if (!this.tokenRepository || !this.accessToken) return;
+    const expiresAt = Date.now() + (tokenData.expires_in - 60) * 1000;
+    this.tokenRepository.set('spotify:access_token', this.accessToken, expiresAt);
+    if (tokenData.refresh_token) {
+      this.tokenRepository.set(
+        'spotify:refresh_token',
+        tokenData.refresh_token,
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      );
     }
   }
 

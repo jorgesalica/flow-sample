@@ -8,10 +8,10 @@
 
 ### 1. Environment Variables
 
-Copy the example file and fill in your Spotify credentials:
+Copy the example file (at the monorepo root — this is what the server actually loads) and fill in your Spotify credentials:
 
 ```bash
-cp packages/backend/.env.example packages/backend/.env
+cp .env.example .env
 ```
 
 | Variable | Description |

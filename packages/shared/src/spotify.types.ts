@@ -38,3 +38,13 @@ export interface YearCount {
     year: number;
     count: number;
 }
+
+// Repository interface (shared contract between Spotify and Lyrics flows)
+export interface TrackRepository {
+    save(tracks: Track[]): Promise<void>;
+    findAll(): Promise<Track[]>;
+    findById(id: string): Promise<Track | null>;
+    count(): Promise<number>;
+    getGenres(): Promise<GenreCount[]>;
+    getYears(): Promise<YearCount[]>;
+}

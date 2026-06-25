@@ -251,7 +251,7 @@
               >
                 {#if isInterpreting}
                   <div class="spinner small"></div>
-                   Generating...
+                  Generating...
                 {:else}
                   Generate Meaning
                 {/if}

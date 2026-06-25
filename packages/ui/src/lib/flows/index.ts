@@ -1,15 +1,19 @@
 // Flow exports
 export { registerFlow, getFlows, getFlow, type FlowDefinition, type FlowStats } from './registry';
 
-// Auto-register flows by importing them
-import './spotify';
-import './trading/trading';
+import { registerFlow } from './registry';
+import { spotifyFlow } from './spotify';
+import { tradingFlow } from './trading/trading';
 import { lyricsFlow } from './lyrics';
 import { chatFlow } from './chat';
 import { canvasFlow } from './canvas';
-import { registerFlow } from './registry';
 
-// Register
-registerFlow(lyricsFlow);
-registerFlow(chatFlow);
-registerFlow(canvasFlow);
+// ──────────────────────────────────────────────
+// The board manifest
+//
+// Every flow hung on the canvas, in display order.
+// To add a flow: export its FlowDefinition, then list it here.
+// This is the single place that decides what's on the board.
+// ──────────────────────────────────────────────
+const flows = [spotifyFlow, tradingFlow, lyricsFlow, chatFlow, canvasFlow];
+flows.forEach(registerFlow);

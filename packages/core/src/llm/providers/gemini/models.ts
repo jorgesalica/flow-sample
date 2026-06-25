@@ -1,4 +1,4 @@
-import type { ModelInfo } from '../types';
+import type { ModelInfo } from '../../types';
 
 /**
  * Gemini model catalog — Google AI Studio / Vertex AI

@@ -1,8 +1,6 @@
 import type { LyricsStatus } from '@flows/shared';
-import { createDatabase } from '@flows/core';
+import { musicDb } from '@flows/spotify';
 import { logger } from '@flows/core';
-
-const musicDb = createDatabase('music.db');
 
 const log = logger.child({ module: 'SQLiteLyricsRepository' });
 

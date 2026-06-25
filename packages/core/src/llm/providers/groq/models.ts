@@ -1,4 +1,4 @@
-import type { ModelInfo } from '../types';
+import type { ModelInfo } from '../../types';
 
 /**
  * Groq model catalog — GroqCloud (LPU inference)

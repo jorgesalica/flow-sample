@@ -41,6 +41,10 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Wrong-package-manager lockfiles — this is a pnpm workspace (source of truth: pnpm-lock.yaml)
+package-lock.json
+yarn.lock
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
@@ -141,9 +145,11 @@ vite.config.ts.timestamp-*
 # Project outputs
 outputs/
 
-# SQLite database
+# SQLite database files in any package
 data/*
-packages/backend/data/*
+**/data/*.db
+**/data/*.db-shm
+**/data/*.db-wal
 
 # Playwright
 packages/ui/playwright-report/

@@ -3,7 +3,7 @@
 // Backend exports
 export { createSpotifyRoutes } from './backend/routes';
 export { SpotifyUseCase, type SpotifyUseCaseOptions } from './backend/usecase';
-export { SQLiteTrackRepository, type PaginatedResult } from './backend/repository';
+export { SQLiteTrackRepository, type TrackRepository, type PaginatedResult } from './backend/repository';
 export { SQLiteTokenRepository } from './backend/token.repository';
 export { calculateStats } from './backend/stats.service';
 export { musicDb, rebuildFtsIndex } from './backend/database';

@@ -22,6 +22,7 @@ export type {
 
 // LLM — Providers
 export { BaseLLMProvider } from './llm/providers';
+export { OpenAICompatibleProvider } from './llm/providers';
 export { GeminiProvider } from './llm/providers';
 export { GroqProvider } from './llm/providers';
 export { OpenRouterProvider } from './llm/providers';

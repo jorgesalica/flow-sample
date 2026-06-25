@@ -1,20 +1,10 @@
-import type { Track, Artist, GenreCount, YearCount } from '@flows/shared';
+import type { Track, Artist, GenreCount, YearCount, TrackRepository } from '@flows/shared';
 import { musicDb } from './database';
 import { logger } from '@flows/core';
 
 const log = logger.child({ module: 'SQLiteTrackRepository' });
 
-/**
- * Repository interface for Spotify tracks
- */
-export interface TrackRepository {
-  save(tracks: Track[]): Promise<void>;
-  findAll(): Promise<Track[]>;
-  findById(id: string): Promise<Track | null>;
-  count(): Promise<number>;
-  getGenres(): Promise<GenreCount[]>;
-  getYears(): Promise<YearCount[]>;
-}
+export type { TrackRepository };
 
 interface TrackRow {
   id: string;

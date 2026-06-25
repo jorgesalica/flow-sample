@@ -1,7 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { SpotifyUseCase } from './usecase';
 import { calculateStats } from './stats.service';
-import type { GenreCount, YearCount } from '@flows/shared';
 import { SpotifyApiAdapter } from './adapter';
 import { SQLiteTrackRepository } from './repository';
 import { SQLiteTokenRepository } from './token.repository';
@@ -10,10 +9,23 @@ import { SimpleCache, logger } from '@flows/core';
 const log = logger.child({ module: 'SpotifyRoutes' });
 const apiCache = new SimpleCache();
 
+async function withCache<T>(key: string, fetch: () => Promise<T>): Promise<T> {
+  const cached = apiCache.get<T>(key);
+  if (cached) {
+    log.debug({ key }, 'Cache hit');
+    return cached;
+  }
+  const value = await fetch();
+  apiCache.set(key, value);
+  return value;
+}
+
 export interface SpotifyRoutesConfig {
   spotify: {
     clientId: string;
     clientSecret: string;
+    redirectUri: string;
+    successUrl: string;
     refreshToken?: string;
     pageLimit: number;
   };
@@ -27,6 +39,7 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
     {
       clientId: config.spotify.clientId,
       clientSecret: config.spotify.clientSecret,
+      redirectUri: config.spotify.redirectUri,
       refreshToken: config.spotify.refreshToken,
     },
     tokenRepository,
@@ -50,7 +63,7 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
           response_type: 'code',
           client_id: config.spotify.clientId,
           scope,
-          redirect_uri: 'http://127.0.0.1:4173/api/spotify/auth/callback',
+          redirect_uri: config.spotify.redirectUri,
         });
 
         set.status = 302;
@@ -69,8 +82,9 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
           try {
             await adapter.exchangeCode(code);
             set.status = 302;
-            set.headers['Location'] = 'http://localhost:5173/?connected=true#/spotify';
-          } catch {
+            set.headers['Location'] = config.spotify.successUrl;
+          } catch (error) {
+            log.error({ error }, 'Failed to exchange Spotify auth code');
             set.status = 500;
             return { error: 'Failed to exchange token' };
           }
@@ -157,39 +171,16 @@ export function createSpotifyRoutes(config: SpotifyRoutesConfig) {
         return { count };
       })
 
-      .get('/genres', async ({ spotifyRepository }) => {
-        const cached = apiCache.get<GenreCount[]>('genres');
-        if (cached) {
-          log.debug('Cache hit: genres');
-          return cached;
-        }
-        const genres = await spotifyRepository.getGenres();
-        apiCache.set('genres', genres);
-        return genres;
-      })
+      .get('/genres', ({ spotifyRepository }) =>
+        withCache('genres', () => spotifyRepository.getGenres()),
+      )
 
-      .get('/years', async ({ spotifyRepository }) => {
-        const cached = apiCache.get<YearCount[]>('years');
-        if (cached) {
-          log.debug('Cache hit: years');
-          return cached;
-        }
-        const years = await spotifyRepository.getYears();
-        apiCache.set('years', years);
-        return years;
-      })
+      .get('/years', ({ spotifyRepository }) =>
+        withCache('years', () => spotifyRepository.getYears()),
+      )
 
-      .get('/stats', async ({ spotifyRepository }) => {
-        const cached = apiCache.get<object>('stats');
-        if (cached) {
-          log.debug('Cache hit: stats');
-          return cached;
-        }
-
-        const stats = await calculateStats(spotifyRepository);
-
-        apiCache.set('stats', stats);
-        return stats;
-      })
+      .get('/stats', ({ spotifyRepository }) =>
+        withCache('stats', () => calculateStats(spotifyRepository)),
+      )
   );
 }

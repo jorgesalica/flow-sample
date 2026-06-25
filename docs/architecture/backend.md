@@ -11,40 +11,52 @@ The central `packages/backend` workspace now acts strictly as an **Application H
 Each flow encapsulates its own Domain, Infrastructure, and API layers. They are isolated from one another and share only core infrastructure and types.
 
 ```text
-packages/flows/
-├── shared/         # Shared Types and DTOs (Track, Artist)
-├── spotify/        # Spotify Sync & Search Flow
-├── lyrics/         # LrcLib Lyrics Fetcher Flow
-└── trading/        # Binance real-time Trading & AI Advisor Flow
+packages/
+├── shared/             # @flows/shared — shared types & DTOs (Track, Artist, …)
+├── core/               # @flows/core — logger, SimpleCache, LLMClient, createDatabase()
+└── flows/
+    ├── spotify/        # Spotify Sync & Search Flow
+    ├── lyrics/         # LrcLib Lyrics Fetcher Flow
+    ├── trading/        # Binance real-time Trading & AI Advisor Flow
+    └── chat/           # Multi-provider LLM Chat Flow
 ```
 
-### Layered Architecture per Flow
+### Layout per Flow (current state)
 
-Within each flow, we maintain a strict separation of concerns:
+The flows are **not yet uniform** — two patterns coexist today. Unifying them is a
+B2 goal (see [refactor-proposals/B1-ordering.md](../refactor-proposals/B1-ordering.md)
+and GitHub issue #18); B1 keeps them in place.
 
 ```text
+# Hexagonal (spotify, trading): a domain/ layer split from infrastructure
 flow-package/
 ├── src/
-│   ├── api/                # Elysia HTTP routes & validation
-│   ├── domain/             # Pure math, business rules, entities
-│   └── infrastructure/     # API clients, Repositories, DB queries
+│   ├── domain/             # Pure math, entities, ports, typed errors
+│   └── backend/            # Elysia routes, repositories, DB, services
+│       └── adapter/        # External API clients (trading: src/adapters/binance/)
+
+# Flat (lyrics, chat): routes + data access, no domain/ layer yet
+flow-package/
+├── src/
+│   └── backend/            # routes.ts, repository.ts / database.ts, adapter/
 ```
 
 ## Shared Infrastructure
 
-To avoid duplicating database connections and logging setup, we use a `core` package:
+To avoid duplicating database connections and logging setup, flows depend on the
+`@flows/core` package. The database is created via a factory (not a global singleton):
 
 ```typescript
-// packages/core/src/db.ts
+// packages/core/src/db/index.ts
 import Database from 'better-sqlite3';
-export const db = new Database('data/database.sqlite');
+export function createDatabase(filename: string) {
+  return new Database(filename);
+}
 ```
 
-Flows import the shared database instance:
-
-```typescript
-import { db } from '@flows/core';
-```
+> **Note:** the shared `music.db` (used by spotify + lyrics) is currently created
+> inside `@flows/spotify` and exported as `musicDb`. Relocating it to neutral
+> ownership is a B2 item — see issue #18.
 
 ## LLM Provider Architecture
 

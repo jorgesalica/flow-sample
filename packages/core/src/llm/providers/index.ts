@@ -5,14 +5,15 @@ export type {
     LLMResponse,
     LLMStreamEvent,
     LLMUsage,
-    StructuredOutputConfig,
     ModelTier,
     ModelPricing,
     ModelInfo,
-} from './types';
+} from '../types';
 
 // ── Base ─────────────────────────────────────────────────────────────
 export { BaseLLMProvider } from './base-provider';
+export { OpenAICompatibleProvider } from './openai-compatible';
+export type { OpenAICompatibleConfig } from './openai-compatible';
 
 // ── Providers ────────────────────────────────────────────────────────
 export { GeminiProvider } from './gemini/gemini-provider';

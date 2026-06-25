@@ -6,6 +6,10 @@ import {
   getLastCandle,
   type CandleRow,
 } from '../database';
+import { TRADING_CONFIG } from '../config';
+import { logger } from '@flows/core';
+
+const log = logger.child({ module: 'TradingService' });
 
 export interface TradingServiceConfig {
   symbol: string;
@@ -36,8 +40,8 @@ export class TradingService {
 
   constructor(config?: Partial<TradingServiceConfig>) {
     this.config = {
-      symbol: config?.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT',
-      interval: config?.interval || process.env.TRADING_INTERVAL || '1m',
+      symbol: config?.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL,
+      interval: config?.interval || TRADING_CONFIG.DEFAULTS.INTERVAL,
     };
 
     this.state = {
@@ -58,11 +62,11 @@ export class TradingService {
   /** Start the data ingestion pipeline */
   start(): void {
     if (this.state.isRunning) {
-      console.log('[TradingService] Already running');
+      log.info('Already running');
       return;
     }
 
-    console.log(`[TradingService] Starting with ${this.config.symbol}@${this.config.interval}`);
+    log.info({ symbol: this.config.symbol, interval: this.config.interval }, 'Starting');
 
     this.stream = new BinanceStream(this.config.symbol, this.config.interval);
 
@@ -81,7 +85,7 @@ export class TradingService {
     });
 
     this.stream.on('error', (error: Error) => {
-      console.error('[TradingService] Stream error:', error.message);
+      log.error({ error: error.message }, 'Stream error');
       this.emit('error', { error: error.message });
     });
 
@@ -92,11 +96,11 @@ export class TradingService {
   /** Stop the data ingestion pipeline */
   stop(): void {
     if (!this.state.isRunning) {
-      console.log('[TradingService] Not running');
+      log.info('Not running');
       return;
     }
 
-    console.log('[TradingService] Stopping...');
+    log.info('Stopping');
     this.stream?.disconnect();
     this.stream = null;
     this.state.isRunning = false;
@@ -121,7 +125,7 @@ export class TradingService {
         closeTime: candle.closeTime,
       });
     } catch (error) {
-      console.error('[TradingService] Failed to persist candle:', error);
+      log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to persist candle');
     }
 
     // Emit events
