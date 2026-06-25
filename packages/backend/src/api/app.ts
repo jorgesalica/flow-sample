@@ -116,8 +116,8 @@ export type App = typeof app;
 // Start server
 app.listen(config.port, () => {
   log.info({ port: config.port }, 'Server started');
-  console.log(`🚀 Server running at http://localhost:${config.port}`);
+  log.info({ url: `http://localhost:${config.port}` }, 'Listening');
   if (hasUiDist) {
-    console.log(`📦 Serving UI from ${uiDistPath}`);
+    log.info({ path: uiDistPath }, 'Serving UI');
   }
 });

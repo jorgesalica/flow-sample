@@ -51,9 +51,32 @@ pnpm dev                # Runs backend (:4173) and UI (:5173) in parallel
 | :--- | :--- | :--- |
 | **Dev** | `pnpm dev` | Start Backend + UI in parallel |
 | **Build** | `pnpm run build` | Build all packages |
-| **Type Check** | `pnpm run typecheck` | TypeScript checking |
-| **Test** | `pnpm run test` | Run unit tests |
+| **Type Check** | `pnpm run typecheck` | TypeScript checking across all packages |
+| **Check** | `pnpm run check` | Svelte component type checking (UI) |
+| **Test** | `pnpm run test` | Run unit tests (Vitest) |
 | **Lint** | `pnpm run lint` | ESLint |
+| **Format** | `pnpm run format` | Prettier auto-format |
+| **Format Check** | `pnpm run format:check` | Verify formatting (used in CI/hooks) |
+| **Clean** | `pnpm run clean` | Remove all `dist/` and `node_modules/` |
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in the required values:
+
+| Variable | Required | Description |
+| :--- | :---: | :--- |
+| `PORT` | — | Server port (default `4173`) |
+| `SPOTIFY_CLIENT_ID` | ✓ | Spotify app client ID |
+| `SPOTIFY_CLIENT_SECRET` | ✓ | Spotify app client secret |
+| `GEMINI_API_KEY` | ✓* | Gemini API key (`*` one LLM key required) |
+| `GROQ_API_KEY` | — | Groq API key (for rotation mode) |
+| `OPENROUTER_API_KEY` | — | OpenRouter API key |
+| `CEREBRAS_API_KEY` | — | Cerebras API key |
+| `MISTRAL_API_KEY` | — | Mistral API key |
+| `LLM_PROVIDER` | — | `gemini` \| `groq` \| `rotation` … (default `gemini`) |
+| `LLM_MODEL` | — | Model name for the selected provider |
+| `TRADING_SYMBOL` | — | Default trading pair (default `BTCUSDT`) |
+| `TRADING_INTERVAL` | — | Default candle interval (default `1m`) |
 
 ## Tech Stack
 

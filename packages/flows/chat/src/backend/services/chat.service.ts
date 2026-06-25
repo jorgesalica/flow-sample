@@ -1,7 +1,9 @@
 import { randomUUID } from 'crypto';
-import { LLMClient } from '@flows/core';
+import { LLMClient, logger } from '@flows/core';
 import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
 import { chatDb } from '../database';
+
+const log = logger.child({ module: 'ChatService' });
 
 export class ChatService {
     private rotationClient: LLMClient | null = null;
@@ -53,7 +55,7 @@ export class ChatService {
         mode: ChatMode = 'specific',
         model?: string,
     ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
-        console.log(`[ChatService] mode=${mode} model=${model || 'auto'} conv=${conversationId}`);
+        log.info({ mode, model: model || 'auto', conversationId }, 'sendMessage');
 
         this.ensureConversation(conversationId, content);
 
@@ -69,9 +71,7 @@ export class ChatService {
                 ? await this.getRotationClient().generate({ messages: llmMessages })
                 : await LLMClient.generateForProvider(model!, { messages: llmMessages });
 
-        console.log(
-            `[ChatService] ${response.provider}/${response.model} responded in ${response.latencyMs}ms (${response.usage.totalTokens} tokens)`,
-        );
+        log.info({ provider: response.provider, model: response.model, latencyMs: response.latencyMs, tokens: response.usage.totalTokens }, 'sendMessage: response');
 
         const assistantMsg: ChatMessage = {
             id: randomUUID(),
@@ -97,7 +97,7 @@ export class ChatService {
         mode: ChatMode = 'specific',
         model?: string,
     ): AsyncGenerator<string> {
-        console.log(`[ChatService] STREAM mode=${mode} model=${model || 'auto'} conv=${conversationId}`);
+        log.info({ mode, model: model || 'auto', conversationId }, 'sendMessageStream: start');
 
         this.ensureConversation(conversationId, content);
 
@@ -139,7 +139,7 @@ export class ChatService {
         };
         chatDb.addMessage(assistantMsg);
 
-        console.log(`[ChatService] STREAM complete ${providerUsed}/${modelUsed} (${fullContent.length} chars)`);
+        log.info({ provider: providerUsed, model: modelUsed, chars: fullContent.length }, 'sendMessageStream: done');
         yield `data: ${JSON.stringify({ type: 'done', message: assistantMsg })}\n\n`;
     }
 

@@ -7,7 +7,7 @@ async function getSpotifyStats(): Promise<FlowStats> {
   try {
     const { data, error } = await api.api.spotify.stats.get();
     if (error) throw new Error('Failed to fetch stats');
-    const stats = data as Record<string, unknown>;
+    const stats = data as unknown as Record<string, unknown>;
     return {
       count: (stats.totalTracks as number) || 0,
       status: 'active',

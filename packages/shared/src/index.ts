@@ -10,6 +10,7 @@ export type {
     Track,
     GenreCount,
     YearCount,
+    TrackRepository,
 } from './spotify.types';
 
 // Lyrics types

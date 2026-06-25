@@ -3,13 +3,19 @@ import { LrcLibAdapter } from './adapter';
 import { SQLiteLyricsRepository } from './repository';
 import { SQLiteTrackRepository } from '@flows/spotify';
 import { logger, LLMClient } from '@flows/core';
-import type { LyricsStatus } from '@flows/shared';
+import type { LyricsStatus, TrackRepository } from '@flows/shared';
 
 const log = logger.child({ module: 'LyricsRoutes' });
 
+const LYRICS_INTERPRETATION_PROMPT =
+  'You are a music analyst. Analyze the following song lyrics. ' +
+  'Explain what the song is about, its themes, emotions, and any notable metaphors or references. ' +
+  'Write in the same language as the lyrics. Be concise but insightful. ' +
+  'Use Markdown formatting for structure.';
+
 export function createLyricsRoutes() {
   const lyricsRepository = new SQLiteLyricsRepository();
-  const trackRepository = new SQLiteTrackRepository();
+  const trackRepository: TrackRepository = new SQLiteTrackRepository();
   const lrcLibAdapter = new LrcLibAdapter();
 
   return (
@@ -204,11 +210,7 @@ export function createLyricsRoutes() {
             messages: [
               {
                 role: 'system',
-                content:
-                  'You are a music analyst. Analyze the following song lyrics. ' +
-                  'Explain what the song is about, its themes, emotions, and any notable metaphors or references. ' +
-                  'Write in the same language as the lyrics. Be concise but insightful. ' +
-                  'Use Markdown formatting for structure.',
+                content: LYRICS_INTERPRETATION_PROMPT,
               },
               {
                 role: 'user',

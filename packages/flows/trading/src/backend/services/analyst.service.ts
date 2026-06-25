@@ -45,8 +45,8 @@ export class AnalystService {
 
   constructor(config?: Partial<AnalystServiceConfig>) {
     this.config = {
-      symbol: config?.symbol || process.env.TRADING_SYMBOL || 'BTCUSDT',
-      interval: config?.interval || process.env.TRADING_INTERVAL || '1m',
+      symbol: config?.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL,
+      interval: config?.interval || TRADING_CONFIG.DEFAULTS.INTERVAL,
       hurstWindowSize: config?.hurstWindowSize || TRADING_CONFIG.HURST.WINDOW_SIZE,
       candleLookback: config?.candleLookback || 500,
     };
