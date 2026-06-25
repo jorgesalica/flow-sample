@@ -6,7 +6,7 @@
  */
 
 import { createDatabase } from '../db';
-import type { CanvasAnalysis } from '@flows/shared';
+import type { CanvasAnalysis, CanvasSourceType } from '@flows/shared';
 import type Database from 'better-sqlite3';
 
 let db: Database.Database | null = null;
@@ -92,7 +92,7 @@ export function findAnalysisBySourceId(sourceId: string): CanvasAnalysis | null 
     return {
         id: row.id as string,
         sourceId: row.source_id as string,
-        sourceType: row.source_type as string,
+        sourceType: row.source_type as CanvasSourceType,
         sourceTextHash: row.source_text_hash as string,
         tokenAst: JSON.parse(row.token_ast as string),
         annotations: JSON.parse(row.annotations as string),
@@ -127,7 +127,7 @@ export function getAllAnalysesBySourceType(sourceType: string): CanvasAnalysis[]
     return rows.map(row => ({
         id: row.id as string,
         sourceId: row.source_id as string,
-        sourceType: row.source_type as string,
+        sourceType: row.source_type as CanvasSourceType,
         sourceTextHash: row.source_text_hash as string,
         tokenAst: JSON.parse(row.token_ast as string),
         annotations: JSON.parse(row.annotations as string),

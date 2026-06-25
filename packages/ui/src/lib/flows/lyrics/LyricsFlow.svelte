@@ -153,14 +153,14 @@
       await getLyrics(trackId, { force: true });
       toast.dismiss(toastId);
       toast.success('Fetch complete');
-      
-      tracks = tracks.map(t => t.id === trackId ? { ...t, status: 'found' } : t);
+
+      tracks = tracks.map((t) => (t.id === trackId ? { ...t, status: 'found' } : t));
       stats = await getLyricsStats();
     } catch {
       toast.dismiss(toastId);
       toast.error('Fetch failed or not found');
-      
-      tracks = tracks.map(t => t.id === trackId ? { ...t, status: 'not_found' } : t);
+
+      tracks = tracks.map((t) => (t.id === trackId ? { ...t, status: 'not_found' } : t));
     }
   }
 
@@ -279,7 +279,14 @@
             class="text-pulsar hover:text-white transition-colors flex items-center gap-2"
             onclick={() => (canvasTrackId = null)}
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              /></svg
+            >
             Back to Dashboard
           </button>
         </div>
@@ -455,7 +462,18 @@
                               };
                             }}
                           >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            <svg
+                              class="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              /></svg
+                            >
                           </button>
                           <button
                             class="text-cosmic hover:text-white transition-colors p-1 rounded hover:bg-white/10"
@@ -465,21 +483,38 @@
                               canvasTrackId = track.id;
                             }}
                           >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            <svg
+                              class="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                              /></svg
+                            >
                           </button>
                         {/if}
                         {#if track.status === 'not_found' || track.status === 'pending'}
                           <button
                             class="text-pulsar hover:text-white transition-colors p-1 rounded hover:bg-white/10"
-                            title={track.status === 'not_found' ? "Retry Fetching" : "Fetch Lyrics"}
+                            title={track.status === 'not_found' ? 'Retry Fetching' : 'Fetch Lyrics'}
                             onclick={(e) => handleIndividualRetry(track.id, e)}
                           >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            <svg
+                              class="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                               ><path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                                 stroke-width="2"
-                                d={track.status === 'not_found' ? "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" : "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"}
+                                d={track.status === 'not_found'
+                                  ? 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                                  : 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12'}
                               /></svg
                             >
                           </button>
