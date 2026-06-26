@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
     test: {
@@ -16,6 +17,12 @@ export default defineConfig({
                 'src/**/database.ts',
                 'src/**/server.ts',
             ],
+        },
+    },
+    resolve: {
+        alias: {
+            '@flows/core': path.resolve(__dirname, '../../core/src/index.ts'),
+            '@flows/shared': path.resolve(__dirname, '../../shared/src/index.ts'),
         },
     },
 });
