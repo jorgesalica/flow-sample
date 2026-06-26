@@ -6,6 +6,18 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         include: ['tests/**/*.test.ts'],
+        coverage: {
+            provider: 'v8',
+            reporter: ['text', 'json-summary', 'html'],
+            include: ['src/**/*.ts'],
+            exclude: [
+                'src/**/index.ts',
+                'src/**/*.types.ts',
+                'src/**/types/**',
+                'src/**/database.ts',
+                'src/**/server.ts',
+            ],
+        },
     },
     resolve: {
         alias: {
