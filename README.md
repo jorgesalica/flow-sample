@@ -8,6 +8,7 @@ A playground for data flows — extract, transform, and visualize data from vari
 - **Lyrics Flow**: Batch-fetch lyrics from LrcLib with concurrent requests, view inline
 - **Trading Bot Flow**: Real-time BTC advisor with Fractal Analysis and AI-driven "Cascade Wizard"
 - **Chat Flow**: Multi-provider LLM chat (Gemini, Groq, Cerebras, Mistral, OpenRouter) with rotation fallback and SSE streaming
+- **Canvas Flow**: Tokenize lyrics/text and render LLM annotations (chords, vocal, meaning) on an interactive canvas
 - **Cosmic UI**: Dark space-themed interface with glassmorphism and subtle animations
 - **Charts & Insights**: Genre distribution, decade analysis, and more
 - **Smart Caching**: 5-minute API cache with auto-invalidation
@@ -20,12 +21,13 @@ flow-sample/
 │   ├── core/               # Logger, shared infra (@flows/core)
 │   ├── shared/             # TypeScript types & interfaces (@flows/shared)
 │   ├── backend/            # Elysia API server (@flows/backend)
-│   ├── ui/                 # Svelte 5 Frontend (@flows/ui)
+│   ├── ui/                 # SvelteKit frontend, Svelte 5 (@flows/ui)
 │   └── flows/
 │       ├── spotify/        # Spotify API adapter + SQLite (@flows/spotify)
 │       ├── lyrics/         # LrcLib adapter + batch fetcher (@flows/lyrics)
 │       ├── trading/        # Binance WebSocket + AI advisor (@flows/trading)
-│       └── chat/           # Multi-provider LLM chat + SSE (@flows/chat)
+│       ├── chat/           # Multi-provider LLM chat + SSE (@flows/chat)
+│       └── canvas/         # Tokenizer + LLM annotation canvas (@flows/canvas)
 ├── data/                   # SQLite databases
 ├── docs/                   # Documentation
 └── package.json            # pnpm workspace root
@@ -82,18 +84,34 @@ Copy `.env.example` to `.env` and fill in the required values:
 
 | Layer | Technology |
 | ----- | ---------- |
-| **UI** | Svelte 5, Vite 7, Tailwind CSS 4, Chart.js |
-| **Server** | Elysia (with Node.js adapter) |
+| **UI** | SvelteKit, Svelte 5 (runes), Vite 7, Tailwind CSS 4, Chart.js |
+| **Server** | Elysia (Node.js adapter), `tsx` dev runtime |
 | **Database** | SQLite (better-sqlite3) |
+| **API client** | Eden Treaty (end-to-end typed) |
 | **Validation** | TypeBox (Elysia `t`) |
-| **Testing** | Vitest, Playwright |
+| **Testing** | Vitest (+ coverage v8, Testing Library), Playwright |
 | **Logging** | Pino |
 
 ## Documentation
 
+- [Conventions & Best Practices](docs/conventions.md) — the engineering rules (start here)
+- [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) — entry point for AI agents
+- [Backend Architecture](docs/architecture/backend.md) — bounded-context flows, layers, LLM
+- [UI Architecture](docs/architecture/ui.md) — SvelteKit, flows registry, Eden client
 - [Architecture Roadmap](docs/refactor-proposals/future-architecture.md)
 - [Design System](docs/design-system.md)
 - [Future Tasks (Bucket)](docs/bucket.md)
+
+## Quality gate
+
+Personal project, minimal ceremony: everything goes to `main`, no `develop`/PRs.
+Run the full local gate before pushing anything non-trivial:
+
+```bash
+pnpm verify   # lint && typecheck && check && test
+```
+
+Coverage: `pnpm test:coverage`.
 
 ## License
 

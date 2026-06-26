@@ -1,124 +1,113 @@
 # UI Architecture
 
+The frontend is a **SvelteKit** app (Svelte 5 runes) that talks to the Elysia backend
+through a typed **Eden Treaty** client. It is organized as a set of vertical **flows**
+(spotify, lyrics, trading, chat, canvas) hung on a central board.
+
 ## Tech Stack
 
-| Technology | Version | Purpose |
-| ---------- | ------- | ------- |
-| **Svelte** | 5.x | Reactive UI framework |
-| **Vite** | 7.x | Build tool & dev server |
-| **Tailwind CSS** | 4.x | Utility-first styling |
-| **TypeScript** | 5.x | Type safety |
+| Technology         | Version | Purpose                                     |
+| ------------------ | ------- | ------------------------------------------- |
+| **SvelteKit**      | 2.x     | App framework + file-based routing          |
+| **Svelte**         | 5.x     | UI framework (runes)                        |
+| **adapter-static** | 3.x     | Builds a client-rendered SPA (`ssr = false`) |
+| **Vite**           | 7.x     | Build tool & dev server                     |
+| **Tailwind CSS**   | 4.x     | Utility-first styling (`@tailwindcss/vite`) |
+| **Eden Treaty**    | 1.x     | End-to-end typed API client                 |
+| **TypeScript**     | 5.x     | Type safety                                 |
+| **Vitest + Testing Library** | 4.x | Component & unit tests (jsdom)         |
+| **Playwright**     | 1.x     | E2E                                         |
+
+## Rendering model
+
+SPA mode: `src/routes/+layout.ts` sets `ssr = false` (the app uses browser-only chart
+libraries) and `adapter-static` emits a static bundle with an `index.html` fallback. The
+backend can serve that bundle, or it can be hosted as static files. Data is fetched
+client-side through the Eden client.
 
 ## Directory Structure
 
 ```text
 ui/
 ├── src/
-│   ├── App.svelte              # Router (hash-based)
-│   ├── main.ts                 # Entry point
-│   ├── app.css                 # Global styles + Tailwind
+│   ├── app.html                  # HTML shell (%sveltekit.head% / %sveltekit.body%)
+│   ├── app.css                   # Tailwind v4 (@import 'tailwindcss') + @theme tokens
+│   ├── routes/
+│   │   ├── +layout.svelte        # Global shell: <Toaster/> + {@render children()}
+│   │   ├── +layout.ts            # ssr = false; prerender = false
+│   │   ├── +page.svelte          # The board (renders pages/Landing.svelte)
+│   │   ├── spotify/+page.svelte  # → flows/spotify/SpotifyFlow.svelte
+│   │   ├── lyrics/+page.svelte
+│   │   ├── trading/+page.svelte
+│   │   ├── chat/+page.svelte
+│   │   └── canvas/+page.svelte
 │   └── lib/
-│       ├── config.ts           # API endpoints
-│       ├── api.ts              # API client (loadTracks, fetchFromSpotify)
-│       ├── types.ts            # TypeScript interfaces imported from @flows/shared
-│       ├── stores.ts           # Svelte stores (server-side pagination)
-│       ├── utils.ts            # Utilities (debounce)
-│       ├── pages/
-│       │   ├── index.ts
-│       │   ├── Landing.svelte  # Home page with flow cards
-│       │   └── SpotifyFlow.svelte
-│       └── components/
-│           ├── index.ts
-│           ├── track/          # TrackCard, AlbumArt, GenreBadges
-│           ├── filters/        # FilterPanel, FilterSelect, GenreFilter, YearFilter, PopularitySlider
-│           ├── charts/         # GenreChart, DecadeChart, InsightsPanel
-│           ├── common/         # SearchBar, Pagination, InfiniteScroll, MetricCard
-│           └── layout/         # Controls, Navbar, SpotifyHeader
-├── vite.config.ts
-├── tailwind.config.js
+│       ├── client.ts             # Eden Treaty client (typed against the backend App)
+│       ├── toast.ts              # svelte-5-french-toast wrapper (Toaster, showError…)
+│       ├── types.ts              # local UI types (domain types come from @flows/shared)
+│       ├── pages/Landing.svelte  # the board UI (flow cards + live stats)
+│       ├── components/
+│       │   ├── layout/           # Navbar, FlowLayout
+│       │   ├── common/           # InfiniteScroll, …
+│       │   └── canvas/           # TokenRenderer, TokenTooltip, LayerToggle
+│       └── flows/
+│           ├── registry.ts       # FlowDefinition + registerFlow/getFlows/getFlow
+│           ├── index.ts          # the board manifest (registers every flow)
+│           └── <flow>/           # SpotifyFlow.svelte + components/ + api.ts + stores.ts + index.ts
+├── vite.config.ts                # sveltekit() + tailwindcss(); /api + /outputs dev proxy
+├── svelte.config.js              # adapter-static (SPA), @lib/@components aliases
+├── vitest.config.ts              # jsdom + svelte() plugin (unit/component tests)
+├── vitest-setup.ts               # jsdom polyfills (matchMedia, ResizeObserver, …)
 ├── eslint.config.js
-└── .prettierrc
+└── tsconfig.json                 # extends ./.svelte-kit/tsconfig.json
 ```
 
-## Pages
+## Routing
 
-| Page | Route | Description |
-| ---- | ----- | ----------- |
-| **Landing** | `#/` | Flow selection (toolbox) |
-| **SpotifyFlow** | `#/spotify` | Track explorer with filters, infinite scroll, and charts |
+File-based. Each flow is a route under `src/routes/<flow>/+page.svelte` that renders the
+flow's page component from `lib/flows/<flow>/`. The home route renders the board
+(`Landing.svelte`), which links to each flow via `<a href="/spotify">` etc. (The old
+`#/`-hash router was removed in the SvelteKit migration.)
 
-## State Management
+## Flows registry
 
-Uses Svelte stores with **server-side pagination** and **charts data**:
+`lib/flows/registry.ts` defines `FlowDefinition` (id, name, icon, description, route,
+color, `getStats()`); `lib/flows/index.ts` registers each flow. The board reads the
+registry to render cards and pull live stats. Each flow's `index.ts` exports its
+`FlowDefinition`; its `api.ts` wraps the Eden calls; `stores.ts` holds flow state.
 
-```typescript
-// stores.ts
-export const tracks = writable<Track[]>([]);
-export const totalTracks = writable(0);
-export const searchOptions = writable<SearchOptions>({});
-export const topStats = writable({
-    total: 0,
-    artists: 0,
-    topGenre: '—',
-    genres: [],
-    decadeDistribution: {}
-});
-```
+## Data access
 
-## API Client
+The typed Eden client lives in `lib/client.ts` (`treaty<App>(...)`, importing
+`type { App }` from the backend) — calls like `api.api.spotify.tracks.search.get({...})`
+are fully typed. In dev, Vite proxies `/api` and `/outputs` to the backend on `:4173`.
 
-| Function | Purpose |
-| -------- | ------- |
-| `loadTracks(options, append)` | Fetch tracks (append=true for infinite scroll) |
-| `updateStats()` | Fetch summary statistics and chart data |
-| `fetchFromSpotify()` | Trigger sync from Spotify API |
+> Convention target: move per-route data fetching into SvelteKit `+page.ts` loaders
+> (universal load) over the Eden client, instead of `onMount`. See
+> [conventions.md](../conventions.md) §4.
 
-## Filter Panel Features
+## Styling
 
-The `FilterPanel` component provides:
+Tailwind v4, CSS-first: `app.css` does `@import 'tailwindcss'` and declares brand tokens
+in `@theme { … }` ("cosmic" dark theme + glassmorphism). Component-scoped `<style>` for
+the rest; inline `style` only for dynamic values. There is no `tailwind.config.js` (v4).
 
-- **Genre** dropdown
-- **Year** dropdown
-- **Sort By** (Date Added, Popularity, Title)
-- **Sort Order** (Asc/Desc)
-- **Min Popularity** slider (0-100)
-- **(Removed)** Audio Preview toggle (functionality deprecated)
+## Testing
 
-## TrackCard Features
-
-Each track card displays:
-
-- Album art (300px)
-- **Artist avatar** (circular, 160px) or initials fallback
-- Title, artists, album name
-- Genre badges (top 2)
-- Popularity bar
-- Added date
-- **Spotify link** (green button on hover)
-
-## Data Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI
-    participant Store
-    participant API
-    participant Server
-
-    User->>UI: Apply filters
-    UI->>API: loadTracks({ genre, year, ... })
-    API->>Server: GET /api/spotify/tracks/search?...
-    Server-->>API: { data, total, page, totalPages }
-    API->>Store: tracks.set(data)
-    Store-->>UI: Re-render grid
-```
+Unit/component tests run under Vitest + `@testing-library/svelte` (jsdom), beside the code
+as `*.svelte.test.ts` / `*.test.ts`. Mock the Eden client (`@lib/client`) — never hit the
+network. Chart-heavy components (chart.js / lightweight-charts) are not unit-tested under
+jsdom. E2E lives in `e2e/` (Playwright).
 
 ## Tooling
 
-| Script | Command | Purpose |
-| ------ | ------- | ------- |
-| `dev` | `pnpm --filter @flows/ui run dev` | Start dev server (port 5173) |
-| `build` | `pnpm --filter @flows/ui run build` | Production build |
-| `lint` | `pnpm --filter @flows/ui run lint` | ESLint check |
-| `check` | `pnpm --filter @flows/ui run check` | Svelte + TypeScript check |
+| Script          | Command                                   |
+| --------------- | ----------------------------------------- |
+| `dev`           | `vite dev` (port 5173)                     |
+| `build`         | `vite build` (adapter-static → `build/`)   |
+| `preview`       | `vite preview`                            |
+| `check`         | `svelte-check --tsconfig ./tsconfig.json` |
+| `test`          | `vitest run`                              |
+| `test:coverage` | `vitest run --coverage`                   |
+| `test:e2e`      | `playwright test`                         |
+| `lint`          | `eslint src`                              |

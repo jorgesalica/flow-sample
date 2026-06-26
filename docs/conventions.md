@@ -4,8 +4,8 @@ The engineering rules for this monorepo. Code is in **English**; user-facing str
 commit messages may be in Spanish. These conventions are the source of truth — when in
 doubt, follow them; when they're wrong, change them here first, then the code.
 
-Stack: pnpm workspaces · **ElysiaJS** backend (Node) · **better-sqlite3** (raw SQL, no ORM)
-· **Svelte 5** frontend (migrating to **SvelteKit**) · **Eden Treaty** for typed RPC ·
+Stack: pnpm workspaces · **ElysiaJS** backend (Node, `tsx` dev) · **better-sqlite3** (raw
+SQL, no ORM) · **SvelteKit** frontend (Svelte 5 runes) · **Eden Treaty** for typed RPC ·
 **Vitest** for tests. Vertical "flows" (`spotify`, `lyrics`, `trading`, `chat`, `canvas`)
 sit on top of shared infra (`@flows/core`) and shared types (`@flows/shared`).
 
@@ -103,18 +103,20 @@ wrappers or hardcode URLs.
 
 ## 4. Frontend conventions
 
-Current state: plain Svelte 5 + Vite with hash-based routing. Target: **SvelteKit**
-(file-based routing, loaders). Until the migration lands, follow these and write new code
-SvelteKit-ready:
+The UI is **SvelteKit** (Svelte 5 runes), SPA mode (`ssr = false`) via adapter-static.
+Routing is file-based under `src/routes/`; each flow is a route rendering its component
+from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
 
 - **Runes only** (`$state`, `$derived`, `$effect`). Avoid `svelte/store` (`writable`) in new
   code; module-level runes in `*.svelte.ts` for cross-component state.
 - **One component per file, PascalCase.** `import type` for types in `.svelte`.
 - **Keyed `{#each}`** with a stable id (`{#each items as item (item.id)}`).
+- **File-based routing**: a route lives in `src/routes/<path>/+page.svelte`; link with
+  `<a href="/path">`. No hand-rolled routers.
 - **Tailwind v4** (CSS-first `@import 'tailwindcss'` + `@theme` tokens). Component-scoped
-  `<style>` for the rest; inline `style` only for dynamic values.
-- **Data access** centralized in a flow's `api.ts` over the typed Eden client. After the
-  SvelteKit migration, load data in `+page.ts`/`+layout.ts` loaders, not `onMount`.
+  `<style>` for the rest; inline `style` only for dynamic values. No `tailwind.config.js`.
+- **Data access** goes through the typed Eden client (`@lib/client`), wrapped per flow in
+  `api.ts`. Preferred target: SvelteKit `+page.ts` loaders (universal load) over `onMount`.
 
 ---
 
