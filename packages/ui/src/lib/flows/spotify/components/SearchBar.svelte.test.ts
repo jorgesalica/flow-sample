@@ -8,12 +8,18 @@ vi.mock('../api', () => ({ loadTracks: (...args: unknown[]) => loadTracks(...arg
 vi.mock('@lib/client', () => ({ api: {} }));
 
 import SearchBar from './SearchBar.svelte';
-import { searchOptions } from '../stores';
+import { spotifyStore } from '../stores.svelte';
 
 describe('SearchBar', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    searchOptions.set({ page: 1, limit: 24, q: '', sortBy: 'added_at', sortOrder: 'desc' });
+    spotifyStore.searchOptions = {
+      page: 1,
+      limit: 24,
+      q: '',
+      sortBy: 'added_at',
+      sortOrder: 'desc',
+    };
     loadTracks.mockClear();
   });
 

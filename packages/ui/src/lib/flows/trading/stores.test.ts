@@ -1,14 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { get } from 'svelte/store';
 import type { Candle, FractalNode, AdvisorNote } from '@flows/shared';
-import {
-  tradingState,
-  advisorState,
-  candles,
-  fractals,
-  latestInsight,
-  isLoadingInsight,
-} from './stores';
+import { tradingStore } from './stores.svelte';
 
 // Fixed, deterministic fixtures (no Date.now / Math.random).
 function makeCandle(overrides: Partial<Candle> = {}): Candle {
@@ -41,26 +33,15 @@ function makeNote(overrides: Partial<AdvisorNote> = {}): AdvisorNote {
   };
 }
 
-// Reset every store to a known baseline before each test so order is irrelevant.
+// The store is a module-level singleton; reset it to a known baseline before
+// each test so ordering is irrelevant.
 beforeEach(() => {
-  tradingState.set({
-    isRunning: false,
-    symbol: 'BTCUSDT',
-    interval: '1m',
-    lastCandle: null,
-    candleCount: 0,
-    connectedAt: null,
-  });
-  advisorState.set({ isEnabled: false, lastInsightAt: null, insightCount: 0 });
-  candles.set([]);
-  fractals.set([]);
-  latestInsight.set(null);
-  isLoadingInsight.set(false);
+  tradingStore.reset();
 });
 
-describe('trading stores — initial contract', () => {
+describe('trading store — initial contract', () => {
   it('tradingState starts stopped with BTCUSDT/1m defaults and no candle', () => {
-    const state = get(tradingState);
+    const state = tradingStore.tradingState;
     expect(state.isRunning).toBe(false);
     expect(state.symbol).toBe('BTCUSDT');
     expect(state.interval).toBe('1m');
@@ -70,24 +51,24 @@ describe('trading stores — initial contract', () => {
   });
 
   it('advisorState starts disabled with zero insights', () => {
-    const state = get(advisorState);
+    const state = tradingStore.advisorState;
     expect(state.isEnabled).toBe(false);
     expect(state.lastInsightAt).toBeNull();
     expect(state.insightCount).toBe(0);
   });
 
-  it('collection stores start empty and insight flags start falsy', () => {
-    expect(get(candles)).toEqual([]);
-    expect(get(fractals)).toEqual([]);
-    expect(get(latestInsight)).toBeNull();
-    expect(get(isLoadingInsight)).toBe(false);
+  it('collection state starts empty and insight flags start falsy', () => {
+    expect(tradingStore.candles).toEqual([]);
+    expect(tradingStore.fractals).toEqual([]);
+    expect(tradingStore.latestInsight).toBeNull();
+    expect(tradingStore.isLoadingInsight).toBe(false);
   });
 });
 
-describe('trading stores — set/update behavior', () => {
-  it('tradingState.set replaces the whole state object', () => {
+describe('trading store — set/update behavior', () => {
+  it('setTradingState replaces the whole state object', () => {
     const candle = makeCandle({ close: 200 });
-    tradingState.set({
+    tradingStore.setTradingState({
       isRunning: true,
       symbol: 'ETHUSDT',
       interval: '5m',
@@ -95,59 +76,74 @@ describe('trading stores — set/update behavior', () => {
       candleCount: 42,
       connectedAt: '2023-11-14T22:13:20.000Z',
     });
-    const state = get(tradingState);
+    const state = tradingStore.tradingState;
     expect(state.isRunning).toBe(true);
     expect(state.symbol).toBe('ETHUSDT');
     expect(state.lastCandle?.close).toBe(200);
     expect(state.candleCount).toBe(42);
   });
 
-  it('advisorState.update toggles isEnabled without dropping other fields', () => {
-    advisorState.set({ isEnabled: false, lastInsightAt: '2023-01-01', insightCount: 3 });
-    advisorState.update((s) => ({ ...s, isEnabled: true }));
-    const state = get(advisorState);
+  it('updateAdvisorState toggles isEnabled without dropping other fields', () => {
+    tradingStore.setAdvisorState({
+      isEnabled: false,
+      lastInsightAt: '2023-01-01',
+      insightCount: 3,
+    });
+    tradingStore.updateAdvisorState((s) => ({ ...s, isEnabled: true }));
+    const state = tradingStore.advisorState;
     expect(state.isEnabled).toBe(true);
     expect(state.lastInsightAt).toBe('2023-01-01');
     expect(state.insightCount).toBe(3);
   });
 
-  it('candles store holds an ordered list of candles', () => {
+  it('setCandles holds an ordered list of candles', () => {
     const list = [makeCandle({ openTime: 1 }), makeCandle({ openTime: 2 })];
-    candles.set(list);
-    const stored = get(candles);
+    tradingStore.setCandles(list);
+    const stored = tradingStore.candles;
     expect(stored).toHaveLength(2);
     expect(stored[0].openTime).toBe(1);
     expect(stored[1].openTime).toBe(2);
   });
 
-  it('candles.update mimics the rolling-window append used by the SSE handler', () => {
-    candles.set([makeCandle({ openTime: 1 })]);
-    candles.update((arr) => [...arr.slice(-99), makeCandle({ openTime: 2 })]);
-    const stored = get(candles);
+  it('appendClosedCandle mimics the rolling-window append used by the SSE handler', () => {
+    tradingStore.setCandles([makeCandle({ openTime: 1 })]);
+    tradingStore.appendClosedCandle(makeCandle({ openTime: 2 }));
+    const stored = tradingStore.candles;
     expect(stored).toHaveLength(2);
     expect(stored.at(-1)?.openTime).toBe(2);
   });
 
-  it('fractals store holds typed support/resistance nodes', () => {
+  it('appendClosedCandle caps the rolling window at 100 candles', () => {
+    // Seed 100 candles, then append one more — the oldest should drop off.
+    const seed = Array.from({ length: 100 }, (_, i) => makeCandle({ openTime: i }));
+    tradingStore.setCandles(seed);
+    tradingStore.appendClosedCandle(makeCandle({ openTime: 999 }));
+    const stored = tradingStore.candles;
+    expect(stored).toHaveLength(100);
+    expect(stored[0].openTime).toBe(1);
+    expect(stored.at(-1)?.openTime).toBe(999);
+  });
+
+  it('setFractals holds typed support/resistance nodes', () => {
     const nodes: FractalNode[] = [
       { type: 'low', price: 90, candleOpenTime: 1 },
       { type: 'high', price: 110, candleOpenTime: 2 },
     ];
-    fractals.set(nodes);
-    expect(get(fractals)).toEqual(nodes);
+    tradingStore.setFractals(nodes);
+    expect(tradingStore.fractals).toEqual(nodes);
   });
 
-  it('latestInsight can hold a note and be cleared back to null', () => {
-    latestInsight.set(makeNote({ title: 'BTC breakout' }));
-    expect(get(latestInsight)?.title).toBe('BTC breakout');
-    latestInsight.set(null);
-    expect(get(latestInsight)).toBeNull();
+  it('setLatestInsight can hold a note and be cleared back to null', () => {
+    tradingStore.setLatestInsight(makeNote({ title: 'BTC breakout' }));
+    expect(tradingStore.latestInsight?.title).toBe('BTC breakout');
+    tradingStore.setLatestInsight(null);
+    expect(tradingStore.latestInsight).toBeNull();
   });
 
-  it('isLoadingInsight toggles boolean flag', () => {
-    isLoadingInsight.set(true);
-    expect(get(isLoadingInsight)).toBe(true);
-    isLoadingInsight.set(false);
-    expect(get(isLoadingInsight)).toBe(false);
+  it('setLoadingInsight toggles the boolean flag', () => {
+    tradingStore.setLoadingInsight(true);
+    expect(tradingStore.isLoadingInsight).toBe(true);
+    tradingStore.setLoadingInsight(false);
+    expect(tradingStore.isLoadingInsight).toBe(false);
   });
 });

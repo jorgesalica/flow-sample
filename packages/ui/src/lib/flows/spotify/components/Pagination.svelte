@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { searchOptions, totalTracks } from '../stores';
+  import { spotifyStore } from '../stores.svelte';
   import { loadTracks } from '../api';
 
-  let currentPage = $derived($searchOptions.page || 1);
-  let limit = $derived($searchOptions.limit || 24);
-  let total = $derived($totalTracks);
+  let currentPage = $derived(spotifyStore.searchOptions.page || 1);
+  let limit = $derived(spotifyStore.searchOptions.limit || 24);
+  let total = $derived(spotifyStore.totalTracks);
   let totalPages = $derived(Math.ceil(total / limit));
 
   function goToPage(page: number) {

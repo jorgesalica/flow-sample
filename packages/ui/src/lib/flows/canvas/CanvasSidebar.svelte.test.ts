@@ -2,37 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import type { CanvasAnalysis } from '@flows/shared';
 
-interface CanvasStoreState {
-  canvases: CanvasAnalysis[];
-  activeCanvas: CanvasAnalysis | null;
-  isLoading: boolean;
-  isAnalyzing: boolean;
-}
-
-// Hoisted so the vi.mock factory (also hoisted) can reference them.
-const { state, init, loadCanvas, deleteCanvas, clearActive } = vi.hoisted(() => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { writable: w } = require('svelte/store');
-  return {
-    state: w({ canvases: [], activeCanvas: null, isLoading: false, isAnalyzing: false }),
-    init: vi.fn(),
-    loadCanvas: vi.fn(),
-    deleteCanvas: vi.fn(),
-    clearActive: vi.fn(),
-  };
-});
-
-vi.mock('./stores', () => ({
-  canvasStore: {
-    subscribe: state.subscribe,
-    init: (...a: unknown[]) => init(...a),
-    loadCanvas: (...a: unknown[]) => loadCanvas(...a),
-    deleteCanvas: (...a: unknown[]) => deleteCanvas(...a),
-    clearActive: (...a: unknown[]) => clearActive(...a),
-    createAndAnalyze: vi.fn(),
-  },
+// Runes-backed mocked store shared by the sidebar under test.
+vi.mock('./stores.svelte', async () => ({
+  canvasStore: (await import('./canvas-store.mock.svelte')).mockCanvasStore,
 }));
 
+import { mockCanvasStore } from './canvas-store.mock.svelte';
 import CanvasSidebar from './CanvasSidebar.svelte';
 
 function makeCanvas(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
@@ -53,18 +28,14 @@ function makeCanvas(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
   };
 }
 
-function setState(partial: Partial<CanvasStoreState>) {
-  state.update((s: CanvasStoreState) => ({ ...s, ...partial }));
-}
-
 describe('CanvasSidebar', () => {
   beforeEach(() => {
-    state.set({ canvases: [], activeCanvas: null, isLoading: false, isAnalyzing: false });
+    mockCanvasStore.reset();
   });
 
-  it('calls store.init on mount', () => {
+  it('does not fetch on mount (initial data comes from the route loader)', () => {
     render(CanvasSidebar);
-    expect(init).toHaveBeenCalledOnce();
+    expect(mockCanvasStore.init).not.toHaveBeenCalled();
   });
 
   it('always renders the New Canvas button', () => {
@@ -78,7 +49,7 @@ describe('CanvasSidebar', () => {
   });
 
   it('shows a loading spinner instead of the empty/list state while loading', () => {
-    setState({ isLoading: true });
+    mockCanvasStore.isLoading = true;
     render(CanvasSidebar);
 
     expect(screen.queryByText(/No canvases yet/i)).not.toBeInTheDocument();
@@ -86,12 +57,10 @@ describe('CanvasSidebar', () => {
   });
 
   it('lists canvases with title and author', () => {
-    setState({
-      canvases: [
-        makeCanvas({ sourceId: 'a', meta: { title: 'Alpha', author: 'Alice' } }),
-        makeCanvas({ sourceId: 'b', meta: { title: 'Beta', author: 'Bob' } }),
-      ],
-    });
+    mockCanvasStore.canvases = [
+      makeCanvas({ sourceId: 'a', meta: { title: 'Alpha', author: 'Alice' } }),
+      makeCanvas({ sourceId: 'b', meta: { title: 'Beta', author: 'Bob' } }),
+    ];
     render(CanvasSidebar);
 
     expect(screen.getByText('Alpha')).toBeInTheDocument();
@@ -102,7 +71,7 @@ describe('CanvasSidebar', () => {
   });
 
   it('falls back to Untitled / User when meta is missing', () => {
-    setState({ canvases: [makeCanvas({ sourceId: 'a', meta: undefined })] });
+    mockCanvasStore.canvases = [makeCanvas({ sourceId: 'a', meta: undefined })];
     render(CanvasSidebar);
 
     expect(screen.getByText('Untitled')).toBeInTheDocument();
@@ -110,32 +79,33 @@ describe('CanvasSidebar', () => {
   });
 
   it('loads a canvas when its row is clicked', async () => {
-    setState({ canvases: [makeCanvas({ sourceId: 'pick-me', meta: { title: 'Pick Me' } })] });
+    mockCanvasStore.canvases = [makeCanvas({ sourceId: 'pick-me', meta: { title: 'Pick Me' } })];
     render(CanvasSidebar);
 
     await fireEvent.click(screen.getByText('Pick Me'));
 
-    expect(loadCanvas).toHaveBeenCalledWith('pick-me');
+    expect(mockCanvasStore.loadCanvas).toHaveBeenCalledWith('pick-me');
   });
 
   it('deletes a canvas when its delete button is clicked', async () => {
-    setState({ canvases: [makeCanvas({ sourceId: 'del-me', meta: { title: 'Delete Me' } })] });
+    mockCanvasStore.canvases = [makeCanvas({ sourceId: 'del-me', meta: { title: 'Delete Me' } })];
     render(CanvasSidebar);
 
     await fireEvent.click(screen.getByTitle('Delete Canvas'));
 
-    expect(deleteCanvas).toHaveBeenCalledWith('del-me');
+    expect(mockCanvasStore.deleteCanvas).toHaveBeenCalledWith('del-me');
   });
 
   it('clears the active canvas when New Canvas is clicked', async () => {
     render(CanvasSidebar);
     await fireEvent.click(screen.getByRole('button', { name: /New Canvas/i }));
-    expect(clearActive).toHaveBeenCalledOnce();
+    expect(mockCanvasStore.clearActive).toHaveBeenCalledOnce();
   });
 
   it('highlights the active canvas row', () => {
     const active = makeCanvas({ sourceId: 'active', meta: { title: 'Active One' } });
-    setState({ canvases: [active], activeCanvas: active });
+    mockCanvasStore.canvases = [active];
+    mockCanvasStore.activeCanvas = active;
     render(CanvasSidebar);
 
     const row = screen.getByText('Active One').closest('button') as HTMLElement;

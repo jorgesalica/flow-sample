@@ -1,26 +1,32 @@
 import type { Track, PaginatedResult, SearchOptions } from '@flows/shared';
-import {
-  tracks,
-  totalTracks,
-  status,
-  isLoading,
-  searchOptions,
-  topStats,
-  isAuthenticated,
-} from './stores';
-import { get } from 'svelte/store';
+import type { TopStats } from '@lib/types';
+import { spotifyStore } from './stores.svelte';
 import { api } from '@lib/client';
 import { showError, showSuccess, showLoading, dismissToast } from '@lib/toast';
+
+/**
+ * Maps the raw stats payload from the API into the UI's TopStats shape.
+ * Shared by the page loader (initial fetch) and updateStats (interactive refresh).
+ */
+export function mapTopStats(stats: Record<string, unknown>): TopStats {
+  return {
+    total: (stats.totalTracks as number) || 0,
+    artists: 0,
+    topGenre: (stats.topGenres as Array<{ genre: string }>)?.[0]?.genre || '—',
+    genres: (stats.topGenres as Array<{ genre: string; count: number }>) || [],
+    decadeDistribution: (stats.decadeDistribution as Record<string, number>) || {},
+  };
+}
 
 export async function loadTracks(
   options?: Partial<SearchOptions>,
   append: boolean = false
 ): Promise<void> {
-  isLoading.set(true);
+  spotifyStore.isLoading = true;
 
-  const currentOptions = get(searchOptions);
+  const currentOptions = spotifyStore.searchOptions;
   const newOptions = { ...currentOptions, ...options };
-  searchOptions.set(newOptions);
+  spotifyStore.searchOptions = newOptions;
 
   try {
     const { data, error } = await api.api.spotify.tracks.search.get({
@@ -40,11 +46,11 @@ export async function loadTracks(
     const result = data as unknown as PaginatedResult<Track>;
 
     if (append) {
-      tracks.update((current) => [...current, ...result.data]);
+      spotifyStore.appendTracks(result.data);
     } else {
-      tracks.set(result.data);
+      spotifyStore.tracks = result.data;
     }
-    totalTracks.set(result.total);
+    spotifyStore.totalTracks = result.total;
 
     // Update stats on initial load (no filters, page 1)
     if (!newOptions.q && !newOptions.genre && !newOptions.year && newOptions.page === 1) {
@@ -54,9 +60,9 @@ export async function loadTracks(
     console.error(error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     showError(`Failed to load tracks: ${message}`);
-    status.set({ message: 'Error loading tracks.', tone: 'error' });
+    spotifyStore.status = { message: 'Error loading tracks.', tone: 'error' };
   } finally {
-    isLoading.set(false);
+    spotifyStore.isLoading = false;
   }
 }
 
@@ -66,13 +72,7 @@ export async function updateStats(): Promise<void> {
     if (error) return;
 
     const stats = data as unknown as Record<string, unknown>;
-    topStats.set({
-      total: (stats.totalTracks as number) || 0,
-      artists: 0,
-      topGenre: (stats.topGenres as Array<{ genre: string }>)?.[0]?.genre || '—',
-      genres: (stats.topGenres as Array<{ genre: string; count: number }>) || [],
-      decadeDistribution: (stats.decadeDistribution as Record<string, number>) || {},
-    });
+    spotifyStore.topStats = mapTopStats(stats);
   } catch {
     // Silent fail for stats - not critical
   }
@@ -85,9 +85,9 @@ export function cancelSync() {
   if (syncController) {
     syncController.abort();
     syncController = null;
-    isLoading.set(false);
+    spotifyStore.isLoading = false;
     if (syncToastId) dismissToast(syncToastId);
-    status.set({ message: 'Sync cancelled.', tone: 'info' });
+    spotifyStore.status = { message: 'Sync cancelled.', tone: 'info' };
   }
 }
 
@@ -97,8 +97,8 @@ export async function fetchFromSpotify(): Promise<void> {
 
   const toastId = showLoading('Syncing with Spotify...');
   syncToastId = toastId;
-  status.set({ message: 'Fetching from Spotify...', tone: 'info' });
-  isLoading.set(true);
+  spotifyStore.status = { message: 'Fetching from Spotify...', tone: 'info' };
+  spotifyStore.isLoading = true;
 
   try {
     const { data, error } = await api.api.spotify.run.post({
@@ -112,10 +112,13 @@ export async function fetchFromSpotify(): Promise<void> {
 
     dismissToast(toastId);
     showSuccess(`Synced ${result.count} tracks from Spotify!`);
-    status.set({ message: `Fetch complete. ${result.count} tracks processed.`, tone: 'success' });
+    spotifyStore.status = {
+      message: `Fetch complete. ${result.count} tracks processed.`,
+      tone: 'success',
+    };
 
     // Reload everything
-    searchOptions.set({ ...get(searchOptions), page: 1 });
+    spotifyStore.searchOptions = { ...spotifyStore.searchOptions, page: 1 };
     await loadTracks();
     await updateStats();
   } catch (error) {
@@ -124,9 +127,9 @@ export async function fetchFromSpotify(): Promise<void> {
     dismissToast(toastId);
     const message = error instanceof Error ? error.message : 'Unknown error';
     showError(`Sync failed: ${message}`);
-    status.set({ message: `Fetch failed: ${message}`, tone: 'error' });
+    spotifyStore.status = { message: `Fetch failed: ${message}`, tone: 'error' };
   } finally {
-    isLoading.set(false);
+    spotifyStore.isLoading = false;
     syncController = null;
   }
 }
@@ -135,7 +138,7 @@ export async function checkAuthStatus(): Promise<void> {
   try {
     const { data, error } = await api.api.spotify.auth.status.get();
     if (!error && data) {
-      isAuthenticated.set((data as { connected: boolean }).connected);
+      spotifyStore.isAuthenticated = (data as { connected: boolean }).connected;
     }
   } catch (e) {
     console.error('Failed to check auth status', e);

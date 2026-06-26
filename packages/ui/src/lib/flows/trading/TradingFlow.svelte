@@ -3,36 +3,32 @@
   import { FlowLayout } from '@lib/components';
   import StepWizard from './components/StepWizard.svelte';
   import {
-    tradingState,
-    advisorState,
-    candles,
-    latestInsight,
-    isLoadingInsight,
-    fetchTradingStatus,
+    tradingStore,
     startTrading,
     stopTrading,
-    fetchCandles,
     fetchKlines,
     toggleAdvisor,
     generateInsight,
     generateWizardInsight,
-    fetchLatestInsight,
     connectToStream,
     disconnectFromStream,
     type AdvisorNote,
+    type TradingPageData,
   } from './trading';
+
+  let { initialData }: { initialData: TradingPageData } = $props();
 
   // Local interface extension to bypass potential type-check caching issues
   interface EnhancedAdvisorNote extends AdvisorNote {
     _debugContext?: unknown;
   }
 
-  // Local derived state
-  let tradingData = $derived($tradingState);
-  let advisor = $derived($advisorState);
-  let insight = $derived($latestInsight) as EnhancedAdvisorNote | null;
-  let candleList = $derived($candles);
-  let loadingInsight = $derived($isLoadingInsight);
+  // Local derived state (from the runes store)
+  let tradingData = $derived(tradingStore.tradingState);
+  let advisor = $derived(tradingStore.advisorState);
+  let insight = $derived(tradingStore.latestInsight) as EnhancedAdvisorNote | null;
+  let candleList = $derived(tradingStore.candles);
+  let loadingInsight = $derived(tradingStore.isLoadingInsight);
 
   // View mode: 'dashboard' or 'wizard'
   let viewMode: 'dashboard' | 'wizard' = $state('dashboard');
@@ -55,9 +51,12 @@
   }
 
   onMount(() => {
-    fetchTradingStatus();
-    fetchCandles(100);
-    fetchLatestInsight();
+    // Hydrate the runes store from the data the universal loader fetched,
+    // then open the live stream. (The initial fetch used to live here.)
+    if (initialData.trading) tradingStore.setTradingState(initialData.trading);
+    if (initialData.advisor) tradingStore.setAdvisorState(initialData.advisor);
+    tradingStore.setCandles(initialData.candles);
+    tradingStore.setLatestInsight(initialData.insight);
     connectToStream();
   });
 

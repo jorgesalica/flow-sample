@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { get } from 'svelte/store';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import type { ChatProviderGroup } from '@flows/shared';
 import type { StreamEvent } from '../api';
@@ -14,10 +13,9 @@ vi.mock('../api', () => ({
 vi.mock('@lib/toast', () => ({ showError: vi.fn() }));
 
 import * as api from '../api';
-import { chatStore } from '../stores';
+import { chatStore } from '../stores.svelte';
 import ModelSelector from './ModelSelector.svelte';
 
-const fetchModelCatalog = vi.mocked(api.fetchModelCatalog);
 const fetchConversations = vi.mocked(api.fetchConversations);
 const sendMessageStream = vi.mocked(api.sendMessageStream);
 
@@ -46,18 +44,24 @@ function makeCatalog(): ChatProviderGroup[] {
   ];
 }
 
-/** Seed the store with a catalog and the first model selected (init defaults). */
-async function seed(catalog: ChatProviderGroup[]) {
-  fetchModelCatalog.mockResolvedValueOnce(catalog);
-  fetchConversations.mockResolvedValueOnce([]);
-  await chatStore.init();
+/** Seed the store with a catalog and the first model selected (loader defaults). */
+function seed(catalog: ChatProviderGroup[]) {
+  const selectedModel =
+    catalog.length > 0 && catalog[0].models.length > 0
+      ? `${catalog[0].provider}:${catalog[0].models[0].id}`
+      : '';
+  chatStore.hydrate({ catalog, conversations: [], selectedModel });
+  chatStore.lastProvider = '';
+  chatStore.lastModel = '';
+  chatStore.activeConversationId = null;
+  chatStore.messages = [];
 }
 
 describe('ModelSelector', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     sendMessageStream.mockResolvedValue(undefined);
-    await seed(makeCatalog());
+    seed(makeCatalog());
     chatStore.setMode('specific');
     chatStore.setModel('openai:gpt-4o');
   });
@@ -92,7 +96,7 @@ describe('ModelSelector', () => {
 
     // Selection reflected in the store (the dropdown closes via a slide
     // transition, so we assert the contract, not the transient DOM removal).
-    expect(get(chatStore).selectedModel).toBe('groq:llama-3');
+    expect(chatStore.selectedModel).toBe('groq:llama-3');
     // Trigger reflects the new provider (the slide-out dropdown may briefly
     // keep its own "groq" group header, so allow more than one match).
     expect(screen.getAllByText('groq').length).toBeGreaterThanOrEqual(1);
@@ -119,6 +123,7 @@ describe('ModelSelector', () => {
   it('shows the last-used provider/model in the rotation badge after an answer', async () => {
     chatStore.setMode('rotation');
     chatStore.startNewConversation();
+    fetchConversations.mockResolvedValue([]);
     sendMessageStream.mockImplementationOnce(
       async (_c, _m, _mode, _model, onEvent: (e: StreamEvent) => void) => {
         onEvent({

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { searchOptions } from '../stores';
+  import { spotifyStore } from '../stores.svelte';
   import { loadTracks } from '../api';
 
-  let value = $state($searchOptions.q || '');
+  let value = $state(spotifyStore.searchOptions.q || '');
   let timer: ReturnType<typeof setTimeout> | null = null;
 
   function handleInput(e: Event) {

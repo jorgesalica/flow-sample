@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { chatStore } from '../stores';
-  import { afterUpdate } from 'svelte';
+  import { chatStore } from '../stores.svelte';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
 
   let listContainer: HTMLDivElement;
 
-  // Auto-scroll to bottom whenever messages update
-  afterUpdate(() => {
+  // Auto-scroll to bottom whenever messages / streaming content update.
+  $effect(() => {
+    // Track the reactive values that should trigger a scroll.
+    void chatStore.messages;
+    void chatStore.streamingContent;
     if (listContainer) {
       listContainer.scrollTop = listContainer.scrollHeight;
     }
@@ -42,7 +44,7 @@
     const model = msg.modelUsed || '';
 
     // Try to find human-readable name from catalog
-    for (const group of $chatStore.catalog) {
+    for (const group of chatStore.catalog) {
       if (group.provider === provider) {
         const found = group.models.find((m) => m.id === model);
         if (found) return `${provider} / ${found.name}`;
@@ -64,7 +66,7 @@
   bind:this={listContainer}
   class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin scroll-smooth"
 >
-  {#if $chatStore.messages.length === 0 && !$chatStore.isStreaming}
+  {#if chatStore.messages.length === 0 && !chatStore.isStreaming}
     <div class="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
       <div
         class="w-16 h-16 rounded-full bg-cosmic-900/50 flex items-center justify-center border border-cosmic-500/30"
@@ -78,7 +80,7 @@
     </div>
   {/if}
 
-  {#each $chatStore.messages as msg (msg.id)}
+  {#each chatStore.messages as msg (msg.id)}
     <div class={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       <!-- Avatar for assistant -->
       {#if msg.role === 'assistant'}
@@ -131,7 +133,7 @@
   {/each}
 
   <!-- Streaming message (in progress) -->
-  {#if $chatStore.isStreaming}
+  {#if chatStore.isStreaming}
     <div class="flex w-full justify-start">
       <div
         class="w-8 h-8 rounded-full bg-cosmic-700 flex-shrink-0 flex items-center justify-center mr-3 mt-1 shadow-glow-sm"
@@ -153,12 +155,12 @@
       <div
         class="max-w-[85%] md:max-w-[75%] bg-transparent border border-cosmic-800 rounded-2xl rounded-tl-sm px-5 py-3 shadow-sm"
       >
-        {#if $chatStore.streamingContent}
+        {#if chatStore.streamingContent}
           <div
             class="prose prose-invert prose-sm max-w-none leading-relaxed prose-p:my-1 prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-code:text-cosmic-300 prose-code:before:content-[''] prose-code:after:content-['']"
           >
             <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-            {@html renderMarkdown($chatStore.streamingContent)}
+            {@html renderMarkdown(chatStore.streamingContent)}
           </div>
           <span class="inline-block w-0.5 h-4 bg-cosmic-400 animate-pulse ml-0.5 align-text-bottom"
           ></span>

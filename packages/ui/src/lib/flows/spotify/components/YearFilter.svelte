@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { searchOptions } from '../stores';
+  import { spotifyStore } from '../stores.svelte';
   import { loadTracks } from '../api';
   import { api } from '@lib/client';
   import type { YearCount } from '@flows/shared';
 
   let years: YearCount[] = $state([]);
-  let selectedYear = $state($searchOptions.year?.toString() || '');
+  let selectedYear = $state(spotifyStore.searchOptions.year?.toString() || '');
 
   onMount(async () => {
     try {

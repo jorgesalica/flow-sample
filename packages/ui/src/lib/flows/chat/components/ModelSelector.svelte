@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { chatStore } from '../stores';
+  import { chatStore } from '../stores.svelte';
+  import type { ChatProviderGroup } from '@flows/shared';
   import { slide } from 'svelte/transition';
 
-  let dropdownOpen = false;
+  let dropdownOpen = $state(false);
 
   function setMode(mode: 'rotation' | 'specific') {
     chatStore.setMode(mode);
@@ -17,7 +18,7 @@
   }
 
   function toggleDropdown() {
-    if ($chatStore.chatMode === 'specific') {
+    if (chatStore.chatMode === 'specific') {
       dropdownOpen = !dropdownOpen;
     }
   }
@@ -35,7 +36,7 @@
     return { provider: sel.slice(0, idx), model: sel.slice(idx + 1) };
   }
 
-  function getModelDisplayName(modelId: string, catalog: typeof $chatStore.catalog): string {
+  function getModelDisplayName(modelId: string, catalog: ChatProviderGroup[]): string {
     for (const group of catalog) {
       const found = group.models.find((m) => m.id === modelId);
       if (found) return found.name;
@@ -77,8 +78,8 @@
     }
   }
 
-  $: selected = parseSelected($chatStore.selectedModel);
-  $: selectedDisplayName = getModelDisplayName(selected.model, $chatStore.catalog);
+  let selected = $derived(parseSelected(chatStore.selectedModel));
+  let selectedDisplayName = $derived(getModelDisplayName(selected.model, chatStore.catalog));
 </script>
 
 <svelte:window on:click={handleClickOutside} />
@@ -90,10 +91,10 @@
   >
     <button
       class="flex items-center gap-1 px-3 py-1.5 transition-all"
-      class:bg-cosmic-600={$chatStore.chatMode === 'rotation'}
-      class:text-white={$chatStore.chatMode === 'rotation'}
-      class:text-slate-400={$chatStore.chatMode !== 'rotation'}
-      class:hover:text-slate-200={$chatStore.chatMode !== 'rotation'}
+      class:bg-cosmic-600={chatStore.chatMode === 'rotation'}
+      class:text-white={chatStore.chatMode === 'rotation'}
+      class:text-slate-400={chatStore.chatMode !== 'rotation'}
+      class:hover:text-slate-200={chatStore.chatMode !== 'rotation'}
       on:click={() => setMode('rotation')}
       title="Round-robin across free providers"
     >
@@ -114,10 +115,10 @@
     </button>
     <button
       class="flex items-center gap-1 px-3 py-1.5 transition-all"
-      class:bg-cosmic-600={$chatStore.chatMode === 'specific'}
-      class:text-white={$chatStore.chatMode === 'specific'}
-      class:text-slate-400={$chatStore.chatMode !== 'specific'}
-      class:hover:text-slate-200={$chatStore.chatMode !== 'specific'}
+      class:bg-cosmic-600={chatStore.chatMode === 'specific'}
+      class:text-white={chatStore.chatMode === 'specific'}
+      class:text-slate-400={chatStore.chatMode !== 'specific'}
+      class:hover:text-slate-200={chatStore.chatMode !== 'specific'}
       on:click={() => setMode('specific')}
       title="Choose a specific provider and model"
     >
@@ -139,15 +140,15 @@
   </div>
 
   <!-- Badge / Selector -->
-  {#if $chatStore.chatMode === 'rotation'}
+  {#if chatStore.chatMode === 'rotation'}
     <div
       class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/50 rounded-lg border border-slate-700/50 text-xs"
     >
-      {#if $chatStore.lastProvider}
-        <span class="text-cosmic-400 font-medium capitalize">{$chatStore.lastProvider}</span>
+      {#if chatStore.lastProvider}
+        <span class="text-cosmic-400 font-medium capitalize">{chatStore.lastProvider}</span>
         <span class="text-slate-600">/</span>
         <span class="text-slate-300 truncate max-w-[140px]">
-          {getModelDisplayName($chatStore.lastModel, $chatStore.catalog)}
+          {getModelDisplayName(chatStore.lastModel, chatStore.catalog)}
         </span>
       {:else}
         <span class="text-slate-400 italic">Auto-rotate</span>
@@ -181,7 +182,7 @@
       class="absolute top-full right-0 mt-1.5 w-72 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl shadow-black/40 z-50 overflow-hidden"
     >
       <div class="max-h-[360px] overflow-y-auto scrollbar-thin">
-        {#each $chatStore.catalog as group (group.provider)}
+        {#each chatStore.catalog as group (group.provider)}
           {#if group.models.length > 0}
             <div
               class="sticky top-0 px-3 py-2 bg-slate-800/95 backdrop-blur-sm border-b border-slate-700/50"
@@ -193,7 +194,7 @@
 
             {#each group.models as model (model.id)}
               {@const fullId = `${group.provider}:${model.id}`}
-              {@const isSelected = $chatStore.selectedModel === fullId}
+              {@const isSelected = chatStore.selectedModel === fullId}
               <button
                 class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-700/50 transition-colors {isSelected
                   ? 'bg-cosmic-600/10'

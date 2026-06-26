@@ -4,8 +4,17 @@
   import ChatInput from './components/ChatInput.svelte';
   import ModelSelector from './components/ModelSelector.svelte';
   import FlowLayout from '../../components/layout/FlowLayout.svelte';
+  import { onMount } from 'svelte';
+  import { chatStore, type ChatInitialData } from './stores.svelte';
 
-  let isMobileMenuOpen = false;
+  let { initialData }: { initialData: ChatInitialData } = $props();
+
+  // Seed the store with the data fetched by the route loader.
+  onMount(() => {
+    chatStore.hydrate(initialData);
+  });
+
+  let isMobileMenuOpen = $state(false);
 
   function toggleMobileMenu() {
     isMobileMenuOpen = !isMobileMenuOpen;

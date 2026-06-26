@@ -13,11 +13,9 @@ vi.mock('../api', () => ({
 vi.mock('@lib/toast', () => ({ showError: vi.fn() }));
 
 import * as api from '../api';
-import { chatStore } from '../stores';
+import { chatStore } from '../stores.svelte';
 import MessageList from './MessageList.svelte';
 
-const fetchModelCatalog = vi.mocked(api.fetchModelCatalog);
-const fetchConversations = vi.mocked(api.fetchConversations);
 const fetchMessages = vi.mocked(api.fetchMessages);
 const sendMessageStream = vi.mocked(api.sendMessageStream);
 
@@ -59,9 +57,9 @@ function assistantMsg(over: Partial<ChatMessage> = {}): ChatMessage {
 
 /** Seed the store to a clean state with the given catalog + messages. */
 async function seed(messages: ChatMessage[], catalog: ChatProviderGroup[] = []) {
-  fetchModelCatalog.mockResolvedValueOnce(catalog);
-  fetchConversations.mockResolvedValueOnce([]);
-  await chatStore.init();
+  chatStore.hydrate({ catalog, conversations: [], selectedModel: '' });
+  chatStore.isStreaming = false;
+  chatStore.streamingContent = '';
   fetchMessages.mockResolvedValueOnce(messages);
   await chatStore.loadConversation('c1');
 }

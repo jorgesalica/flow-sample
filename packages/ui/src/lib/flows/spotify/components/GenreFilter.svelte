@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { searchOptions } from '../stores';
+  import { spotifyStore } from '../stores.svelte';
   import { loadTracks } from '../api';
   import { api } from '@lib/client';
   import type { GenreCount } from '@flows/shared';
 
   let genres: GenreCount[] = $state([]);
-  let selectedGenre = $state($searchOptions.genre || '');
+  let selectedGenre = $state(spotifyStore.searchOptions.genre || '');
 
   onMount(async () => {
     try {

@@ -1,44 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 
-interface CanvasStoreState {
-  canvases: unknown[];
-  activeCanvas: unknown;
-  isLoading: boolean;
-  isAnalyzing: boolean;
-}
-
-// Hoisted so the vi.mock factory (also hoisted) can reference them.
-const { state, createAndAnalyze } = vi.hoisted(() => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { writable: w } = require('svelte/store');
-  return {
-    state: w({ canvases: [], activeCanvas: null, isLoading: false, isAnalyzing: false }),
-    createAndAnalyze: vi.fn(),
-  };
-});
-
 // Mock the store edge so we control isAnalyzing and capture submissions.
-vi.mock('./stores', () => ({
-  canvasStore: {
-    subscribe: state.subscribe,
-    createAndAnalyze: (...args: unknown[]) => createAndAnalyze(...args),
-    init: vi.fn(),
-    loadCanvas: vi.fn(),
-    deleteCanvas: vi.fn(),
-    clearActive: vi.fn(),
-  },
+vi.mock('./stores.svelte', async () => ({
+  canvasStore: (await import('./canvas-store.mock.svelte')).mockCanvasStore,
 }));
 
+import { mockCanvasStore } from './canvas-store.mock.svelte';
 import CanvasEditor from './CanvasEditor.svelte';
-
-function setState(partial: Partial<CanvasStoreState>) {
-  state.update((s: CanvasStoreState) => ({ ...s, ...partial }));
-}
 
 describe('CanvasEditor', () => {
   beforeEach(() => {
-    state.set({ canvases: [], activeCanvas: null, isLoading: false, isAnalyzing: false });
+    mockCanvasStore.reset();
   });
 
   it('renders the heading and the title/author/text inputs', () => {
@@ -79,7 +52,11 @@ describe('CanvasEditor', () => {
 
     await fireEvent.click(screen.getByRole('button', { name: /Analyze Text/i }));
 
-    expect(createAndAnalyze).toHaveBeenCalledWith('the body text', 'My Title', 'My Author');
+    expect(mockCanvasStore.createAndAnalyze).toHaveBeenCalledWith(
+      'the body text',
+      'My Title',
+      'My Author'
+    );
   });
 
   it('does not submit when the text is only whitespace', async () => {
@@ -90,11 +67,11 @@ describe('CanvasEditor', () => {
 
     // Button stays disabled, and even a forced click is a no-op for whitespace.
     expect(screen.getByRole('button', { name: /Analyze Text/i })).toBeDisabled();
-    expect(createAndAnalyze).not.toHaveBeenCalled();
+    expect(mockCanvasStore.createAndAnalyze).not.toHaveBeenCalled();
   });
 
   it('shows the analyzing state and disables inputs/button while analyzing', () => {
-    setState({ isAnalyzing: true });
+    mockCanvasStore.isAnalyzing = true;
     render(CanvasEditor);
 
     expect(screen.getByText('Analyzing...')).toBeInTheDocument();

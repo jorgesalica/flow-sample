@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { chatStore } from '../stores';
+  import { chatStore } from '../stores.svelte';
 
-  let inputContent = '';
+  let inputContent = $state('');
   let textareaEl: HTMLTextAreaElement;
 
   // Auto-resize textarea
@@ -19,7 +19,7 @@
   }
 
   function submit() {
-    if (!inputContent.trim() || $chatStore.isLoading) return;
+    if (!inputContent.trim() || chatStore.isLoading) return;
 
     chatStore.sendMessage(inputContent.trim());
     inputContent = '';
@@ -43,12 +43,12 @@
       placeholder="Send a message..."
       class="w-full bg-transparent text-slate-200 resize-none outline-none py-3.5 pl-4 pr-12 max-h-[200px] overflow-y-auto scrollbar-thin text-sm leading-relaxed"
       rows="1"
-      disabled={$chatStore.isLoading}
+      disabled={chatStore.isLoading}
     ></textarea>
 
     <button
       on:click={submit}
-      disabled={!inputContent.trim() || $chatStore.isLoading}
+      disabled={!inputContent.trim() || chatStore.isLoading}
       class="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center rounded-lg bg-cosmic-600 text-white disabled:opacity-50 disabled:bg-slate-700 disabled:cursor-not-allowed transition-colors hover:bg-cosmic-500"
       title="Send message"
     >

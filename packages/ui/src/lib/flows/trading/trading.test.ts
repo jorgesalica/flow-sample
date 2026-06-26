@@ -147,8 +147,7 @@ describe('tradingFlow definition contract', () => {
     expect(tradingFlow.description).toMatch(/Hurst/);
   });
 
-  it('wires a renderable component and a getStats function', () => {
-    expect(tradingFlow.component).toBeDefined();
+  it('exposes a getStats function (routing is file-based, no component field)', () => {
     expect(typeof tradingFlow.getStats).toBe('function');
   });
 

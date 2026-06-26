@@ -13,19 +13,19 @@ vi.mock('../api', () => ({
 vi.mock('@lib/client', () => ({ api: {} }));
 
 import Controls from './Controls.svelte';
-import { isLoading, isAuthenticated } from '../stores';
+import { spotifyStore } from '../stores.svelte';
 
 describe('Controls', () => {
   beforeEach(() => {
     loadTracks.mockClear();
     fetchFromSpotify.mockClear();
     cancelSync.mockClear();
-    isLoading.set(false);
-    isAuthenticated.set(false);
+    spotifyStore.isLoading = false;
+    spotifyStore.isAuthenticated = false;
   });
 
   it('shows a Connect Spotify link when unauthenticated', () => {
-    isAuthenticated.set(false);
+    spotifyStore.isAuthenticated = false;
     render(Controls);
 
     const link = screen.getByRole('link', { name: /connect spotify/i });
@@ -34,7 +34,7 @@ describe('Controls', () => {
   });
 
   it('shows a Sync with Spotify button when authenticated', () => {
-    isAuthenticated.set(true);
+    spotifyStore.isAuthenticated = true;
     render(Controls);
 
     expect(screen.getByRole('button', { name: /sync with spotify/i })).toBeInTheDocument();
@@ -50,15 +50,15 @@ describe('Controls', () => {
   });
 
   it('disables Refresh while loading', () => {
-    isLoading.set(true);
+    spotifyStore.isLoading = true;
     render(Controls);
 
     expect(screen.getByRole('button', { name: /refresh/i })).toBeDisabled();
   });
 
   it('triggers a sync when authenticated and not loading', async () => {
-    isAuthenticated.set(true);
-    isLoading.set(false);
+    spotifyStore.isAuthenticated = true;
+    spotifyStore.isLoading = false;
     render(Controls);
 
     await fireEvent.click(screen.getByRole('button', { name: /sync with spotify/i }));
@@ -68,8 +68,8 @@ describe('Controls', () => {
   });
 
   it('cancels the sync when authenticated and already loading', async () => {
-    isAuthenticated.set(true);
-    isLoading.set(true);
+    spotifyStore.isAuthenticated = true;
+    spotifyStore.isLoading = true;
     render(Controls);
 
     await fireEvent.click(screen.getByRole('button', { name: /cancel/i }));

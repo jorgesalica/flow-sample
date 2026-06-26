@@ -7,11 +7,11 @@ vi.mock('../api', () => ({ loadTracks: (...args: unknown[]) => loadTracks(...arg
 vi.mock('@lib/client', () => ({ api: {} }));
 
 import Pagination from './Pagination.svelte';
-import { searchOptions, totalTracks } from '../stores';
+import { spotifyStore } from '../stores.svelte';
 
 function setState(page: number, total: number, limit = 24) {
-  searchOptions.set({ page, limit, q: '', sortBy: 'added_at', sortOrder: 'desc' });
-  totalTracks.set(total);
+  spotifyStore.searchOptions = { page, limit, q: '', sortBy: 'added_at', sortOrder: 'desc' };
+  spotifyStore.totalTracks = total;
 }
 
 describe('Pagination', () => {

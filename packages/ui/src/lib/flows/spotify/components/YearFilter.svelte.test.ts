@@ -11,7 +11,7 @@ vi.mock('@lib/client', () => ({
 }));
 
 import YearFilter from './YearFilter.svelte';
-import { searchOptions } from '../stores';
+import { spotifyStore } from '../stores.svelte';
 
 const YEARS: YearCount[] = [
   { year: 2021, count: 8 },
@@ -20,7 +20,13 @@ const YEARS: YearCount[] = [
 
 describe('YearFilter', () => {
   beforeEach(() => {
-    searchOptions.set({ page: 1, limit: 24, q: '', sortBy: 'added_at', sortOrder: 'desc' });
+    spotifyStore.searchOptions = {
+      page: 1,
+      limit: 24,
+      q: '',
+      sortBy: 'added_at',
+      sortOrder: 'desc',
+    };
     loadTracks.mockClear();
     yearsGet.mockReset();
   });

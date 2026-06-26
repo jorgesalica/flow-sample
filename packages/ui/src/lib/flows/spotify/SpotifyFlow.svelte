@@ -8,8 +8,19 @@
   import { FlowLayout } from '@lib/components';
   import SpotifyHeader from './components/SpotifyHeader.svelte';
   import InsightsPanel from './components/InsightsPanel.svelte';
-  import { tracks, topStats, isLoading, totalTracks, searchOptions } from './stores';
+  import { spotifyStore } from './stores.svelte';
   import { loadTracks, checkAuthStatus } from './api';
+  import type { Track, SearchOptions } from '@flows/shared';
+  import type { TopStats } from '@lib/types';
+
+  interface Props {
+    tracks?: Track[];
+    totalTracks?: number;
+    searchOptions?: SearchOptions;
+    topStats?: TopStats;
+  }
+
+  let { tracks, totalTracks, searchOptions, topStats }: Props = $props();
 
   // Page title
   const pageTitle = 'Spotify Flow - Your Music Library';
@@ -17,8 +28,13 @@
   import { toast } from 'svelte-5-french-toast';
 
   onMount(() => {
+    // Hydrate the runes store from the loader's initial data (mount-time, once).
+    if (tracks !== undefined) spotifyStore.tracks = tracks;
+    if (totalTracks !== undefined) spotifyStore.totalTracks = totalTracks;
+    if (searchOptions !== undefined) spotifyStore.searchOptions = searchOptions;
+    if (topStats !== undefined) spotifyStore.topStats = topStats;
+
     checkAuthStatus();
-    loadTracks({ page: 1 });
 
     // Check for success redirect
     const url = new URL(window.location.href);
@@ -34,7 +50,7 @@
   });
 
   function handleLoadMore() {
-    const nextPage = ($searchOptions.page || 1) + 1;
+    const nextPage = (spotifyStore.searchOptions.page || 1) + 1;
     loadTracks({ page: nextPage }, true);
   }
 </script>
@@ -46,10 +62,10 @@
 <FlowLayout>
   <div class="flex flex-col gap-6">
     <!-- Header -->
-    <SpotifyHeader stats={$topStats} />
+    <SpotifyHeader stats={spotifyStore.topStats} />
 
     <!-- Insights Section -->
-    <InsightsPanel stats={$topStats} />
+    <InsightsPanel stats={spotifyStore.topStats} />
 
     <!-- Controls -->
     <div class="flex items-center">
@@ -72,16 +88,16 @@
     <section
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-h-[50vh]"
     >
-      {#if $isLoading && $tracks.length === 0}
+      {#if spotifyStore.isLoading && spotifyStore.tracks.length === 0}
         <!-- Loading Skeleton -->
         {#each [0, 1, 2, 3, 4, 5, 6, 7] as i (i)}
           <div class="glass h-48 skeleton"></div>
         {/each}
       {:else}
-        {#each $tracks as track (track.id)}
+        {#each spotifyStore.tracks as track (track.id)}
           <TrackCard {track} />
         {:else}
-          {#if !$isLoading}
+          {#if !spotifyStore.isLoading}
             <div class="col-span-full py-16 text-center">
               <div class="text-5xl mb-4 opacity-30">🔍</div>
               <p class="text-white/50">No tracks found matching your filters.</p>
@@ -98,10 +114,10 @@
     </section>
 
     <!-- Infinite Scroll Trigger -->
-    {#if $tracks.length > 0}
+    {#if spotifyStore.tracks.length > 0}
       <InfiniteScroll
-        hasMore={$tracks.length < $totalTracks}
-        isLoading={$isLoading}
+        hasMore={spotifyStore.tracks.length < spotifyStore.totalTracks}
+        isLoading={spotifyStore.isLoading}
         onLoadMore={handleLoadMore}
       />
     {/if}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { searchOptions } from '../stores';
+  import { spotifyStore } from '../stores.svelte';
   import { loadTracks } from '../api';
   import { api } from '@lib/client';
   import type { GenreCount, YearCount } from '@flows/shared';
@@ -11,10 +11,10 @@
   let years: YearCount[] = $state([]);
 
   // Local filter values (synced with store)
-  let selectedGenre = $state($searchOptions.genre || '');
-  let selectedYear = $state($searchOptions.year?.toString() || '');
-  let sortBy = $state($searchOptions.sortBy || 'added_at');
-  let sortOrder = $state($searchOptions.sortOrder || 'desc');
+  let selectedGenre = $state(spotifyStore.searchOptions.genre || '');
+  let selectedYear = $state(spotifyStore.searchOptions.year?.toString() || '');
+  let sortBy = $state(spotifyStore.searchOptions.sortBy || 'added_at');
+  let sortOrder = $state(spotifyStore.searchOptions.sortOrder || 'desc');
 
   // Count active filters
   let activeFilterCount = $derived(

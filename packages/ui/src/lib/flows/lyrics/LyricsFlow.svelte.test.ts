@@ -1,9 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import type { LyricsStats } from '@flows/shared';
+import type { LyricsPageData, LyricsTrackRow } from '../../../routes/lyrics/+page';
 import LyricsFlow from './LyricsFlow.svelte';
 
-// Mock the flow's data edge.
+// Mock the flow's data edge. The INITIAL stats + first page now arrive via the
+// loader (passed in as the `data` prop); these mocks back the interactive
+// re-fetches that stay in the component (filtering, load-more, refresh, retry).
 const getLyricsStats = vi.fn();
 const getLyricsLibrary = vi.fn();
 const fetchAllLyrics = vi.fn();
@@ -36,7 +39,7 @@ function makeStats(overrides: Partial<LyricsStats> = {}): LyricsStats {
   return { total: 10, found: 6, notFound: 2, pending: 2, ...overrides };
 }
 
-function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
+function makeRow(overrides: Partial<LyricsTrackRow> = {}): LyricsTrackRow {
   return {
     id: 'track-1',
     title: 'Test Title',
@@ -45,6 +48,22 @@ function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
     status: 'found',
     ...overrides,
   };
+}
+
+// Build the loader payload the component now consumes as its `data` prop.
+function makeData(overrides: Partial<LyricsPageData> = {}): LyricsPageData {
+  return {
+    stats: makeStats(),
+    tracks: [makeRow()],
+    canvasTrackId: null,
+    error: null,
+    ...overrides,
+  };
+}
+
+// Render the flow with loaded data already in hand (mirrors what +page.ts feeds).
+function renderFlow(data: LyricsPageData = makeData()) {
+  return render(LyricsFlow, { props: { data } });
 }
 
 function deferred<T>() {
@@ -69,20 +88,26 @@ describe('LyricsFlow', () => {
     window.history.replaceState(null, '', '/lyrics');
   });
 
-  it('shows the loading state while initial data loads', () => {
-    getLyricsStats.mockReturnValue(deferred().promise);
-    getLyricsLibrary.mockReturnValue(deferred().promise);
+  it('shows the loading state while a re-fetch is in flight with no rows yet', async () => {
+    // A filter reset clears rows and flips into the loading branch; hold the
+    // library fetch open so the spinner stays visible.
+    getLyricsStats.mockResolvedValue(makeStats());
+    getLyricsLibrary.mockReturnValue(deferred<LyricsTrackRow[]>().promise);
 
-    render(LyricsFlow);
+    renderFlow();
+    await screen.findByText('Recent Tracks');
 
-    expect(screen.getByText('Loading lyrics data...')).toBeInTheDocument();
+    await fireEvent.change(screen.getByRole('combobox'), { target: { value: 'not_found' } });
+
+    expect(await screen.findByText('Loading lyrics data...')).toBeInTheDocument();
   });
 
-  it('renders the stats grid and the tracks table on success', async () => {
-    getLyricsStats.mockResolvedValue(makeStats());
-    getLyricsLibrary.mockResolvedValue([makeRow(), makeRow({ id: 'track-2', title: 'Second' })]);
-
-    render(LyricsFlow);
+  it('renders the stats grid and the tracks table from loaded data', async () => {
+    renderFlow(
+      makeData({
+        tracks: [makeRow(), makeRow({ id: 'track-2', title: 'Second' })],
+      })
+    );
 
     // Stats values.
     expect(await screen.findByText('Total Tracks')).toBeInTheDocument();
@@ -94,11 +119,13 @@ describe('LyricsFlow', () => {
     expect(screen.getByText('2 loaded')).toBeInTheDocument();
   });
 
-  it('shows the empty state when no tracks are returned', async () => {
-    getLyricsStats.mockResolvedValue(makeStats({ total: 0, found: 0, notFound: 0, pending: 0 }));
-    getLyricsLibrary.mockResolvedValue([]);
-
-    render(LyricsFlow);
+  it('shows the empty state when the loaded data has no tracks', async () => {
+    renderFlow(
+      makeData({
+        stats: makeStats({ total: 0, found: 0, notFound: 0, pending: 0 }),
+        tracks: [],
+      })
+    );
 
     expect(await screen.findByText('No tracks found')).toBeInTheDocument();
     expect(
@@ -106,31 +133,22 @@ describe('LyricsFlow', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the error state when the initial load fails', async () => {
-    getLyricsStats.mockRejectedValue(new Error('Backend exploded'));
-    getLyricsLibrary.mockRejectedValue(new Error('Backend exploded'));
-
-    render(LyricsFlow);
+  it('shows the error state when the loader reports a failure', async () => {
+    renderFlow(makeData({ stats: null, tracks: [], error: 'Backend exploded' }));
 
     expect(await screen.findByText('Error Loading Data')).toBeInTheDocument();
     expect(screen.getByText('Backend exploded')).toBeInTheDocument();
   });
 
   it('does NOT render the stats grid while in the error state (negative space)', async () => {
-    getLyricsStats.mockRejectedValue(new Error('boom'));
-    getLyricsLibrary.mockRejectedValue(new Error('boom'));
-
-    render(LyricsFlow);
+    renderFlow(makeData({ stats: null, tracks: [], error: 'boom' }));
 
     await screen.findByText('Error Loading Data');
     expect(screen.queryByText('Recent Tracks')).not.toBeInTheDocument();
   });
 
   it('renders a percentage in the Found stat card', async () => {
-    getLyricsStats.mockResolvedValue(makeStats({ total: 10, found: 5 }));
-    getLyricsLibrary.mockResolvedValue([makeRow()]);
-
-    render(LyricsFlow);
+    renderFlow(makeData({ stats: makeStats({ total: 10, found: 5 }) }));
 
     // 5 / 10 = 50%.
     expect(await screen.findByText('50%')).toBeInTheDocument();
@@ -140,7 +158,7 @@ describe('LyricsFlow', () => {
     getLyricsStats.mockResolvedValue(makeStats());
     getLyricsLibrary.mockResolvedValue([makeRow()]);
 
-    render(LyricsFlow);
+    renderFlow();
     await screen.findByText('Recent Tracks');
 
     getLyricsLibrary.mockClear();
@@ -157,7 +175,7 @@ describe('LyricsFlow', () => {
     getLyricsLibrary.mockResolvedValue([makeRow()]);
     fetchAllLyrics.mockResolvedValue({ processed: 3, found: 2, notFound: 1, errors: 0 });
 
-    render(LyricsFlow);
+    renderFlow();
     await screen.findByText('Recent Tracks');
 
     await fireEvent.click(screen.getByRole('button', { name: /Fetch Missing/ }));
@@ -175,7 +193,7 @@ describe('LyricsFlow', () => {
     getLyricsLibrary.mockResolvedValue([makeRow()]);
     fetchAllLyrics.mockResolvedValue({ processed: 5, found: 3, notFound: 1, errors: 1 });
 
-    render(LyricsFlow);
+    renderFlow();
     await screen.findByText('Recent Tracks');
 
     await fireEvent.click(screen.getByRole('button', { name: /Fetch Missing/ }));
@@ -192,7 +210,7 @@ describe('LyricsFlow', () => {
     getLyricsLibrary.mockResolvedValue([makeRow()]);
     fetchAllLyrics.mockResolvedValue({ processed: 0, found: 0, notFound: 0, errors: 0 });
 
-    render(LyricsFlow);
+    renderFlow();
     await screen.findByText('Recent Tracks');
 
     await fireEvent.click(screen.getByRole('button', { name: /Fetch Missing/ }));
@@ -207,7 +225,7 @@ describe('LyricsFlow', () => {
     getLyricsLibrary.mockResolvedValue([makeRow()]);
     fetchAllLyrics.mockRejectedValue(new Error('batch failed'));
 
-    render(LyricsFlow);
+    renderFlow();
     await screen.findByText('Recent Tracks');
 
     await fireEvent.click(screen.getByRole('button', { name: /Fetch Missing/ }));
@@ -218,12 +236,10 @@ describe('LyricsFlow', () => {
   });
 
   it('opens the modal with the track when a found row is clicked', async () => {
-    getLyricsStats.mockResolvedValue(makeStats());
-    getLyricsLibrary.mockResolvedValue([makeRow({ title: 'Clickable Song' })]);
     // The modal mounts and fetches lyrics for the track.
     getLyrics.mockResolvedValue({ plainLyrics: 'la la la', status: 'found' });
 
-    render(LyricsFlow);
+    renderFlow(makeData({ tracks: [makeRow({ title: 'Clickable Song' })] }));
     const row = await screen.findByText('Clickable Song');
 
     await fireEvent.click(row);
@@ -235,10 +251,7 @@ describe('LyricsFlow', () => {
   });
 
   it('opens the canvas view when a found row Open Canvas button is clicked', async () => {
-    getLyricsStats.mockResolvedValue(makeStats());
-    getLyricsLibrary.mockResolvedValue([makeRow()]);
-
-    render(LyricsFlow);
+    renderFlow();
     await screen.findByText('Recent Tracks');
 
     await fireEvent.click(screen.getByRole('button', { name: 'Open Canvas' }));
@@ -247,23 +260,15 @@ describe('LyricsFlow', () => {
     expect(screen.getByTestId('canvas-stub')).toHaveTextContent('track-1');
   });
 
-  it('restores the canvas view from a canvasTrackId URL param on mount', async () => {
-    getLyricsStats.mockResolvedValue(makeStats());
-    getLyricsLibrary.mockResolvedValue([makeRow()]);
-    window.history.replaceState(null, '', '/lyrics?canvasTrackId=track-99');
-
-    render(LyricsFlow);
+  it('restores the canvas view from a canvasTrackId provided by the loader', async () => {
+    renderFlow(makeData({ canvasTrackId: 'track-99' }));
 
     expect(await screen.findByText('Back to Dashboard')).toBeInTheDocument();
     expect(screen.getByTestId('canvas-stub')).toHaveTextContent('track-99');
   });
 
   it('returns to the dashboard from the canvas view', async () => {
-    getLyricsStats.mockResolvedValue(makeStats());
-    getLyricsLibrary.mockResolvedValue([makeRow()]);
-    window.history.replaceState(null, '', '/lyrics?canvasTrackId=track-99');
-
-    render(LyricsFlow);
+    renderFlow(makeData({ canvasTrackId: 'track-99' }));
     await screen.findByText('Back to Dashboard');
 
     await fireEvent.click(screen.getByText('Back to Dashboard'));
@@ -273,10 +278,9 @@ describe('LyricsFlow', () => {
 
   it('retries an individual not_found track and flips it to found on success', async () => {
     getLyricsStats.mockResolvedValue(makeStats());
-    getLyricsLibrary.mockResolvedValue([makeRow({ status: 'not_found' })]);
     getLyrics.mockResolvedValue({ plainLyrics: 'found now', status: 'found' });
 
-    render(LyricsFlow);
+    renderFlow(makeData({ tracks: [makeRow({ status: 'not_found' })] }));
     await screen.findByText('Recent Tracks');
 
     // The not_found row shows a single "Retry Fetching" action button.
@@ -291,11 +295,9 @@ describe('LyricsFlow', () => {
   });
 
   it('marks an individual track not_found and toasts on a failed retry', async () => {
-    getLyricsStats.mockResolvedValue(makeStats());
-    getLyricsLibrary.mockResolvedValue([makeRow({ status: 'pending' })]);
     getLyrics.mockRejectedValue(new Error('not found'));
 
-    render(LyricsFlow);
+    renderFlow(makeData({ tracks: [makeRow({ status: 'pending' })] }));
     await screen.findByText('Recent Tracks');
 
     await fireEvent.click(screen.getByRole('button', { name: 'Fetch Lyrics' }));

@@ -1,5 +1,4 @@
 import type { FlowDefinition, FlowStats } from '../registry';
-import CanvasFlow from './CanvasFlow.svelte';
 import { fetchCanvasList } from './api';
 
 async function getStats(): Promise<FlowStats> {
@@ -26,6 +25,5 @@ export const canvasFlow: FlowDefinition = {
   description: 'Paste any text and get a deep literary AI analysis.',
   route: '/canvas',
   color: 'from-cyan-400 to-blue-500',
-  component: CanvasFlow,
   getStats,
 };

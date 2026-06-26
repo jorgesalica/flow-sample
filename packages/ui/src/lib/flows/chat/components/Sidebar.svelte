@@ -1,13 +1,7 @@
 <script lang="ts">
-  import { chatStore } from '../stores';
-  import { onMount } from 'svelte';
+  import { chatStore } from '../stores.svelte';
 
-  export let isMobileMenuOpen = false;
-
-  // Load initial conversations list on mount
-  onMount(() => {
-    chatStore.init();
-  });
+  let { isMobileMenuOpen = $bindable(false) }: { isMobileMenuOpen?: boolean } = $props();
 
   function selectConversation(id: string) {
     chatStore.loadConversation(id);
@@ -55,21 +49,21 @@
   </div>
 
   <div class="flex-1 overflow-y-auto p-2 scrollbar-thin">
-    {#if $chatStore.conversations.length === 0}
+    {#if chatStore.conversations.length === 0}
       <div class="text-slate-500 text-center py-8 text-sm px-2">
         No history yet. Start a conversation!
       </div>
     {/if}
 
     <ul class="space-y-0.5">
-      {#each $chatStore.conversations as conv (conv.id)}
+      {#each chatStore.conversations as conv (conv.id)}
         <li class="group">
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
             on:click={() => selectConversation(conv.id)}
             class={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              $chatStore.activeConversationId === conv.id
+              chatStore.activeConversationId === conv.id
                 ? 'bg-cosmic-800/70 text-white border border-cosmic-600/30'
                 : 'text-slate-300 hover:bg-slate-800/70'
             }`}

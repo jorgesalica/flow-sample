@@ -1,6 +1,5 @@
 import type { FlowDefinition, FlowStats } from '../registry';
 import { fetchConversations } from './api';
-import ChatFlow from './ChatFlow.svelte';
 
 async function getStats(): Promise<FlowStats> {
   try {
@@ -26,6 +25,5 @@ export const chatFlow: FlowDefinition = {
   description: 'Converse with your favorite AI models.',
   route: '/chat',
   color: 'from-blue-500 to-indigo-500',
-  component: ChatFlow,
   getStats,
 };

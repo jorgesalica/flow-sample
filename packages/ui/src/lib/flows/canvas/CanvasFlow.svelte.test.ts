@@ -2,34 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import type { CanvasAnalysis } from '@flows/shared';
 
-interface CanvasStoreState {
-  canvases: CanvasAnalysis[];
-  activeCanvas: CanvasAnalysis | null;
-  isLoading: boolean;
-  isAnalyzing: boolean;
-}
-
-// Hoisted so the vi.mock factory (also hoisted) can reference it.
-const { state } = vi.hoisted(() => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { writable: w } = require('svelte/store');
-  return {
-    state: w({ canvases: [], activeCanvas: null, isLoading: false, isAnalyzing: false }),
-  };
-});
-
-// One mocked store shared by CanvasFlow and all its children.
-vi.mock('./stores', () => ({
-  canvasStore: {
-    subscribe: state.subscribe,
-    init: vi.fn(),
-    loadCanvas: vi.fn(),
-    deleteCanvas: vi.fn(),
-    clearActive: vi.fn(),
-    createAndAnalyze: vi.fn(),
-  },
+// One runes-backed mocked store shared by CanvasFlow and all its children.
+vi.mock('./stores.svelte', async () => ({
+  canvasStore: (await import('./canvas-store.mock.svelte')).mockCanvasStore,
 }));
 
+import { mockCanvasStore } from './canvas-store.mock.svelte';
 import CanvasFlow from './CanvasFlow.svelte';
 
 function makeActiveCanvas(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
@@ -70,18 +48,22 @@ function makeActiveCanvas(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalys
   };
 }
 
-function setState(partial: Partial<CanvasStoreState>) {
-  state.update((s: CanvasStoreState) => ({ ...s, ...partial }));
-}
-
 describe('CanvasFlow', () => {
   beforeEach(() => {
-    state.set({ canvases: [], activeCanvas: null, isLoading: false, isAnalyzing: false });
+    mockCanvasStore.reset();
+  });
+
+  it('seeds the store with the canvases passed from the loader', () => {
+    const loaded = [makeActiveCanvas({ id: 'l1', sourceId: 'loaded_1' })];
+    render(CanvasFlow, { props: { canvases: loaded } });
+
+    expect(mockCanvasStore.setCanvases).toHaveBeenCalledWith(loaded);
+    expect(mockCanvasStore.canvases).toEqual(loaded);
   });
 
   describe('no active canvas (editor state)', () => {
     it('shows the default header title and the New Canvas editor', () => {
-      render(CanvasFlow);
+      render(CanvasFlow, { props: { canvases: [] } });
 
       expect(screen.getByText('Text Analysis Canvas')).toBeInTheDocument();
       // CanvasEditor heading
@@ -90,7 +72,7 @@ describe('CanvasFlow', () => {
     });
 
     it('does not render token content when there is no active canvas', () => {
-      render(CanvasFlow);
+      render(CanvasFlow, { props: { canvases: [] } });
       expect(document.querySelector('.canvas-renderer')).toBeNull();
       expect(screen.queryByText('Overview')).not.toBeInTheDocument();
     });
@@ -98,17 +80,17 @@ describe('CanvasFlow', () => {
 
   describe('with an active canvas (viewer state)', () => {
     beforeEach(() => {
-      setState({ activeCanvas: makeActiveCanvas() });
+      mockCanvasStore.activeCanvas = makeActiveCanvas();
     });
 
     it('renders the active canvas title and author in the header', () => {
-      render(CanvasFlow);
+      render(CanvasFlow, { props: { canvases: [] } });
       expect(screen.getByRole('heading', { name: 'The Poem' })).toBeInTheDocument();
       expect(screen.getByText('A. Poet')).toBeInTheDocument();
     });
 
     it('renders the meta overview with summary, theme and tone', () => {
-      render(CanvasFlow);
+      render(CanvasFlow, { props: { canvases: [] } });
       expect(screen.getByText('Overview')).toBeInTheDocument();
       expect(screen.getByText('A short overview of the work.')).toBeInTheDocument();
       expect(screen.getByText('Renewal')).toBeInTheDocument();
@@ -116,7 +98,7 @@ describe('CanvasFlow', () => {
     });
 
     it('renders the token AST content via TokenRenderer', () => {
-      render(CanvasFlow);
+      render(CanvasFlow, { props: { canvases: [] } });
       expect(document.querySelector('.canvas-renderer')).not.toBeNull();
       expect(screen.getByText('Bright')).toBeInTheDocument();
       expect(screen.getByText('morning')).toBeInTheDocument();
@@ -124,19 +106,19 @@ describe('CanvasFlow', () => {
     });
 
     it('renders the layer toggles for the canvas layers', () => {
-      render(CanvasFlow);
+      render(CanvasFlow, { props: { canvases: [] } });
       expect(screen.getByTitle('Toggle Meaning')).toBeInTheDocument();
     });
 
     it('does not show the editor when a canvas is active', () => {
-      render(CanvasFlow);
+      render(CanvasFlow, { props: { canvases: [] } });
       expect(screen.queryByPlaceholderText('Paste your text here...')).not.toBeInTheDocument();
       expect(screen.queryByText('Text Analysis Canvas')).not.toBeInTheDocument();
     });
 
     it('omits the overview block when meta has no summary', () => {
-      setState({ activeCanvas: makeActiveCanvas({ meta: { title: 'No Meta', author: 'X' } }) });
-      render(CanvasFlow);
+      mockCanvasStore.activeCanvas = makeActiveCanvas({ meta: { title: 'No Meta', author: 'X' } });
+      render(CanvasFlow, { props: { canvases: [] } });
       expect(screen.queryByText('Overview')).not.toBeInTheDocument();
       // Title still renders from header.
       expect(screen.getByRole('heading', { name: 'No Meta' })).toBeInTheDocument();

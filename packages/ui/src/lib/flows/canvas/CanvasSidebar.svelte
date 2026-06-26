@@ -1,12 +1,7 @@
 <script lang="ts">
-  import { canvasStore } from './stores';
-  import { onMount } from 'svelte';
+  import { canvasStore } from './stores.svelte';
 
   export let isMobileMenuOpen = false;
-
-  onMount(() => {
-    canvasStore.init();
-  });
 
   function handleSelect(id: string) {
     canvasStore.loadCanvas(id);
@@ -47,20 +42,20 @@
 
   <!-- Canvas List -->
   <div class="flex-1 overflow-y-auto overflow-x-hidden p-2 custom-scrollbar">
-    {#if $canvasStore.isLoading}
+    {#if canvasStore.isLoading}
       <div class="flex items-center justify-center p-8">
         <div
           class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"
         ></div>
       </div>
-    {:else if $canvasStore.canvases.length === 0}
+    {:else if canvasStore.canvases.length === 0}
       <div class="p-4 text-center text-sm text-slate-500">
         No canvases yet.<br />Create one to start analyzing text!
       </div>
     {:else}
       <div class="space-y-1">
-        {#each $canvasStore.canvases as canvas (canvas.sourceId)}
-          {@const isActive = $canvasStore.activeCanvas?.sourceId === canvas.sourceId}
+        {#each canvasStore.canvases as canvas (canvas.sourceId)}
+          {@const isActive = canvasStore.activeCanvas?.sourceId === canvas.sourceId}
           <div class="group flex items-center gap-1">
             <button
               class="flex-1 text-left px-3 py-2 rounded-md text-sm transition-colors truncate

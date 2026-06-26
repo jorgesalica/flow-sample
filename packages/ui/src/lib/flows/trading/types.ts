@@ -38,3 +38,14 @@ export interface WizardInsightResponse {
   meta?: Record<string, unknown>;
   error?: string;
 }
+
+/**
+ * Shape returned by the trading universal loader (`+page.ts`) — the initial
+ * status/candles/insight snapshot that previously hydrated in `onMount`.
+ */
+export interface TradingPageData {
+  trading: TradingState | null;
+  advisor: AdvisorState | null;
+  candles: Candle[];
+  insight: (AdvisorNote & { _debugContext?: unknown }) | null;
+}

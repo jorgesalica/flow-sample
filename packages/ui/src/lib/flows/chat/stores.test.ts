@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { get } from 'svelte/store';
 import type { ChatConversation, ChatMessage, ChatProviderGroup } from '@flows/shared';
 import type { StreamEvent } from './api';
 
@@ -18,7 +17,7 @@ vi.mock('@lib/toast', () => ({
 
 import * as api from './api';
 import { showError } from '@lib/toast';
-import { chatStore } from './stores';
+import { chatStore, type ChatInitialData } from './stores.svelte';
 
 // ── Fixtures (fixed, deterministic, no PII) ──────────────────────────
 function makeCatalog(): ChatProviderGroup[] {
@@ -73,7 +72,16 @@ function makeMessage(over: Partial<ChatMessage> = {}): ChatMessage {
   };
 }
 
-const fetchModelCatalog = vi.mocked(api.fetchModelCatalog);
+/** A loader-shaped payload to seed the store via hydrate(). */
+function makeInitialData(over: Partial<ChatInitialData> = {}): ChatInitialData {
+  return {
+    catalog: [],
+    conversations: [],
+    selectedModel: '',
+    ...over,
+  };
+}
+
 const fetchConversations = vi.mocked(api.fetchConversations);
 const fetchMessages = vi.mocked(api.fetchMessages);
 const deleteConversation = vi.mocked(api.deleteConversation);
@@ -82,92 +90,69 @@ const mockShowError = vi.mocked(showError);
 
 /**
  * The store is a module-level singleton; reset its observable state before each
- * test by driving it through its own public methods so tests stay isolated.
+ * test by re-hydrating with empty data and driving it back to an idle baseline.
  */
-async function resetStore() {
-  fetchModelCatalog.mockResolvedValueOnce([]);
-  fetchConversations.mockResolvedValueOnce([]);
-  await chatStore.init();
+function resetStore() {
+  chatStore.hydrate(makeInitialData());
   chatStore.setMode('specific');
   chatStore.setModel('');
-  // Clear messages / active conversation
-  chatStore.startNewConversation();
-  chatStore.deleteConversation(get(chatStore).activeConversationId ?? 'none');
-  await Promise.resolve();
+  chatStore.activeConversationId = null;
+  chatStore.messages = [];
+  chatStore.lastProvider = '';
+  chatStore.lastModel = '';
+  chatStore.isLoading = false;
+  chatStore.isStreaming = false;
+  chatStore.streamingContent = '';
 }
 
 describe('chatStore', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    await resetStore();
-    vi.clearAllMocks();
+    resetStore();
   });
 
-  describe('init', () => {
-    it('loads catalog + conversations and defaults to first model of first provider', async () => {
+  describe('hydrate', () => {
+    it('seeds catalog, conversations, and the selected model from loader data', () => {
       const catalog = makeCatalog();
       const conversations = [makeConversation()];
-      fetchModelCatalog.mockResolvedValueOnce(catalog);
-      fetchConversations.mockResolvedValueOnce(conversations);
 
-      await chatStore.init();
+      chatStore.hydrate({ catalog, conversations, selectedModel: 'openai:gpt-4o' });
 
-      const state = get(chatStore);
-      expect(state.catalog).toEqual(catalog);
-      expect(state.conversations).toEqual(conversations);
-      expect(state.selectedModel).toBe('openai:gpt-4o');
+      expect(chatStore.catalog).toEqual(catalog);
+      expect(chatStore.conversations).toEqual(conversations);
+      expect(chatStore.selectedModel).toBe('openai:gpt-4o');
       expect(mockShowError).not.toHaveBeenCalled();
     });
 
-    it('leaves selectedModel empty when the catalog is empty', async () => {
-      fetchModelCatalog.mockResolvedValueOnce([]);
-      fetchConversations.mockResolvedValueOnce([]);
+    it('seeds empty defaults when the loader returns nothing', () => {
+      chatStore.hydrate(makeInitialData());
 
-      await chatStore.init();
-
-      expect(get(chatStore).selectedModel).toBe('');
-    });
-
-    it('leaves selectedModel empty when first provider has no models', async () => {
-      fetchModelCatalog.mockResolvedValueOnce([{ provider: 'empty', models: [] }]);
-      fetchConversations.mockResolvedValueOnce([]);
-
-      await chatStore.init();
-
-      expect(get(chatStore).selectedModel).toBe('');
-    });
-
-    it('surfaces a toast error and does not throw when the API fails', async () => {
-      fetchModelCatalog.mockRejectedValueOnce(new Error('backend down'));
-      fetchConversations.mockResolvedValueOnce([]);
-
-      await chatStore.init();
-
-      expect(mockShowError).toHaveBeenCalledWith('backend down');
+      expect(chatStore.catalog).toEqual([]);
+      expect(chatStore.conversations).toEqual([]);
+      expect(chatStore.selectedModel).toBe('');
     });
   });
 
   describe('setModel / setMode', () => {
     it('updates the selected model', () => {
       chatStore.setModel('anthropic:claude-3');
-      expect(get(chatStore).selectedModel).toBe('anthropic:claude-3');
+      expect(chatStore.selectedModel).toBe('anthropic:claude-3');
     });
 
     it('updates the chat mode', () => {
       chatStore.setMode('rotation');
-      expect(get(chatStore).chatMode).toBe('rotation');
+      expect(chatStore.chatMode).toBe('rotation');
       chatStore.setMode('specific');
-      expect(get(chatStore).chatMode).toBe('specific');
+      expect(chatStore.chatMode).toBe('specific');
     });
   });
 
   describe('startNewConversation', () => {
     it('assigns a fresh active conversation id and clears messages', () => {
       const id = chatStore.startNewConversation();
-      const state = get(chatStore);
       expect(id).toBeTruthy();
-      expect(state.activeConversationId).toBe(id);
-      expect(state.messages).toEqual([]);
+      expect(chatStore.activeConversationId).toBe(id);
+      expect(chatStore.messages).toEqual([]);
     });
   });
 
@@ -178,10 +163,9 @@ describe('chatStore', () => {
 
       await chatStore.loadConversation('conv-1');
 
-      const state = get(chatStore);
-      expect(state.activeConversationId).toBe('conv-1');
-      expect(state.messages).toEqual(messages);
-      expect(state.isLoading).toBe(false);
+      expect(chatStore.activeConversationId).toBe('conv-1');
+      expect(chatStore.messages).toEqual(messages);
+      expect(chatStore.isLoading).toBe(false);
       expect(fetchMessages).toHaveBeenCalledWith('conv-1');
     });
 
@@ -190,60 +174,60 @@ describe('chatStore', () => {
 
       await chatStore.loadConversation('conv-x');
 
-      expect(get(chatStore).isLoading).toBe(false);
+      expect(chatStore.isLoading).toBe(false);
       expect(mockShowError).toHaveBeenCalledWith('not found');
     });
   });
 
   describe('deleteConversation', () => {
     it('removes the conversation and clears active state when it was active', async () => {
-      // Seed conversations + active id via init + load
-      fetchModelCatalog.mockResolvedValueOnce([]);
-      fetchConversations.mockResolvedValueOnce([
-        makeConversation({ id: 'conv-1' }),
-        makeConversation({ id: 'conv-2', title: 'Second' }),
-      ]);
-      await chatStore.init();
+      // Seed conversations + active id via hydrate + load
+      chatStore.hydrate(
+        makeInitialData({
+          conversations: [
+            makeConversation({ id: 'conv-1' }),
+            makeConversation({ id: 'conv-2', title: 'Second' }),
+          ],
+        })
+      );
       fetchMessages.mockResolvedValueOnce([makeMessage()]);
       await chatStore.loadConversation('conv-1');
       deleteConversation.mockResolvedValueOnce(undefined);
 
       await chatStore.deleteConversation('conv-1');
 
-      const state = get(chatStore);
-      expect(state.conversations.map((c) => c.id)).toEqual(['conv-2']);
-      expect(state.activeConversationId).toBeNull();
-      expect(state.messages).toEqual([]);
+      expect(chatStore.conversations.map((c) => c.id)).toEqual(['conv-2']);
+      expect(chatStore.activeConversationId).toBeNull();
+      expect(chatStore.messages).toEqual([]);
     });
 
     it('keeps active state when deleting a non-active conversation', async () => {
-      fetchModelCatalog.mockResolvedValueOnce([]);
-      fetchConversations.mockResolvedValueOnce([
-        makeConversation({ id: 'conv-1' }),
-        makeConversation({ id: 'conv-2', title: 'Second' }),
-      ]);
-      await chatStore.init();
+      chatStore.hydrate(
+        makeInitialData({
+          conversations: [
+            makeConversation({ id: 'conv-1' }),
+            makeConversation({ id: 'conv-2', title: 'Second' }),
+          ],
+        })
+      );
       fetchMessages.mockResolvedValueOnce([makeMessage()]);
       await chatStore.loadConversation('conv-1');
       deleteConversation.mockResolvedValueOnce(undefined);
 
       await chatStore.deleteConversation('conv-2');
 
-      const state = get(chatStore);
-      expect(state.conversations.map((c) => c.id)).toEqual(['conv-1']);
-      expect(state.activeConversationId).toBe('conv-1');
-      expect(state.messages).toHaveLength(1);
+      expect(chatStore.conversations.map((c) => c.id)).toEqual(['conv-1']);
+      expect(chatStore.activeConversationId).toBe('conv-1');
+      expect(chatStore.messages).toHaveLength(1);
     });
 
     it('toasts and does not mutate the list when delete fails', async () => {
-      fetchModelCatalog.mockResolvedValueOnce([]);
-      fetchConversations.mockResolvedValueOnce([makeConversation({ id: 'conv-1' })]);
-      await chatStore.init();
+      chatStore.hydrate(makeInitialData({ conversations: [makeConversation({ id: 'conv-1' })] }));
       deleteConversation.mockRejectedValueOnce(new Error('delete failed'));
 
       await chatStore.deleteConversation('conv-1');
 
-      expect(get(chatStore).conversations.map((c) => c.id)).toEqual(['conv-1']);
+      expect(chatStore.conversations.map((c) => c.id)).toEqual(['conv-1']);
       expect(mockShowError).toHaveBeenCalledWith('delete failed');
     });
   });
@@ -254,7 +238,7 @@ describe('chatStore', () => {
 
       await chatStore.sendMessage('Hi');
 
-      expect(get(chatStore).activeConversationId).toBeTruthy();
+      expect(chatStore.activeConversationId).toBeTruthy();
       expect(sendMessageStream).toHaveBeenCalledTimes(1);
     });
 
@@ -293,7 +277,7 @@ describe('chatStore', () => {
       chatStore.startNewConversation();
       let observedDuringStream = -1;
       sendMessageStream.mockImplementationOnce(async () => {
-        observedDuringStream = get(chatStore).messages.length;
+        observedDuringStream = chatStore.messages.length;
       });
 
       await chatStore.sendMessage('optimistic');
@@ -329,16 +313,15 @@ describe('chatStore', () => {
 
       await chatStore.sendMessage('real question');
 
-      const state = get(chatStore);
-      expect(state.messages).toContainEqual(serverUserMsg);
-      expect(state.messages).toContainEqual(assistantMsg);
+      expect(chatStore.messages).toContainEqual(serverUserMsg);
+      expect(chatStore.messages).toContainEqual(assistantMsg);
       // No leftover temp message
-      expect(state.messages.some((m) => m.id.startsWith('temp-'))).toBe(false);
-      expect(state.lastProvider).toBe('openai');
-      expect(state.lastModel).toBe('gpt-4o');
-      expect(state.isStreaming).toBe(false);
-      expect(state.isLoading).toBe(false);
-      expect(state.streamingContent).toBe('');
+      expect(chatStore.messages.some((m) => m.id.startsWith('temp-'))).toBe(false);
+      expect(chatStore.lastProvider).toBe('openai');
+      expect(chatStore.lastModel).toBe('gpt-4o');
+      expect(chatStore.isStreaming).toBe(false);
+      expect(chatStore.isLoading).toBe(false);
+      expect(chatStore.streamingContent).toBe('');
     });
 
     it('accumulates delta content into streamingContent', async () => {
@@ -348,7 +331,7 @@ describe('chatStore', () => {
         async (_c, _m, _mode, _model, onEvent: (e: StreamEvent) => void) => {
           onEvent({ type: 'delta', delta: 'foo' });
           onEvent({ type: 'delta', delta: 'bar' });
-          contentDuringStream = get(chatStore).streamingContent;
+          contentDuringStream = chatStore.streamingContent;
         }
       );
 
@@ -367,10 +350,9 @@ describe('chatStore', () => {
 
       await chatStore.sendMessage('hi');
 
-      const state = get(chatStore);
-      expect(state.isStreaming).toBe(false);
-      expect(state.isLoading).toBe(false);
-      expect(state.streamingContent).toBe('');
+      expect(chatStore.isStreaming).toBe(false);
+      expect(chatStore.isLoading).toBe(false);
+      expect(chatStore.streamingContent).toBe('');
       expect(mockShowError).toHaveBeenCalledWith('model exploded');
     });
 
@@ -380,10 +362,9 @@ describe('chatStore', () => {
 
       await chatStore.sendMessage('will fail');
 
-      const state = get(chatStore);
-      expect(state.messages.some((m) => m.id.startsWith('temp-'))).toBe(false);
-      expect(state.isStreaming).toBe(false);
-      expect(state.isLoading).toBe(false);
+      expect(chatStore.messages.some((m) => m.id.startsWith('temp-'))).toBe(false);
+      expect(chatStore.isStreaming).toBe(false);
+      expect(chatStore.isLoading).toBe(false);
       expect(mockShowError).toHaveBeenCalledWith('network gone');
     });
   });

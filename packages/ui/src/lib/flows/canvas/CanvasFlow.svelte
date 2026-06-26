@@ -5,19 +5,27 @@
   import LayerToggle from '@components/canvas/LayerToggle.svelte';
   import TokenTooltip from '@components/canvas/TokenTooltip.svelte';
   import FlowLayout from '../../components/layout/FlowLayout.svelte';
-  import { canvasStore } from './stores';
-  import type { Annotation } from '@flows/shared';
+  import { untrack } from 'svelte';
+  import { canvasStore } from './stores.svelte';
+  import type { Annotation, CanvasAnalysis } from '@flows/shared';
 
-  let isMobileMenuOpen = false;
+  // Initial canvas list comes from the route loader (+page.ts).
+  let { canvases = [] }: { canvases?: CanvasAnalysis[] } = $props();
+
+  // Seed the store once with the loader's data instead of fetching on mount.
+  // `untrack` makes the one-time intent explicit (no re-seed on later changes).
+  untrack(() => canvasStore.setCanvases(canvases));
+
+  let isMobileMenuOpen = $state(false);
 
   // UI State for viewer
-  let activeLayers: string[] = ['meaning'];
+  let activeLayers: string[] = $state(['meaning']);
 
   // Tooltip State
-  let tooltipX = 0;
-  let tooltipY = 0;
-  let tooltipVisible = false;
-  let tooltipAnnotations: Annotation[] = [];
+  let tooltipX = $state(0);
+  let tooltipY = $state(0);
+  let tooltipVisible = $state(false);
+  let tooltipAnnotations: Annotation[] = $state([]);
 
   function toggleMobileMenu() {
     isMobileMenuOpen = !isMobileMenuOpen;
@@ -25,7 +33,7 @@
 
   function handleTokenHover(e: CustomEvent<{ tokenId: string; el: HTMLElement } | null>) {
     const detail = e.detail;
-    const analysis = $canvasStore.activeCanvas;
+    const analysis = canvasStore.activeCanvas;
 
     if (!detail || !analysis) {
       tooltipVisible = false;
@@ -86,13 +94,13 @@
             </svg>
           </button>
 
-          {#if $canvasStore.activeCanvas}
+          {#if canvasStore.activeCanvas}
             <div class="flex flex-col">
               <h1 class="text-sm font-semibold text-slate-200">
-                {$canvasStore.activeCanvas.meta?.title || 'Untitled'}
+                {canvasStore.activeCanvas.meta?.title || 'Untitled'}
               </h1>
               <span class="text-xs text-slate-500">
-                {$canvasStore.activeCanvas.meta?.author || 'User'}
+                {canvasStore.activeCanvas.meta?.author || 'User'}
               </span>
             </div>
           {:else}
@@ -100,39 +108,39 @@
           {/if}
         </div>
 
-        {#if $canvasStore.activeCanvas}
+        {#if canvasStore.activeCanvas}
           <!-- Layer Toggles -->
           <div class="flex gap-2">
-            <LayerToggle layers={$canvasStore.activeCanvas.layers} bind:activeLayers />
+            <LayerToggle layers={canvasStore.activeCanvas.layers} bind:activeLayers />
           </div>
         {/if}
       </header>
 
       <div class="flex-1">
-        {#if $canvasStore.activeCanvas}
+        {#if canvasStore.activeCanvas}
           <div class="max-w-4xl mx-auto p-4 md:p-8 relative min-h-full">
             <!-- Meta summary if exists -->
-            {#if $canvasStore.activeCanvas.meta?.summary}
+            {#if canvasStore.activeCanvas.meta?.summary}
               <div class="mb-8 p-6 bg-slate-900/50 border border-cosmic-800/50 rounded-xl">
                 <h3 class="text-lg font-semibold text-white mb-2">Overview</h3>
-                <p class="text-slate-300">{$canvasStore.activeCanvas.meta.summary}</p>
+                <p class="text-slate-300">{canvasStore.activeCanvas.meta.summary}</p>
 
                 <div class="flex gap-4 mt-4 pt-4 border-t border-slate-800">
-                  {#if $canvasStore.activeCanvas.meta.theme}
+                  {#if canvasStore.activeCanvas.meta.theme}
                     <div>
                       <span class="text-xs text-slate-500 uppercase tracking-wider block"
                         >Theme</span
                       >
                       <span class="text-sm text-primary-300"
-                        >{$canvasStore.activeCanvas.meta.theme}</span
+                        >{canvasStore.activeCanvas.meta.theme}</span
                       >
                     </div>
                   {/if}
-                  {#if $canvasStore.activeCanvas.meta.tone}
+                  {#if canvasStore.activeCanvas.meta.tone}
                     <div>
                       <span class="text-xs text-slate-500 uppercase tracking-wider block">Tone</span
                       >
-                      <span class="text-sm text-aurora">{$canvasStore.activeCanvas.meta.tone}</span>
+                      <span class="text-sm text-aurora">{canvasStore.activeCanvas.meta.tone}</span>
                     </div>
                   {/if}
                 </div>
@@ -140,8 +148,8 @@
             {/if}
 
             <TokenRenderer
-              tokenAst={$canvasStore.activeCanvas.tokenAst}
-              annotations={$canvasStore.activeCanvas.annotations}
+              tokenAst={canvasStore.activeCanvas.tokenAst}
+              annotations={canvasStore.activeCanvas.annotations}
               {activeLayers}
               on:tokenhover={handleTokenHover}
             />

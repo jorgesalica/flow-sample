@@ -1,19 +1,25 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { untrack } from 'svelte';
   import type { LyricsStats, LyricsStatus, Track } from '@flows/shared';
+  import type { LyricsPageData, LyricsTrackRow } from '../../../routes/lyrics/+page';
   import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from './api';
   import { toast } from '@lib/toast';
   import { FlowLayout } from '@lib/components';
   import LyricsModal from './components/LyricsModal.svelte';
   import LyricsCanvas from './LyricsCanvas.svelte';
 
-  let stats = $state<LyricsStats | null>(null);
-  let canvasTrackId = $state<string | null>(null);
-  let tracks = $state<
-    Array<{ id: string; title: string; artist: string; imageUrl: string | null; status: string }>
-  >([]);
-  let loading = $state(true);
-  let error = $state<string | null>(null);
+  // Initial data comes from the universal loader (src/routes/lyrics/+page.ts).
+  let { data }: { data: LyricsPageData } = $props();
+
+  const LIMIT = 50;
+
+  // Seed component-local state once from the loaded data; `untrack` makes the
+  // one-time capture explicit (subsequent interactions own this state).
+  let stats = $state<LyricsStats | null>(untrack(() => data.stats));
+  let canvasTrackId = $state<string | null>(untrack(() => data.canvasTrackId));
+  let tracks = $state<LyricsTrackRow[]>(untrack(() => data.tracks));
+  let loading = $state(false);
+  let error = $state<string | null>(untrack(() => data.error));
   let isFetchingLyrics = $state(false);
   let isRetryingFailed = $state(false);
   let selectedTrack = $state<Track | null>(null);
@@ -21,8 +27,7 @@
   // Filter state
   let currentFilter = $state<string>(''); // '' = all
   let page = $state(1);
-  let hasMore = $state(true);
-  const LIMIT = 50;
+  let hasMore = $state(untrack(() => data.tracks.length) >= LIMIT);
 
   // Load data
   async function loadData(reset = false) {
@@ -80,15 +85,6 @@
   function refreshAll() {
     return loadData(true);
   }
-
-  onMount(() => {
-    // Restore canvas state from URL if present
-    const trackId = new URLSearchParams(window.location.search).get('canvasTrackId');
-    if (trackId) {
-      canvasTrackId = trackId;
-    }
-    loadData(true);
-  });
 
   // Sync state to URL
   $effect(() => {

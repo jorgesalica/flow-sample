@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { get } from 'svelte/store';
 import type { CanvasAnalysis } from '@flows/shared';
 
 // ── Mock the edge: the flow's api.ts (raw fetch wrapper) and the toast helper ──
@@ -16,7 +15,7 @@ vi.mock('@lib/toast', () => ({
 
 import * as api from './api';
 import { showError } from '@lib/toast';
-import { canvasStore } from './stores';
+import { canvasStore } from './stores.svelte';
 
 // ── Fixtures (fixed fake data, no PII) ──────────────────────────────
 function makeCanvas(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
@@ -42,17 +41,28 @@ const mockShowError = vi.mocked(showError);
 
 describe('canvasStore', () => {
   beforeEach(() => {
-    // Reset the singleton store to a known baseline before each test.
+    // Reset the singleton runes store to a known baseline before each test.
+    canvasStore.setCanvases([]);
     canvasStore.clearActive();
-    // Drain any residual canvases from prior tests by replaying a clean init.
     mockApi.fetchCanvasList.mockResolvedValue([]);
   });
 
   it('starts empty / not loading', () => {
-    const s = get(canvasStore);
-    expect(s.activeCanvas).toBeNull();
-    expect(s.isLoading).toBe(false);
-    expect(s.isAnalyzing).toBe(false);
+    expect(canvasStore.activeCanvas).toBeNull();
+    expect(canvasStore.isLoading).toBe(false);
+    expect(canvasStore.isAnalyzing).toBe(false);
+  });
+
+  describe('setCanvases', () => {
+    it('replaces the canvas list with loader-provided data', () => {
+      const list = [makeCanvas({ id: 'a' }), makeCanvas({ id: 'b', sourceId: 'src_2' })];
+
+      canvasStore.setCanvases(list);
+
+      expect(canvasStore.canvases).toEqual(list);
+      // Pure seeding — no network call.
+      expect(mockApi.fetchCanvasList).not.toHaveBeenCalled();
+    });
   });
 
   describe('init', () => {
@@ -62,10 +72,9 @@ describe('canvasStore', () => {
 
       await canvasStore.init();
 
-      const s = get(canvasStore);
       expect(mockApi.fetchCanvasList).toHaveBeenCalledOnce();
-      expect(s.canvases).toEqual(list);
-      expect(s.isLoading).toBe(false);
+      expect(canvasStore.canvases).toEqual(list);
+      expect(canvasStore.isLoading).toBe(false);
       expect(mockShowError).not.toHaveBeenCalled();
     });
 
@@ -74,9 +83,8 @@ describe('canvasStore', () => {
 
       await canvasStore.init();
 
-      const s = get(canvasStore);
       expect(mockShowError).toHaveBeenCalledWith('boom');
-      expect(s.isLoading).toBe(false);
+      expect(canvasStore.isLoading).toBe(false);
     });
 
     it('stringifies non-Error rejections for the toast', async () => {
@@ -95,10 +103,9 @@ describe('canvasStore', () => {
 
       await canvasStore.loadCanvas('src_loaded');
 
-      const s = get(canvasStore);
       expect(mockApi.fetchCanvas).toHaveBeenCalledWith('src_loaded');
-      expect(s.activeCanvas).toEqual(canvas);
-      expect(s.isLoading).toBe(false);
+      expect(canvasStore.activeCanvas).toEqual(canvas);
+      expect(canvasStore.isLoading).toBe(false);
     });
 
     it('shows an error and leaves activeCanvas null on failure', async () => {
@@ -106,32 +113,27 @@ describe('canvasStore', () => {
 
       await canvasStore.loadCanvas('missing');
 
-      const s = get(canvasStore);
       expect(mockShowError).toHaveBeenCalledWith('not found');
-      expect(s.activeCanvas).toBeNull();
-      expect(s.isLoading).toBe(false);
+      expect(canvasStore.activeCanvas).toBeNull();
+      expect(canvasStore.isLoading).toBe(false);
     });
   });
 
   describe('createAndAnalyze', () => {
     it('prepends the new canvas, sets it active, and clears analyzing', async () => {
       // Seed an existing canvas first.
-      mockApi.fetchCanvasList.mockResolvedValueOnce([
-        makeCanvas({ id: 'existing', sourceId: 'old' }),
-      ]);
-      await canvasStore.init();
+      canvasStore.setCanvases([makeCanvas({ id: 'existing', sourceId: 'old' })]);
 
       const created = makeCanvas({ id: 'new', sourceId: 'new_src' });
       mockApi.createAndAnalyzeCanvas.mockResolvedValueOnce(created);
 
       await canvasStore.createAndAnalyze('some text', 'Title', 'Author');
 
-      const s = get(canvasStore);
       expect(mockApi.createAndAnalyzeCanvas).toHaveBeenCalledWith('some text', 'Title', 'Author');
-      expect(s.canvases[0]).toEqual(created); // prepended
-      expect(s.canvases).toHaveLength(2);
-      expect(s.activeCanvas).toEqual(created);
-      expect(s.isAnalyzing).toBe(false);
+      expect(canvasStore.canvases[0]).toEqual(created); // prepended
+      expect(canvasStore.canvases).toHaveLength(2);
+      expect(canvasStore.activeCanvas).toEqual(created);
+      expect(canvasStore.isAnalyzing).toBe(false);
     });
 
     it('shows an error and clears analyzing on failure', async () => {
@@ -139,9 +141,8 @@ describe('canvasStore', () => {
 
       await canvasStore.createAndAnalyze('text');
 
-      const s = get(canvasStore);
       expect(mockShowError).toHaveBeenCalledWith('analysis failed');
-      expect(s.isAnalyzing).toBe(false);
+      expect(canvasStore.isAnalyzing).toBe(false);
     });
   });
 
@@ -149,27 +150,24 @@ describe('canvasStore', () => {
     it('removes the canvas from the list and clears active when it matches', async () => {
       const keep = makeCanvas({ id: 'keep', sourceId: 'keep_src' });
       const remove = makeCanvas({ id: 'remove', sourceId: 'remove_src' });
-      mockApi.fetchCanvasList.mockResolvedValueOnce([keep, remove]);
-      await canvasStore.init();
+      canvasStore.setCanvases([keep, remove]);
 
       mockApi.fetchCanvas.mockResolvedValueOnce(remove);
       await canvasStore.loadCanvas('remove_src');
-      expect(get(canvasStore).activeCanvas?.sourceId).toBe('remove_src');
+      expect(canvasStore.activeCanvas?.sourceId).toBe('remove_src');
 
       mockApi.deleteCanvas.mockResolvedValueOnce(undefined);
       await canvasStore.deleteCanvas('remove_src');
 
-      const s = get(canvasStore);
       expect(mockApi.deleteCanvas).toHaveBeenCalledWith('remove_src');
-      expect(s.canvases.map((c) => c.sourceId)).toEqual(['keep_src']);
-      expect(s.activeCanvas).toBeNull(); // active matched -> cleared
+      expect(canvasStore.canvases.map((c) => c.sourceId)).toEqual(['keep_src']);
+      expect(canvasStore.activeCanvas).toBeNull(); // active matched -> cleared
     });
 
     it('keeps a non-matching active canvas after deleting another', async () => {
       const active = makeCanvas({ id: 'active', sourceId: 'active_src' });
       const other = makeCanvas({ id: 'other', sourceId: 'other_src' });
-      mockApi.fetchCanvasList.mockResolvedValueOnce([active, other]);
-      await canvasStore.init();
+      canvasStore.setCanvases([active, other]);
 
       mockApi.fetchCanvas.mockResolvedValueOnce(active);
       await canvasStore.loadCanvas('active_src');
@@ -177,22 +175,19 @@ describe('canvasStore', () => {
       mockApi.deleteCanvas.mockResolvedValueOnce(undefined);
       await canvasStore.deleteCanvas('other_src');
 
-      const s = get(canvasStore);
-      expect(s.canvases.map((c) => c.sourceId)).toEqual(['active_src']);
-      expect(s.activeCanvas?.sourceId).toBe('active_src'); // untouched
+      expect(canvasStore.canvases.map((c) => c.sourceId)).toEqual(['active_src']);
+      expect(canvasStore.activeCanvas?.sourceId).toBe('active_src'); // untouched
     });
 
     it('shows an error and does not mutate the list on failure', async () => {
       const a = makeCanvas({ id: 'a', sourceId: 'a_src' });
-      mockApi.fetchCanvasList.mockResolvedValueOnce([a]);
-      await canvasStore.init();
+      canvasStore.setCanvases([a]);
 
       mockApi.deleteCanvas.mockRejectedValueOnce(new Error('delete failed'));
       await canvasStore.deleteCanvas('a_src');
 
-      const s = get(canvasStore);
       expect(mockShowError).toHaveBeenCalledWith('delete failed');
-      expect(s.canvases.map((c) => c.sourceId)).toEqual(['a_src']); // unchanged
+      expect(canvasStore.canvases.map((c) => c.sourceId)).toEqual(['a_src']); // unchanged
     });
   });
 
@@ -201,11 +196,11 @@ describe('canvasStore', () => {
       const canvas = makeCanvas({ sourceId: 'to_clear' });
       mockApi.fetchCanvas.mockResolvedValueOnce(canvas);
       await canvasStore.loadCanvas('to_clear');
-      expect(get(canvasStore).activeCanvas).not.toBeNull();
+      expect(canvasStore.activeCanvas).not.toBeNull();
 
       canvasStore.clearActive();
 
-      expect(get(canvasStore).activeCanvas).toBeNull();
+      expect(canvasStore.activeCanvas).toBeNull();
     });
   });
 });

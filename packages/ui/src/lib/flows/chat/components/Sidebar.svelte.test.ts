@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { get } from 'svelte/store';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import type { ChatConversation, ChatProviderGroup } from '@flows/shared';
 
@@ -13,11 +12,9 @@ vi.mock('../api', () => ({
 vi.mock('@lib/toast', () => ({ showError: vi.fn() }));
 
 import * as api from '../api';
-import { chatStore } from '../stores';
+import { chatStore } from '../stores.svelte';
 import Sidebar from './Sidebar.svelte';
 
-const fetchModelCatalog = vi.mocked(api.fetchModelCatalog);
-const fetchConversations = vi.mocked(api.fetchConversations);
 const fetchMessages = vi.mocked(api.fetchMessages);
 const deleteConversation = vi.mocked(api.deleteConversation);
 
@@ -36,15 +33,12 @@ function makeConversation(over: Partial<ChatConversation> = {}): ChatConversatio
 
 const EMPTY_CATALOG: ChatProviderGroup[] = [];
 
-/** Mount the Sidebar with the given conversations returned by init(). */
-async function renderWith(conversations: ChatConversation[]) {
-  fetchModelCatalog.mockResolvedValueOnce(EMPTY_CATALOG);
-  fetchConversations.mockResolvedValueOnce(conversations);
-  const utils = render(Sidebar);
-  // onMount -> chatStore.init() resolves asynchronously; flush microtasks.
-  await Promise.resolve();
-  await Promise.resolve();
-  return utils;
+/** Mount the Sidebar after seeding the store with the given conversations. */
+function renderWith(conversations: ChatConversation[]) {
+  chatStore.hydrate({ catalog: EMPTY_CATALOG, conversations, selectedModel: '' });
+  chatStore.activeConversationId = null;
+  chatStore.messages = [];
+  return render(Sidebar);
 }
 
 describe('Sidebar', () => {
@@ -53,26 +47,27 @@ describe('Sidebar', () => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
     // Reset store conversations so leakage from prior tests can't show through.
-    fetchModelCatalog.mockResolvedValue(EMPTY_CATALOG);
-    fetchConversations.mockResolvedValue([]);
+    chatStore.hydrate({ catalog: EMPTY_CATALOG, conversations: [], selectedModel: '' });
+    chatStore.activeConversationId = null;
+    chatStore.messages = [];
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('always renders the New Chat button', async () => {
-    await renderWith([]);
+  it('always renders the New Chat button', () => {
+    renderWith([]);
     expect(screen.getByText('New Chat')).toBeInTheDocument();
   });
 
-  it('shows the empty-history placeholder when there are no conversations', async () => {
-    await renderWith([]);
+  it('shows the empty-history placeholder when there are no conversations', () => {
+    renderWith([]);
     expect(screen.getByText('No history yet. Start a conversation!')).toBeInTheDocument();
   });
 
-  it('lists conversation titles once loaded', async () => {
-    await renderWith([
+  it('lists conversation titles once loaded', () => {
+    renderWith([
       makeConversation({ id: 'a', title: 'Trip planning' }),
       makeConversation({ id: 'b', title: 'Recipe ideas' }),
     ]);
@@ -83,32 +78,32 @@ describe('Sidebar', () => {
     expect(screen.queryByText('No history yet. Start a conversation!')).not.toBeInTheDocument();
   });
 
-  it('renders a deterministic relative timestamp', async () => {
-    await renderWith([
+  it('renders a deterministic relative timestamp', () => {
+    renderWith([
       makeConversation({ id: 'a', title: 'Old chat', updatedAt: NOW - 2 * 60 * 60 * 1000 }),
     ]);
     expect(screen.getByText('2h ago')).toBeInTheDocument();
   });
 
   it('clicking New Chat starts a fresh conversation in the store', async () => {
-    await renderWith([]);
+    renderWith([]);
     await fireEvent.click(screen.getByText('New Chat'));
 
-    expect(get(chatStore).activeConversationId).toBeTruthy();
+    expect(chatStore.activeConversationId).toBeTruthy();
   });
 
   it('clicking a conversation loads its messages', async () => {
-    await renderWith([makeConversation({ id: 'conv-7', title: 'Pick me' })]);
+    renderWith([makeConversation({ id: 'conv-7', title: 'Pick me' })]);
     fetchMessages.mockResolvedValueOnce([]);
 
     await fireEvent.click(screen.getByText('Pick me'));
 
     expect(fetchMessages).toHaveBeenCalledWith('conv-7');
-    expect(get(chatStore).activeConversationId).toBe('conv-7');
+    expect(chatStore.activeConversationId).toBe('conv-7');
   });
 
   it('clicking delete removes the conversation via the api', async () => {
-    await renderWith([makeConversation({ id: 'conv-9', title: 'Delete me' })]);
+    renderWith([makeConversation({ id: 'conv-9', title: 'Delete me' })]);
     deleteConversation.mockResolvedValueOnce(undefined);
 
     await fireEvent.click(screen.getByTitle('Delete conversation'));
@@ -117,7 +112,7 @@ describe('Sidebar', () => {
   });
 
   it('does not trigger a conversation load when only the delete button is clicked', async () => {
-    await renderWith([makeConversation({ id: 'conv-9', title: 'Delete me' })]);
+    renderWith([makeConversation({ id: 'conv-9', title: 'Delete me' })]);
     deleteConversation.mockResolvedValueOnce(undefined);
     fetchMessages.mockClear();
 

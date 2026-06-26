@@ -1,5 +1,4 @@
 // Flow Registry - Dynamic flow registration system
-import type { Component } from 'svelte';
 
 export interface FlowStats {
   count: number;
@@ -14,7 +13,6 @@ export interface FlowDefinition {
   description: string;
   route: string;
   color: string;
-  component?: Component;
   getStats: () => Promise<FlowStats>;
 }
 

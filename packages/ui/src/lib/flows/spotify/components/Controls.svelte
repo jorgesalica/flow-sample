@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isLoading, isAuthenticated } from '../stores';
+  import { spotifyStore } from '../stores.svelte';
   import { fetchFromSpotify, loadTracks, cancelSync } from '../api';
 
   async function handleRefresh() {
@@ -10,10 +10,10 @@
 <div class="flex gap-2">
   <button
     onclick={handleRefresh}
-    disabled={$isLoading}
+    disabled={spotifyStore.isLoading}
     class="px-4 py-2 glass hover:bg-nebula/20 rounded-lg transition-all active:scale-95 disabled:opacity-50 text-cosmic flex items-center gap-2"
   >
-    {#if $isLoading}
+    {#if spotifyStore.isLoading}
       <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
         ></circle>
@@ -27,13 +27,13 @@
     Refresh
   </button>
 
-  {#if $isAuthenticated}
+  {#if spotifyStore.isAuthenticated}
     <button
-      onclick={$isLoading ? cancelSync : fetchFromSpotify}
+      onclick={spotifyStore.isLoading ? cancelSync : fetchFromSpotify}
       class="btn-primary flex items-center gap-2 transition-transform hover:scale-105 active:scale-95"
       title="Sync with Spotify to get latest tracks"
     >
-      {#if $isLoading}
+      {#if spotifyStore.isLoading}
         <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
           ></circle>

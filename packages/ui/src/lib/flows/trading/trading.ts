@@ -1,26 +1,19 @@
 // Trading Flow Registration
 //
 // Re-exports types and all public API from split modules:
-//   - types.ts   → Response interfaces
-//   - stores.ts  → Svelte stores
-//   - api.ts     → API functions + SSE streaming
+//   - types.ts          → Response interfaces + loader data shape
+//   - stores.svelte.ts  → Runes-based state (tradingStore)
+//   - api.ts            → API functions + SSE streaming
 
 import { type FlowStats, type FlowDefinition } from '../registry';
 import { api } from '@lib/client';
-import TradingFlow from './TradingFlow.svelte';
 import type { StatusResponse } from './types';
 
 // Re-export everything consumers need
 export type { Candle, FractalNode, AdvisorNote, TradingState, AdvisorState } from '@flows/shared';
 export type { SentimentBias, RiskManagement } from '@flows/shared';
-export {
-  tradingState,
-  advisorState,
-  candles,
-  fractals,
-  latestInsight,
-  isLoadingInsight,
-} from './stores';
+export type { TradingPageData } from './types';
+export { tradingStore } from './stores.svelte';
 export {
   fetchTradingStatus,
   startTrading,
@@ -67,7 +60,6 @@ export const tradingFlow: FlowDefinition = {
   description: 'Real-time BTC analysis with Hurst exponent, fractals, and AI-powered insights.',
   route: '/trading',
   color: 'from-amber-400 to-orange-500',
-  component: TradingFlow,
   getStats: getTradingStats,
 };
 

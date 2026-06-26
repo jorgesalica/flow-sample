@@ -2,14 +2,7 @@
 import { showError, showSuccess } from '@lib/toast';
 import { api } from '@lib/client';
 import type { Candle, AdvisorNote } from '@flows/shared';
-import {
-  tradingState,
-  advisorState,
-  candles,
-  fractals,
-  latestInsight,
-  isLoadingInsight,
-} from './stores';
+import { tradingStore } from './stores.svelte';
 import type {
   StatusResponse,
   StateResponse,
@@ -25,8 +18,8 @@ export async function fetchTradingStatus(): Promise<void> {
     const { data, error } = await api.api.trading.status.get();
     if (error) throw new Error('Failed to fetch status');
     const result = data as unknown as StatusResponse;
-    if (result.trading) tradingState.set(result.trading);
-    if (result.advisor) advisorState.set(result.advisor);
+    if (result.trading) tradingStore.setTradingState(result.trading);
+    if (result.advisor) tradingStore.setAdvisorState(result.advisor);
   } catch (error) {
     console.error('[TradingFlow] Status fetch failed:', error);
   }
@@ -39,7 +32,7 @@ export async function startTrading(): Promise<void> {
     const result = data as unknown as StateResponse;
 
     if (result.state) {
-      tradingState.set(result.state);
+      tradingStore.setTradingState(result.state);
     }
 
     showSuccess('Trading stream started');
@@ -57,7 +50,7 @@ export async function stopTrading(): Promise<void> {
     const result = data as unknown as StateResponse;
 
     if (result.state) {
-      tradingState.set(result.state);
+      tradingStore.setTradingState(result.state);
     }
 
     showSuccess('Trading stream stopped');
@@ -75,7 +68,7 @@ export async function fetchCandles(limit: number = 100): Promise<void> {
     });
     if (error) throw new Error('Failed to fetch candles');
     const result = data as unknown as CandlesResponse;
-    candles.set(result.candles || []);
+    tradingStore.setCandles(result.candles || []);
   } catch (error) {
     console.error('[TradingFlow] Candles fetch failed:', error);
   }
@@ -88,7 +81,7 @@ export async function fetchFractals(limit: number = 50): Promise<void> {
     });
     if (error) throw new Error('Failed to fetch fractals');
     const result = data as unknown as FractalsResponse;
-    fractals.set(result.nodes || []);
+    tradingStore.setFractals(result.nodes || []);
   } catch (error) {
     console.error('[TradingFlow] Fractals fetch failed:', error);
   }
@@ -119,7 +112,7 @@ export async function toggleAdvisor(): Promise<void> {
     const { data, error } = await api.api.trading.advisor.toggle.post();
     if (error) throw new Error('Failed to toggle advisor');
     const result = data as unknown as AdvisorToggleResponse;
-    advisorState.update((s) => ({ ...s, isEnabled: result.active }));
+    tradingStore.updateAdvisorState((s) => ({ ...s, isEnabled: result.active }));
     showSuccess(result.message);
   } catch (error) {
     showError('Failed to toggle advisor');
@@ -128,7 +121,7 @@ export async function toggleAdvisor(): Promise<void> {
 }
 
 export async function generateInsight(): Promise<void> {
-  isLoadingInsight.set(true);
+  tradingStore.setLoadingInsight(true);
   try {
     const { data, error } = await api.api.trading.insight.generate.post();
     if (error) throw new Error('Failed to generate insight');
@@ -136,7 +129,7 @@ export async function generateInsight(): Promise<void> {
     if (result.success && result.insight) {
       const insight = result.insight;
       if (result.debugContext) insight._debugContext = result.debugContext;
-      latestInsight.set(insight);
+      tradingStore.setLatestInsight(insight);
       showSuccess('Insight generated!');
     } else {
       showError(result.error || 'Failed to generate insight');
@@ -145,7 +138,7 @@ export async function generateInsight(): Promise<void> {
     showError('Failed to generate insight');
     console.error(error);
   } finally {
-    isLoadingInsight.set(false);
+    tradingStore.setLoadingInsight(false);
   }
 }
 
@@ -192,7 +185,7 @@ export async function fetchLatestInsight(): Promise<void> {
     if (result.insight) {
       const insight = result.insight;
       if (result.debugContext) insight._debugContext = result.debugContext;
-      latestInsight.set(insight);
+      tradingStore.setLatestInsight(insight);
     }
   } catch (error) {
     console.error('[TradingFlow] Insight fetch failed:', error);
@@ -214,18 +207,18 @@ export function connectToStream(): void {
 
   eventSource.addEventListener('candle', (event) => {
     const candle = JSON.parse(event.data) as Candle;
-    tradingState.update((s) => ({ ...s, lastCandle: candle }));
+    tradingStore.updateTradingState((s) => ({ ...s, lastCandle: candle }));
   });
 
   eventSource.addEventListener('candleClosed', (event) => {
     const candle = JSON.parse(event.data) as Candle;
-    candles.update((arr) => [...arr.slice(-99), candle]);
-    tradingState.update((s) => ({ ...s, candleCount: s.candleCount + 1 }));
+    tradingStore.appendClosedCandle(candle);
+    tradingStore.updateTradingState((s) => ({ ...s, candleCount: s.candleCount + 1 }));
   });
 
   eventSource.addEventListener('state', (event) => {
     const state = JSON.parse(event.data) as TradingState;
-    tradingState.set(state);
+    tradingStore.setTradingState(state);
   });
 
   eventSource.onerror = () => {

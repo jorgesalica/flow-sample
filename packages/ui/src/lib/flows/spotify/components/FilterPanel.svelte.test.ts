@@ -19,7 +19,7 @@ vi.mock('@lib/client', () => ({
 }));
 
 import FilterPanel from './FilterPanel.svelte';
-import { searchOptions } from '../stores';
+import { spotifyStore } from '../stores.svelte';
 
 const GENRES: GenreCount[] = [{ genre: 'rock', count: 12 }];
 const YEARS: YearCount[] = [{ year: 2021, count: 8 }];
@@ -31,7 +31,13 @@ function mockOk() {
 
 describe('FilterPanel', () => {
   beforeEach(() => {
-    searchOptions.set({ page: 1, limit: 24, q: '', sortBy: 'added_at', sortOrder: 'desc' });
+    spotifyStore.searchOptions = {
+      page: 1,
+      limit: 24,
+      q: '',
+      sortBy: 'added_at',
+      sortOrder: 'desc',
+    };
     loadTracks.mockClear();
     genresGet.mockReset();
     yearsGet.mockReset();

@@ -1,7 +1,6 @@
 // Spotify Flow Registration
 import { type FlowStats, type FlowDefinition } from '../registry';
 import { api } from '@lib/client';
-import SpotifyFlow from './SpotifyFlow.svelte';
 
 async function getSpotifyStats(): Promise<FlowStats> {
   try {
@@ -30,7 +29,6 @@ export const spotifyFlow: FlowDefinition = {
   description: 'Explore your liked songs, discover genres, and analyze your music taste.',
   route: '/spotify',
   color: 'from-green-400 to-emerald-500',
-  component: SpotifyFlow,
   getStats: getSpotifyStats,
 };
 

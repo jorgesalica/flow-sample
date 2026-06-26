@@ -14,7 +14,7 @@ vi.mock('@lib/toast', () => ({ showError: vi.fn() }));
 
 import type { StreamEvent } from '../api';
 import * as api from '../api';
-import { chatStore } from '../stores';
+import { chatStore } from '../stores.svelte';
 import ChatInput from './ChatInput.svelte';
 
 const sendMessageStream = vi.mocked(api.sendMessageStream);
@@ -44,19 +44,20 @@ function idleStream() {
 }
 
 /** Reset the singleton store to a known idle state between tests. */
-async function resetStore() {
-  vi.mocked(api.fetchModelCatalog).mockResolvedValueOnce([]);
-  vi.mocked(api.fetchConversations).mockResolvedValueOnce([]);
+function resetStore() {
   vi.mocked(api.fetchConversations).mockResolvedValue([]);
-  await chatStore.init();
+  chatStore.hydrate({ catalog: [], conversations: [], selectedModel: '' });
+  chatStore.isLoading = false;
+  chatStore.isStreaming = false;
+  chatStore.streamingContent = '';
   chatStore.startNewConversation();
 }
 
 describe('ChatInput', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     idleStream();
-    await resetStore();
+    resetStore();
   });
 
   it('renders the textarea and a disabled send button while empty', () => {

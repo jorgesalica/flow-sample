@@ -1,6 +1,5 @@
 import type { FlowDefinition, FlowStats } from '../registry';
 import { getLyricsStats } from './api';
-import LyricsFlow from './LyricsFlow.svelte';
 
 async function getStats(): Promise<FlowStats> {
   try {
@@ -38,6 +37,5 @@ export const lyricsFlow: FlowDefinition = {
   description: 'Manage and view lyrics status for your library.',
   route: '/lyrics',
   color: 'from-pink-500 to-rose-500',
-  component: LyricsFlow,
   getStats,
 };

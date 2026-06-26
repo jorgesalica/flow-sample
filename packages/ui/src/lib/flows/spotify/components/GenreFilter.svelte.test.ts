@@ -11,7 +11,7 @@ vi.mock('@lib/client', () => ({
 }));
 
 import GenreFilter from './GenreFilter.svelte';
-import { searchOptions } from '../stores';
+import { spotifyStore } from '../stores.svelte';
 
 const GENRES: GenreCount[] = [
   { genre: 'rock', count: 12 },
@@ -20,7 +20,13 @@ const GENRES: GenreCount[] = [
 
 describe('GenreFilter', () => {
   beforeEach(() => {
-    searchOptions.set({ page: 1, limit: 24, q: '', sortBy: 'added_at', sortOrder: 'desc' });
+    spotifyStore.searchOptions = {
+      page: 1,
+      limit: 24,
+      q: '',
+      sortBy: 'added_at',
+      sortOrder: 'desc',
+    };
     loadTracks.mockClear();
     genresGet.mockReset();
   });
