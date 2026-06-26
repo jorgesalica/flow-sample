@@ -1,16 +1,9 @@
 import { defineConfig } from 'vite';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'path';
 
 export default defineConfig({
-  plugins: [tailwindcss(), svelte()],
-  resolve: {
-    alias: {
-      '@lib': path.resolve(__dirname, './src/lib'),
-      '@components': path.resolve(__dirname, './src/lib/components'),
-    },
-  },
+  plugins: [tailwindcss(), sveltekit()],
   server: {
     proxy: {
       '/api': 'http://127.0.0.1:4173',

@@ -17,7 +17,7 @@
       name: 'YouTube Flow',
       icon: '📺',
       description: 'Import and explore YouTube Music library',
-      route: '#/youtube',
+      route: '/youtube',
       color: 'from-red-400 to-pink-500',
       stats: { count: 0, status: 'disabled', statusMessage: 'Coming Soon' },
       getStats: async () => ({ count: 0, status: 'disabled' }),

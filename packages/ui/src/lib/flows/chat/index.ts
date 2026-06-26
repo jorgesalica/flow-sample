@@ -24,7 +24,7 @@ export const chatFlow: FlowDefinition = {
   name: 'Chat Flow',
   icon: '💬',
   description: 'Converse with your favorite AI models.',
-  route: '#/chat',
+  route: '/chat',
   color: 'from-blue-500 to-indigo-500',
   component: ChatFlow,
   getStats,

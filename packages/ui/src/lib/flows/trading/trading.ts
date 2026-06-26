@@ -65,7 +65,7 @@ export const tradingFlow: FlowDefinition = {
   name: 'Trading Bot',
   icon: '📈',
   description: 'Real-time BTC analysis with Hurst exponent, fractals, and AI-powered insights.',
-  route: '#/trading',
+  route: '/trading',
   color: 'from-amber-400 to-orange-500',
   component: TradingFlow,
   getStats: getTradingStats,

@@ -83,24 +83,19 @@
 
   onMount(() => {
     // Restore canvas state from URL if present
-    const hash = window.location.hash;
-    if (hash.includes('?')) {
-      const query = new URLSearchParams(hash.split('?')[1]);
-      const trackId = query.get('canvasTrackId');
-      if (trackId) {
-        canvasTrackId = trackId;
-      }
+    const trackId = new URLSearchParams(window.location.search).get('canvasTrackId');
+    if (trackId) {
+      canvasTrackId = trackId;
     }
     loadData(true);
   });
 
   // Sync state to URL
   $effect(() => {
-    const hash = window.location.hash;
-    const basePath = hash.split('?')[0];
+    const basePath = window.location.pathname;
     if (canvasTrackId) {
       window.history.replaceState(null, '', `${basePath}?canvasTrackId=${canvasTrackId}`);
-    } else if (hash.includes('canvasTrackId')) {
+    } else if (window.location.search.includes('canvasTrackId')) {
       window.history.replaceState(null, '', basePath);
     }
   });
@@ -194,7 +189,7 @@
         </h1>
         <p class="text-pulsar mt-2 max-w-xl">
           Manage lyrics availability. To read lyrics, visit the
-          <a href="#/spotify" class="text-aurora hover:underline">Spotify Flow</a>.
+          <a href="/spotify" class="text-aurora hover:underline">Spotify Flow</a>.
         </p>
       </div>
 

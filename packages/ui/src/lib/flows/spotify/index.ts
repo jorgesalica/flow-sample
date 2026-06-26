@@ -28,7 +28,7 @@ export const spotifyFlow: FlowDefinition = {
   name: 'Spotify Flow',
   icon: '🎵',
   description: 'Explore your liked songs, discover genres, and analyze your music taste.',
-  route: '#/spotify',
+  route: '/spotify',
   color: 'from-green-400 to-emerald-500',
   component: SpotifyFlow,
   getStats: getSpotifyStats,

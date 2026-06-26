@@ -36,7 +36,7 @@ export const lyricsFlow: FlowDefinition = {
   name: 'Lyrics Flow',
   icon: '🎤',
   description: 'Manage and view lyrics status for your library.',
-  route: '#/lyrics',
+  route: '/lyrics',
   color: 'from-pink-500 to-rose-500',
   component: LyricsFlow,
   getStats,

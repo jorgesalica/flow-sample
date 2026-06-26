@@ -11,7 +11,7 @@
 <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
   <div>
     <a
-      href="#/"
+      href="/"
       class="text-white/50 hover:text-white text-sm flex items-center gap-1 mb-2 transition-colors group"
     >
       <span class="group-hover:-translate-x-1 transition-transform">←</span> Back to Flows

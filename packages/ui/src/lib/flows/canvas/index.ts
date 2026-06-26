@@ -24,7 +24,7 @@ export const canvasFlow: FlowDefinition = {
   name: 'Text Canvas',
   icon: '📝',
   description: 'Paste any text and get a deep literary AI analysis.',
-  route: '#/canvas',
+  route: '/canvas',
   color: 'from-cyan-400 to-blue-500',
   component: CanvasFlow,
   getStats,

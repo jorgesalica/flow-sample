@@ -22,6 +22,11 @@ export default [
         parser: ts.parser,
       },
     },
+    rules: {
+      // Phase 3a lift-and-shift: keep existing plain href links as-is.
+      // Adopting resolve() for internal/base-aware links is deferred to a later phase.
+      'svelte/no-navigation-without-resolve': 'off',
+    },
   },
   {
     ignores: ['dist/', 'node_modules/', '.svelte-kit/'],
