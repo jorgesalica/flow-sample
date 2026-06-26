@@ -64,11 +64,12 @@ The `@flows/core/llm` module provides a unified interface for multiple LLM provi
 
 ```text
 @flows/core/src/llm/
-├── llm-client.ts          # LLMClient class (Direct + Rotation modes)
+├── client.ts              # LLMClient class (Direct + Rotation modes, generateObject)
+├── types.ts               # Shared types (LLMMessage, ModelInfo, ModelTier, etc.)
 ├── index.ts               # Barrel: re-exports + createLLMClient() factory
 └── providers/
-    ├── types.ts            # Shared types (LLMMessage, ModelInfo, ModelTier, etc.)
     ├── base-provider.ts    # Abstract BaseLLMProvider
+    ├── openai-compatible.ts # OpenAICompatibleProvider (shared base for groq/openrouter/cerebras/mistral)
     ├── gemini/             # Google Gemini (paid, @google/genai SDK)
     ├── groq/               # GroqCloud (free, OpenAI-compatible)
     ├── openrouter/         # OpenRouter aggregator (free :free models)
