@@ -1,12 +1,16 @@
 import { randomUUID } from 'crypto';
 import { LLMClient, logger } from '@flows/core';
 import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
+import type { ChatRepository } from '../../domain/ports';
+import { deriveConversationTitle } from '../../domain/conversation';
 import { chatDb } from '../database';
 
 const log = logger.child({ module: 'ChatService' });
 
 export class ChatService {
     private rotationClient: LLMClient | null = null;
+
+    constructor(private readonly repo: ChatRepository = chatDb) {}
 
     /**
      * Get model catalog grouped by provider (for the provider/model selector).
@@ -29,21 +33,21 @@ export class ChatService {
      * Fetch all conversations.
      */
     getConversations(): ChatConversation[] {
-        return chatDb.getConversations();
+        return this.repo.getConversations();
     }
 
     /**
      * Delete a conversation.
      */
     deleteConversation(id: string): void {
-        chatDb.deleteConversation(id);
+        this.repo.deleteConversation(id);
     }
 
     /**
      * Fetch messages for a conversation.
      */
     getMessages(conversationId: string): ChatMessage[] {
-        return chatDb.getMessages(conversationId);
+        return this.repo.getMessages(conversationId);
     }
 
     /**
@@ -61,7 +65,7 @@ export class ChatService {
 
         // Save user message
         const userMsg = this.createUserMessage(conversationId, content);
-        chatDb.addMessage(userMsg);
+        this.repo.addMessage(userMsg);
 
         // Build context and generate
         const llmMessages = this.buildLLMMessages(conversationId);
@@ -82,7 +86,7 @@ export class ChatService {
             providerUsed: response.provider,
             createdAt: Date.now(),
         };
-        chatDb.addMessage(assistantMsg);
+        this.repo.addMessage(assistantMsg);
 
         return { userMessage: userMsg, assistantMessage: assistantMsg };
     }
@@ -103,7 +107,7 @@ export class ChatService {
 
         // Save user message
         const userMsg = this.createUserMessage(conversationId, content);
-        chatDb.addMessage(userMsg);
+        this.repo.addMessage(userMsg);
         yield `data: ${JSON.stringify({ type: 'user_message', message: userMsg })}\n\n`;
 
         // Build context and stream
@@ -137,7 +141,7 @@ export class ChatService {
             providerUsed,
             createdAt: Date.now(),
         };
-        chatDb.addMessage(assistantMsg);
+        this.repo.addMessage(assistantMsg);
 
         log.info({ provider: providerUsed, model: modelUsed, chars: fullContent.length }, 'sendMessageStream: done');
         yield `data: ${JSON.stringify({ type: 'done', message: assistantMsg })}\n\n`;
@@ -146,11 +150,11 @@ export class ChatService {
     // ── Private helpers ──────────────────────────────────────────────
 
     private ensureConversation(conversationId: string, content: string): void {
-        const existing = chatDb.getConversations().find((c) => c.id === conversationId);
+        const existing = this.repo.getConversations().find((c) => c.id === conversationId);
         if (!existing) {
-            chatDb.createConversation({
+            this.repo.createConversation({
                 id: conversationId,
-                title: content.slice(0, 30) + (content.length > 30 ? '...' : ''),
+                title: deriveConversationTitle(content),
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
             });
@@ -169,7 +173,7 @@ export class ChatService {
     }
 
     private buildLLMMessages(conversationId: string) {
-        const history = chatDb.getMessages(conversationId);
+        const history = this.repo.getMessages(conversationId);
         return [
             {
                 role: 'system' as const,

@@ -1,32 +1,27 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
-import type { LrcLibResponse, LyricsResult } from './types';
+import type { LrcLibResponse } from './types';
 import { logger } from '@flows/core';
+import type {
+  LyricsSource,
+  LyricsResult,
+  LyricsTrackParams,
+  BatchLyricsResult,
+} from '../../domain/ports';
+
+// Re-exported for backward compatibility with existing importers.
+export type { LyricsTrackParams, BatchLyricsResult } from '../../domain/ports';
 
 const log = logger.child({ module: 'LrcLibAdapter' });
 
 const LRCLIB_BASE_URL = 'https://lrclib.net/api';
 const DEFAULT_CONCURRENCY = 10;
 
-export interface LyricsTrackParams {
-  trackId: string;
-  trackName: string;
-  artistName: string;
-  albumName: string;
-  durationSeconds: number;
-}
-
-export interface BatchLyricsResult {
-  trackId: string;
-  result: LyricsResult | null;
-  error?: string;
-}
-
 /**
  * Adapter for LrcLib lyrics API
  * https://lrclib.net/docs
  */
-export class LrcLibAdapter {
+export class LrcLibAdapter implements LyricsSource {
   private client: AxiosInstance;
 
   constructor() {

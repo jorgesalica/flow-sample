@@ -5,6 +5,8 @@ import { SQLiteTrackRepository } from '@flows/spotify';
 import { logger, LLMClient } from '@flows/core';
 import type { LyricsStatus, TrackRepository } from '@flows/shared';
 import { canvasRoutes } from './canvas/canvas.routes';
+import type { LyricsRepository, LyricsSource } from '../domain/ports';
+import { LyricsNotFoundError, LyricsFetchError } from '../domain/errors';
 
 const log = logger.child({ module: 'LyricsRoutes' });
 
@@ -15,9 +17,9 @@ const LYRICS_INTERPRETATION_PROMPT =
   'Use Markdown formatting for structure.';
 
 export function createLyricsRoutes() {
-  const lyricsRepository = new SQLiteLyricsRepository();
+  const lyricsRepository: LyricsRepository = new SQLiteLyricsRepository();
   const trackRepository: TrackRepository = new SQLiteTrackRepository();
-  const lrcLibAdapter = new LrcLibAdapter();
+  const lrcLibAdapter: LyricsSource = new LrcLibAdapter();
 
   return (
     new Elysia({ prefix: '/api/lyrics' })
@@ -42,7 +44,7 @@ export function createLyricsRoutes() {
           const track = await trackRepository.findById(trackId);
           if (!track) {
             set.status = 404;
-            return { error: 'Track not found' };
+            return { error: new LyricsNotFoundError(trackId, 'Track not found').message };
           }
 
           log.info({ trackId, title: track.title, force }, 'Fetching lyrics from LrcLib');
@@ -80,8 +82,9 @@ export function createLyricsRoutes() {
             }
           } catch (error) {
             log.error({ trackId, error }, 'Failed to fetch lyrics');
+            const fetchError = new LyricsFetchError('Failed to fetch lyrics', trackId);
             set.status = 500;
-            return { error: 'Failed to fetch lyrics' };
+            return { error: fetchError.message };
           }
         },
         {
@@ -198,7 +201,8 @@ export function createLyricsRoutes() {
           // Need lyrics + track info
           const lyrics = await lyricsRepository.findByTrackId(trackId);
           if (!lyrics || lyrics.status !== 'found' || !lyrics.plainLyrics) {
-            return new Response(JSON.stringify({ error: 'Lyrics not found for this track' }), { status: 404 });
+            const notFound = new LyricsNotFoundError(trackId, 'Lyrics not found for this track');
+            return new Response(JSON.stringify({ error: notFound.message }), { status: 404 });
           }
 
           const track = await trackRepository.findById(trackId);

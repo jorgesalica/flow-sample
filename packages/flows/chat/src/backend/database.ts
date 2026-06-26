@@ -1,11 +1,12 @@
 import type Database from 'better-sqlite3';
 import { createDatabase } from '@flows/core';
 import type { ChatConversation, ChatMessage } from '@flows/shared';
+import type { ChatRepository } from '../domain/ports';
 
 /**
  * Chat Database Schema & Queries
  */
-export class ChatDatabase {
+export class ChatDatabase implements ChatRepository {
     private db: Database.Database;
 
     constructor(sharedDb: Database.Database) {

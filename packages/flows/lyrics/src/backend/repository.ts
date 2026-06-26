@@ -1,6 +1,10 @@
 import type { LyricsStatus } from '@flows/shared';
 import { musicDb } from '@flows/spotify';
 import { logger } from '@flows/core';
+import type { LyricsRepository, LyricsData, LyricsRecord } from '../domain/ports';
+
+// Re-exported for backward compatibility with existing importers.
+export type { LyricsData, LyricsRecord } from '../domain/ports';
 
 const log = logger.child({ module: 'SQLiteLyricsRepository' });
 
@@ -13,21 +17,7 @@ interface LyricsRow {
   interpretation: string | null;
 }
 
-export interface LyricsData {
-  plainLyrics: string | null;
-  syncedLyrics: string | null;
-}
-
-export interface LyricsRecord {
-  trackId: string;
-  plainLyrics: string | null;
-  syncedLyrics: string | null;
-  status: LyricsStatus;
-  fetchedAt: string | null;
-  interpretation: string | null;
-}
-
-export class SQLiteLyricsRepository {
+export class SQLiteLyricsRepository implements LyricsRepository {
   constructor() {
     // Ensure foreign keys are on for cascading deletes
     musicDb.pragma('foreign_keys = ON');

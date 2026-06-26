@@ -1,6 +1,8 @@
 import { LLMClient, logger } from '@flows/core';
 import type { TokenAST, Annotation } from '@flows/shared';
 import { textAnalysisSchema, type TextAnalysisResult } from './schemas';
+import { expandAnnotations } from '../domain/annotations';
+import { CanvasAnalysisError } from '../domain/errors';
 
 const log = logger.child({ module: 'CanvasTextAnalyzer' });
 
@@ -59,34 +61,24 @@ IMPORTANT DENSITY RULE: Provide a dense, rich analysis identifying key moments i
             textAnalysisSchema
         );
         
-        const expandedAnnotations: any[] = [];
-        
-        for (const ann of result.annotations) {
-            if (ann.layerId === 'meaning') {
-                const tids = ann.tokenIds || (ann.tokenId ? [ann.tokenId] : []);
-                for (const tid of tids) {
-                    expandedAnnotations.push({
-                        ...ann,
-                        tokenIds: undefined,
-                        tokenId: tid
-                    });
-                }
-            } else {
-                expandedAnnotations.push(ann);
-            }
-        }
-        
-        log.info({ 
+        const expandedAnnotations = expandAnnotations(result.annotations);
+
+        log.info({
             latencyMs: Date.now() - startTime,
             annotationsCount: expandedAnnotations.length
         }, 'LLM analysis completed successfully');
-        
+
         return {
             ...result,
             annotations: expandedAnnotations
         };
     } catch (error) {
         log.error({ error, title }, 'Failed to generate text analysis');
-        throw error;
+        if (error instanceof CanvasAnalysisError) {
+            throw error;
+        }
+        throw new CanvasAnalysisError(
+            error instanceof Error ? error.message : 'Canvas text analysis failed',
+        );
     }
 }

@@ -1,6 +1,7 @@
 import { LLMClient, logger } from '@flows/core';
 import type { TokenAST, Annotation } from '@flows/shared';
 import { musicalAnalysisSchema, type MusicalAnalysisResult } from './schemas';
+import { expandMeaningAnnotations } from '../../domain/annotations';
 
 const log = logger.child({ module: 'CanvasMusicAnalyzer' });
 
@@ -114,23 +115,8 @@ EXAMPLE JSON OUTPUT:
         );
         
         // Expand meaning tokenIds arrays back into individual annotations
-        const expandedAnnotations: any[] = [];
-        
-        for (const ann of result.annotations) {
-            if (ann.layerId === 'meaning') {
-                const tids = ann.tokenIds || (ann.tokenId ? [ann.tokenId] : []);
-                for (const tid of tids) {
-                    expandedAnnotations.push({
-                        ...ann,
-                        tokenIds: undefined,
-                        tokenId: tid
-                    });
-                }
-            } else {
-                expandedAnnotations.push(ann);
-            }
-        }
-        
+        const expandedAnnotations = expandMeaningAnnotations(result.annotations);
+
         log.info({ 
             latencyMs: Date.now() - startTime,
             annotationsCount: expandedAnnotations.length
