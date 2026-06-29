@@ -6,7 +6,7 @@ const chatService = new ChatService();
 /**
  * Chat Flow API Routes
  */
-export const chatRoutes = new Elysia({ prefix: '/chat' })
+export const chatRoutes = new Elysia({ prefix: '/api/chat' })
     // Model catalog (grouped by provider)
     .get('/models', () => {
         return chatService.getModelCatalog();

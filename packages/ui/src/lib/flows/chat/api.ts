@@ -1,8 +1,18 @@
 import { api } from '@lib/client';
 import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
 
-// Typed Eden client for the chat routes
-const chatApi = api.chat;
+// Typed Eden client for the chat routes (mounted under /api/chat, like every flow)
+const chatApi = api.api.chat;
+
+/**
+ * Relative URL for the SSE streaming endpoint.
+ *
+ * Eden Treaty doesn't model SSE responses, so the stream is consumed with a
+ * hand-rolled `fetch`. A relative path keeps it same-origin: in dev it's
+ * forwarded by the Vite proxy (`/api` → backend), in prod it hits the backend
+ * that serves the UI — no hardcoded host/port.
+ */
+const STREAM_URL = '/api/chat/message/stream';
 
 /**
  * Extracts a readable error message from Eden's error object
@@ -81,7 +91,7 @@ export async function sendMessageStream(
   model: string | undefined,
   onEvent: (event: StreamEvent) => void
 ): Promise<void> {
-  const response = await fetch('http://localhost:4173/chat/message/stream', {
+  const response = await fetch(STREAM_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ conversationId, message, mode, model }),
