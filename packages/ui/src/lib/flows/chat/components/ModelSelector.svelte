@@ -82,7 +82,7 @@
   let selectedDisplayName = $derived(getModelDisplayName(selected.model, chatStore.catalog));
 </script>
 
-<svelte:window on:click={handleClickOutside} />
+<svelte:window onclick={handleClickOutside} />
 
 <div class="model-selector-container relative flex items-center gap-1.5">
   <!-- Mode Toggle (labeled) -->
@@ -95,7 +95,7 @@
       class:text-white={chatStore.chatMode === 'rotation'}
       class:text-slate-400={chatStore.chatMode !== 'rotation'}
       class:hover:text-slate-200={chatStore.chatMode !== 'rotation'}
-      on:click={() => setMode('rotation')}
+      onclick={() => setMode('rotation')}
       title="Round-robin across free providers"
     >
       <svg
@@ -119,7 +119,7 @@
       class:text-white={chatStore.chatMode === 'specific'}
       class:text-slate-400={chatStore.chatMode !== 'specific'}
       class:hover:text-slate-200={chatStore.chatMode !== 'specific'}
-      on:click={() => setMode('specific')}
+      onclick={() => setMode('specific')}
       title="Choose a specific provider and model"
     >
       <svg
@@ -157,7 +157,7 @@
   {:else}
     <button
       class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 rounded-lg border border-slate-700 hover:border-cosmic-600 transition-colors text-xs cursor-pointer"
-      on:click={toggleDropdown}
+      onclick={toggleDropdown}
     >
       <span class="text-cosmic-400 font-medium capitalize">{selected.provider}</span>
       <span class="text-slate-600">/</span>
@@ -199,7 +199,7 @@
                 class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-700/50 transition-colors {isSelected
                   ? 'bg-cosmic-600/10'
                   : ''}"
-                on:click={() => selectModel(group.provider, model.id)}
+                onclick={() => selectModel(group.provider, model.id)}
               >
                 <span
                   class="w-1.5 h-1.5 rounded-full shrink-0 {isSelected

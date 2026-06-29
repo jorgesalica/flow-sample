@@ -3,6 +3,8 @@ import { LLMClient, logger } from '@flows/core';
 import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
 import type { ChatRepository } from '../../domain/ports';
 import { deriveConversationTitle } from '../../domain/conversation';
+import { ChatError } from '../../domain/errors';
+import { CHAT_SYSTEM_PROMPT, DEFAULT_CHAT_MODE } from '../config';
 import { chatDb } from '../database';
 
 const log = logger.child({ module: 'ChatService' });
@@ -56,11 +58,12 @@ export class ChatService {
     async sendMessage(
         conversationId: string,
         content: string,
-        mode: ChatMode = 'specific',
+        mode: ChatMode = DEFAULT_CHAT_MODE,
         model?: string,
     ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
         log.info({ mode, model: model || 'auto', conversationId }, 'sendMessage');
 
+        this.assertModelForMode(mode, model);
         this.ensureConversation(conversationId, content);
 
         // Save user message
@@ -98,11 +101,12 @@ export class ChatService {
     async *sendMessageStream(
         conversationId: string,
         content: string,
-        mode: ChatMode = 'specific',
+        mode: ChatMode = DEFAULT_CHAT_MODE,
         model?: string,
     ): AsyncGenerator<string> {
         log.info({ mode, model: model || 'auto', conversationId }, 'sendMessageStream: start');
 
+        this.assertModelForMode(mode, model);
         this.ensureConversation(conversationId, content);
 
         // Save user message
@@ -149,6 +153,16 @@ export class ChatService {
 
     // ── Private helpers ──────────────────────────────────────────────
 
+    /**
+     * Guard: in "specific" mode a concrete `provider:model` must be selected.
+     * Rotation mode picks providers internally, so no model is required there.
+     */
+    private assertModelForMode(mode: ChatMode, model?: string): void {
+        if (mode === 'specific' && !model) {
+            throw new ChatError('A model must be selected in "specific" mode.');
+        }
+    }
+
     private ensureConversation(conversationId: string, content: string): void {
         const existing = this.repo.getConversations().find((c) => c.id === conversationId);
         if (!existing) {
@@ -177,9 +191,7 @@ export class ChatService {
         return [
             {
                 role: 'system' as const,
-                content:
-                    'You are a helpful AI assistant. Format your replies using standard Markdown. ' +
-                    'Never start your reply with a heading (# or ## or ###). Begin with normal text.',
+                content: CHAT_SYSTEM_PROMPT,
             },
             ...history.map((msg) => ({
                 role: msg.role === 'user' ? ('user' as const) : ('assistant' as const),

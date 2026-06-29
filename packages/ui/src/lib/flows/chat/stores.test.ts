@@ -255,7 +255,8 @@ describe('chatStore', () => {
         'specific msg',
         'specific',
         'openai:gpt-4o',
-        expect.any(Function)
+        expect.any(Function),
+        expect.any(AbortSignal)
       );
 
       chatStore.setMode('rotation');
@@ -269,8 +270,36 @@ describe('chatStore', () => {
         'rotation msg',
         'rotation',
         undefined,
-        expect.any(Function)
+        expect.any(Function),
+        expect.any(AbortSignal)
       );
+    });
+
+    it('stopStreaming aborts the request signal and resets streaming flags', async () => {
+      chatStore.startNewConversation();
+      let capturedSignal: AbortSignal | undefined;
+      // Hold the stream open until aborted; resolve on abort like the real
+      // api layer does (a user stop is a clean end of stream, not an error).
+      sendMessageStream.mockImplementationOnce(
+        (_c, _m, _mode, _model, _onEvent, signal?: AbortSignal) => {
+          capturedSignal = signal;
+          return new Promise<void>((resolve) => {
+            signal?.addEventListener('abort', () => resolve());
+          });
+        }
+      );
+
+      const pending = chatStore.sendMessage('long answer');
+      // streaming is in progress
+      expect(chatStore.isStreaming).toBe(true);
+
+      chatStore.stopStreaming();
+
+      expect(capturedSignal?.aborted).toBe(true);
+      expect(chatStore.isStreaming).toBe(false);
+      expect(chatStore.isLoading).toBe(false);
+      expect(chatStore.streamingContent).toBe('');
+      await pending;
     });
 
     it('appends an optimistic user message immediately', async () => {

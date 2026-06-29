@@ -100,7 +100,8 @@ describe('ChatInput', () => {
       'hi there',
       expect.any(String),
       expect.anything(),
-      expect.any(Function)
+      expect.any(Function),
+      expect.any(AbortSignal)
     );
     expect(textarea.value).toBe('');
   });
@@ -136,8 +137,8 @@ describe('ChatInput', () => {
     expect(sendMessageStream).not.toHaveBeenCalled();
   });
 
-  it('disables the textarea and button while a send is in flight (isLoading)', async () => {
-    // Hold the stream open so isLoading stays true.
+  it('disables the textarea and swaps in a Stop button while a send is in flight', async () => {
+    // Hold the stream open so isLoading/isStreaming stay true.
     let resolveStream: () => void = () => {};
     sendMessageStream.mockImplementationOnce(
       () =>
@@ -152,9 +153,35 @@ describe('ChatInput', () => {
     await fireEvent.click(screen.getByTitle('Send message'));
 
     expect(screen.getByPlaceholderText('Send a message...')).toBeDisabled();
-    expect(screen.getByTitle('Send message')).toBeDisabled();
+    // The send button is replaced by an (enabled) Stop button while streaming.
+    expect(screen.queryByTitle('Send message')).toBeNull();
+    expect(screen.getByTitle('Stop generating')).toBeEnabled();
 
     resolveStream();
+  });
+
+  it('clicking Stop aborts the in-flight stream', async () => {
+    let resolveStream: () => void = () => {};
+    sendMessageStream.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveStream = resolve;
+        })
+    );
+    const stopSpy = vi.spyOn(chatStore, 'stopStreaming');
+
+    render(ChatInput);
+    const textarea = screen.getByPlaceholderText('Send a message...');
+    await fireEvent.input(textarea, { target: { value: 'stop me' } });
+    await fireEvent.click(screen.getByTitle('Send message'));
+
+    await fireEvent.click(screen.getByTitle('Stop generating'));
+
+    expect(stopSpy).toHaveBeenCalledTimes(1);
+    expect(chatStore.isStreaming).toBe(false);
+
+    resolveStream();
+    stopSpy.mockRestore();
   });
 
   it('renders the AI disclaimer footer', () => {

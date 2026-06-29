@@ -3,6 +3,7 @@ import Database from 'better-sqlite3';
 import type { LLMRequest, LLMResponse, LLMStreamEvent } from '@flows/core';
 import type { ChatMessage, ChatMode } from '@flows/shared';
 import { ChatDatabase } from '../../../src/backend/database';
+import { ChatError } from '../../../src/domain/errors';
 
 // ── Spies live in a hoisted block (vi.mock factories run before imports) ──
 const spies = vi.hoisted(() => ({
@@ -366,6 +367,34 @@ describe('ChatService', () => {
             expect(stored).toHaveLength(1);
             expect(stored[0].role).toBe('user');
             expect(stored.find((m) => m.role === 'assistant')).toBeUndefined();
+        });
+    });
+
+    // ── model validation (specific mode) ──────────────────────────────
+    describe('specific-mode model validation', () => {
+        it('sendMessage throws ChatError when no model is given in specific mode', async () => {
+            await expect(service.sendMessage(CONV_ID, 'Hi', 'specific')).rejects.toBeInstanceOf(
+                ChatError,
+            );
+            expect(generateForProvider).not.toHaveBeenCalled();
+        });
+
+        it('sendMessage persists nothing when the model is missing', async () => {
+            await expect(service.sendMessage(CONV_ID, 'Hi', 'specific')).rejects.toThrow();
+            expect(service.getConversations()).toEqual([]);
+            expect(service.getMessages(CONV_ID)).toEqual([]);
+        });
+
+        it('sendMessageStream throws ChatError when no model is given in specific mode', async () => {
+            await expect(
+                collect(service.sendMessageStream(CONV_ID, 'Hi', 'specific')),
+            ).rejects.toBeInstanceOf(ChatError);
+            expect(generateStreamForProvider).not.toHaveBeenCalled();
+        });
+
+        it('rotation mode does not require a model', async () => {
+            rotationGenerate.mockResolvedValue(okResponse());
+            await expect(service.sendMessage(CONV_ID, 'Hi', 'rotation')).resolves.toBeDefined();
         });
     });
 
