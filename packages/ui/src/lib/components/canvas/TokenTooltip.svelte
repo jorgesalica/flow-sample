@@ -1,11 +1,15 @@
 <script lang="ts">
   import type { Annotation, AnnotationLayer } from '@flows/shared';
 
-  export let annotations: Annotation[] = [];
-  export let layers: AnnotationLayer[] = [];
-  export let x: number = 0;
-  export let y: number = 0;
-  export let visible: boolean = false;
+  interface Props {
+    annotations?: Annotation[];
+    layers?: AnnotationLayer[];
+    x?: number;
+    y?: number;
+    visible?: boolean;
+  }
+
+  let { annotations = [], layers = [], x = 0, y = 0, visible = false }: Props = $props();
 
   // Map layer info for display
   function getLayerInfo(layerId: string) {

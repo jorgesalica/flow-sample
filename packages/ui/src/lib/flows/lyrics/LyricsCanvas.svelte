@@ -9,27 +9,27 @@
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
 
-  export let trackId: string;
+  let { trackId }: { trackId: string } = $props();
 
-  let loading = true;
-  let analyzing = false;
-  let error: string | null = null;
+  let loading = $state(true);
+  let analyzing = $state(false);
+  let error = $state<string | null>(null);
 
-  let analysis: CanvasAnalysis | null = null;
-  let statusInfo: CanvasStatusResponse['source'] | null = null;
+  let analysis = $state<CanvasAnalysis | null>(null);
+  let statusInfo = $state<CanvasStatusResponse['source'] | null>(null);
 
   // UI State
-  let activeLayers: string[] = ['chords', 'vocal', 'meaning'];
+  let activeLayers = $state<string[]>(['chords', 'vocal', 'meaning']);
 
   // Tooltip State
-  let tooltipX = 0;
-  let tooltipY = 0;
-  let tooltipVisible = false;
-  let tooltipAnnotations: Annotation[] = [];
+  let tooltipX = $state(0);
+  let tooltipY = $state(0);
+  let tooltipVisible = $state(false);
+  let tooltipAnnotations = $state<Annotation[]>([]);
 
   // Interpretation State
-  let interpretation: string | null = null;
-  let isInterpreting = false;
+  let interpretation = $state<string | null>(null);
+  let isInterpreting = $state(false);
 
   marked.setOptions({ breaks: true, gfm: true });
 
@@ -111,9 +111,7 @@
     }
   }
 
-  function handleTokenHover(e: CustomEvent<{ tokenId: string; el: HTMLElement } | null>) {
-    const detail = e.detail;
-
+  function handleTokenHover(detail: { tokenId: string; el: HTMLElement } | null) {
     if (!detail || !analysis) {
       tooltipVisible = false;
       return;
@@ -147,7 +145,7 @@
   {:else if error}
     <div class="center-state error">
       <p>{error}</p>
-      <button class="btn" on:click={loadData}>Retry</button>
+      <button class="btn" onclick={loadData}>Retry</button>
     </div>
   {:else if !analysis && statusInfo}
     <div class="center-state empty">
@@ -159,7 +157,7 @@
 
       <div class="actions">
         <p class="description">Generate a musical analysis for this track using AI.</p>
-        <button class="btn primary" on:click={handleAnalyze} disabled={analyzing}>
+        <button class="btn primary" onclick={handleAnalyze} disabled={analyzing}>
           {#if analyzing}
             <div class="spinner small"></div>
             Analyzing Lyrics... (This may take a minute)
@@ -193,7 +191,7 @@
           <LayerToggle layers={analysis.layers} bind:activeLayers />
           <button
             class="btn primary small"
-            on:click={handleAnalyze}
+            onclick={handleAnalyze}
             disabled={analyzing}
             title="Regenerate Analysis"
           >
@@ -221,7 +219,7 @@
           tokenAst={analysis.tokenAst}
           annotations={analysis.annotations}
           {activeLayers}
-          on:tokenhover={handleTokenHover}
+          ontokenhover={handleTokenHover}
         />
       </div>
 
@@ -246,7 +244,7 @@
               <p>No overarching meaning analysis found.</p>
               <button
                 class="btn small mt-4"
-                on:click={handleGenerateMeaning}
+                onclick={handleGenerateMeaning}
                 disabled={isInterpreting}
               >
                 {#if isInterpreting}

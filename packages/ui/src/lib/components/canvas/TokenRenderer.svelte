@@ -1,23 +1,26 @@
 <script lang="ts">
   import type { TokenAST, Annotation } from '@flows/shared';
-  import { createEventDispatcher } from 'svelte';
 
-  export let tokenAst: TokenAST;
-  export let annotations: Annotation[] = [];
-  export let activeLayers: string[] = [];
+  interface Props {
+    tokenAst: TokenAST;
+    annotations?: Annotation[];
+    activeLayers?: string[];
+    /** Fired with the hovered token (or null on leave); replaces the old `tokenhover` event. */
+    ontokenhover?: (detail: { tokenId: string; el: HTMLElement } | null) => void;
+  }
 
-  const dispatch = createEventDispatcher<{
-    tokenhover: { tokenId: string; el: HTMLElement } | null;
-  }>();
+  let { tokenAst, annotations = [], activeLayers = [], ontokenhover }: Props = $props();
 
   // Group annotations by token ID for O(1) lookup during render
-  $: annotationsByToken = annotations.reduce(
-    (acc, ann) => {
-      if (!acc[ann.tokenId]) acc[ann.tokenId] = [];
-      acc[ann.tokenId].push(ann);
-      return acc;
-    },
-    {} as Record<string, Annotation[]>
+  const annotationsByToken = $derived(
+    annotations.reduce(
+      (acc, ann) => {
+        if (!acc[ann.tokenId]) acc[ann.tokenId] = [];
+        acc[ann.tokenId].push(ann);
+        return acc;
+      },
+      {} as Record<string, Annotation[]>
+    )
   );
 
   // Filter annotations for a specific token that belong to active layers
@@ -31,7 +34,7 @@
   }
 
   // Line-level meaning highlight: track which line group is hovered
-  let hoveredLineId: string | null = null;
+  let hoveredLineId = $state<string | null>(null);
 
   function handleTokenMouseEnter(
     tokenId: string,
@@ -45,13 +48,13 @@
     }
 
     if (anns.length > 0) {
-      dispatch('tokenhover', { tokenId, el });
+      ontokenhover?.({ tokenId, el });
     }
   }
 
   function handleTokenMouseLeave() {
     hoveredLineId = null;
-    dispatch('tokenhover', null);
+    ontokenhover?.(null);
   }
 
   function abbreviateVocal(label: string): string {
@@ -86,15 +89,15 @@
               {@const displayAnns = activeAnns.filter((a) => a.layerId !== 'meaning')}
               {@const tokenHoverAnns = [...displayAnns, ...lineMeaningAnns]}
 
-              <!-- svelte-ignore a11y-no-static-element-interactions -->
+              <!-- svelte-ignore a11y_no_static_element_interactions -->
               <span
                 class="token"
                 class:annotated={displayAnns.length > 0}
                 class:has-meaning={lineHasMeaning}
                 data-id={token.id}
-                on:mouseenter={(e) =>
+                onmouseenter={(e) =>
                   handleTokenMouseEnter(token.id, tokenHoverAnns, e.currentTarget, lineId)}
-                on:mouseleave={handleTokenMouseLeave}
+                onmouseleave={handleTokenMouseLeave}
               >
                 <!-- All badges inline ABOVE the text -->
                 {#if displayAnns.length > 0}
