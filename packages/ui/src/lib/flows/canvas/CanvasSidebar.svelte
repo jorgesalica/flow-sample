@@ -1,7 +1,7 @@
 <script lang="ts">
   import { canvasStore } from './stores.svelte';
 
-  export let isMobileMenuOpen = false;
+  let { isMobileMenuOpen = $bindable(false) }: { isMobileMenuOpen?: boolean } = $props();
 
   function handleSelect(id: string) {
     canvasStore.loadCanvas(id);
@@ -22,7 +22,7 @@
   <div class="p-4 border-b border-cosmic-800/50 flex-shrink-0">
     <button
       class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors"
-      on:click={handleNew}
+      onclick={handleNew}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -62,7 +62,7 @@
                                    {isActive
                 ? 'bg-primary-500/20 text-primary-300 font-medium'
                 : 'text-slate-300 hover:bg-slate-800 hover:text-white'}"
-              on:click={() => handleSelect(canvas.sourceId)}
+              onclick={() => handleSelect(canvas.sourceId)}
             >
               <div class="truncate text-sm font-medium">{canvas.meta?.title || 'Untitled'}</div>
               <div class="text-xs text-slate-500 truncate">{canvas.meta?.author || 'User'}</div>
@@ -71,7 +71,7 @@
             <button
               class="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md opacity-0 group-hover:opacity-100 transition-all focus:opacity-100 flex-shrink-0"
               title="Delete Canvas"
-              on:click={() => canvasStore.deleteCanvas(canvas.sourceId)}
+              onclick={() => canvasStore.deleteCanvas(canvas.sourceId)}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

@@ -31,8 +31,7 @@
     isMobileMenuOpen = !isMobileMenuOpen;
   }
 
-  function handleTokenHover(e: CustomEvent<{ tokenId: string; el: HTMLElement } | null>) {
-    const detail = e.detail;
+  function handleTokenHover(detail: { tokenId: string; el: HTMLElement } | null) {
     const analysis = canvasStore.activeCanvas;
 
     if (!detail || !analysis) {
@@ -76,7 +75,7 @@
           <button
             class="md:hidden text-slate-400 hover:text-white"
             aria-label="Toggle mobile menu"
-            on:click={toggleMobileMenu}
+            onclick={toggleMobileMenu}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -151,7 +150,7 @@
               tokenAst={canvasStore.activeCanvas.tokenAst}
               annotations={canvasStore.activeCanvas.annotations}
               {activeLayers}
-              on:tokenhover={handleTokenHover}
+              ontokenhover={handleTokenHover}
             />
 
             <TokenTooltip
@@ -169,11 +168,11 @@
 
     <!-- Overlay for mobile when sidebar is open -->
     {#if isMobileMenuOpen}
-      <!-- svelte-ignore a11y-click-events-have-key-events -->
-      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="fixed inset-0 bg-black/60 z-10 md:hidden"
-        on:click={() => (isMobileMenuOpen = false)}
+        onclick={() => (isMobileMenuOpen = false)}
       ></div>
     {/if}
   </div>

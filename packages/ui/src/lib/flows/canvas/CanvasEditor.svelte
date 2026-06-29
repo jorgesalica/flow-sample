@@ -1,9 +1,9 @@
 <script lang="ts">
   import { canvasStore } from './stores.svelte';
 
-  let title = '';
-  let author = '';
-  let text = '';
+  let title = $state('');
+  let author = $state('');
+  let text = $state('');
 
   function handleSubmit() {
     if (!text.trim()) return;
@@ -50,7 +50,7 @@
     <div class="flex justify-end pt-2">
       <button
         class="px-6 py-3 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary-900/20"
-        on:click={handleSubmit}
+        onclick={handleSubmit}
         disabled={!text.trim() || canvasStore.isAnalyzing}
       >
         {#if canvasStore.isAnalyzing}

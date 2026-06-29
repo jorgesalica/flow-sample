@@ -1,14 +1,15 @@
 <script lang="ts">
   import type { AnnotationLayer } from '@flows/shared';
-  import { createEventDispatcher } from 'svelte';
 
-  export let layers: AnnotationLayer[];
-  export let activeLayers: string[] = [];
-  export let disabled: boolean = false;
+  interface Props {
+    layers: AnnotationLayer[];
+    activeLayers?: string[];
+    disabled?: boolean;
+    /** Fired when a layer is toggled; replaces the old `toggle` event. */
+    ontoggle?: (detail: { layerId: string; active: boolean }) => void;
+  }
 
-  const dispatch = createEventDispatcher<{
-    toggle: { layerId: string; active: boolean };
-  }>();
+  let { layers, activeLayers = $bindable([]), disabled = false, ontoggle }: Props = $props();
 
   function toggleLayer(layerId: string) {
     if (disabled) return;
@@ -25,7 +26,7 @@
     // This makes the component controlled/uncontrolled hybrid for ease of use
     activeLayers = newActiveLayers;
 
-    dispatch('toggle', { layerId, active: !isActive });
+    ontoggle?.({ layerId, active: !isActive });
   }
 </script>
 
@@ -37,7 +38,7 @@
       class:active={isActive}
       style="--layer-color: {layer.color}"
       {disabled}
-      on:click={() => toggleLayer(layer.id)}
+      onclick={() => toggleLayer(layer.id)}
       title="Toggle {layer.name}"
     >
       <span class="icon">{layer.icon}</span>
