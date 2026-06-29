@@ -80,22 +80,38 @@ export type StreamEvent =
   | { type: 'done'; message: ChatMessage }
   | { type: 'error'; error: string };
 
+/** True when an error is the abort triggered by the caller's signal. */
+function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError';
+}
+
 /**
  * Streaming message send via SSE.
- * Calls a callback for each event as it arrives.
+ *
+ * Calls `onEvent` for each event as it arrives. Pass an `AbortSignal` to cancel
+ * an in-flight response; on abort the function returns cleanly (no throw) so the
+ * caller can treat a user-initiated stop as a normal end of stream.
  */
 export async function sendMessageStream(
   conversationId: string,
   message: string,
   mode: ChatMode,
   model: string | undefined,
-  onEvent: (event: StreamEvent) => void
+  onEvent: (event: StreamEvent) => void,
+  signal?: AbortSignal
 ): Promise<void> {
-  const response = await fetch(STREAM_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ conversationId, message, mode, model }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(STREAM_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId, message, mode, model }),
+      signal,
+    });
+  } catch (err) {
+    if (isAbortError(err)) return;
+    throw err;
+  }
 
   if (!response.ok) {
     const text = await response.text();
@@ -106,24 +122,30 @@ export async function sendMessageStream(
   const decoder = new TextDecoder();
   let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n\n');
-    buffer = lines.pop()!;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop()!;
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith('data: ')) continue;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
 
-      try {
-        const event = JSON.parse(trimmed.slice(6)) as StreamEvent;
-        onEvent(event);
-      } catch {
-        // skip malformed SSE
+        try {
+          const event = JSON.parse(trimmed.slice(6)) as StreamEvent;
+          onEvent(event);
+        } catch {
+          // skip malformed SSE
+        }
       }
     }
+  } catch (err) {
+    // A caller-initiated abort is a normal stop, not an error.
+    if (isAbortError(err) || signal?.aborted) return;
+    throw err;
   }
 }

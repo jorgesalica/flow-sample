@@ -27,6 +27,9 @@ class ChatStore {
   isStreaming = $state(false);
   streamingContent = $state(''); // partial content being streamed
 
+  /** Aborts the in-flight streaming request, if any. Not reactive state. */
+  private streamController: AbortController | null = null;
+
   /** Seed the store from the route loader's data. Replaces the old `init()` fetch. */
   hydrate(data: ChatInitialData) {
     this.catalog = data.catalog;
@@ -98,48 +101,68 @@ class ChatStore {
     this.isLoading = true;
     this.isStreaming = true;
     this.streamingContent = '';
+    this.streamController = new AbortController();
 
     try {
-      await api.sendMessageStream(convId, content, mode, model, (event) => {
-        switch (event.type) {
-          case 'user_message':
-            // Replace temp user message with server version
-            this.messages = this.messages.map((m) => (m.id === tempUserMsg.id ? event.message : m));
-            break;
+      await api.sendMessageStream(
+        convId,
+        content,
+        mode,
+        model,
+        (event) => {
+          switch (event.type) {
+            case 'user_message':
+              // Replace temp user message with server version
+              this.messages = this.messages.map((m) =>
+                m.id === tempUserMsg.id ? event.message : m
+              );
+              break;
 
-          case 'delta':
-            this.streamingContent = this.streamingContent + event.delta;
-            break;
+            case 'delta':
+              this.streamingContent = this.streamingContent + event.delta;
+              break;
 
-          case 'done':
-            this.messages = [...this.messages, event.message];
-            this.lastProvider = event.message.providerUsed || '';
-            this.lastModel = event.message.modelUsed || '';
-            this.isLoading = false;
-            this.isStreaming = false;
-            this.streamingContent = '';
-            // Refresh conversation list in background
-            api.fetchConversations().then((conversations) => {
-              this.conversations = conversations;
-            });
-            break;
+            case 'done':
+              this.messages = [...this.messages, event.message];
+              this.lastProvider = event.message.providerUsed || '';
+              this.lastModel = event.message.modelUsed || '';
+              this.resetStreamingState();
+              // Refresh conversation list in background
+              api.fetchConversations().then((conversations) => {
+                this.conversations = conversations;
+              });
+              break;
 
-          case 'error':
-            console.error('[ChatStore] Stream error:', event.error);
-            showError(event.error);
-            this.isLoading = false;
-            this.isStreaming = false;
-            this.streamingContent = '';
-            break;
-        }
-      });
+            case 'error':
+              showError(event.error);
+              this.resetStreamingState();
+              break;
+          }
+        },
+        this.streamController.signal
+      );
     } catch (e: unknown) {
       this.messages = this.messages.filter((m) => m.id !== tempUserMsg.id);
-      this.isLoading = false;
-      this.isStreaming = false;
-      this.streamingContent = '';
+      this.resetStreamingState();
       showError(e instanceof Error ? e.message : String(e));
     }
+  }
+
+  /**
+   * Stop the in-flight streaming response. The user message stays (it was
+   * already persisted server-side); the partial assistant text is discarded.
+   */
+  stopStreaming() {
+    this.streamController?.abort();
+    this.resetStreamingState();
+  }
+
+  /** Clears the transient streaming flags and the abort controller. */
+  private resetStreamingState() {
+    this.isLoading = false;
+    this.isStreaming = false;
+    this.streamingContent = '';
+    this.streamController = null;
   }
 }
 
