@@ -38,8 +38,8 @@
     <textarea
       bind:this={textareaEl}
       bind:value={inputContent}
-      on:input={handleInput}
-      on:keydown={handleKeydown}
+      oninput={handleInput}
+      onkeydown={handleKeydown}
       placeholder="Send a message..."
       class="w-full bg-transparent text-slate-200 resize-none outline-none py-3.5 pl-4 pr-12 max-h-[200px] overflow-y-auto scrollbar-thin text-sm leading-relaxed"
       rows="1"
@@ -47,7 +47,7 @@
     ></textarea>
 
     <button
-      on:click={submit}
+      onclick={submit}
       disabled={!inputContent.trim() || chatStore.isLoading}
       class="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center rounded-lg bg-cosmic-600 text-white disabled:opacity-50 disabled:bg-slate-700 disabled:cursor-not-allowed transition-colors hover:bg-cosmic-500"
       title="Send message"

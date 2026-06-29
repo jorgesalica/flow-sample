@@ -11,11 +11,14 @@ const { modelsGet, conversationsGet } = vi.hoisted(() => ({
 
 vi.mock('@lib/client', () => ({
   api: {
-    chat: {
-      models: { get: modelsGet },
-      conversations: Object.assign(() => ({ get: vi.fn(), delete: vi.fn() }), {
-        get: conversationsGet,
-      }),
+    // Chat routes are mounted under /api/chat, so the Eden tree is api.api.chat
+    api: {
+      chat: {
+        models: { get: modelsGet },
+        conversations: Object.assign(() => ({ get: vi.fn(), delete: vi.fn() }), {
+          get: conversationsGet,
+        }),
+      },
     },
   },
 }));

@@ -38,7 +38,7 @@
 >
   <div class="p-4 border-b border-cosmic-800">
     <button
-      on:click={newChat}
+      onclick={newChat}
       class="w-full flex items-center justify-center gap-2 bg-cosmic-600 hover:bg-cosmic-500 text-white py-2 px-4 rounded-lg transition-colors shadow-glow"
     >
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -58,10 +58,10 @@
     <ul class="space-y-0.5">
       {#each chatStore.conversations as conv (conv.id)}
         <li class="group">
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
-            on:click={() => selectConversation(conv.id)}
+            onclick={() => selectConversation(conv.id)}
             class={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2 transition-all cursor-pointer ${
               chatStore.activeConversationId === conv.id
                 ? 'bg-cosmic-800/70 text-white border border-cosmic-600/30'
@@ -93,7 +93,7 @@
             <!-- Delete button (visible on hover) -->
             <button
               class="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 hover:text-red-400 text-slate-500 transition-all"
-              on:click={(e) => handleDelete(e, conv.id)}
+              onclick={(e) => handleDelete(e, conv.id)}
               title="Delete conversation"
             >
               <svg
