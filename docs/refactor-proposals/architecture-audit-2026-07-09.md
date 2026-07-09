@@ -135,12 +135,16 @@ Next step:
 
 ## Suggested execution order
 
-1. Tooling enforcement: lint every flow, then fix surfaced `any` in production.
-2. Backend app factory split, unlocking route tests.
-3. Lyrics canvas repository/service extraction.
-4. UI data-access pass: Eden client factory usage in loaders and Canvas API.
-5. Design-system primitives, then apply them to Chat/Canvas.
-6. Trading polish/refactor.
+Updated after PR #32:
+
+1. Close #31 and split/close #19 so the issue tracker matches the current code.
+2. UI data-access pass (#34): loaders, invalidation constants, and Eden-first Canvas
+   CRUD where practical.
+3. Design-system primitives (#24), then apply them to Chat/Canvas.
+4. Trading polish/refactor (#26).
+5. Config/env ownership pass (#33) for LLM and Trading factories.
+6. Testing gate cleanup (#35): root contract checks and an explicit decision on
+   Playwright in CI.
 
 This order keeps behavior stable while making the next change easier than the
 previous one.

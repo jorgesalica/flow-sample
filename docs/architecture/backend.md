@@ -1,5 +1,8 @@
 # Backend Architecture
 
+For the cross-package map and refactor lanes, see
+[System Map and Refactor Boundaries](./system-map.md).
+
 ## Overview
 
 The backend has been refactored from a monolithic layered architecture into isolated **Bounded Contexts (Flows)**. Each flow is distributed as its own workspace package under `packages/flows/*`.
