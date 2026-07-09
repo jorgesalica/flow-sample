@@ -1,67 +1,24 @@
-# System Architecture
+# Architecture
 
-This document provides a high-level overview of the Flow Sample architecture.
+Start here when changing package boundaries, backend layering, frontend data
+access, or the flow model.
 
-## Overview
+## Current Maps
 
-```mermaid
-graph TD
-    User["User"] --> UI["UI (Svelte)"]
-    User --> CLI["CLI"]
-    
-    UI --> API["API (Elysia)"]
-    API --> UseCase["Application Layer"]
-    CLI --> UseCase
-    
-    UseCase --> Domain["Domain Layer"]
-    UseCase --> Infra["Infrastructure Layer"]
-    
-    Infra --> SQLite["SQLite"]
-    Infra --> SpotifyAPI["Spotify API"]
-```
+- [System Map and Refactor Boundaries](./system-map.md) - workspace map,
+  package responsibilities, flow extraction contract, and refactor lanes.
+- [Backend Architecture](./backend.md) - Elysia host, bounded-context flow
+  packages, repositories, services, adapters, and LLM core.
+- [UI Architecture](./ui.md) - SvelteKit routes, flow registry, Eden client,
+  frontend flow modules, and testing.
+- [Server Architecture](./server.md) - backend runtime details.
 
-## Layered Architecture (per Flow)
+## Working Rule
 
-Each independent flow package (`packages/flows/*`) follows a layered architecture pattern:
+The package split is intentional: `packages/backend` hosts the app,
+`packages/ui` renders it, `packages/core` owns shared infrastructure,
+`packages/shared` owns cross-boundary contracts, and `packages/flows/*` own
+backend bounded contexts.
 
-| Layer | Location | Responsibility |
-| ----- | -------- | -------------- |
-| **API** | `src/api/` | HTTP routes (Elysia), validation |
-| **Domain** | `src/domain/` | Pure business logic, equations, entities |
-| **Infrastructure** | `src/infrastructure/` | External API clients, repositories |
-
-## Tech Stack
-
-| Component | Technology |
-| --------- | ---------- |
-| **UI** | Svelte 5, Vite 7, Tailwind CSS 4, Chart.js |
-| **Server** | Elysia (Node.js adapter) |
-| **Database** | SQLite (better-sqlite3) |
-| **Validation** | Zod, TypeBox |
-| **Logging** | Pino |
-
-## Directory Structure
-
-```text
-flow-sample/
-├── packages/
-│   ├── core/                           # Shared infrastructure (DB connection, Logger, LLM integration)
-│   ├── backend/                        # API server host (Elysia app init)
-│   ├── flows/                          # Independent bounded contexts
-│   │   ├── shared/                     # Shared types and DTOs
-│   │   ├── chat/                       # Chat Flow (Dynamic LLM provider integration)
-│   │   ├── spotify/                    # Spotify Flow (API + DB + Domain)
-│   │   ├── lyrics/                     # Lyrics Flow (API + DB + Domain)
-│   │   └── trading/                    # Trading Flow (API + SSE + Domain)
-│   └── ui/                             # Frontend application (Svelte 5)
-├── data/                               # SQLite database volume
-├── outputs/                            # Generated data
-└── docs/
-    └── architecture/                   # This documentation
-```
-
-## Detailed Documentation
-
-- [UI Architecture](./ui.md)
-- [Server Architecture](./server.md)
-- [Backend Architecture](./backend.md)
+Keep the separation, but do not treat each flow as a separately deployable app
+until its contracts are explicit and tested.

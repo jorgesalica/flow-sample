@@ -1,5 +1,8 @@
 # UI Architecture
 
+For the cross-package map and refactor lanes, see
+[System Map and Refactor Boundaries](./system-map.md).
+
 The frontend is a **SvelteKit** app (Svelte 5 runes) that talks to the Elysia backend
 through a typed **Eden Treaty** client. It is organized as a set of vertical **flows**
 (spotify, lyrics, trading, chat, canvas) hung on a central board.

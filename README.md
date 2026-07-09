@@ -96,6 +96,7 @@ Copy `.env.example` to `.env` and fill in the required values:
 
 - [Conventions & Best Practices](docs/conventions.md) — the engineering rules (start here)
 - [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) — entry point for AI agents
+- [System Map](docs/architecture/system-map.md) — package boundaries, flow contract, refactor lanes
 - [Backend Architecture](docs/architecture/backend.md) — bounded-context flows, layers, LLM
 - [UI Architecture](docs/architecture/ui.md) — SvelteKit, flows registry, Eden client
 - [Architecture Roadmap](docs/refactor-proposals/future-architecture.md)
@@ -104,8 +105,9 @@ Copy `.env.example` to `.env` and fill in the required values:
 
 ## Quality gate
 
-Personal project, minimal ceremony: everything goes to `main`, no `develop`/PRs.
-Run the full local gate before pushing anything non-trivial:
+Personal project, minimal ceremony: short-lived branches open PRs directly to
+`main`; there is no `develop` branch. Run the full local gate before pushing
+anything non-trivial:
 
 ```bash
 pnpm verify   # lint && typecheck && check && test
