@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { OpenAICompatibleProvider } from '../../../src/llm/providers/openai-compatible';
-import type { ModelInfo } from '../../../src/llm/types';
+import type { LLMStreamEvent, ModelInfo } from '../../../src/llm/types';
 
 // ── Test fixtures ─────────────────────────────────────────────────────
 
@@ -54,8 +54,8 @@ function sseData(obj: object): string {
     return `data: ${JSON.stringify(obj)}\n\n`;
 }
 
-async function collectStream(gen: AsyncGenerator<any>): Promise<any[]> {
-    const events: any[] = [];
+async function collectStream(gen: AsyncGenerator<LLMStreamEvent>): Promise<LLMStreamEvent[]> {
+    const events: LLMStreamEvent[] = [];
     for await (const e of gen) events.push(e);
     return events;
 }

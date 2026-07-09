@@ -33,9 +33,10 @@ Mostly done across the recent modernization (Fases 0–3):
 - [x] Tests + coverage: ~832 tests, per-package coverage (`pnpm test:coverage`)
 - [x] Tooling: Tailwind v4 (vite plugin, no config), pins, conventions doc, AGENTS/CLAUDE
 - [x] Frontend → **SvelteKit** (file routing, adapter-static SPA) + UI test suite
-- [ ] **3b** — data via `+page.ts` loaders (in progress)
-- [ ] **3c** — runes-only state, drop remaining `svelte/store` (in progress)
-- [ ] GitHub: light CI (gate on push/PR) + PR/issue templates + tidy the boards
+- [x] **3b** — data via `+page.ts` loaders
+- [x] **3c** — runes-only state, drop remaining `svelte/store`
+- [x] GitHub: light CI (gate on push/PR) + PR/issue templates
+- [ ] Refactor audit pass: architecture, frontend data access, backend layering, testing, and stale docs
 
 ---
 
@@ -79,7 +80,7 @@ obvious). This epic makes the LLM output genuinely useful.
 
 ### 5. Flow polish
 
-- **Chat flow**: it's currently broken — fix it; unify its components with the design system.
+- **Chat flow**: routing/streaming is fixed; continue UX and design-system polish.
 - **Trading flow**: tidy and improve; clarify its domain + docs.
 - Per flow: sharpen the domain model, the docs, and the high-level "what is this" framing.
 

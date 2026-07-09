@@ -18,27 +18,22 @@ packages/
     ├── spotify/        # Spotify Sync & Search Flow
     ├── lyrics/         # LrcLib Lyrics Fetcher Flow
     ├── trading/        # Binance real-time Trading & AI Advisor Flow
-    └── chat/           # Multi-provider LLM Chat Flow
+    ├── chat/           # Multi-provider LLM Chat Flow
+    └── canvas/         # Generic text analysis canvas
 ```
 
 ### Layout per Flow (current state)
 
-The flows are **not yet uniform** — two patterns coexist today. Unifying them is a
-B2 goal (see [refactor-proposals/B1-ordering.md](../refactor-proposals/B1-ordering.md)
-and GitHub issue #18); B1 keeps them in place.
+All five flows now follow the same high-level package shape: a `domain/` layer
+for pure concepts, ports, and typed errors, plus a `backend/` layer for Elysia
+routes, repositories, services, databases, and adapters. The remaining refactor
+work is about tightening boundaries inside that shape, not introducing it.
 
 ```text
-# Hexagonal (spotify, trading): a domain/ layer split from infrastructure
 flow-package/
 ├── src/
-│   ├── domain/             # Pure math, entities, ports, typed errors
-│   └── backend/            # Elysia routes, repositories, DB, services
-│       └── adapter/        # External API clients (trading: src/adapters/binance/)
-
-# Flat (lyrics, chat): routes + data access, no domain/ layer yet
-flow-package/
-├── src/
-│   └── backend/            # routes.ts, repository.ts / database.ts, adapter/
+│   ├── domain/             # Pure logic, ports, typed errors
+│   └── backend/            # Elysia routes, repositories, DB, services, adapters
 ```
 
 ## Shared Infrastructure

@@ -30,7 +30,7 @@ export class SynthesizerService {
    * Enrich raw market state with derived metrics for the LLM.
    * Exposed public for debugging if needed.
    */
-  public enrichMarketState(state: MarketState): Record<string, any> {
+  public enrichMarketState(state: MarketState): Record<string, unknown> {
     const currentPrice = state.price.current;
 
     // Calculate distances to levels

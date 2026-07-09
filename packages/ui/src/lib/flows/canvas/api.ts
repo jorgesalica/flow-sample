@@ -1,6 +1,6 @@
 import type { CanvasAnalysis } from '@flows/shared';
 
-const API_BASE = 'http://localhost:4173/api/canvas';
+const API_BASE = '/api/canvas';
 
 export async function fetchCanvasList(): Promise<CanvasAnalysis[]> {
   const res = await fetch(API_BASE);

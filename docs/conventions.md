@@ -148,16 +148,25 @@ from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
 
 ---
 
-## 7. Git & quality gate (personal project — minimal ceremony)
+## 7. Git & delivery workflow
 
-- **Everything goes to `main`.** No `develop` branch, no mandatory PRs. Commit, push, merge
-  directly.
-- **Light hooks:** pre-commit formats/lints staged files; pre-push runs typecheck + fast
-  tests. Don't add multi-dev ceremony (branch protection, CI shards, PR templates as gates).
+This repo uses the lightweight PR discipline from `ccec`, adapted to a single permanent
+branch: **PRs target `main`**. There is no `develop` branch here.
+
+- **Never push directly to `main`.** Work on a short-lived branch, push it, open a PR, wait
+  for checks, and merge through GitHub.
+- **Branch naming:** prefer `codex/<short-kebab-description>` for Codex-created branches.
+  If a local ref layout blocks slash branches, use a clear kebab name such as
+  `housekeeping-audit-workflow`.
 - **Conventional Commits** in English: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`,
   `test:`, `ci:`.
-- The full local gate is `pnpm verify`-style: `pnpm lint && pnpm typecheck && pnpm check &&
-  pnpm test`. Run it before pushing anything non-trivial.
+- **Local gate before push:** `pnpm lint && pnpm typecheck && pnpm check && pnpm test`.
+  Add `pnpm build` when touching package entrypoints, generated artifacts, UI build output,
+  or backend startup/build behavior.
+- **PR description:** include what changed, why it matters, user-visible impact, technical
+  areas touched, test commands run, and related issue/refs if any.
+- **Merge discipline:** check PR status before merging. Prefer GitHub server-side merge
+  (`gh pr merge` or the GitHub UI) over local merges into `main`.
 
 ---
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { CanvasAnalysis } from '@flows/shared';
 import { fetchCanvasList, fetchCanvas, deleteCanvas, createAndAnalyzeCanvas } from './api';
 
-const API_BASE = 'http://localhost:4173/api/canvas';
+const API_BASE = '/api/canvas';
 
 function makeCanvas(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
   return {
