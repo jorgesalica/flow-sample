@@ -2,9 +2,18 @@ import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
-import prettierPlugin from 'eslint-plugin-prettier';
 
-const ignores = ['dist/', 'node_modules/', 'outputs/'];
+const ignores = [
+  'dist/',
+  'node_modules/',
+  'outputs/',
+  'coverage/',
+  '../core/dist/',
+  '../core/coverage/',
+  '../shared/dist/',
+  '../flows/*/dist/',
+  '../flows/*/coverage/',
+];
 
 export default [
   {
@@ -25,12 +34,14 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      prettier: prettierPlugin,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
-      'prettier/prettier': 'warn',
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
     },
   },
 ];

@@ -1,34 +1,35 @@
 # [PR Title]
 
-## 🚀 Summary
+## Summary
 
 [Brief summary of what this PR accomplishes]
 
-## 🛠️ Key Changes
+## Key Changes
 
-### 🏗️ Refactoring
-
-- [Change 1]
-- [Change 2]
-
-### 🎨 UI Polish
+### Refactoring
 
 - [Change 1]
 - [Change 2]
 
-### ⚡ Features
+### UI Polish
 
 - [Change 1]
 - [Change 2]
 
-### 🐛 Fixes
+### Features
 
 - [Change 1]
 - [Change 2]
 
-## ✅ Verification
+### Fixes
 
-- [ ] `pnpm check` passed (0 errors)
-- [ ] Browser QA performed
-- [ ] No console errors
-- [ ] Visual regression checked (if UI changed)
+- [Change 1]
+- [Change 2]
+
+## Verification
+
+- [ ] `pnpm lint`
+- [ ] `pnpm typecheck`
+- [ ] `pnpm check`
+- [ ] `pnpm test`
+- [ ] `pnpm build` when package entrypoints or build behavior changed

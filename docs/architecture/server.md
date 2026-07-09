@@ -4,109 +4,56 @@
 
 | Technology | Purpose |
 | ---------- | ------- |
-| **Elysia** | Web framework (TypeBox validation, plugin system) |
+| **Elysia** | HTTP composition, validation, plugin system |
 | **@elysiajs/node** | Node.js adapter |
-| **@elysiajs/static** | Static file serving |
-| **TypeScript** | Type safety |
+| **@elysiajs/static** | Static UI serving in production |
+| **Eden Treaty** | Type-safe client contract for the SvelteKit UI |
+| **better-sqlite3** | Local SQLite persistence inside flow repositories |
 
-## Why Elysia?
+## Host Shape
 
-- **Plugin system** — Dependency injection without decorators
-- **TypeBox validation** — Runtime validation with compile-time types
-- **Eden client** — Type-safe API client for frontend (future)
-- **Route groups** — Clean separation by domain
-- **Node.js adapter** — Works with existing Node.js ecosystem
-
-## Directory Structure
+The backend package is a thin host. Flow packages own their domain logic,
+repositories, adapters, and routes; `@flows/backend` only composes them.
 
 ```text
-src/api/
-├── app.ts              # Main Elysia server
-├── spotify.routes.ts   # Spotify route group
-├── config.ts           # Zod config loader
-└── index.ts            # Barrel exports
+packages/backend/src/api/
+├── app.ts      # import-safe createApp(config)
+├── config.ts   # env-to-config mapping
+└── server.ts   # process entrypoint, dotenv, listen()
 ```
 
-## API Endpoints
+`app.ts` must stay import-safe because UI Eden types and backend tests import it.
+Only `server.ts` may bind a port.
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| `GET` | `/api/status` | Health check |
-| `POST` | `/api/spotify/run` | Fetch tracks and save to SQLite |
-| `GET` | `/api/spotify/tracks` | Get all tracks from SQLite |
-| `GET` | `/api/spotify/count` | Get track count |
-| `GET` | `/outputs/*` | Serve output files |
-| `GET` | `/*` | Serve UI static files (production) |
+## Mounted Routes
 
-## Request/Response Examples
+| Prefix | Owner |
+| ------ | ----- |
+| `/api/health` | backend host |
+| `/api/spotify` | `@flows/spotify` |
+| `/api/lyrics` | `@flows/lyrics` |
+| `/api/trading` | `@flows/trading` |
+| `/api/chat` | `@flows/chat` |
+| `/api/canvas` | `@flows/canvas` |
 
-### Health Check
-
-```http
-GET /api/status
-
-{ "success": true, "message": "Server ready." }
-```
-
-### Run Spotify Flow
-
-```http
-POST /api/spotify/run
-Content-Type: application/json
-
-{ "limit": 50 }
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "message": "Flow completed.",
-  "count": 1247,
-  "output": "liked_songs.json"
-}
-```
-
-### Get All Tracks
-
-```http
-GET /api/spotify/tracks
-
-[
-  {
-    "id": "abc123",
-    "title": "Song Name",
-    "artists": [{ "id": "...", "name": "Artist" }],
-    "album": { "id": "...", "name": "Album", "releaseYear": 2024 },
-    ...
-  }
-]
-```
+In production-style builds, the host also serves the SvelteKit static output from
+`packages/ui/build` when it exists, with `index.html` fallback for SPA routing.
 
 ## Code Overview
 
 ```typescript
-import { Elysia } from 'elysia';
-import { node } from '@elysiajs/node';
-import { staticPlugin } from '@elysiajs/static';
-
-const app = new Elysia({ adapter: node() })
-  .get('/api/status', () => ({ success: true }))
+const app = createApp(config)
   .use(createSpotifyRoutes(config))
-  .use(staticPlugin({ assets: 'outputs', prefix: '/outputs' }))
-  .listen({ port: 4173 });
+  .use(createLyricsRoutes())
+  .use(createTradingRoutes())
+  .use(chatRoutes)
+  .use(canvasFlowRoutes);
 ```
 
-## Running the Server
+## Running
 
 ```bash
-# Development
-npm run server
-
-# The server will:
-# - Start on http://127.0.0.1:4173
-# - Create SQLite database at data/flow.db
-# - Serve API endpoints
-# - Serve UI from ui/dist (if built)
+pnpm --filter @flows/backend dev
 ```
+
+The root `pnpm dev` script runs all package dev scripts in parallel.

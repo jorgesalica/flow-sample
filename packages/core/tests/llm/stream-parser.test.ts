@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseOpenAIStream } from '../../src/llm/providers/stream-parser';
+import type { LLMStreamEvent } from '../../src/llm/types';
 
 function makeSSEResponse(chunks: string[]): Response {
     const encoder = new TextEncoder();
@@ -18,8 +19,8 @@ function sseData(obj: object): string {
     return `data: ${JSON.stringify(obj)}\n\n`;
 }
 
-async function collect(gen: AsyncGenerator<any>): Promise<any[]> {
-    const events: any[] = [];
+async function collect(gen: AsyncGenerator<LLMStreamEvent>): Promise<LLMStreamEvent[]> {
+    const events: LLMStreamEvent[] = [];
     for await (const e of gen) {
         events.push(e);
     }

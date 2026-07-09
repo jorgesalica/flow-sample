@@ -4,8 +4,19 @@ const { mockGenerateContent } = vi.hoisted(() => ({
     mockGenerateContent: vi.fn(),
 }));
 
+interface MockGoogleGenAI {
+    models: {
+        generateContent: typeof mockGenerateContent;
+    };
+}
+
+interface CapturedContent {
+    role: string;
+    parts: Array<{ text: string }>;
+}
+
 vi.mock('@google/genai', () => ({
-    GoogleGenAI: vi.fn(function (this: any) {
+    GoogleGenAI: vi.fn(function (this: MockGoogleGenAI) {
         this.models = { generateContent: mockGenerateContent };
     }),
 }));
@@ -17,8 +28,8 @@ const okGenAIResponse = {
     usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, totalTokenCount: 15 },
 };
 
-function capturedContents(): any[] {
-    return mockGenerateContent.mock.calls[0][0].contents;
+function capturedContents(): CapturedContent[] {
+    return mockGenerateContent.mock.calls[0][0].contents as CapturedContent[];
 }
 
 describe('GeminiProvider formatMessages', () => {

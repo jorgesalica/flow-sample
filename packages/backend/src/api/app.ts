@@ -4,12 +4,7 @@
  * This package is just the Elysia server that composes
  * route modules from each flow package.
  */
-import * as dotenv from 'dotenv';
 import * as path from 'path';
-
-// Load .env from monorepo root (2 levels up from packages/backend/)
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
-
 import { Elysia } from 'elysia';
 import { node } from '@elysiajs/node';
 import { cors } from '@elysiajs/cors';
@@ -21,105 +16,79 @@ import { createTradingRoutes } from '@flows/trading';
 import { chatRoutes } from '@flows/chat';
 import { canvasFlowRoutes } from '@flows/canvas';
 import { logger } from '@flows/core';
+import type { BackendConfig } from './config';
 
 const log = logger.child({ module: 'Server' });
 
-// Load config from environment
-const config = {
-  port: parseInt(process.env.PORT || '4173'),
-  spotify: {
-    clientId: process.env.SPOTIFY_CLIENT_ID || '',
-    clientSecret: process.env.SPOTIFY_CLIENT_SECRET || '',
-    redirectUri:
-      process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:4173/api/spotify/auth/callback',
-    successUrl: process.env.SPOTIFY_SUCCESS_URL || 'http://localhost:5173/?connected=true#/spotify',
-    refreshToken: process.env.SPOTIFY_REFRESH_TOKEN,
-    pageLimit: parseInt(process.env.SPOTIFY_PAGE_LIMIT || '5'),
-  },
-};
+// Check if the SvelteKit static output exists for same-origin serving.
+const uiBuildPath = path.resolve(__dirname, '../../../ui/build');
 
-// Warn about missing Spotify credentials at startup (non-fatal — other flows work without them)
-if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
-  log.warn(
-    'SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET not set — Spotify flow will not authenticate',
-  );
+export function createApp(config: BackendConfig) {
+  const hasUiBuild = fs.existsSync(uiBuildPath);
+
+  return new Elysia({ adapter: node() })
+    // CORS
+    .use(
+      cors({
+        origin: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      }),
+    )
+
+    // Static UI serving (if built)
+    .use(
+      hasUiBuild
+        ? staticPlugin({
+            assets: uiBuildPath,
+            prefix: '/',
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          })
+        : new Elysia(),
+    )
+
+    // Request ID middleware
+    .derive(() => ({
+      requestId: crypto.randomUUID(),
+    }))
+
+    // Health check
+    .get('/api/health', () => ({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      flows: ['spotify', 'lyrics', 'trading', 'chat', 'canvas'],
+    }))
+
+    // Flow routes (from flow packages)
+    .use(createSpotifyRoutes(config))
+    .use(createLyricsRoutes())
+    .use(createTradingRoutes())
+    .use(chatRoutes)
+    .use(canvasFlowRoutes)
+
+    // Error handler
+    .onError(({ error, code, set }) => {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      log.error({ error: errMsg, code }, 'Request error');
+
+      if (code === 'NOT_FOUND') {
+        // Try to serve index.html for SPA routing
+        if (hasUiBuild) {
+          const indexPath = path.join(uiBuildPath, 'index.html');
+          if (fs.existsSync(indexPath)) {
+            set.headers['Content-Type'] = 'text/html';
+            return fs.readFileSync(indexPath, 'utf-8');
+          }
+        }
+        set.status = 404;
+        return { error: 'Not Found' };
+      }
+
+      set.status = 500;
+      return { error: 'Internal Server Error' };
+    });
 }
 
-// Check if UI dist folder exists for static serving
-const uiDistPath = path.resolve(__dirname, '../../ui/dist');
-const hasUiDist = fs.existsSync(uiDistPath);
-
-export const app = new Elysia({ adapter: node() })
-  // CORS
-  .use(
-    cors({
-      origin: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    }),
-  )
-
-  // Static UI serving (if built)
-  .use(
-    hasUiDist
-      ? staticPlugin({
-          assets: uiDistPath,
-          prefix: '/',
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        })
-      : new Elysia(),
-  )
-
-  // Request ID middleware
-  .derive(() => ({
-    requestId: crypto.randomUUID(),
-  }))
-
-  // Health check
-  .get('/api/health', () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    flows: ['spotify', 'lyrics', 'trading', 'chat'],
-  }))
-
-  // Flow routes (from flow packages)
-  .use(createSpotifyRoutes(config))
-  .use(createLyricsRoutes())
-  .use(createTradingRoutes())
-  .use(chatRoutes)
-  .use(canvasFlowRoutes)
-
-  // Error handler
-  .onError(({ error, code, set }) => {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    log.error({ error: errMsg, code }, 'Request error');
-
-    if (code === 'NOT_FOUND') {
-      // Try to serve index.html for SPA routing
-      if (hasUiDist) {
-        const indexPath = path.join(uiDistPath, 'index.html');
-        if (fs.existsSync(indexPath)) {
-          set.headers['Content-Type'] = 'text/html';
-          return fs.readFileSync(indexPath, 'utf-8');
-        }
-      }
-      set.status = 404;
-      return { error: 'Not Found' };
-    }
-
-    set.status = 500;
-    return { error: 'Internal Server Error' };
-  });
-
 // Export type for Eden
-export type App = typeof app;
-
-// Start server
-app.listen(config.port, () => {
-  log.info({ port: config.port }, 'Server started');
-  log.info({ url: `http://localhost:${config.port}` }, 'Listening');
-  if (hasUiDist) {
-    log.info({ path: uiDistPath }, 'Serving UI');
-  }
-});
+export type App = ReturnType<typeof createApp>;

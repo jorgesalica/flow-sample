@@ -27,12 +27,29 @@ function makeTestProvider(name: string) {
     };
 }
 
-function makeRotationClient(providers: ReturnType<typeof makeTestProvider>[]): any {
-    const client = Object.create(LLMClient.prototype) as any;
-    client.provider = providers[0];
-    client.rotationProviders = providers;
-    client.rotationIndex = 0;
+function makeDirectClient(provider: ReturnType<typeof makeTestProvider>): LLMClient {
+    const client = Object.create(LLMClient.prototype) as LLMClient;
+    Reflect.set(client, 'provider', provider);
+    Reflect.set(client, 'rotationProviders', null);
+    Reflect.set(client, 'rotationIndex', 0);
     return client;
+}
+
+function makeRotationClient(providers: ReturnType<typeof makeTestProvider>[]): LLMClient {
+    const client = Object.create(LLMClient.prototype) as LLMClient;
+    Reflect.set(client, 'provider', providers[0]);
+    Reflect.set(client, 'rotationProviders', providers);
+    Reflect.set(client, 'rotationIndex', 0);
+    return client;
+}
+
+function setRotationIndex(client: LLMClient, index: number): void {
+    Reflect.set(client, 'rotationIndex', index);
+}
+
+function clearProviderCache(): void {
+    const cache = Reflect.get(LLMClient, 'providerCache') as Map<unknown, unknown>;
+    cache.clear();
 }
 
 async function* toAsyncGen(events: LLMStreamEvent[]): AsyncGenerator<LLMStreamEvent> {
@@ -50,7 +67,7 @@ describe('LLMClient constructor', () => {
     beforeEach(() => {
         origEnv = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
         for (const k of ENV_KEYS) delete process.env[k];
-        (LLMClient as any).providerCache.clear();
+        clearProviderCache();
     });
 
     afterEach(() => {
@@ -78,19 +95,13 @@ describe('LLMClient constructor', () => {
 describe('LLMClient direct mode', () => {
     it('isRotation is false for a direct client', () => {
         const p1 = makeTestProvider('groq');
-        const client = Object.create(LLMClient.prototype) as any;
-        client.provider = p1;
-        client.rotationProviders = null;
-        client.rotationIndex = 0;
+        const client = makeDirectClient(p1);
         expect(client.isRotation).toBe(false);
     });
 
     it('listAllModelCatalogs returns only current provider in direct mode', () => {
         const p1 = makeTestProvider('groq');
-        const client = Object.create(LLMClient.prototype) as any;
-        client.provider = p1;
-        client.rotationProviders = null;
-        client.rotationIndex = 0;
+        const client = makeDirectClient(p1);
         const catalogs = client.listAllModelCatalogs();
         expect(catalogs).toHaveLength(1);
         expect(catalogs[0].id).toBe('groq-id');
@@ -178,7 +189,7 @@ describe('LLMClient rotation — generate()', () => {
         p1.generate.mockResolvedValue(okResponse('groq'));
         p2.generate.mockResolvedValue(okResponse('openrouter'));
         const client = makeRotationClient([p1, p2]);
-        client.rotationIndex = 1;
+        setRotationIndex(client, 1);
 
         const res = await client.generate(req);
         expect(res.provider).toBe('openrouter');
@@ -193,7 +204,7 @@ describe('LLMClient rotation — generate()', () => {
 describe('LLMClient rotation — generateStream()', () => {
     const req: LLMRequest = { messages: [{ role: 'user', content: 'hi' }] };
 
-    async function collectStream(client: any): Promise<LLMStreamEvent[]> {
+    async function collectStream(client: LLMClient): Promise<LLMStreamEvent[]> {
         const events: LLMStreamEvent[] = [];
         for await (const e of client.generateStream(req)) {
             events.push(e);
@@ -314,7 +325,7 @@ describe('LLMClient.parseProviderModel', () => {
             expect(msg).not.toMatch(/Invalid model format/);
         } finally {
             delete process.env.OPENROUTER_API_KEY;
-            (LLMClient as any).providerCache.clear();
+            clearProviderCache();
         }
     });
 });
@@ -324,10 +335,7 @@ describe('LLMClient.parseProviderModel', () => {
 describe('LLMClient listModelCatalog', () => {
     it('returns catalog from the current provider in direct mode', () => {
         const p1 = makeTestProvider('groq');
-        const client = Object.create(LLMClient.prototype) as any;
-        client.provider = p1;
-        client.rotationProviders = null;
-        client.rotationIndex = 0;
+        const client = makeDirectClient(p1);
         const catalog = client.listModelCatalog();
         expect(catalog).toHaveLength(1);
         expect(catalog[0].id).toBe('groq-id');

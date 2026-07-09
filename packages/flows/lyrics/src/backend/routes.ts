@@ -4,7 +4,7 @@ import { SQLiteLyricsRepository } from './repository';
 import { SQLiteTrackRepository } from '@flows/spotify';
 import { logger, LLMClient } from '@flows/core';
 import type { LyricsStatus, TrackRepository } from '@flows/shared';
-import { canvasRoutes } from './canvas/canvas.routes';
+import { createCanvasRoutes } from './canvas/canvas.routes';
 import type { LyricsRepository, LyricsSource } from '../domain/ports';
 import { LyricsNotFoundError, LyricsFetchError } from '../domain/errors';
 
@@ -26,7 +26,7 @@ export function createLyricsRoutes() {
       .decorate('lyricsRepository', lyricsRepository)
       .decorate('trackRepository', trackRepository)
       .decorate('lrcLibAdapter', lrcLibAdapter)
-      .use(canvasRoutes)
+      .use(createCanvasRoutes(lyricsRepository))
 
       .get(
         '/:trackId',

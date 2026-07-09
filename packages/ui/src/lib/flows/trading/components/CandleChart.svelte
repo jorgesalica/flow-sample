@@ -1,15 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import {
-    createChart,
-    CandlestickSeries,
-    LineSeries,
-    type IChartApi,
-    type ISeriesApi,
-    type Time,
-    type CandlestickData,
-    type LineData,
-  } from 'lightweight-charts';
+  import type { IChartApi, ISeriesApi, Time, CandlestickData, LineData } from 'lightweight-charts';
   import type { Candle } from '../trading';
 
   interface Props {
@@ -26,6 +17,7 @@
   let candlestickSeries: ISeriesApi<'Candlestick'> | null = null;
   let supportLine: ISeriesApi<'Line'> | null = null;
   let resistanceLine: ISeriesApi<'Line'> | null = null;
+  let lineSeriesDefinition: typeof import('lightweight-charts').LineSeries | null = null;
 
   // Transform candles to lightweight-charts format (time in seconds)
   function transformCandles(data: Candle[]): CandlestickData<Time>[] {
@@ -47,68 +39,122 @@
     ];
   }
 
+  function updateSupportLine() {
+    if (!chart || !lineSeriesDefinition) return;
+
+    if (supportLevel && candles.length > 0) {
+      if (!supportLine) {
+        supportLine = chart.addSeries(lineSeriesDefinition, {
+          color: '#22c55e',
+          lineWidth: 2,
+          lineStyle: 2, // Dashed
+        });
+      }
+      supportLine.setData(generateLineData(supportLevel, candles));
+    } else if (supportLine) {
+      chart.removeSeries(supportLine);
+      supportLine = null;
+    }
+  }
+
+  function updateResistanceLine() {
+    if (!chart || !lineSeriesDefinition) return;
+
+    if (resistanceLevel && candles.length > 0) {
+      if (!resistanceLine) {
+        resistanceLine = chart.addSeries(lineSeriesDefinition, {
+          color: '#ef4444',
+          lineWidth: 2,
+          lineStyle: 2, // Dashed
+        });
+      }
+      resistanceLine.setData(generateLineData(resistanceLevel, candles));
+    } else if (resistanceLine) {
+      chart.removeSeries(resistanceLine);
+      resistanceLine = null;
+    }
+  }
+
   onMount(() => {
     if (!chartContainer) return;
 
-    // Create chart with v5 API
-    chart = createChart(chartContainer, {
-      width: chartContainer.clientWidth,
-      height: height,
-      layout: {
-        background: { color: 'transparent' },
-        textColor: 'rgba(255, 255, 255, 0.7)',
-      },
-      grid: {
-        vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-        horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
-      },
-      rightPriceScale: {
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-      },
-      timeScale: {
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      localization: {
-        timeFormatter: (time: number) => {
-          const date = new Date(time * 1000);
-          return date.toLocaleString(undefined, {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          });
+    let disposed = false;
+    let resizeObserver: ResizeObserver | null = null;
+
+    async function initChart() {
+      const { createChart, CandlestickSeries, LineSeries } = await import('lightweight-charts');
+      if (disposed || !chartContainer) return;
+
+      lineSeriesDefinition = LineSeries;
+
+      // Create chart with v5 API
+      chart = createChart(chartContainer, {
+        width: chartContainer.clientWidth,
+        height: height,
+        layout: {
+          background: { color: 'transparent' },
+          textColor: 'rgba(255, 255, 255, 0.7)',
         },
-      },
-    });
+        grid: {
+          vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+          horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+        },
+        rightPriceScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+        },
+        timeScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        localization: {
+          timeFormatter: (time: number) => {
+            const date = new Date(time * 1000);
+            return date.toLocaleString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+          },
+        },
+      });
 
-    // Add candlestick series using v5 API
-    candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#22c55e',
-      downColor: '#ef4444',
-      borderUpColor: '#22c55e',
-      borderDownColor: '#ef4444',
-      wickUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
-    });
+      // Add candlestick series using v5 API
+      candlestickSeries = chart.addSeries(CandlestickSeries, {
+        upColor: '#22c55e',
+        downColor: '#ef4444',
+        borderUpColor: '#22c55e',
+        borderDownColor: '#ef4444',
+        wickUpColor: '#22c55e',
+        wickDownColor: '#ef4444',
+      });
 
-    // Set initial data
-    if (candles.length > 0) {
-      candlestickSeries.setData(transformCandles(candles));
-      chart.timeScale().fitContent();
+      // Set initial data
+      if (candles.length > 0) {
+        candlestickSeries.setData(transformCandles(candles));
+        chart.timeScale().fitContent();
+      }
+
+      updateSupportLine();
+      updateResistanceLine();
+
+      // Handle resize
+      resizeObserver = new ResizeObserver((entries) => {
+        if (chart && entries[0]) {
+          chart.applyOptions({ width: entries[0].contentRect.width });
+        }
+      });
+      resizeObserver.observe(chartContainer);
     }
 
-    // Handle resize
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (chart && entries[0]) {
-        chart.applyOptions({ width: entries[0].contentRect.width });
-      }
-    });
-    resizeObserver.observe(chartContainer);
+    void initChart();
 
     return () => {
-      resizeObserver.disconnect();
+      disposed = true;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
     };
   });
 
@@ -117,6 +163,10 @@
       chart.remove();
       chart = null;
     }
+    candlestickSeries = null;
+    supportLine = null;
+    resistanceLine = null;
+    lineSeriesDefinition = null;
   });
 
   // Update data when candles change
@@ -129,40 +179,12 @@
 
   // Update support line
   $effect(() => {
-    if (!chart) return;
-
-    if (supportLevel && candles.length > 0) {
-      if (!supportLine) {
-        supportLine = chart.addSeries(LineSeries, {
-          color: '#22c55e',
-          lineWidth: 2,
-          lineStyle: 2, // Dashed
-        });
-      }
-      supportLine.setData(generateLineData(supportLevel, candles));
-    } else if (supportLine) {
-      chart.removeSeries(supportLine);
-      supportLine = null;
-    }
+    updateSupportLine();
   });
 
   // Update resistance line
   $effect(() => {
-    if (!chart) return;
-
-    if (resistanceLevel && candles.length > 0) {
-      if (!resistanceLine) {
-        resistanceLine = chart.addSeries(LineSeries, {
-          color: '#ef4444',
-          lineWidth: 2,
-          lineStyle: 2, // Dashed
-        });
-      }
-      resistanceLine.setData(generateLineData(resistanceLevel, candles));
-    } else if (resistanceLine) {
-      chart.removeSeries(resistanceLine);
-      resistanceLine = null;
-    }
+    updateResistanceLine();
   });
 </script>
 
