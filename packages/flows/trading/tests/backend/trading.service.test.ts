@@ -38,9 +38,7 @@ const getLastCandleGet = vi.fn();
 const countGet = vi.fn(() => ({ count: 0 }));
 
 vi.mock('../../src/backend/database', () => ({
-  tradingDb: {
-    prepare: vi.fn(() => ({ get: countGet })),
-  },
+  getCandleCount: { get: countGet },
   upsertCandle: { run: upsertRun },
   getLastNCandles: { all: getLastNCandlesAll },
   getLastCandle: { get: getLastCandleGet },

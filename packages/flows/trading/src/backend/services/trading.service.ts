@@ -1,6 +1,6 @@
 import { BinanceStream, type Candle } from '../../adapters/binance';
 import {
-  tradingDb,
+  getCandleCount,
   upsertCandle,
   getLastNCandles,
   getLastCandle,
@@ -149,9 +149,7 @@ export class TradingService {
 
   /** Get total candle count in database */
   private getCandleCount(): number {
-    const result = tradingDb
-      .prepare('SELECT COUNT(*) as count FROM candles WHERE symbol = ?')
-      .get(this.config.symbol) as { count: number };
+    const result = getCandleCount.get(this.config.symbol) as { count: number } | undefined;
     return result?.count || 0;
   }
 
