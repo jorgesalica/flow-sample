@@ -74,6 +74,11 @@ export const getLastCandle: Database.Statement = tradingDb.prepare(`
   LIMIT 1
 `);
 
+export const getCandleCount: Database.Statement = tradingDb.prepare(`
+  SELECT COUNT(*) as count FROM candles
+  WHERE symbol = ?
+`);
+
 // Prepared statements for fractal nodes
 export const insertFractalNode: Database.Statement = tradingDb.prepare(`
   INSERT OR IGNORE INTO fractal_nodes (symbol, type, price, candle_open_time, detected_at)

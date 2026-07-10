@@ -168,6 +168,20 @@ branch: **PRs target `main`**. There is no `develop` branch here.
 - **Merge discipline:** check PR status before merging. Prefer GitHub server-side merge
   (`gh pr merge` or the GitHub UI) over local merges into `main`.
 
+### Automated architecture contracts
+
+`pnpm check:architecture` enforces the rules that can be detected reliably without a
+heavy static-analysis framework. It checks production sources for explicit `any`,
+hardcoded localhost origins in UI API modules, SQL calls outside persistence modules,
+and direct imports between sibling flow packages. The command is part of `pnpm verify`,
+and its own behavior is covered by `pnpm test:architecture`.
+
+The only sibling-flow exception is the current Lyrics -> Spotify dependency in the Lyrics
+routes and repositories. Both flows intentionally share `musicDb` and the Spotify track
+repository today. Keep the exception limited to the paths listed in
+`scripts/check-architecture-contracts.mjs`; remove it when shared music persistence moves
+to `@flows/core` or a dedicated package.
+
 ---
 
 ## Do / Don't (the short version)
