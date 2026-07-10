@@ -7,19 +7,12 @@ import { GroqProvider } from './providers/groq/groq-provider';
 import { OpenRouterProvider } from './providers/openrouter/openrouter-provider';
 import { CerebrasProvider } from './providers/cerebras/cerebras-provider';
 import { MistralProvider } from './providers/mistral/mistral-provider';
+import { createLLMConfigFromEnv, getProviderEnvVar, type LLMRuntimeConfig } from './env';
 
 export type LLMProviderType = 'gemini' | 'groq' | 'openrouter' | 'cerebras' | 'mistral';
 
 // ── Free provider rotation order ─────────────────────────────────────
 const FREE_ROTATION_ORDER: LLMProviderType[] = ['groq', 'openrouter', 'cerebras', 'mistral'];
-
-const PROVIDER_ENV_VARS: Record<LLMProviderType, string> = {
-    gemini: 'GEMINI_API_KEY',
-    groq: 'GROQ_API_KEY',
-    openrouter: 'OPENROUTER_API_KEY',
-    cerebras: 'CEREBRAS_API_KEY',
-    mistral: 'MISTRAL_API_KEY',
-};
 
 /**
  * LLMClient: Factory & facade for LLM providers.
@@ -44,17 +37,18 @@ export class LLMClient {
     private rotationProviders: BaseLLMProvider[] | null = null;
     private rotationIndex = 0;
 
-    constructor(providerType: LLMProviderType = 'gemini', apiKey?: string) {
-        const key = apiKey || getApiKeyForProvider(providerType);
+    constructor(providerType: LLMProviderType = 'gemini', apiKey?: string, defaultModel?: string) {
+        const runtime = createLLMConfigFromEnv();
+        const key = apiKey || runtime.apiKeys[providerType];
 
         if (!key) {
             throw new Error(
                 `API key not found for provider: ${providerType}. ` +
-                `Set the env var: ${PROVIDER_ENV_VARS[providerType]}.`,
+                `Set the env var: ${getProviderEnvVar(providerType)}.`,
             );
         }
 
-        this.provider = createProviderInstance(providerType, key);
+        this.provider = createProviderInstance(providerType, key, defaultModel || runtime.model);
     }
 
     // ── Rotation factory ─────────────────────────────────────────────
@@ -64,20 +58,20 @@ export class LLMClient {
      * On 429 or error, it tries the next provider in the list.
      * Only providers with API keys set in env will be included.
      */
-    static createRotation(): LLMClient {
+    static createRotation(config: LLMRuntimeConfig = createLLMConfigFromEnv()): LLMClient {
         const providers: BaseLLMProvider[] = [];
 
         for (const type of FREE_ROTATION_ORDER) {
-            const key = getApiKeyForProvider(type);
+            const key = config.apiKeys[type];
             if (key) {
-                providers.push(createProviderInstance(type, key));
+                providers.push(createProviderInstance(type, key, config.model));
             }
         }
 
         if (providers.length === 0) {
             throw new Error(
                 `[LLMClient] No free providers configured. Set at least one of: ` +
-                FREE_ROTATION_ORDER.map((t) => PROVIDER_ENV_VARS[t]).join(', '),
+                FREE_ROTATION_ORDER.map(getProviderEnvVar).join(', '),
             );
         }
 
@@ -221,12 +215,12 @@ export class LLMClient {
      * Get model catalogs grouped by provider.
      * Returns all providers that have API keys configured.
      */
-    static getModelCatalogGrouped(): { provider: string; models: ModelInfo[] }[] {
+    static getModelCatalogGrouped(config: LLMRuntimeConfig = createLLMConfigFromEnv()): { provider: string; models: ModelInfo[] }[] {
         const groups: { provider: string; models: ModelInfo[] }[] = [];
         const ALL_PROVIDERS: LLMProviderType[] = ['gemini', 'groq', 'openrouter', 'cerebras', 'mistral'];
 
         for (const type of ALL_PROVIDERS) {
-            const key = getApiKeyForProvider(type);
+            const key = config.apiKeys[type];
             if (!key) continue;
 
             const provider = LLMClient.getOrCreateProvider(type, key);
@@ -273,7 +267,7 @@ export class LLMClient {
         const providerType = providerAndModel.slice(0, colonIdx) as LLMProviderType;
         const modelId = providerAndModel.slice(colonIdx + 1);
 
-        const key = getApiKeyForProvider(providerType);
+        const key = createLLMConfigFromEnv().apiKeys[providerType];
         if (!key) {
             throw new Error(`API key not configured for provider: ${providerType}`);
         }
@@ -376,23 +370,19 @@ function stripJsonFences(content: string): string {
     return out.trim();
 }
 
-function createProviderInstance(type: LLMProviderType, apiKey: string): BaseLLMProvider {
+function createProviderInstance(type: LLMProviderType, apiKey: string, defaultModel?: string): BaseLLMProvider {
     switch (type) {
         case 'gemini':
-            return new GeminiProvider(apiKey);
+            return new GeminiProvider(apiKey, defaultModel);
         case 'groq':
-            return new GroqProvider(apiKey);
+            return new GroqProvider(apiKey, defaultModel);
         case 'openrouter':
-            return new OpenRouterProvider(apiKey);
+            return new OpenRouterProvider(apiKey, defaultModel);
         case 'cerebras':
-            return new CerebrasProvider(apiKey);
+            return new CerebrasProvider(apiKey, defaultModel);
         case 'mistral':
-            return new MistralProvider(apiKey);
+            return new MistralProvider(apiKey, defaultModel);
         default:
             throw new Error(`Unsupported LLM provider: ${type}`);
     }
-}
-
-function getApiKeyForProvider(type: LLMProviderType): string | undefined {
-    return process.env[PROVIDER_ENV_VARS[type]];
 }

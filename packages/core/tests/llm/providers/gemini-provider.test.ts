@@ -128,24 +128,11 @@ describe('GeminiProvider metadata', () => {
     });
 
     it('defaults the model to the gemini default', () => {
-        const orig = process.env.LLM_MODEL;
-        delete process.env.LLM_MODEL;
-        try {
-            expect(new GeminiProvider('k').defaultModel).toBe(GEMINI_DEFAULT_MODEL);
-        } finally {
-            if (orig !== undefined) process.env.LLM_MODEL = orig;
-        }
+        expect(new GeminiProvider('k').defaultModel).toBe(GEMINI_DEFAULT_MODEL);
     });
 
-    it('respects the LLM_MODEL env override for the default model', () => {
-        const orig = process.env.LLM_MODEL;
-        process.env.LLM_MODEL = 'gemini-from-env';
-        try {
-            expect(new GeminiProvider('k').defaultModel).toBe('gemini-from-env');
-        } finally {
-            if (orig === undefined) delete process.env.LLM_MODEL;
-            else process.env.LLM_MODEL = orig;
-        }
+    it('respects an injected default model', () => {
+        expect(new GeminiProvider('k', 'gemini-configured').defaultModel).toBe('gemini-configured');
     });
 
     it('returns the static model catalog', () => {

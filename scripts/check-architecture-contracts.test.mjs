@@ -35,3 +35,19 @@ test('allows the documented lyrics to spotify transition', () => {
   const violations = checkSource('packages/flows/lyrics/src/backend/repository.ts', "import { musicDb } from '@flows/spotify';");
   assert.deepEqual(violations, []);
 });
+
+test('rejects environment reads outside config factories', () => {
+  const violations = checkSource(
+    'packages/flows/trading/src/backend/services/example.ts',
+    'const enabled = process.env.FEATURE_ENABLED;',
+  );
+  assert.equal(violations[0]?.rule, 'env-in-config-only');
+});
+
+test('allows environment reads in explicitly named config modules', () => {
+  const violations = checkSource(
+    'packages/flows/trading/src/backend/config.ts',
+    'export const fromEnv = (env = process.env) => env.VALUE;',
+  );
+  assert.deepEqual(violations, []);
+});

@@ -1,5 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { TRADING_CONFIG, MENTOR_SYSTEM_PROMPT } from '../../src/backend/config';
+import { describe, it, expect } from 'vitest';
+import {
+  createTradingConfigFromEnv,
+  TRADING_CONFIG,
+  MENTOR_SYSTEM_PROMPT,
+} from '../../src/backend/config';
 
 describe('TRADING_CONFIG static values', () => {
   it('exposes Hurst thresholds with trending > mean-reverting', () => {
@@ -49,38 +53,18 @@ describe('TRADING_CONFIG static values', () => {
   });
 });
 
-describe('TRADING_CONFIG.DEFAULTS environment parsing', () => {
-  let origSymbol: string | undefined;
-  let origInterval: string | undefined;
-
-  beforeEach(() => {
-    origSymbol = process.env.TRADING_SYMBOL;
-    origInterval = process.env.TRADING_INTERVAL;
+describe('createTradingConfigFromEnv', () => {
+  it('falls back to BTCUSDT / 1m with advisor disabled', () => {
+    const config = createTradingConfigFromEnv({});
+    expect(config).toEqual({ symbol: 'BTCUSDT', interval: '1m', advisorAutoStart: false });
   });
 
-  afterEach(() => {
-    if (origSymbol === undefined) delete process.env.TRADING_SYMBOL;
-    else process.env.TRADING_SYMBOL = origSymbol;
-    if (origInterval === undefined) delete process.env.TRADING_INTERVAL;
-    else process.env.TRADING_INTERVAL = origInterval;
-    vi.resetModules();
-  });
-
-  it('falls back to BTCUSDT / 1m when env vars are unset', async () => {
-    delete process.env.TRADING_SYMBOL;
-    delete process.env.TRADING_INTERVAL;
-    vi.resetModules();
-    const { TRADING_CONFIG: fresh } = await import('../../src/backend/config');
-    expect(fresh.DEFAULTS.SYMBOL).toBe('BTCUSDT');
-    expect(fresh.DEFAULTS.INTERVAL).toBe('1m');
-  });
-
-  it('reads symbol and interval overrides from the environment', async () => {
-    process.env.TRADING_SYMBOL = 'ETHUSDT';
-    process.env.TRADING_INTERVAL = '15m';
-    vi.resetModules();
-    const { TRADING_CONFIG: fresh } = await import('../../src/backend/config');
-    expect(fresh.DEFAULTS.SYMBOL).toBe('ETHUSDT');
-    expect(fresh.DEFAULTS.INTERVAL).toBe('15m');
+  it('reads runtime overrides explicitly', () => {
+    const config = createTradingConfigFromEnv({
+      TRADING_SYMBOL: 'ETHUSDT',
+      TRADING_INTERVAL: '15m',
+      ADVISOR_AUTO_START: 'true',
+    });
+    expect(config).toEqual({ symbol: 'ETHUSDT', interval: '15m', advisorAutoStart: true });
   });
 });

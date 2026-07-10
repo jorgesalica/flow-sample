@@ -12,7 +12,7 @@ import { staticPlugin } from '@elysiajs/static';
 import * as fs from 'fs';
 import { createSpotifyRoutes } from '@flows/spotify';
 import { createLyricsRoutes } from '@flows/lyrics';
-import { createTradingRoutes } from '@flows/trading';
+import { createTradingConfigFromEnv, createTradingRoutes } from '@flows/trading';
 import { chatRoutes } from '@flows/chat';
 import { canvasFlowRoutes } from '@flows/canvas';
 import { logger } from '@flows/core';
@@ -63,7 +63,7 @@ export function createApp(config: BackendConfig) {
     // Flow routes (from flow packages)
     .use(createSpotifyRoutes(config))
     .use(createLyricsRoutes())
-    .use(createTradingRoutes())
+    .use(createTradingRoutes(createTradingConfigFromEnv()))
     .use(chatRoutes)
     .use(canvasFlowRoutes)
 

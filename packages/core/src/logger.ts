@@ -1,10 +1,19 @@
 import pino from 'pino';
 
-const isDev = process.env.NODE_ENV !== 'production';
+type LoggerEnv = Record<string, string | undefined>;
+
+export function createLoggerConfigFromEnv(env: LoggerEnv = process.env) {
+    return {
+        isDev: env.NODE_ENV !== 'production',
+        level: env.LOG_LEVEL || 'info',
+    };
+}
+
+const config = createLoggerConfigFromEnv();
 
 export const logger = pino({
-    level: process.env.LOG_LEVEL || 'info',
-    transport: isDev
+    level: config.level,
+    transport: config.isDev
         ? {
             target: 'pino-pretty',
             options: {

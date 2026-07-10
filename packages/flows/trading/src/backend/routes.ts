@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia';
 import { getTradingService, getMentorService, getSynthesizerService, AnalystService } from './services';
 import { fetchKlines, type KlineInterval } from '../adapters/binance';
 import { createLLMClient, logger } from '@flows/core';
-import { TRADING_CONFIG } from './config';
+import { createTradingConfigFromEnv, TRADING_CONFIG, type TradingRuntimeConfig } from './config';
 
 const log = logger.child({ module: 'TradingRoutes' });
 import {
@@ -19,9 +19,9 @@ import {
  *
  * Endpoints for the Trading Bot Flow (N1-N6)
  */
-export function createTradingRoutes() {
-  const tradingService = getTradingService();
-  const mentorService = getMentorService();
+export function createTradingRoutes(config: TradingRuntimeConfig = createTradingConfigFromEnv()) {
+  const tradingService = getTradingService({ symbol: config.symbol, interval: config.interval });
+  const mentorService = getMentorService(config.symbol, config.advisorAutoStart);
 
   return (
     new Elysia({ prefix: '/api/trading' })

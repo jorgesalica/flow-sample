@@ -125,10 +125,26 @@ export const TRADING_CONFIG = {
    * Default trading pair and timeframe (overridable via environment variables)
    */
   DEFAULTS: {
-    SYMBOL: process.env.TRADING_SYMBOL || 'BTCUSDT',
-    INTERVAL: process.env.TRADING_INTERVAL || '1m',
+    SYMBOL: 'BTCUSDT',
+    INTERVAL: '1m',
   },
 } as const;
+
+type Env = Record<string, string | undefined>;
+
+export interface TradingRuntimeConfig {
+  symbol: string;
+  interval: string;
+  advisorAutoStart: boolean;
+}
+
+export function createTradingConfigFromEnv(env: Env = process.env): TradingRuntimeConfig {
+  return {
+    symbol: env.TRADING_SYMBOL || TRADING_CONFIG.DEFAULTS.SYMBOL,
+    interval: env.TRADING_INTERVAL || TRADING_CONFIG.DEFAULTS.INTERVAL,
+    advisorAutoStart: env.ADVISOR_AUTO_START === 'true',
+  };
+}
 
 /**
  * Type-safe access to configuration values

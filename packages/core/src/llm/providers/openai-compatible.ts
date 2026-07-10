@@ -18,10 +18,10 @@ export class OpenAICompatibleProvider extends BaseLLMProvider {
     private readonly cfg: OpenAICompatibleConfig;
     private readonly _defaultModel: string;
 
-    constructor(apiKey: string, cfg: OpenAICompatibleConfig) {
+    constructor(apiKey: string, cfg: OpenAICompatibleConfig, defaultModel?: string) {
         super(apiKey);
         this.cfg = cfg;
-        this._defaultModel = process.env.LLM_MODEL || cfg.defaultModel;
+        this._defaultModel = defaultModel || cfg.defaultModel;
         console.log(`[${cfg.providerName}] Initialized with model: ${this._defaultModel}`);
     }
 

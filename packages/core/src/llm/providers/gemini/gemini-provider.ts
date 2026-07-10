@@ -10,16 +10,16 @@ const log = logger.child({ module: 'GeminiProvider' });
  * Gemini LLM Provider
  *
  * Uses Google's Gemini API via @google/genai SDK.
- * Model configurable via LLM_MODEL env var, defaults to gemini-2.5-flash
+ * Model is injected by the LLM env factory and defaults to gemini-2.5-flash.
  */
 export class GeminiProvider extends BaseLLMProvider {
     private client: GoogleGenAI;
     private _defaultModel: string;
 
-    constructor(apiKey: string) {
+    constructor(apiKey: string, defaultModel?: string) {
         super(apiKey);
         this.client = new GoogleGenAI({ apiKey });
-        this._defaultModel = process.env.LLM_MODEL || GEMINI_DEFAULT_MODEL;
+        this._defaultModel = defaultModel || GEMINI_DEFAULT_MODEL;
         log.debug({ model: this._defaultModel }, 'GeminiProvider initialized');
     }
 

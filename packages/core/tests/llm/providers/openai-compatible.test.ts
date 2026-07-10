@@ -10,14 +10,14 @@ const TEST_CATALOG: ModelInfo[] = [
 ];
 
 class TestProvider extends OpenAICompatibleProvider {
-    constructor(apiKey: string, extraHeaders?: Record<string, string>) {
+    constructor(apiKey: string, extraHeaders?: Record<string, string>, defaultModel?: string) {
         super(apiKey, {
             baseUrl: 'https://api.test.example',
             providerName: 'testprovider',
             defaultModel: 'model-a',
             catalog: TEST_CATALOG,
             extraHeaders,
-        });
+        }, defaultModel);
     }
 }
 
@@ -72,7 +72,6 @@ describe('OpenAICompatibleProvider', () => {
 
     afterEach(() => {
         vi.unstubAllGlobals();
-        delete process.env.LLM_MODEL;
     });
 
     // ── Properties ────────────────────────────────────────────────────
@@ -82,9 +81,8 @@ describe('OpenAICompatibleProvider', () => {
             expect(new TestProvider('key').defaultModel).toBe('model-a');
         });
 
-        it('LLM_MODEL env var overrides the catalog default', () => {
-            process.env.LLM_MODEL = 'model-b';
-            expect(new TestProvider('key').defaultModel).toBe('model-b');
+        it('an injected model overrides the catalog default', () => {
+            expect(new TestProvider('key', undefined, 'model-b').defaultModel).toBe('model-b');
         });
 
         it('providerName returns the configured name', () => {
