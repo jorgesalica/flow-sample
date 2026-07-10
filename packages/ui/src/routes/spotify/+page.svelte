@@ -10,4 +10,7 @@
   totalTracks={data.totalTracks}
   searchOptions={data.searchOptions}
   topStats={data.topStats}
+  genres={data.genres}
+  years={data.years}
+  isAuthenticated={data.isAuthenticated}
 />

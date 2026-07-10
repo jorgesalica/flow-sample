@@ -3,20 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { GenreCount, YearCount } from '@flows/shared';
 
 const loadTracks = vi.fn();
-const genresGet = vi.fn();
-const yearsGet = vi.fn();
-
 vi.mock('../api', () => ({ loadTracks: (...args: unknown[]) => loadTracks(...args) }));
-vi.mock('@lib/client', () => ({
-  api: {
-    api: {
-      spotify: {
-        genres: { get: () => genresGet() },
-        years: { get: () => yearsGet() },
-      },
-    },
-  },
-}));
 
 import FilterPanel from './FilterPanel.svelte';
 import { spotifyStore } from '../stores.svelte';
@@ -24,10 +11,7 @@ import { spotifyStore } from '../stores.svelte';
 const GENRES: GenreCount[] = [{ genre: 'rock', count: 12 }];
 const YEARS: YearCount[] = [{ year: 2021, count: 8 }];
 
-function mockOk() {
-  genresGet.mockResolvedValue({ data: GENRES, error: null });
-  yearsGet.mockResolvedValue({ data: YEARS, error: null });
-}
+const renderPanel = () => render(FilterPanel, { props: { genres: GENRES, years: YEARS } });
 
 describe('FilterPanel', () => {
   beforeEach(() => {
@@ -39,13 +23,10 @@ describe('FilterPanel', () => {
       sortOrder: 'desc',
     };
     loadTracks.mockClear();
-    genresGet.mockReset();
-    yearsGet.mockReset();
   });
 
   it('renders the Filters toggle button collapsed by default', () => {
-    mockOk();
-    render(FilterPanel);
+    renderPanel();
 
     expect(screen.getByRole('button', { name: /filters/i })).toBeInTheDocument();
     // Panel is closed: the Apply Filters button is not present yet.
@@ -53,8 +34,7 @@ describe('FilterPanel', () => {
   });
 
   it('opens the panel and shows the filter controls when toggled', async () => {
-    mockOk();
-    render(FilterPanel);
+    renderPanel();
 
     await fireEvent.click(screen.getByRole('button', { name: /filters/i }));
 
@@ -66,8 +46,7 @@ describe('FilterPanel', () => {
   });
 
   it('populates genre and year options from the fetched data', async () => {
-    mockOk();
-    render(FilterPanel);
+    renderPanel();
 
     await fireEvent.click(screen.getByRole('button', { name: /filters/i }));
 
@@ -78,8 +57,7 @@ describe('FilterPanel', () => {
   });
 
   it('applies selected filters and closes the panel', async () => {
-    mockOk();
-    render(FilterPanel);
+    renderPanel();
 
     await fireEvent.click(screen.getByRole('button', { name: /filters/i }));
     await waitFor(() => screen.getByRole('option', { name: 'rock (12)' }));
@@ -100,8 +78,7 @@ describe('FilterPanel', () => {
   });
 
   it('shows an active-filter count badge once a filter is chosen', async () => {
-    mockOk();
-    render(FilterPanel);
+    renderPanel();
 
     await fireEvent.click(screen.getByRole('button', { name: /filters/i }));
     await waitFor(() => screen.getByRole('option', { name: 'rock (12)' }));
@@ -113,8 +90,7 @@ describe('FilterPanel', () => {
   });
 
   it('clears all filters back to defaults and reloads', async () => {
-    mockOk();
-    render(FilterPanel);
+    renderPanel();
 
     await fireEvent.click(screen.getByRole('button', { name: /filters/i }));
     await waitFor(() => screen.getByRole('option', { name: 'rock (12)' }));
@@ -126,10 +102,8 @@ describe('FilterPanel', () => {
     expect(screen.getByLabelText('Genre')).toHaveValue('');
   });
 
-  it('survives a failed options fetch and still renders the default options', async () => {
-    genresGet.mockResolvedValue({ data: null, error: { status: 500 } });
-    yearsGet.mockResolvedValue({ data: null, error: { status: 500 } });
-    render(FilterPanel);
+  it('renders default options when the loader supplies empty lists', async () => {
+    render(FilterPanel, { props: { genres: [], years: [] } });
 
     await fireEvent.click(screen.getByRole('button', { name: /filters/i }));
 

@@ -1,6 +1,8 @@
 import type { CanvasAnalysis } from '@flows/shared';
 import * as api from './api';
 import { showError } from '@lib/toast';
+import { invalidateData } from '@lib/invalidate';
+import { INVALIDATION } from '@lib/invalidation';
 
 /**
  * Runes-based canvas store (replaces the previous svelte/store writable).
@@ -69,6 +71,7 @@ class CanvasStore {
       if (this.#activeCanvas?.sourceId === id) {
         this.#activeCanvas = null;
       }
+      await invalidateData(INVALIDATION.CANVAS_LIST);
     } catch (e: unknown) {
       showError(e instanceof Error ? e.message : String(e));
     }
@@ -80,6 +83,7 @@ class CanvasStore {
       const newCanvas = await api.createAndAnalyzeCanvas(text, title, author);
       this.#canvases = [newCanvas, ...this.#canvases];
       this.#activeCanvas = newCanvas;
+      await invalidateData(INVALIDATION.CANVAS_LIST);
     } catch (e: unknown) {
       showError(e instanceof Error ? e.message : String(e));
     } finally {

@@ -36,12 +36,14 @@ function makeCanvas(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
 
 // The loader takes no inputs we rely on, but `load` is typed as PageLoad —
 // pass a minimal typed stand-in for the SvelteKit load event.
-const event = {} as Parameters<typeof load>[0];
+const depends = vi.fn();
+const event = { depends } as unknown as Parameters<typeof load>[0];
 const runLoad = () => load(event);
 
 describe('canvas +page loader', () => {
   beforeEach(() => {
     canvasGet.mockReset();
+    depends.mockReset();
   });
 
   it('returns the canvas list fetched from the Eden client', async () => {
@@ -51,6 +53,7 @@ describe('canvas +page loader', () => {
     const result = await runLoad();
 
     expect(canvasGet).toHaveBeenCalledOnce();
+    expect(depends).toHaveBeenCalledWith('app:canvas-list');
     expect(result).toEqual({ canvases: list });
   });
 

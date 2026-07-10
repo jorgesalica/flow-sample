@@ -5,16 +5,14 @@
   import LayerToggle from '@components/canvas/LayerToggle.svelte';
   import TokenTooltip from '@components/canvas/TokenTooltip.svelte';
   import FlowLayout from '../../components/layout/FlowLayout.svelte';
-  import { untrack } from 'svelte';
   import { canvasStore } from './stores.svelte';
   import type { Annotation, CanvasAnalysis } from '@flows/shared';
 
   // Initial canvas list comes from the route loader (+page.ts).
   let { canvases = [] }: { canvases?: CanvasAnalysis[] } = $props();
 
-  // Seed the store once with the loader's data instead of fetching on mount.
-  // `untrack` makes the one-time intent explicit (no re-seed on later changes).
-  untrack(() => canvasStore.setCanvases(canvases));
+  // Keep the store aligned when a mutation invalidates and reruns the loader.
+  $effect(() => canvasStore.setCanvases(canvases));
 
   let isMobileMenuOpen = $state(false);
 

@@ -3,6 +3,8 @@ import type { TopStats } from '@lib/types';
 import { spotifyStore } from './stores.svelte';
 import { api } from '@lib/client';
 import { showError, showSuccess, showLoading, dismissToast } from '@lib/toast';
+import { invalidateData } from '@lib/invalidate';
+import { INVALIDATION } from '@lib/invalidation';
 
 /**
  * Maps the raw stats payload from the API into the UI's TopStats shape.
@@ -117,10 +119,8 @@ export async function fetchFromSpotify(): Promise<void> {
       tone: 'success',
     };
 
-    // Reload everything
     spotifyStore.searchOptions = { ...spotifyStore.searchOptions, page: 1 };
-    await loadTracks();
-    await updateStats();
+    await invalidateData(INVALIDATION.SPOTIFY_LIBRARY);
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') return;
 
@@ -131,16 +131,5 @@ export async function fetchFromSpotify(): Promise<void> {
   } finally {
     spotifyStore.isLoading = false;
     syncController = null;
-  }
-}
-
-export async function checkAuthStatus(): Promise<void> {
-  try {
-    const { data, error } = await api.api.spotify.auth.status.get();
-    if (!error && data) {
-      spotifyStore.isAuthenticated = (data as { connected: boolean }).connected;
-    }
-  } catch (e) {
-    console.error('Failed to check auth status', e);
   }
 }

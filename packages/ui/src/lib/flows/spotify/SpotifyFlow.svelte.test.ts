@@ -4,13 +4,11 @@ import type { Track, SearchOptions } from '@flows/shared';
 import type { TopStats } from '@lib/types';
 
 const loadTracks = vi.fn();
-const checkAuthStatus = vi.fn();
 
-// Mock the flow's api edge: SpotifyFlow's onMount fires checkAuthStatus only now —
-// the initial tracks/stats fetch moved to the +page.ts loader and arrives via props.
+// Mock the flow's interactive API edge; route data is loader-owned.
+// Initial tracks, stats, options, and auth arrive through loader props.
 vi.mock('./api', () => ({
   loadTracks: (...args: unknown[]) => loadTracks(...args),
-  checkAuthStatus: (...args: unknown[]) => checkAuthStatus(...args),
   // Re-exported indirectly by child components we also have to satisfy.
   fetchFromSpotify: vi.fn(),
   cancelSync: vi.fn(),
@@ -88,13 +86,12 @@ describe('SpotifyFlow render states', () => {
   beforeEach(() => {
     resetStore();
     loadTracks.mockClear();
-    checkAuthStatus.mockClear();
   });
 
-  it('checks auth on mount and does NOT refetch tracks (the loader already did)', () => {
-    render(SpotifyFlow, { props: props() });
+  it('hydrates auth from loader props and does not refetch tracks', async () => {
+    render(SpotifyFlow, { props: { ...props(), isAuthenticated: true } });
 
-    expect(checkAuthStatus).toHaveBeenCalledOnce();
+    await waitFor(() => expect(spotifyStore.isAuthenticated).toBe(true));
     expect(loadTracks).not.toHaveBeenCalled();
   });
 

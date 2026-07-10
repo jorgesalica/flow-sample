@@ -1,5 +1,6 @@
 import type { CanvasAnalysis } from '@flows/shared';
 import { api } from '@lib/client';
+import { INVALIDATION } from '@lib/invalidation';
 import type { PageLoad } from './$types';
 
 // SPA only — no SSR for this route.
@@ -16,7 +17,8 @@ export interface CanvasPageData {
  * its data before the component mounts. Interactive actions (load/create/
  * delete) still run through the flow's store + api.ts.
  */
-export const load: PageLoad = async (): Promise<CanvasPageData> => {
+export const load: PageLoad = async ({ depends }): Promise<CanvasPageData> => {
+  depends(INVALIDATION.CANVAS_LIST);
   const { data, error } = await api.api.canvas.get();
 
   if (error) {

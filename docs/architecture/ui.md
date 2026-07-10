@@ -85,9 +85,15 @@ The typed Eden client lives in `lib/client.ts` (`treaty<App>(...)`, importing
 `type { App }` from the backend) — calls like `api.api.spotify.tracks.search.get({...})`
 are fully typed. In dev, Vite proxies `/api` and `/outputs` to the backend on `:4173`.
 
-> Convention target: move per-route data fetching into SvelteKit `+page.ts` loaders
-> (universal load) over the Eden client, instead of `onMount`. See
-> [conventions.md](../conventions.md) §4.
+Persistent route data belongs in SvelteKit `+page.ts` universal loaders and uses Eden.
+Loaders register stable dependency keys from `lib/invalidation.ts`; successful mutations
+call the `lib/invalidate.ts` adapter so SvelteKit reruns only the affected loader. Flow
+components receive loader data as props and hydrate their runes state reactively.
+
+`onMount` remains appropriate for browser-only behavior such as chart construction,
+`IntersectionObserver`, URL cleanup after OAuth redirects, and SSE subscriptions. Raw
+`fetch` is reserved for endpoints Eden cannot model cleanly; each exception must stay in
+the flow's `api.ts` and be covered by a contract test.
 
 ## Styling
 
