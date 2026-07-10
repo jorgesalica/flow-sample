@@ -3,7 +3,12 @@
 // Backend exports
 export { createTradingRoutes } from './backend/routes';
 export { getTradingService, getMentorService, getSynthesizerService, AnalystService } from './backend/services';
-export { TRADING_CONFIG, type TradingConfig } from './backend/config';
+export {
+  createTradingConfigFromEnv,
+  TRADING_CONFIG,
+  type TradingConfig,
+  type TradingRuntimeConfig,
+} from './backend/config';
 
 // Domain math exports
 export {

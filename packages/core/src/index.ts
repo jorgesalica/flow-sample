@@ -7,7 +7,15 @@ export { logger } from './logger';
 export { SimpleCache } from './cache';
 
 // LLM — Client
-export { LLMClient, createLLMClient, type LLMProviderType } from './llm';
+export {
+  LLMClient,
+  createLLMClient,
+  createLLMClientFromEnv,
+  createLLMConfigFromEnv,
+  type LLMEnv,
+  type LLMProviderType,
+  type LLMRuntimeConfig,
+} from './llm';
 
 // LLM — Types
 export type {

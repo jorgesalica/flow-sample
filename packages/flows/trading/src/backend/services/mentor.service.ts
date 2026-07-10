@@ -34,11 +34,9 @@ export class MentorService {
   private insightCount: number = 0;
   private symbol: string;
 
-  constructor(symbol?: string) {
+  constructor(symbol?: string, autoStart: boolean = false) {
     this.symbol = symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
 
-    // Auto-start based on environment
-    const autoStart = process.env.ADVISOR_AUTO_START === 'true';
     if (autoStart) {
       this.enable();
     }
@@ -272,9 +270,9 @@ export class MentorService {
 // Singleton
 let mentorInstance: MentorService | null = null;
 
-export function getMentorService(symbol?: string): MentorService {
+export function getMentorService(symbol?: string, autoStart: boolean = false): MentorService {
   if (!mentorInstance) {
-    mentorInstance = new MentorService(symbol);
+    mentorInstance = new MentorService(symbol, autoStart);
   }
   return mentorInstance;
 }

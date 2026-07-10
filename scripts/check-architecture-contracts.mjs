@@ -53,6 +53,7 @@ export function checkSource(file, source) {
   const hardcodedOrigin = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?/g;
   const sqlCall = /\.(?:prepare|exec)\s*\(/g;
   const flowImport = /from\s+['"]@flows\/(spotify|lyrics|trading|chat|canvas)(?:\/[^'"]*)?['"]/g;
+  const processEnv = /process\.env/g;
 
   for (const match of source.matchAll(explicitAny)) {
     violations.push(violation(file, source, match, 'no-explicit-any', 'Replace `any` with a concrete type or safe narrowing.'));
@@ -78,6 +79,13 @@ export function checkSource(file, source) {
       if (match[1] !== flowMatch[1]) {
         violations.push(violation(file, source, match, 'no-sibling-flow-imports', 'Depend on @flows/shared, @flows/core, or an injected port instead.'));
       }
+    }
+  }
+
+  const isEnvOwner = /(?:config|env|logger)\.ts$/.test(file) || file.endsWith('/playwright.config.ts');
+  if (!isEnvOwner) {
+    for (const match of source.matchAll(processEnv)) {
+      violations.push(violation(file, source, match, 'env-in-config-only', 'Read environment variables in an explicitly named config/env factory and inject the result.'));
     }
   }
 

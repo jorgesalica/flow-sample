@@ -37,10 +37,10 @@ Each model in the catalog has a `tier` and `pricing`:
 ### Usage
 
 ```typescript
-import { createLLMClient } from '@flows/core';
+import { createLLMClientFromEnv } from '@flows/core';
 
-// Uses LLM_PROVIDER env var (default: gemini)
-const client = createLLMClient();
+// The named composition factory reads LLM_PROVIDER, LLM_MODEL, and provider API keys.
+const client = createLLMClientFromEnv();
 const response = await client.generate({
     messages: [{ role: 'user', content: 'Hello!' }],
 });
@@ -54,14 +54,17 @@ console.log(response.model);     // "gemini-2.5-flash"
 ```typescript
 import { LLMClient } from '@flows/core';
 
-const client = new LLMClient('groq');
+const client = new LLMClient('groq', groqApiKey, 'llama-3.3-70b-versatile');
 ```
 
 **Rotation mode** — round-robin across free providers (auto-fallback on 429):
 
 ```typescript
-const client = LLMClient.createRotation();
-// Or via env: LLM_PROVIDER=rotation
+const client = createLLMClientFromEnv({
+    LLM_PROVIDER: 'rotation',
+    GROQ_API_KEY: groqApiKey,
+    OPENROUTER_API_KEY: openRouterApiKey,
+});
 ```
 
 ### File Structure

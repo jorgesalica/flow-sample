@@ -173,7 +173,7 @@ branch: **PRs target `main`**. There is no `develop` branch here.
 `pnpm check:architecture` enforces the rules that can be detected reliably without a
 heavy static-analysis framework. It checks production sources for explicit `any`,
 hardcoded localhost origins in UI API modules, SQL calls outside persistence modules,
-and direct imports between sibling flow packages. The command is part of `pnpm verify`,
+environment reads outside named config factories, and direct imports between sibling flow packages. The command is part of `pnpm verify`,
 and its own behavior is covered by `pnpm test:architecture`.
 
 The only sibling-flow exception is the current Lyrics -> Spotify dependency in the Lyrics

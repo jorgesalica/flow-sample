@@ -9,6 +9,7 @@ export { LLMClient, type LLMProviderType } from './client';
 
 // ── Factory ──────────────────────────────────────────────────────────
 import { LLMClient, type LLMProviderType } from './client';
+import { createLLMConfigFromEnv, type LLMEnv } from './env';
 
 /**
  * Create an LLMClient using environment variables.
@@ -17,15 +18,18 @@ import { LLMClient, type LLMProviderType } from './client';
  * - LLM_PROVIDER=groq     → uses Groq directly
  * - Defaults to gemini
  */
-export function createLLMClient(): LLMClient {
-    const providerType = process.env.LLM_PROVIDER || 'gemini';
+export function createLLMClientFromEnv(env?: LLMEnv): LLMClient {
+    const config = createLLMConfigFromEnv(env);
 
-    if (providerType === 'rotation') {
-        return LLMClient.createRotation();
+    if (config.provider === 'rotation') {
+        return LLMClient.createRotation(config);
     }
 
-    return new LLMClient(providerType as LLMProviderType);
+    return new LLMClient(config.provider, config.apiKeys[config.provider], config.model);
 }
+
+export const createLLMClient = createLLMClientFromEnv;
+export { createLLMConfigFromEnv, type LLMEnv, type LLMRuntimeConfig } from './env';
 
 // ── Types ────────────────────────────────────────────────────────────
 export type {

@@ -89,12 +89,8 @@ function makeLLMClient(content: string) {
 }
 
 describe('MentorService', () => {
-  let prevAutoStart: string | undefined;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    prevAutoStart = process.env.ADVISOR_AUTO_START;
-    delete process.env.ADVISOR_AUTO_START;
     buildMessagesMock.mockReturnValue({
       messages: [
         { role: 'system', content: 'sys' },
@@ -104,22 +100,16 @@ describe('MentorService', () => {
     });
   });
 
-  afterEach(() => {
-    if (prevAutoStart === undefined) delete process.env.ADVISOR_AUTO_START;
-    else process.env.ADVISOR_AUTO_START = prevAutoStart;
-  });
-
   describe('enable / disable / toggle', () => {
-    it('starts disabled when ADVISOR_AUTO_START is not "true"', () => {
+    it('starts disabled by default', () => {
       const svc = new MentorService(SYMBOL);
       expect(svc.getState().isEnabled).toBe(false);
       expect(createLLMClientMock).not.toHaveBeenCalled();
     });
 
-    it('auto-starts when ADVISOR_AUTO_START is "true"', () => {
-      process.env.ADVISOR_AUTO_START = 'true';
+    it('auto-starts when configured', () => {
       createLLMClientMock.mockReturnValue(makeLLMClient(validInsightJson()));
-      const svc = new MentorService(SYMBOL);
+      const svc = new MentorService(SYMBOL, true);
       expect(svc.getState().isEnabled).toBe(true);
       expect(createLLMClientMock).toHaveBeenCalled();
     });

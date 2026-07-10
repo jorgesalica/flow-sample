@@ -20,6 +20,18 @@ routes      → Elysia API routes + SSE streaming (/api/trading/*)
 - Server-Sent Events (SSE) for live UI updates
 - Start/stop stream controls and advisor toggle
 
+## Runtime Configuration
+
+`createTradingConfigFromEnv()` owns environment parsing at composition time. The route
+factory receives the resulting `{ symbol, interval, advisorAutoStart }` object, and
+services do not read `process.env` directly.
+
+| Variable | Default | Purpose |
+| :------- | :------ | :------ |
+| `TRADING_SYMBOL` | `BTCUSDT` | Binance pair used by the stream and analysis services |
+| `TRADING_INTERVAL` | `1m` | Default candle interval |
+| `ADVISOR_AUTO_START` | `false` | Enables the mentor service during route composition when set to `true` |
+
 ## API Routes
 
 | Method | Path | Description |
