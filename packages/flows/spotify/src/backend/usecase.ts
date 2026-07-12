@@ -1,7 +1,7 @@
 import type { Track } from '@flows/shared';
-import type { TrackRepository } from './repository';
+import type { TrackRepository } from '@flows/shared';
 import { logger } from '@flows/core';
-import { rebuildFtsIndex } from './database';
+import { rebuildFtsIndex } from '@flows/music';
 
 const log = logger.child({ module: 'SpotifyUseCase' });
 

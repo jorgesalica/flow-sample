@@ -45,9 +45,9 @@ testDb.exec(`
   );
 `);
 
-vi.mock('../../src/backend/database', () => ({ musicDb: testDb }));
+vi.mock('../src/database', () => ({ musicDb: testDb }));
 
-const { SQLiteTrackRepository } = await import('../../src/backend/repository');
+const { SQLiteTrackRepository } = await import('../src/track.repository');
 
 // ── Fixture factory ───────────────────────────────────────────────────
 function makeTrack(overrides: Partial<Track> = {}): Track {

@@ -1,7 +1,7 @@
 import { createDatabase } from '@flows/core';
 import type Database from 'better-sqlite3';
 
-// Create the shared music database (Spotify + Lyrics)
+// Shared persistence for music-domain flows.
 export const musicDb: Database.Database = createDatabase('music.db');
 
 // Enable foreign keys
@@ -51,20 +51,6 @@ musicDb.exec(`
   CREATE INDEX IF NOT EXISTS idx_artists_name ON artists(name);
   CREATE INDEX IF NOT EXISTS idx_artist_genres_genre ON artist_genres(genre);
 
-  -- Artist cache for individual Spotify API lookups (Feb 2026 migration)
-  CREATE TABLE IF NOT EXISTS artist_cache (
-    id TEXT PRIMARY KEY,
-    genres TEXT,
-    image_url TEXT,
-    cached_at INTEGER
-  );
-
-  -- Token cache for Spotify access tokens
-  CREATE TABLE IF NOT EXISTS token_cache (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    expires_at INTEGER NOT NULL
-  );
 `);
 
 // FTS5 Full-text search (standalone table, manually synced)

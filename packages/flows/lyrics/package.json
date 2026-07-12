@@ -13,8 +13,8 @@
     },
     "dependencies": {
         "@flows/core": "workspace:*",
+        "@flows/music": "workspace:*",
         "@flows/shared": "workspace:*",
-        "@flows/spotify": "workspace:*",
         "axios": "^1.13.2",
         "better-sqlite3": "^12.5.0",
         "elysia": "^1.4.18",

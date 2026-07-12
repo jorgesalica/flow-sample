@@ -1,5 +1,5 @@
 import type { LyricsStatus } from '@flows/shared';
-import { musicDb } from '@flows/spotify';
+import { musicDb } from '@flows/music';
 import { logger } from '@flows/core';
 import type { LyricsRepository, LyricsData, LyricsRecord } from '../domain/ports';
 

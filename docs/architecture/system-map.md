@@ -34,6 +34,9 @@ flowchart LR
     mounted --> chat["@flows/chat"]
     mounted --> canvas["@flows/canvas"]
 
+    spotify --> music["@flows/music"]
+    lyrics --> music
+
     spotify --> core["@flows/core"]
     lyrics --> core
     trading --> core
@@ -67,6 +70,7 @@ flowchart LR
 | `packages/ui` | Browser app | routes, loaders, flow surfaces, registry, UI state, design primitives | backend domain internals, raw API URLs, persistent server state |
 | `packages/core` | Shared infrastructure | logger, cache, database factory, LLM client/providers | flow-specific business rules, DTOs, route handlers |
 | `packages/shared` | Cross-boundary contract | DTOs, constants, public unions crossing UI/server | implementation details, persistence rows, SDK types |
+| `packages/music` | Shared music persistence | `music.db`, track/artist/genre schema, FTS, neutral track repository | Spotify API/OAuth, LrcLib, flow orchestration, UI DTO ownership |
 | `packages/flows/*` | Backend bounded contexts | domain, ports, adapters, repositories, services, Elysia route factory | global app startup, unrelated flow logic, UI components |
 
 ## Opinion on Flow Packages
@@ -103,9 +107,8 @@ A flow is "extractable enough" when these are true:
 - Its README documents route prefixes, env vars, external services, and test
   commands.
 
-Current known exception: shared music database ownership still leaks through
-the Spotify/Lyrics boundary. That should become neutral ownership before the
-Board/Canvas work grows.
+Shared track persistence is owned by `@flows/music`. Spotify and Lyrics may depend on its
+public exports; they must not import each other's internals.
 
 ## Frontend Component Map
 

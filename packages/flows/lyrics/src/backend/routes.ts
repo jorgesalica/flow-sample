@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { LrcLibAdapter } from './adapter';
 import { SQLiteLyricsRepository } from './repository';
-import { SQLiteTrackRepository } from '@flows/spotify';
+import { SQLiteTrackRepository } from '@flows/music';
 import { logger, LLMClient } from '@flows/core';
 import type { LyricsStatus, TrackRepository } from '@flows/shared';
 import { createCanvasRoutes } from './canvas/canvas.routes';

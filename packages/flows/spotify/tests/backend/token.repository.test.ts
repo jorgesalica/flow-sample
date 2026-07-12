@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
 
-// In-memory DB injected via the mocked './database' module.
+// In-memory DB injected via the mocked @flows/music package.
 const testDb = new Database(':memory:');
 testDb.exec(`
   CREATE TABLE IF NOT EXISTS token_cache (
@@ -11,7 +11,7 @@ testDb.exec(`
   );
 `);
 
-vi.mock('../../src/backend/database', () => ({ musicDb: testDb }));
+vi.mock('@flows/music', () => ({ musicDb: testDb }));
 
 const { SQLiteTokenRepository } = await import('../../src/backend/token.repository');
 

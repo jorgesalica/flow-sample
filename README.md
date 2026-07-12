@@ -20,6 +20,7 @@ expandable items while their dedicated routes remain available.
 ```text
 packages/
   core/             cross-cutting runtime infrastructure (@flows/core)
+  music/            neutral shared music persistence (@flows/music)
   shared/           client/server DTOs and constants (@flows/shared)
   backend/          Elysia application host (@flows/backend)
   ui/               SvelteKit and Svelte 5 frontend (@flows/ui)

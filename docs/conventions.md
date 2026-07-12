@@ -131,7 +131,7 @@ The test-layer matrix and change-specific verification requirements live in
 - **Test the contract:** happy path + boundaries + error/absence. Verify negative space too
   (assert the thing that should *not* be there).
 - **Mock the edge, run the real domain.** Mock adapters/SDKs and DB connections (see the
-  lyrics repository test mocking `@flows/spotify`'s `musicDb` with an in-memory DB); never
+  lyrics repository test mocking `@flows/music`'s `musicDb` with an in-memory DB); never
   re-implement the logic under test inside the mock.
 - **Factories over inline objects** for fixtures; override only the meaningful fields. Use
   fake data, never real credentials/PII.
@@ -187,11 +187,9 @@ and its own behavior is covered by `pnpm test:architecture`.
 `pnpm check:docs` validates local Markdown links. Both contract checks are part of
 `pnpm verify` and run in CI.
 
-The only sibling-flow exception is the current Lyrics -> Spotify dependency in the Lyrics
-routes and repositories. Both flows intentionally share `musicDb` and the Spotify track
-repository today. Keep the exception limited to the paths listed in
-`scripts/check-architecture-contracts.mjs`; remove it when shared music persistence moves
-to `@flows/core` or a dedicated package.
+There are no sibling-flow import exceptions. Shared music persistence belongs to
+`@flows/music`; cross-wire DTOs remain in `@flows/shared`, and generic runtime concerns
+remain in `@flows/core`.
 
 ---
 

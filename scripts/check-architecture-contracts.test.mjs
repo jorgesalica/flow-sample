@@ -31,9 +31,9 @@ test('rejects sibling flow imports', () => {
   assert.equal(violations[0]?.rule, 'no-sibling-flow-imports');
 });
 
-test('allows the documented lyrics to spotify transition', () => {
+test('rejects the former lyrics to spotify persistence dependency', () => {
   const violations = checkSource('packages/flows/lyrics/src/backend/repository.ts', "import { musicDb } from '@flows/spotify';");
-  assert.deepEqual(violations, []);
+  assert.equal(violations[0]?.rule, 'no-sibling-flow-imports');
 });
 
 test('rejects environment reads outside config factories', () => {
