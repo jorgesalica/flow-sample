@@ -89,7 +89,7 @@ describe('LyricsCanvas', () => {
 
     render(LyricsCanvas, { props: { trackId: 'track-1' } });
 
-    expect(screen.getByText('Loading canvas...')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Loading canvas');
   });
 
   it('renders the needs-analysis state with a Generate Analysis button', async () => {
@@ -108,9 +108,9 @@ describe('LyricsCanvas', () => {
     render(LyricsCanvas, { props: { trackId: 'track-1' } });
 
     expect(await screen.findByText('Canvas Analysis')).toBeInTheDocument();
-    expect(screen.getByText('🎵 A minor')).toBeInTheDocument();
-    expect(screen.getByText('⏱️ 120 BPM')).toBeInTheDocument();
-    expect(screen.getByText('✨ melancholy')).toBeInTheDocument();
+    expect(screen.getByText('Key: A minor')).toBeInTheDocument();
+    expect(screen.getByText('120 BPM')).toBeInTheDocument();
+    expect(screen.getByText('Mood: melancholy')).toBeInTheDocument();
     // Tokens rendered by the child TokenRenderer.
     expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText('world')).toBeInTheDocument();
@@ -129,7 +129,9 @@ describe('LyricsCanvas', () => {
 
     render(LyricsCanvas, { props: { trackId: 'track-1' } });
 
-    expect(await screen.findByText('Canvas backend down')).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Canvas unavailable');
+    expect(alert).toHaveTextContent('Canvas backend down');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
@@ -179,5 +181,23 @@ describe('LyricsCanvas', () => {
     await screen.findByText('Canvas Analysis');
     expect(screen.getByText('No overarching meaning analysis found.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Meaning/ })).toBeInTheDocument();
+  });
+
+  it('generates the meaning from the empty interpretation state', async () => {
+    getCanvasAnalysis.mockResolvedValue(makeAnalysis());
+    getLyrics.mockResolvedValue(null);
+    interpretLyrics.mockImplementation(
+      async (_id: string, onEvent: (e: InterpretEvent) => void) => {
+        onEvent({ type: 'cached', interpretation: 'A resolved meaning.' });
+      }
+    );
+
+    render(LyricsCanvas, { props: { trackId: 'track-1' } });
+    const generateBtn = await screen.findByRole('button', { name: 'Generate Meaning' });
+
+    await fireEvent.click(generateBtn);
+
+    expect(interpretLyrics).toHaveBeenCalledWith('track-1', expect.any(Function));
+    expect(await screen.findByText('A resolved meaning.')).toBeInTheDocument();
   });
 });

@@ -21,11 +21,13 @@ describe('LayerToggle', () => {
     expect(screen.getByText('🎸')).toBeInTheDocument();
   });
 
-  it('marks active layers with the active class and leaves others inactive', () => {
+  it('exposes active layers through aria-pressed and leaves others inactive', () => {
     render(LayerToggle, { props: { layers: LAYERS, activeLayers: ['meaning'] } });
 
     const meaningBtn = screen.getByTitle('Toggle Meaning');
     const chordsBtn = screen.getByTitle('Toggle Chords');
+    expect(meaningBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(chordsBtn).toHaveAttribute('aria-pressed', 'false');
     expect(meaningBtn.className).toContain('active');
     expect(chordsBtn.className).not.toContain('active');
   });
