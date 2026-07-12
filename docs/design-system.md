@@ -1,6 +1,6 @@
-# Design System - Cosmic Flow
+# Design System - Flow UI
 
-Dark space theme with blue/green accents.
+Dark operational UI with semantic primitives and selectable galaxy, fire, and organic accents.
 
 ---
 
@@ -55,6 +55,14 @@ Dark space theme with blue/green accents.
 ---
 
 ## Components
+
+Shared primitives live in `packages/ui/src/lib/components/ui` and are exported from
+`@lib/components`. New flow UI should compose `Button`, `IconButton`, `Field`, `Badge`,
+`AsyncState`, and `ModalShell` before adding flow-local equivalents.
+
+Theme selection uses `data-theme` on an ancestor. The default galaxy palette is cyan,
+`data-theme="fire"` uses rose accents, and `data-theme="organic"` uses lime accents.
+Components consume semantic `--ui-*` variables rather than palette names directly.
 
 ### Cards
 
