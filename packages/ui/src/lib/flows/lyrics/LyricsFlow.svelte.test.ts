@@ -97,9 +97,11 @@ describe('LyricsFlow', () => {
     renderFlow();
     await screen.findByText('Recent Tracks');
 
-    await fireEvent.change(screen.getByRole('combobox'), { target: { value: 'not_found' } });
+    await fireEvent.change(screen.getByRole('combobox', { name: 'Filter by lyrics status' }), {
+      target: { value: 'not_found' },
+    });
 
-    expect(await screen.findByText('Loading lyrics data...')).toBeInTheDocument();
+    expect(await screen.findByRole('status')).toHaveTextContent('Loading lyrics data');
   });
 
   it('renders the stats grid and the tracks table from loaded data', async () => {
@@ -162,7 +164,7 @@ describe('LyricsFlow', () => {
     await screen.findByText('Recent Tracks');
 
     getLyricsLibrary.mockClear();
-    const select = screen.getByRole('combobox');
+    const select = screen.getByRole('combobox', { name: 'Filter by lyrics status' });
     await fireEvent.change(select, { target: { value: 'not_found' } });
 
     await waitFor(() => {

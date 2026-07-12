@@ -4,7 +4,7 @@
   import type { LyricsPageData, LyricsTrackRow } from '../../../routes/lyrics/+page';
   import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from './api';
   import { toast } from '@lib/toast';
-  import { FlowLayout } from '@lib/components';
+  import { AsyncState, Badge, Button, FlowLayout, IconButton } from '@lib/components';
   import LyricsModal from './components/LyricsModal.svelte';
   import LyricsCanvas from './LyricsCanvas.svelte';
 
@@ -160,28 +160,28 @@
     return `${Math.round((value / total) * 100)}%`;
   }
 
-  function getStatusColor(status: string): string {
+  function getStatusTone(status: string): 'success' | 'danger' | 'info' {
     switch (status) {
       case 'found':
-        return 'text-aurora bg-aurora/10 border-aurora/20';
+        return 'success';
       case 'not_found':
-        return 'text-red-400 bg-red-400/10 border-red-400/20';
+        return 'danger';
       default:
-        return 'text-pulsar bg-pulsar/10 border-pulsar/20';
+        return 'info';
     }
   }
 </script>
 
 <FlowLayout>
-  <div class="h-full w-full overflow-hidden flex flex-col pb-8">
+  <div class="h-full w-full overflow-hidden flex flex-col pb-8" data-theme="organic">
     <!-- Header -->
     <header
       class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
     >
       <div>
-        <h1 class="text-3xl md:text-4xl font-bold flex items-center gap-3">
-          <span>🎤</span>
-          <span class="text-cosmic">Lyrics Dashboard</span>
+        <h1 class="flex min-w-0 items-center gap-3 text-2xl font-bold sm:text-3xl md:text-4xl">
+          <span aria-hidden="true">🎤</span>
+          <span class="min-w-0 text-cosmic">Lyrics Dashboard</span>
         </h1>
         <p class="text-pulsar mt-2 max-w-xl">
           Manage lyrics availability. To read lyrics, visit the
@@ -192,15 +192,13 @@
       <!-- Actions -->
       <div class="flex items-center gap-3">
         <!-- Retry Failed Button -->
-        <button
+        <Button
           onclick={() => handleFetchAllLyrics(true)}
           disabled={isRetryingFailed || isFetchingLyrics || loading}
-          class="btn-secondary flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm py-2"
+          loading={isRetryingFailed}
+          variant="secondary"
         >
           {#if isRetryingFailed}
-            <div
-              class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"
-            ></div>
             Retrying...
           {:else}
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -213,18 +211,15 @@
             >
             Retry Failed
           {/if}
-        </button>
+        </Button>
 
         <!-- Fetch Missing Button -->
-        <button
+        <Button
           onclick={() => handleFetchAllLyrics(false)}
           disabled={isRetryingFailed || isFetchingLyrics || loading}
-          class="btn-primary flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          loading={isFetchingLyrics}
         >
           {#if isFetchingLyrics}
-            <div
-              class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-            ></div>
             Fetching...
           {:else}
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,49 +232,23 @@
             </svg>
             Fetch Missing
           {/if}
-        </button>
+        </Button>
       </div>
     </header>
 
     {#if loading && !tracks.length}
-      <div class="flex-grow flex flex-col items-center justify-center text-pulsar min-h-[400px]">
-        <div
-          class="w-12 h-12 border-4 border-aurora border-t-transparent rounded-full animate-spin mb-4"
-        ></div>
-        <p>Loading lyrics data...</p>
+      <div class="min-h-[400px] flex-grow">
+        <AsyncState state="loading" title="Loading lyrics data" />
       </div>
     {:else if error}
-      <div class="flex-grow flex items-center justify-center p-8">
-        <div
-          class="bg-red-500/10 border border-red-500/20 text-red-200 p-6 rounded-xl text-center max-w-md"
-        >
-          <p class="font-bold text-lg mb-2">Error Loading Data</p>
-          <p>{error}</p>
-          <button
-            class="mt-4 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors"
-            onclick={() => window.location.reload()}
-          >
-            Retry
-          </button>
-        </div>
-      </div>
+      {#snippet retryAction()}
+        <Button variant="danger" onclick={() => window.location.reload()}>Retry</Button>
+      {/snippet}
+      <AsyncState state="error" title="Error Loading Data" message={error} action={retryAction} />
     {:else if canvasTrackId}
       <div class="flex flex-col h-full">
         <div class="p-4 border-b border-white/5">
-          <button
-            class="text-pulsar hover:text-white transition-colors flex items-center gap-2"
-            onclick={() => (canvasTrackId = null)}
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              /></svg
-            >
-            Back to Dashboard
-          </button>
+          <Button variant="ghost" onclick={() => (canvasTrackId = null)}>Back to Dashboard</Button>
         </div>
         <div class="flex-grow overflow-hidden relative">
           <LyricsCanvas trackId={canvasTrackId} />
@@ -329,43 +298,30 @@
 
             <!-- Filter Control -->
             <div class="relative">
+              <label for="lyrics-status-filter" class="sr-only">Filter by lyrics status</label>
               <select
+                id="lyrics-status-filter"
                 value={currentFilter}
                 onchange={handleFilterChange}
-                class="appearance-none bg-black/20 border border-white/10 text-pulsar text-xs rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:border-aurora cursor-pointer hover:bg-black/30 transition-colors"
+                class="ui-field__control ui-select py-1.5 text-xs"
               >
                 <option value="">All Status</option>
                 <option value="found">✅ Found</option>
                 <option value="not_found">❌ Not Found</option>
                 <option value="pending">⏳ Pending</option>
               </select>
-              <div
-                class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/30"
-              >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                  /></svg
-                >
-              </div>
             </div>
           </div>
 
-          <span class="text-xs text-pulsar bg-black/20 px-2 py-1 rounded">
-            {tracks.length} loaded
-          </span>
+          <Badge tone="info">{tracks.length} loaded</Badge>
         </div>
 
         {#if tracks.length === 0}
-          <!-- Empty State -->
-          <div class="flex flex-col items-center justify-center py-16 text-pulsar/50">
-            <div class="text-4xl mb-4">📭</div>
-            <p class="text-lg font-medium">No tracks found</p>
-            <p class="text-xs mt-1">Try changing the filter or fetching more lyrics.</p>
-          </div>
+          <AsyncState
+            state="empty"
+            title="No tracks found"
+            message="Try changing the filter or fetching more lyrics."
+          />
         {:else}
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -422,20 +378,16 @@
                     >
                     <td class="p-4 text-pulsar">{track.artist}</td>
                     <td class="p-4 text-right">
-                      <span
-                        class="px-2 py-1 rounded text-xs border {getStatusColor(
-                          track.status
-                        )} font-medium capitalize"
-                      >
+                      <Badge tone={getStatusTone(track.status)}>
                         {track.status.replace('_', ' ')}
-                      </span>
+                      </Badge>
                     </td>
                     <td class="p-4 text-right">
                       <div class="flex justify-end gap-2">
                         {#if track.status === 'found'}
-                          <button
-                            class="text-aurora hover:text-white transition-colors p-1 rounded hover:bg-white/10"
-                            title="View Lyrics"
+                          <IconButton
+                            label="View Lyrics"
+                            size="sm"
                             onclick={(e) => {
                               e.stopPropagation();
                               selectedTrack = {
@@ -465,10 +417,10 @@
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                               /></svg
                             >
-                          </button>
-                          <button
-                            class="text-cosmic hover:text-white transition-colors p-1 rounded hover:bg-white/10"
-                            title="Open Canvas"
+                          </IconButton>
+                          <IconButton
+                            label="Open Canvas"
+                            size="sm"
                             onclick={(e) => {
                               e.stopPropagation();
                               canvasTrackId = track.id;
@@ -486,12 +438,12 @@
                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                               /></svg
                             >
-                          </button>
+                          </IconButton>
                         {/if}
                         {#if track.status === 'not_found' || track.status === 'pending'}
-                          <button
-                            class="text-pulsar hover:text-white transition-colors p-1 rounded hover:bg-white/10"
-                            title={track.status === 'not_found' ? 'Retry Fetching' : 'Fetch Lyrics'}
+                          <IconButton
+                            label={track.status === 'not_found' ? 'Retry Fetching' : 'Fetch Lyrics'}
+                            size="sm"
                             onclick={(e) => handleIndividualRetry(track.id, e)}
                           >
                             <svg
@@ -508,7 +460,7 @@
                                   : 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12'}
                               /></svg
                             >
-                          </button>
+                          </IconButton>
                         {/if}
                       </div>
                     </td>
@@ -522,13 +474,9 @@
         <!-- Load More Action -->
         {#if hasMore && tracks.length > 0}
           <div class="p-4 border-t border-white/5 flex justify-center">
-            <button
-              onclick={handleLoadMore}
-              disabled={loading}
-              class="text-sm text-pulsar hover:text-white transition-colors disabled:opacity-50 py-2 px-4 rounded hover:bg-white/5"
-            >
+            <Button onclick={handleLoadMore} disabled={loading} {loading} variant="secondary">
               {loading ? 'Loading more...' : 'Load More'}
-            </button>
+            </Button>
           </div>
         {/if}
       </div>
