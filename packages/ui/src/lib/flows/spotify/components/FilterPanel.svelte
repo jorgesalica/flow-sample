@@ -1,14 +1,11 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { spotifyStore } from '../stores.svelte';
   import { loadTracks } from '../api';
-  import { api } from '@lib/client';
   import type { GenreCount, YearCount } from '@flows/shared';
 
-  // Local state for the panel
+  let { genres = [], years = [] }: { genres?: GenreCount[]; years?: YearCount[] } = $props();
+
   let isOpen = $state(false);
-  let genres: GenreCount[] = $state([]);
-  let years: YearCount[] = $state([]);
 
   // Local filter values (synced with store)
   let selectedGenre = $state(spotifyStore.searchOptions.genre || '');
@@ -22,19 +19,6 @@
       (selectedYear ? 1 : 0) +
       (sortBy !== 'added_at' || sortOrder !== 'desc' ? 1 : 0)
   );
-
-  onMount(async () => {
-    try {
-      const [genresRes, yearsRes] = await Promise.all([
-        api.api.spotify.genres.get(),
-        api.api.spotify.years.get(),
-      ]);
-      if (!genresRes.error && genresRes.data) genres = genresRes.data as unknown as GenreCount[];
-      if (!yearsRes.error && yearsRes.data) years = yearsRes.data as unknown as YearCount[];
-    } catch (e) {
-      console.error('Failed to load filter options', e);
-    }
-  });
 
   function applyFilters() {
     loadTracks({

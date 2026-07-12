@@ -9,8 +9,8 @@
   import SpotifyHeader from './components/SpotifyHeader.svelte';
   import InsightsPanel from './components/InsightsPanel.svelte';
   import { spotifyStore } from './stores.svelte';
-  import { loadTracks, checkAuthStatus } from './api';
-  import type { Track, SearchOptions } from '@flows/shared';
+  import { loadTracks } from './api';
+  import type { GenreCount, Track, SearchOptions, YearCount } from '@flows/shared';
   import type { TopStats } from '@lib/types';
 
   interface Props {
@@ -18,24 +18,35 @@
     totalTracks?: number;
     searchOptions?: SearchOptions;
     topStats?: TopStats;
+    genres?: GenreCount[];
+    years?: YearCount[];
+    isAuthenticated?: boolean;
   }
 
-  let { tracks, totalTracks, searchOptions, topStats }: Props = $props();
+  let {
+    tracks,
+    totalTracks,
+    searchOptions,
+    topStats,
+    genres = [],
+    years = [],
+    isAuthenticated,
+  }: Props = $props();
 
   // Page title
   const pageTitle = 'Spotify Flow - Your Music Library';
 
   import { toast } from 'svelte-5-french-toast';
 
-  onMount(() => {
-    // Hydrate the runes store from the loader's initial data (mount-time, once).
+  $effect(() => {
     if (tracks !== undefined) spotifyStore.tracks = tracks;
     if (totalTracks !== undefined) spotifyStore.totalTracks = totalTracks;
     if (searchOptions !== undefined) spotifyStore.searchOptions = searchOptions;
     if (topStats !== undefined) spotifyStore.topStats = topStats;
+    if (isAuthenticated !== undefined) spotifyStore.isAuthenticated = isAuthenticated;
+  });
 
-    checkAuthStatus();
-
+  onMount(() => {
     // Check for success redirect
     const url = new URL(window.location.href);
     if (url.searchParams.get('connected') === 'true') {
@@ -80,7 +91,7 @@
         <SearchBar />
       </div>
       <div class="flex gap-2 w-full md:w-auto">
-        <FilterPanel />
+        <FilterPanel {genres} {years} />
       </div>
     </div>
 

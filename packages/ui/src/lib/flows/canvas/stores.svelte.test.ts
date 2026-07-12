@@ -12,6 +12,7 @@ vi.mock('./api', () => ({
 vi.mock('@lib/toast', () => ({
   showError: vi.fn(),
 }));
+vi.mock('@lib/invalidate', () => ({ invalidateData: vi.fn().mockResolvedValue(undefined) }));
 
 import * as api from './api';
 import { showError } from '@lib/toast';

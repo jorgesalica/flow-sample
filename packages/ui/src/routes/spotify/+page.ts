@@ -1,8 +1,9 @@
-import type { Track, PaginatedResult, SearchOptions } from '@flows/shared';
+import type { GenreCount, Track, PaginatedResult, SearchOptions, YearCount } from '@flows/shared';
 import type { TopStats } from '@lib/types';
 import { api } from '@lib/client';
 import { mapTopStats } from '@lib/flows/spotify/api';
 import type { PageLoad } from './$types';
+import { INVALIDATION } from '@lib/invalidation';
 
 const DEFAULT_SEARCH_OPTIONS: SearchOptions = {
   page: 1,
@@ -25,9 +26,13 @@ export interface SpotifyPageData {
   totalTracks: number;
   searchOptions: SearchOptions;
   topStats: TopStats;
+  genres: GenreCount[];
+  years: YearCount[];
+  isAuthenticated: boolean;
 }
 
-export const load: PageLoad = async (): Promise<SpotifyPageData> => {
+export const load: PageLoad = async ({ depends }): Promise<SpotifyPageData> => {
+  depends(INVALIDATION.SPOTIFY_LIBRARY);
   const searchOptions = { ...DEFAULT_SEARCH_OPTIONS };
 
   // Initial tracks (page 1, no filters).
@@ -65,5 +70,24 @@ export const load: PageLoad = async (): Promise<SpotifyPageData> => {
     console.error('Failed to load initial stats', e);
   }
 
-  return { tracks, totalTracks, searchOptions, topStats };
+  const [genresResult, yearsResult, authResult] = await Promise.allSettled([
+    api.api.spotify.genres.get(),
+    api.api.spotify.years.get(),
+    api.api.spotify.auth.status.get(),
+  ]);
+
+  const genres =
+    genresResult.status === 'fulfilled' && !genresResult.value.error
+      ? ((genresResult.value.data ?? []) as unknown as GenreCount[])
+      : [];
+  const years =
+    yearsResult.status === 'fulfilled' && !yearsResult.value.error
+      ? ((yearsResult.value.data ?? []) as unknown as YearCount[])
+      : [];
+  const isAuthenticated =
+    authResult.status === 'fulfilled' && !authResult.value.error
+      ? Boolean((authResult.value.data as { connected?: boolean } | null)?.connected)
+      : false;
+
+  return { tracks, totalTracks, searchOptions, topStats, genres, years, isAuthenticated };
 };
