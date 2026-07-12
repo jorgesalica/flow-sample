@@ -13,6 +13,7 @@ import type {
   TradingPageData,
 } from '@lib/flows/trading/types';
 import type { PageLoad } from './$types';
+import { clientLogger } from '@lib/client-logger';
 
 // SPA only — SSR is disabled (also set globally in the root +layout.ts).
 export const ssr = false;
@@ -27,7 +28,7 @@ async function loadStatus(): Promise<Pick<TradingPageData, 'trading' | 'advisor'
       advisor: result.advisor ?? null,
     };
   } catch (err) {
-    console.error('[TradingFlow] Status load failed:', err);
+    clientLogger.error('Trading status loader failed', { error: err });
     return { trading: null, advisor: null };
   }
 }
@@ -41,7 +42,7 @@ async function loadCandles(limit: number): Promise<TradingPageData['candles']> {
     const result = data as unknown as CandlesResponse;
     return result.candles ?? [];
   } catch (err) {
-    console.error('[TradingFlow] Candles load failed:', err);
+    clientLogger.error('Trading candles loader failed', { error: err });
     return [];
   }
 }
@@ -56,7 +57,7 @@ async function loadInsight(): Promise<TradingPageData['insight']> {
     if (result.debugContext) insight._debugContext = result.debugContext;
     return insight;
   } catch (err) {
-    console.error('[TradingFlow] Insight load failed:', err);
+    clientLogger.error('Trading insight loader failed', { error: err });
     return null;
   }
 }

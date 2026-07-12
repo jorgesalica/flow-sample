@@ -1,6 +1,7 @@
 // Trading Flow API Functions
 import { showError, showSuccess } from '@lib/toast';
 import { api } from '@lib/client';
+import { clientLogger } from '@lib/client-logger';
 import type { Candle, AdvisorNote } from '@flows/shared';
 import { tradingStore } from './stores.svelte';
 import type {
@@ -10,6 +11,7 @@ import type {
   FractalsResponse,
   AdvisorToggleResponse,
   InsightResponse,
+  WizardAnalysis,
   WizardInsightResponse,
 } from './types';
 
@@ -21,7 +23,7 @@ export async function fetchTradingStatus(): Promise<void> {
     if (result.trading) tradingStore.setTradingState(result.trading);
     if (result.advisor) tradingStore.setAdvisorState(result.advisor);
   } catch (error) {
-    console.error('[TradingFlow] Status fetch failed:', error);
+    clientLogger.error('Trading status fetch failed', { error });
   }
 }
 
@@ -39,7 +41,7 @@ export async function startTrading(): Promise<void> {
     await fetchTradingStatus();
   } catch (error) {
     showError('Failed to start trading stream');
-    console.error(error);
+    clientLogger.error('Trading stream start failed', { error });
   }
 }
 
@@ -57,7 +59,7 @@ export async function stopTrading(): Promise<void> {
     await fetchTradingStatus();
   } catch (error) {
     showError('Failed to stop trading stream');
-    console.error(error);
+    clientLogger.error('Trading stream stop failed', { error });
   }
 }
 
@@ -70,7 +72,7 @@ export async function fetchCandles(limit: number = 100): Promise<void> {
     const result = data as unknown as CandlesResponse;
     tradingStore.setCandles(result.candles || []);
   } catch (error) {
-    console.error('[TradingFlow] Candles fetch failed:', error);
+    clientLogger.error('Trading candles fetch failed', { error });
   }
 }
 
@@ -83,7 +85,7 @@ export async function fetchFractals(limit: number = 50): Promise<void> {
     const result = data as unknown as FractalsResponse;
     tradingStore.setFractals(result.nodes || []);
   } catch (error) {
-    console.error('[TradingFlow] Fractals fetch failed:', error);
+    clientLogger.error('Trading fractals fetch failed', { error });
   }
 }
 
@@ -102,7 +104,7 @@ export async function fetchKlines(interval: string, limit: number = 100): Promis
     const result = data as unknown as CandlesResponse;
     return result.candles || [];
   } catch (error) {
-    console.error('[TradingFlow] Klines fetch failed:', error);
+    clientLogger.error('Trading klines fetch failed', { error });
     return [];
   }
 }
@@ -116,7 +118,7 @@ export async function toggleAdvisor(): Promise<void> {
     showSuccess(result.message);
   } catch (error) {
     showError('Failed to toggle advisor');
-    console.error(error);
+    clientLogger.error('Trading advisor toggle failed', { error });
   }
 }
 
@@ -136,7 +138,7 @@ export async function generateInsight(): Promise<void> {
     }
   } catch (error) {
     showError('Failed to generate insight');
-    console.error(error);
+    clientLogger.error('Trading insight generation failed', { error });
   } finally {
     tradingStore.setLoadingInsight(false);
   }
@@ -153,7 +155,7 @@ export async function generateWizardInsight(params: {
   previousInsights: { label: string; insight: AdvisorNote }[];
 }): Promise<{
   insight: AdvisorNote;
-  analysis: Record<string, unknown>;
+  analysis: WizardAnalysis;
   meta: Record<string, unknown>;
 } | null> {
   try {
@@ -172,7 +174,7 @@ export async function generateWizardInsight(params: {
     }
   } catch (error) {
     showError('Failed to generate wizard insight');
-    console.error('[TradingFlow] Wizard insight failed:', error);
+    clientLogger.error('Trading wizard insight failed', { error });
     return null;
   }
 }
@@ -188,7 +190,7 @@ export async function fetchLatestInsight(): Promise<void> {
       tradingStore.setLatestInsight(insight);
     }
   } catch (error) {
-    console.error('[TradingFlow] Insight fetch failed:', error);
+    clientLogger.error('Trading insight fetch failed', { error });
   }
 }
 
@@ -222,7 +224,7 @@ export function connectToStream(): void {
   });
 
   eventSource.onerror = () => {
-    console.error('[TradingFlow] SSE connection error');
+    clientLogger.error('Trading SSE connection failed');
     disconnectFromStream();
   };
 }

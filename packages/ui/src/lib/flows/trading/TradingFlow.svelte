@@ -197,10 +197,6 @@
             interval,
             limit
           ) => {
-            console.log(
-              `[Wizard] Generating ${stepLabel} insight via wizard endpoint (${interval}, ${limit} candles)`
-            );
-
             const result = await generateWizardInsight({
               interval,
               limit,
@@ -210,7 +206,6 @@
             });
 
             if (result) {
-              console.log(`[Wizard] ${stepLabel} insight received:`, result.meta);
               return { insight: result.insight, analysis: result.analysis };
             }
             return null;

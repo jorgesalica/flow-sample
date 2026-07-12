@@ -5,10 +5,22 @@ Trading bot flow — real-time BTC/USDT analysis using Binance WebSocket, fracta
 ## Architecture
 
 ```text
-adapter/    → Binance WebSocket client, candle aggregation
-analysis/   → Hurst exponent, fractal detection, ATR calculation
-advisor/    → AI insight generation (OpenRouter LLM integration)
-routes      → Elysia API routes + SSE streaming (/api/trading/*)
+packages/flows/trading/src/
+├── adapters/binance/       # REST history + WebSocket market-data edge
+├── domain/math/            # Hurst, fractals, candle patterns
+├── domain/types/           # market and advisor domain types
+└── backend/
+    ├── config.ts           # static thresholds + runtime env factory
+    ├── database.ts         # SQLite schema and prepared statements
+    ├── routes.ts           # Elysia HTTP/SSE composition
+    └── services/           # analyst, synthesizer, mentor, stream orchestration
+
+packages/ui/src/lib/flows/trading/
+├── api.ts                  # Eden calls and SSE adapter
+├── stores.svelte.ts        # client runtime state
+├── wizard.ts               # timeframe definitions and pure presentation calculations
+├── TradingFlow.svelte      # dashboard/wizard composition
+└── components/             # StepWizard and CandleChart
 ```
 
 ## Key Features
@@ -40,8 +52,19 @@ services do not read `process.env` directly.
 | POST | `/api/trading/start` | Start candle stream |
 | POST | `/api/trading/stop` | Stop candle stream |
 | GET | `/api/trading/candles` | Historical candles |
+| GET | `/api/trading/candles/live` | Current in-memory candle snapshot |
 | GET | `/api/trading/klines` | Klines for wizard |
 | GET | `/api/trading/fractals` | Detected fractals |
 | POST | `/api/trading/advisor/toggle` | Toggle AI advisor |
+| GET | `/api/trading/advisor/status` | Current advisor state |
+| GET | `/api/trading/insight` | Latest persisted insight |
 | POST | `/api/trading/insight/generate` | Generate insight |
+| POST | `/api/trading/wizard/insight` | Generate one cascade timeframe insight |
 | GET | `/api/trading/stream` | SSE live stream |
+
+## UI Data Flow
+
+The route loader hydrates the initial status, candle window, and latest insight. Runtime
+updates then arrive through the SSE adapter into `stores.svelte.ts`. The Cascade Wizard
+requests historical windows through Eden; `wizard.ts` owns timeframe definitions and
+pure display calculations, while `StepWizard.svelte` owns interaction and rendering.

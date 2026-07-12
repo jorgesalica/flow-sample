@@ -1,6 +1,9 @@
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
 import type { BinanceKlinePayload, Candle, ConnectionState } from './types';
+import { logger } from '@flows/core';
+
+const log = logger.child({ module: 'BinanceStreamAdapter' });
 
 const BINANCE_WS_BASE = 'wss://stream.binance.com:9443/ws';
 const RECONNECT_DELAY_MS = 5000;
@@ -12,7 +15,7 @@ const MAX_RECONNECT_ATTEMPTS = 10;
  * Usage:
  * ```ts
  * const stream = new BinanceStream('BTCUSDT', '1m');
- * stream.on('candle', (candle) => console.log(candle));
+ * stream.on('candle', handleCandle);
  * stream.connect();
  * ```
  */
@@ -46,7 +49,7 @@ export class BinanceStream extends EventEmitter {
     const streamName = `${this.symbol.toLowerCase()}@kline_${this.interval}`;
     const url = `${BINANCE_WS_BASE}/${streamName}`;
 
-    console.log(`[BinanceStream] Connecting to ${url}`);
+    log.info({ url }, 'Connecting to Binance stream');
 
     try {
       this.ws = new WebSocket(url);
@@ -54,7 +57,7 @@ export class BinanceStream extends EventEmitter {
       this.ws.on('open', () => {
         this.state = 'connected';
         this.reconnectAttempts = 0;
-        console.log(`[BinanceStream] Connected to ${this.symbol}@${this.interval}`);
+        log.info({ symbol: this.symbol, interval: this.interval }, 'Binance stream connected');
         this.emit('connected');
         this.startPingInterval();
       });
@@ -68,25 +71,25 @@ export class BinanceStream extends EventEmitter {
       });
 
       this.ws.on('close', (code: number, reason: Buffer) => {
-        console.log(`[BinanceStream] Disconnected (code: ${code}, reason: ${reason.toString()})`);
+        log.warn({ code, reason: reason.toString() }, 'Binance stream disconnected');
         this.cleanup();
         this.emit('disconnected');
         this.scheduleReconnect();
       });
 
       this.ws.on('error', (error: Error) => {
-        console.error(`[BinanceStream] Error:`, error.message);
+        log.error({ error: error.message }, 'Binance stream error');
         this.emit('error', error);
       });
     } catch (error) {
-      console.error(`[BinanceStream] Failed to connect:`, error);
+      log.error({ error }, 'Failed to connect to Binance stream');
       this.scheduleReconnect();
     }
   }
 
   /** Disconnect from WebSocket */
   disconnect(): void {
-    console.log(`[BinanceStream] Disconnecting...`);
+    log.info('Disconnecting Binance stream');
     this.cleanup();
     if (this.ws) {
       this.ws.close(1000, 'Manual disconnect');
@@ -119,14 +122,14 @@ export class BinanceStream extends EventEmitter {
         this.emit('candle', candle);
       }
     } catch (error) {
-      console.error(`[BinanceStream] Failed to parse message:`, error);
+      log.error({ error }, 'Failed to parse Binance stream message');
     }
   }
 
   /** Schedule reconnection with exponential backoff */
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.error(`[BinanceStream] Max reconnection attempts reached. Giving up.`);
+      log.error({ attempts: this.reconnectAttempts }, 'Binance stream reconnect limit reached');
       this.state = 'disconnected';
       return;
     }
@@ -135,8 +138,9 @@ export class BinanceStream extends EventEmitter {
     const delay = RECONNECT_DELAY_MS * Math.pow(2, this.reconnectAttempts);
     this.reconnectAttempts++;
 
-    console.log(
-      `[BinanceStream] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`,
+    log.warn(
+      { delay, attempt: this.reconnectAttempts, maxAttempts: MAX_RECONNECT_ATTEMPTS },
+      'Scheduling Binance stream reconnect',
     );
 
     this.reconnectTimeout = setTimeout(() => {
