@@ -6,6 +6,7 @@
   import TokenRenderer from '@components/canvas/TokenRenderer.svelte';
   import LayerToggle from '@components/canvas/LayerToggle.svelte';
   import TokenTooltip from '@components/canvas/TokenTooltip.svelte';
+  import { AsyncState, Badge, Button } from '@lib/components';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
 
@@ -136,16 +137,17 @@
   }
 </script>
 
-<div class="canvas-container">
+<div class="canvas-container" data-theme="organic">
   {#if loading}
     <div class="center-state">
-      <div class="spinner"></div>
-      <p>Loading canvas...</p>
+      <AsyncState state="loading" title="Loading canvas" />
     </div>
   {:else if error}
-    <div class="center-state error">
-      <p>{error}</p>
-      <button class="btn" onclick={loadData}>Retry</button>
+    {#snippet retryAction()}
+      <Button variant="danger" onclick={loadData}>Retry</Button>
+    {/snippet}
+    <div class="center-state">
+      <AsyncState state="error" title="Canvas unavailable" message={error} action={retryAction} />
     </div>
   {:else if !analysis && statusInfo}
     <div class="center-state empty">
@@ -157,14 +159,9 @@
 
       <div class="actions">
         <p class="description">Generate a musical analysis for this track using AI.</p>
-        <button class="btn primary" onclick={handleAnalyze} disabled={analyzing}>
-          {#if analyzing}
-            <div class="spinner small"></div>
-            Analyzing Lyrics... (This may take a minute)
-          {:else}
-            Generate Analysis
-          {/if}
-        </button>
+        <Button onclick={handleAnalyze} loading={analyzing}>
+          {analyzing ? 'Analyzing Lyrics... (This may take a minute)' : 'Generate Analysis'}
+        </Button>
       </div>
     </div>
   {:else if analysis}
@@ -175,13 +172,13 @@
           {#if analysis.meta}
             <div class="meta-tags">
               {#if analysis.meta.key}
-                <span class="tag">🎵 {analysis.meta.key}</span>
+                <Badge tone="info">Key: {analysis.meta.key}</Badge>
               {/if}
               {#if analysis.meta.bpm}
-                <span class="tag">⏱️ {analysis.meta.bpm} BPM</span>
+                <Badge tone="neutral">{analysis.meta.bpm} BPM</Badge>
               {/if}
               {#if analysis.meta.mood}
-                <span class="tag">✨ {analysis.meta.mood}</span>
+                <Badge tone="success">Mood: {analysis.meta.mood}</Badge>
               {/if}
             </div>
           {/if}
@@ -189,26 +186,9 @@
 
         <div class="controls">
           <LayerToggle layers={analysis.layers} bind:activeLayers />
-          <button
-            class="btn primary small"
-            onclick={handleAnalyze}
-            disabled={analyzing}
-            title="Regenerate Analysis"
-          >
-            {#if analyzing}
-              <div class="spinner small"></div>
-            {:else}
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                ><path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                /></svg
-              >
-              Regenerate
-            {/if}
-          </button>
+          <Button onclick={handleAnalyze} loading={analyzing} size="sm" title="Regenerate Analysis">
+            {analyzing ? 'Regenerating...' : 'Regenerate'}
+          </Button>
         </div>
       </div>
     </header>
@@ -242,18 +222,15 @@
           {:else}
             <div class="empty-meaning">
               <p>No overarching meaning analysis found.</p>
-              <button
-                class="btn small mt-4"
+              <Button
+                variant="secondary"
+                size="sm"
+                class="meaning-action"
                 onclick={handleGenerateMeaning}
-                disabled={isInterpreting}
+                loading={isInterpreting}
               >
-                {#if isInterpreting}
-                  <div class="spinner small"></div>
-                  Generating...
-                {:else}
-                  Generate Meaning
-                {/if}
-              </button>
+                {isInterpreting ? 'Generating...' : 'Generate Meaning'}
+              </Button>
             </div>
           {/if}
         </div>
@@ -326,57 +303,6 @@
     gap: 1rem;
   }
 
-  .btn {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid var(--surface-700);
-    background: var(--surface-800);
-    color: var(--surface-100);
-  }
-
-  .btn.primary {
-    background: var(--primary-600);
-    border-color: var(--primary-500);
-  }
-
-  .btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    filter: brightness(1.1);
-  }
-
-  .btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .spinner {
-    width: 2rem;
-    height: 2rem;
-    border: 3px solid var(--surface-700);
-    border-top-color: var(--primary-500);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  .spinner.small {
-    width: 1.25rem;
-    height: 1.25rem;
-    border-width: 2px;
-    border-top-color: white;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
   .canvas-header {
     position: sticky;
     top: 0;
@@ -399,8 +325,10 @@
 
   .controls {
     display: flex;
+    min-width: 0;
     gap: 1rem;
     align-items: center;
+    flex-wrap: wrap;
   }
 
   .title-area h1 {
@@ -412,14 +340,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-  }
-
-  .tag {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    background: var(--surface-800);
-    border-radius: 0.25rem;
-    color: var(--surface-300);
   }
 
   .canvas-layout {
@@ -435,6 +355,7 @@
 
   .canvas-main {
     width: 100%;
+    min-width: 0;
   }
 
   .canvas-sidebar {
@@ -470,5 +391,39 @@
     text-align: center;
     color: var(--surface-400);
     padding: 2rem 0;
+  }
+
+  :global(.meaning-action) {
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 900px) {
+    .canvas-header {
+      padding: 1rem;
+    }
+
+    .header-content,
+    .controls {
+      width: 100%;
+    }
+
+    .controls {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .canvas-layout {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .canvas-sidebar {
+      position: static;
+    }
+
+    .sidebar-content {
+      max-height: none;
+    }
   }
 </style>

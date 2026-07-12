@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AnnotationLayer } from '@flows/shared';
+  import { Button } from '@lib/components';
 
   interface Props {
     layers: AnnotationLayer[];
@@ -33,17 +34,19 @@
 <div class="layer-toggles" class:disabled>
   {#each layers as layer (layer.id)}
     {@const isActive = activeLayers.includes(layer.id)}
-    <button
-      class="layer-btn"
-      class:active={isActive}
+    <Button
+      class="layer-btn{isActive ? ' active' : ''}"
       style="--layer-color: {layer.color}"
       {disabled}
+      variant="secondary"
+      size="sm"
+      aria-pressed={isActive}
       onclick={() => toggleLayer(layer.id)}
       title="Toggle {layer.name}"
     >
       <span class="icon">{layer.icon}</span>
       <span class="name">{layer.name}</span>
-    </button>
+    </Button>
   {/each}
 </div>
 
@@ -59,28 +62,11 @@
     pointer-events: none;
   }
 
-  .layer-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--surface-800);
-    border: 1px solid var(--surface-700);
+  :global(.layer-toggles .layer-btn) {
     border-radius: 9999px;
-    color: var(--surface-300);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
   }
 
-  .layer-btn:hover:not(:disabled) {
-    background: var(--surface-700);
-    border-color: var(--surface-600);
-    color: var(--surface-100);
-  }
-
-  .layer-btn.active {
+  :global(.layer-toggles .layer-btn.active) {
     background: color-mix(in srgb, var(--layer-color) 15%, transparent);
     border-color: var(--layer-color);
     color: var(--layer-color);
