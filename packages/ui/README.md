@@ -65,4 +65,4 @@ In development, Vite proxies API requests to `http://127.0.0.1:4173` (see `vite.
 
 ## Documentation
 
-See [UI Architecture](../docs/architecture/ui.md) for detailed documentation.
+See [UI Architecture](../../docs/architecture/ui.md) for detailed documentation.

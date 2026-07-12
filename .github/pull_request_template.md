@@ -10,11 +10,13 @@
 
 ## Checklist
 
-- [ ] `pnpm lint` is green locally
-- [ ] `pnpm typecheck` is green locally
-- [ ] `pnpm check` is green locally
-- [ ] `pnpm test` is green locally
-- [ ] `pnpm build` is green locally when package entrypoints or build behavior changed
+- [ ] `pnpm verify` is green locally
+- [ ] `pnpm build` is green locally for non-trivial package/backend/frontend changes
+- [ ] Relevant Playwright or desktop/mobile verification is documented for UI behavior
 - [ ] Follows [docs/conventions.md](../docs/conventions.md) (zero `any`, no magic strings, layering)
 - [ ] Tests added/updated for the change
 - [ ] Docs updated if behavior or architecture changed
+
+## Verification
+
+<!-- Commands, focused tests, Playwright journeys, and manual checks actually run. -->

@@ -1,5 +1,11 @@
 # Architectural Refactoring Proposals
 
+> **Historical/exploratory material.** These documents capture earlier design thinking;
+> they are not current implementation instructions. Use the
+> [roadmap](../ROADMAP.md), [conventions](../conventions.md), and
+> [system map](../architecture/system-map.md) for active direction. Promote a proposal to
+> a GitHub issue before implementation.
+
 This document outlines technical improvements to evolve the project from a prototype to a robust, scalable system.
 
 ## 1. Backend: Hexagonal Architecture (Ports & Adapters)

@@ -34,7 +34,7 @@ This document serves as the index for the development iterations of the Trading 
 * **UI**: `StepWizard` component with interactive charts for each timeframe.
 * **Logic**: **Matrioshka Prompting** (passing context from macro to micro).
 * **Data**: Local Timezone support + Variable Kline Limit fetching.
-* **Doc**: Comprehensive [Experience Flow](../cascade-wizard-experience-flow.md).
+* **Doc**: Comprehensive [Experience Flow](./cascade-wizard-experience-flow.md).
 
 ---
 
