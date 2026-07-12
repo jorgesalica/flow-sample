@@ -1,6 +1,7 @@
 <script lang="ts">
   import { spotifyStore } from '../stores.svelte';
   import { loadTracks } from '../api';
+  import { Button } from '@lib/components';
 
   let currentPage = $derived(spotifyStore.searchOptions.page || 1);
   let limit = $derived(spotifyStore.searchOptions.limit || 24);
@@ -16,13 +17,13 @@
 
 {#if totalPages > 1}
   <div class="flex justify-center items-center gap-2 py-8">
-    <button
+    <Button
       onclick={() => goToPage(currentPage - 1)}
       disabled={currentPage === 1}
-      class="px-4 py-2 glass rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-white"
+      variant="secondary"
     >
       ← Previous
-    </button>
+    </Button>
 
     <div class="flex items-center gap-1 px-4 text-white/50">
       <span class="font-semibold text-white">{currentPage}</span>
@@ -30,12 +31,12 @@
       <span>{totalPages}</span>
     </div>
 
-    <button
+    <Button
       onclick={() => goToPage(currentPage + 1)}
       disabled={currentPage === totalPages}
-      class="px-4 py-2 glass rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-white"
+      variant="secondary"
     >
       Next →
-    </button>
+    </Button>
   </div>
 {/if}

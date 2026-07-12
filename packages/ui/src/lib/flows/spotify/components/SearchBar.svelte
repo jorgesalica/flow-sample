@@ -1,46 +1,50 @@
 <script lang="ts">
-  import { spotifyStore } from '../stores.svelte';
+  import { Field, IconButton } from '@lib/components';
   import { loadTracks } from '../api';
+  import { spotifyStore } from '../stores.svelte';
 
   let value = $state(spotifyStore.searchOptions.q || '');
   let timer: ReturnType<typeof setTimeout> | null = null;
 
-  function handleInput(e: Event) {
-    const val = (e.target as HTMLInputElement).value;
-    value = val;
-
-    // Debounced search
+  function handleInput(event: Event) {
+    const nextValue = (event.target as HTMLInputElement).value;
+    value = nextValue;
     if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      loadTracks({ q: val, page: 1 });
-    }, 400);
+    timer = setTimeout(() => loadTracks({ q: nextValue, page: 1 }), 400);
   }
 
   function handleClear() {
+    if (timer) clearTimeout(timer);
     value = '';
     loadTracks({ q: '', page: 1 });
   }
 </script>
 
-<div class="relative w-full max-w-md">
-  <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-    <span class="text-white/30 text-lg">🔍</span>
-  </div>
-  <input
-    type="text"
+<div class="spotify-search relative w-full max-w-md">
+  <Field
+    label="Search library"
+    labelHidden
+    type="search"
     placeholder="Search tracks, artists, albums..."
     bind:value
     oninput={handleInput}
-    class="w-full glass pl-10 pr-10 py-2 rounded-xl border border-white/10
-           focus:border-purple-400 focus:ring-1 focus:ring-purple-400
-           bg-black/20 text-white placeholder-white/30 outline-none transition-all"
   />
   {#if value}
-    <button
-      onclick={handleClear}
-      class="absolute inset-y-0 right-3 flex items-center text-white/30 hover:text-white transition-colors"
-    >
-      ✕
-    </button>
+    <IconButton label="Clear search" onclick={handleClear} size="sm" class="spotify-search__clear">
+      &times;
+    </IconButton>
   {/if}
 </div>
+
+<style>
+  :global(.spotify-search .ui-field__control) {
+    padding-right: 2.75rem;
+  }
+
+  :global(.spotify-search__clear) {
+    position: absolute;
+    top: 50%;
+    right: 0.375rem;
+    transform: translateY(-50%);
+  }
+</style>

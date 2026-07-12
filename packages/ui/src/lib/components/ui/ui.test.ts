@@ -18,6 +18,11 @@ describe('UI primitives', () => {
     expect(button).toHaveAttribute('aria-busy', 'true');
   });
 
+  it('Button renders navigation as a styled link', () => {
+    render(Button, { props: { children: textSnippet('Connect'), href: '/connect' } });
+    expect(screen.getByRole('link', { name: 'Connect' })).toHaveAttribute('href', '/connect');
+  });
+
   it('IconButton uses its label as the accessible name', async () => {
     const onclick = vi.fn();
     render(IconButton, { props: { label: 'Delete', children: textSnippet('×'), onclick } });
@@ -31,6 +36,13 @@ describe('UI primitives', () => {
     unmount();
     render(Field, { props: { label: 'Body', multiline: true, value: 'Text' } });
     expect(screen.getByLabelText('Body').tagName).toBe('TEXTAREA');
+  });
+
+  it('Field supports an accessible search control', () => {
+    render(Field, {
+      props: { label: 'Search library', labelHidden: true, type: 'search', value: '' },
+    });
+    expect(screen.getByRole('searchbox', { name: 'Search library' })).toBeInTheDocument();
   });
 
   it('Badge exposes the selected semantic tone', () => {

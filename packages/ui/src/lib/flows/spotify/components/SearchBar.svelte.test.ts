@@ -49,12 +49,12 @@ describe('SearchBar', () => {
 
   it('shows a clear button only once there is a value', async () => {
     render(SearchBar);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Clear search' })).not.toBeInTheDocument();
 
     const input = screen.getByPlaceholderText('Search tracks, artists, albums...');
     await fireEvent.input(input, { target: { value: 'x' } });
 
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear search' })).toBeInTheDocument();
   });
 
   it('clears the query and reloads when the clear button is clicked', async () => {
@@ -64,7 +64,7 @@ describe('SearchBar', () => {
     );
     await fireEvent.input(input, { target: { value: 'jazz' } });
 
-    await fireEvent.click(screen.getByRole('button'));
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
 
     expect(input.value).toBe('');
     expect(loadTracks).toHaveBeenCalledWith({ q: '', page: 1 });

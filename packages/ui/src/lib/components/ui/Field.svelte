@@ -2,7 +2,10 @@
   let {
     value = $bindable(''),
     label,
+    labelHidden = false,
     placeholder = '',
+    type = 'text',
+    oninput,
     multiline = false,
     rows = 4,
     disabled = false,
@@ -12,7 +15,10 @@
   }: {
     value?: string;
     label?: string;
+    labelHidden?: boolean;
     placeholder?: string;
+    type?: 'text' | 'search';
+    oninput?: (event: Event) => void;
     multiline?: boolean;
     rows?: number;
     disabled?: boolean;
@@ -25,7 +31,7 @@
 </script>
 
 <label class="ui-field {className}" for={id}>
-  {#if label}<span class="ui-field__label">{label}</span>{/if}
+  {#if label}<span class:sr-only={labelHidden} class="ui-field__label">{label}</span>{/if}
   {#if multiline}
     <textarea
       {id}
@@ -40,7 +46,9 @@
   {:else}
     <input
       {id}
+      {type}
       bind:value
+      {oninput}
       {placeholder}
       {disabled}
       {required}
