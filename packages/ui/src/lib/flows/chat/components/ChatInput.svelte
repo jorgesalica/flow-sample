@@ -1,5 +1,6 @@
 <script lang="ts">
   import { chatStore } from '../stores.svelte';
+  import { IconButton } from '@lib/components';
 
   let inputContent = $state('');
   let textareaEl: HTMLTextAreaElement;
@@ -47,11 +48,12 @@
     ></textarea>
 
     {#if chatStore.isStreaming}
-      <button
+      <IconButton
+        label="Stop generating"
+        variant="secondary"
+        size="sm"
         onclick={() => chatStore.stopStreaming()}
-        class="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-600 text-white transition-colors hover:bg-slate-500"
-        title="Stop generating"
-        aria-label="Stop generating"
+        class="absolute right-2 bottom-2"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -61,14 +63,15 @@
         >
           <rect x="6" y="6" width="12" height="12" rx="1.5" />
         </svg>
-      </button>
+      </IconButton>
     {:else}
-      <button
+      <IconButton
+        label="Send message"
+        variant="primary"
+        size="sm"
         onclick={submit}
         disabled={!inputContent.trim() || chatStore.isLoading}
-        class="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center rounded-lg bg-cosmic-600 text-white disabled:opacity-50 disabled:bg-slate-700 disabled:cursor-not-allowed transition-colors hover:bg-cosmic-500"
-        title="Send message"
-        aria-label="Send message"
+        class="absolute right-2 bottom-2"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -80,7 +83,7 @@
             d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z"
           />
         </svg>
-      </button>
+      </IconButton>
     {/if}
   </div>
   <p class="text-center mt-2 text-[11px] text-slate-500 cursor-default select-none">
