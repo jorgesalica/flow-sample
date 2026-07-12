@@ -1,5 +1,9 @@
 # Project History
 
+> Historical record. This directory explains how the project evolved and does not define
+> current architecture or pending work. Use the [documentation index](../README.md) and
+> [roadmap](../ROADMAP.md) for current guidance.
+
 Navigate to specific histories:
 
 - [UI History](./ui.md) — Frontend (Svelte)

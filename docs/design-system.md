@@ -1,82 +1,60 @@
-# Design System - Flow UI
+# Flow UI Design System
 
-Dark operational UI with semantic primitives and selectable galaxy, fire, and organic accents.
+This document describes the implemented shared UI foundation and the direction tracked by
+[issue #24](https://github.com/jorgesalica/flow-sample/issues/24). The system is dark,
+workable on mobile, accessible by keyboard, and uses semantic tokens so flow identity does
+not leak into component implementation.
 
----
+## Implemented Tokens
 
-## Color Palette
+Base and Tailwind theme tokens live in `packages/ui/src/app.css`. Shared components consume
+semantic variables rather than palette names:
 
-### Base Colors
+| Token | Purpose |
+| --- | --- |
+| `--ui-accent` | primary action and selected state |
+| `--ui-accent-strong` | active/pressed accent |
+| `--ui-focus` | keyboard focus indicator |
+| `--ui-danger` | destructive/error action |
+| `--ui-surface` | base component surface |
+| `--ui-surface-raised` | elevated surface |
+| `--ui-border` | standard boundary |
+| `--ui-text` | primary text |
+| `--ui-text-muted` | secondary text |
 
-| Name | Hex | Use |
-| ---- | --- | --- |
-| Void | `#0a0e17` | Deep background |
-| Nebula | `#111827` | Card backgrounds |
-| Stardust | `#1f2937` | Borders, dividers |
+Palette selection uses `data-theme` on an ancestor. The default galaxy palette is cyan;
+`data-theme="fire"` uses rose accents; `data-theme="organic"` uses lime accents. Palette
+names configure semantic tokens but must not appear in generic component logic.
 
-### Accent Colors
+## Shared Primitives
 
-| Name | Hex | Use |
-| ---- | --- | --- |
-| Aurora | `#10b981` | Primary (emerald) |
-| Pulsar | `#06b6d4` | Secondary (cyan) |
-| Cosmic | `#8b5cf6` | Highlights (violet) |
+Shared primitives live in `packages/ui/src/lib/components/ui` and are exported through
+`@lib/components`:
 
-### Text Colors
+- `Button` for text commands and variants.
+- `IconButton` for familiar compact actions with an accessible name.
+- `Field` for label, control, hint, and error relationships.
+- `Badge` for compact status/category metadata.
+- `AsyncState` for loading, empty, and error presentation.
+- `ModalShell` for dialog structure, dismissal, and focus behavior.
 
-| Name | Opacity | Use |
-| ---- | ------- | --- |
-| Star White | 100% | Headings |
-| Moon Glow | 70% | Body text |
-| Dim Star | 40% | Muted text |
+New UI composes these primitives before introducing a flow-local equivalent. A local
+component is justified when it owns domain behavior, not merely different colors or copy.
 
----
+## Interaction Rules
 
-## CSS Variables
+- Every control has an accessible name and visible keyboard focus.
+- Icon-only actions use a familiar icon and tooltip where meaning is not universal.
+- Loading disables duplicate submission without hiding current context.
+- Error and empty states explain the state and expose a recovery action when possible.
+- Motion respects reduced-motion preferences.
+- Layout is verified at desktop and mobile sizes without horizontal overflow.
+- Component tests assert roles, names, states, and callbacks; Playwright covers responsive
+  and browser-dependent interaction.
 
-```css
-:root {
-  /* Base */
-  --color-void: #0a0e17;
-  --color-nebula: #111827;
-  --color-stardust: #1f2937;
-  
-  /* Accents */
-  --color-aurora: #10b981;
-  --color-pulsar: #06b6d4;
-  --color-cosmic: #8b5cf6;
-  
-  /* Glass */
-  --glass-bg: rgba(17, 24, 39, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-}
-```
+## Migration Status
 
----
-
-## Components
-
-Shared primitives live in `packages/ui/src/lib/components/ui` and are exported from
-`@lib/components`. New flow UI should compose `Button`, `IconButton`, `Field`, `Badge`,
-`AsyncState`, and `ModalShell` before adding flow-local equivalents.
-
-Theme selection uses `data-theme` on an ancestor. The default galaxy palette is cyan,
-`data-theme="fire"` uses rose accents, and `data-theme="organic"` uses lime accents.
-Components consume semantic `--ui-*` variables rather than palette names directly.
-
-### Cards
-
-- Glass effect with backdrop blur
-- Subtle border glow on hover
-- Smooth transitions
-
-### Buttons
-
-- Primary: Aurora gradient
-- Secondary: Ghost with border
-- Hover: Scale + glow
-
-### Typography
-
-- Headings: Bold, gradient text
-- Body: Regular, moon-glow opacity
+Canvas editor controls and Chat send/stop actions use the shared primitives. Remaining
+flows and the application shell should migrate in small PRs under issue #24. Legacy
+cosmic/glass utilities remain in `app.css`; removing or consolidating them is part of that
+migration, not documentation housekeeping.

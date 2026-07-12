@@ -122,6 +122,9 @@ from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
 
 ## 5. Testing
 
+The test-layer matrix and change-specific verification requirements live in
+[docs/testing/README.md](testing/README.md). This section defines the core rules.
+
 - **Tests are executable documentation.** Read existing tests before changing code; prefer
   red→green→refactor; never silence a red test.
 - **Tests live beside the code** (`repository.ts` → `repository.test.ts`), run with **Vitest**.
@@ -135,6 +138,9 @@ from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
 - **Constants from `@flows/shared`, never magic strings**, in tests too.
 - **Determinism:** no `Date.now()` / `Math.random()` in the body of a test; inject them.
 - **Coverage** is configured per package via `vitest.config.ts`; keep it from regressing.
+  Coverage is a signal, not a substitute for assertions at the correct layer.
+- **Interactive UI changes** require focused Playwright coverage or documented
+  desktop/mobile verification. Unit tests alone do not prove browser behavior.
 
 ---
 
@@ -155,18 +161,20 @@ branch: **PRs target `main`**. There is no `develop` branch here.
 
 - **Never push directly to `main`.** Work on a short-lived branch, push it, open a PR, wait
   for checks, and merge through GitHub.
-- **Branch naming:** prefer `codex/<short-kebab-description>` for Codex-created branches.
+- **Issue traceability:** non-trivial work starts from a GitHub issue with executable scope.
+- **Branch naming:** prefer `codex/<issue>-<short-kebab-description>` for Codex-created branches.
   If a local ref layout blocks slash branches, use a clear kebab name such as
   `housekeeping-audit-workflow`.
 - **Conventional Commits** in English: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`,
   `test:`, `ci:`.
-- **Local gate before push:** `pnpm lint && pnpm typecheck && pnpm check && pnpm test`.
-  Add `pnpm build` when touching package entrypoints, generated artifacts, UI build output,
-  or backend startup/build behavior.
+- **Local gate before push:** `pnpm verify`. Add `pnpm build` for non-trivial package,
+  backend, or frontend changes. Add focused Playwright checks for changed UI journeys.
 - **PR description:** include what changed, why it matters, user-visible impact, technical
   areas touched, test commands run, and related issue/refs if any.
 - **Merge discipline:** check PR status before merging. Prefer GitHub server-side merge
   (`gh pr merge` or the GitHub UI) over local merges into `main`.
+- **Documentation ownership:** architecture, API, runtime config, flow behavior, testing,
+  and workflow changes update their owner docs in the same PR.
 
 ### Automated architecture contracts
 
@@ -175,6 +183,9 @@ heavy static-analysis framework. It checks production sources for explicit `any`
 hardcoded localhost origins in UI API modules, SQL calls outside persistence modules,
 environment reads outside named config factories, and direct imports between sibling flow packages. The command is part of `pnpm verify`,
 and its own behavior is covered by `pnpm test:architecture`.
+
+`pnpm check:docs` validates local Markdown links. Both contract checks are part of
+`pnpm verify` and run in CI.
 
 The only sibling-flow exception is the current Lyrics -> Spotify dependency in the Lyrics
 routes and repositories. Both flows intentionally share `musicDb` and the Spotify track

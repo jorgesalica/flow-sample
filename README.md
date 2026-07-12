@@ -1,119 +1,113 @@
 # Flow Sample
 
-A playground for data flows — extract, transform, and visualize data from various sources.
+A local-first playground for composing data and AI flows around music, text analysis,
+chat, and trading experiments. The repository is a pnpm monorepo: each flow is an
+independently testable bounded module hosted by one Elysia API and one SvelteKit UI.
 
-## ✨ Features
+## Flows
 
-- **Spotify Flow**: Sync your saved tracks, explore genres, decades, and discover patterns
-- **Lyrics Flow**: Batch-fetch lyrics from LrcLib with concurrent requests, view inline
-- **Trading Bot Flow**: Real-time BTC advisor with Fractal Analysis and AI-driven "Cascade Wizard"
-- **Chat Flow**: Multi-provider LLM chat (Gemini, Groq, Cerebras, Mistral, OpenRouter) with rotation fallback and SSE streaming
-- **Canvas Flow**: Tokenize lyrics/text and render LLM annotations (chords, vocal, meaning) on an interactive canvas
-- **Cosmic UI**: Dark space-themed interface with glassmorphism and subtle animations
-- **Charts & Insights**: Genre distribution, decade analysis, and more
-- **Smart Caching**: 5-minute API cache with auto-invalidation
+- **Spotify** syncs saved tracks and explores genres, decades, and listening patterns.
+- **Lyrics** fetches and stores lyrics from LrcLib.
+- **Trading** streams Binance market data and provides AI-assisted fractal analysis.
+- **Chat** exposes multi-provider LLM chat with rotation fallback and SSE streaming.
+- **Canvas** tokenizes text and renders typed LLM annotations.
+
+The product direction is an accessible board where these flows become movable,
+expandable items while their dedicated routes remain available.
 
 ## Architecture
 
 ```text
-flow-sample/
-├── packages/
-│   ├── core/               # Logger, shared infra (@flows/core)
-│   ├── shared/             # TypeScript types & interfaces (@flows/shared)
-│   ├── backend/            # Elysia API server (@flows/backend)
-│   ├── ui/                 # SvelteKit frontend, Svelte 5 (@flows/ui)
-│   └── flows/
-│       ├── spotify/        # Spotify API adapter + SQLite (@flows/spotify)
-│       ├── lyrics/         # LrcLib adapter + batch fetcher (@flows/lyrics)
-│       ├── trading/        # Binance WebSocket + AI advisor (@flows/trading)
-│       ├── chat/           # Multi-provider LLM chat + SSE (@flows/chat)
-│       └── canvas/         # Tokenizer + LLM annotation canvas (@flows/canvas)
-├── data/                   # SQLite databases
-├── docs/                   # Documentation
-└── package.json            # pnpm workspace root
+packages/
+  core/             cross-cutting runtime infrastructure (@flows/core)
+  shared/           client/server DTOs and constants (@flows/shared)
+  backend/          Elysia application host (@flows/backend)
+  ui/               SvelteKit and Svelte 5 frontend (@flows/ui)
+  flows/
+    spotify/        Spotify adapter and music persistence
+    lyrics/         lyrics adapter, services, and persistence
+    trading/        market stream, domain analysis, and advisor
+    chat/           LLM chat and SSE routes
+    canvas/         tokenizer and annotation canvas
+data/               local SQLite databases
+docs/               current guidance, history, and proposals
 ```
+
+Flows are bounded workspace modules, not separately deployed applications. They share
+the application host and communicate across the client/server boundary through typed
+Eden Treaty RPC. See the [system map](docs/architecture/system-map.md) for ownership and
+extraction rules.
 
 ## Quick Start
 
+Requirements: Node.js 20.19 or newer and pnpm 10.24.
+
 ```bash
-# 1. Install dependencies (requires pnpm)
 pnpm install
-
-# 2. Configure environment
 cp .env.example .env
-# Fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, etc.
-
-# 3. Development
-pnpm dev                # Runs backend (:4173) and UI (:5173) in parallel
+pnpm dev
 ```
 
-## Available Scripts
+The backend runs on `http://localhost:4173`; the Vite UI runs on
+`http://localhost:5173` and proxies `/api` and `/outputs` to the backend.
 
-| Script | Command | Description |
-| :--- | :--- | :--- |
-| **Dev** | `pnpm dev` | Start Backend + UI in parallel |
-| **Build** | `pnpm run build` | Build all packages |
-| **Type Check** | `pnpm run typecheck` | TypeScript checking across all packages |
-| **Check** | `pnpm run check` | Svelte component type checking (UI) |
-| **Test** | `pnpm run test` | Run unit tests (Vitest) |
-| **Lint** | `pnpm run lint` | ESLint |
-| **Format** | `pnpm run format` | Prettier auto-format |
-| **Format Check** | `pnpm run format:check` | Verify formatting (used in CI/hooks) |
-| **Clean** | `pnpm run clean` | Remove all `dist/` and `node_modules/` |
+## Commands
 
-## Environment Variables
+| Command | Purpose |
+| --- | --- |
+| `pnpm dev` | Run every flow, backend, and UI with hot reload |
+| `pnpm build` | Build all workspace packages |
+| `pnpm verify` | Run docs/architecture checks, lint, types, Svelte check, and tests |
+| `pnpm test:coverage` | Run package test suites with coverage |
+| `pnpm --filter @flows/ui test:e2e` | Run Playwright journeys |
+| `pnpm format` | Format packages that provide a formatter |
 
-Copy `.env.example` to `.env` and fill in the required values:
+## Configuration
 
-| Variable | Required | Description |
-| :--- | :---: | :--- |
-| `PORT` | — | Server port (default `4173`) |
-| `SPOTIFY_CLIENT_ID` | ✓ | Spotify app client ID |
-| `SPOTIFY_CLIENT_SECRET` | ✓ | Spotify app client secret |
-| `GEMINI_API_KEY` | ✓* | Gemini API key (`*` one LLM key required) |
-| `GROQ_API_KEY` | — | Groq API key (for rotation mode) |
-| `OPENROUTER_API_KEY` | — | OpenRouter API key |
-| `CEREBRAS_API_KEY` | — | Cerebras API key |
-| `MISTRAL_API_KEY` | — | Mistral API key |
-| `LLM_PROVIDER` | — | `gemini` \| `groq` \| `rotation` … (default `gemini`) |
-| `LLM_MODEL` | — | Model name for the selected provider |
-| `TRADING_SYMBOL` | — | Default trading pair (default `BTCUSDT`) |
-| `TRADING_INTERVAL` | — | Default candle interval (default `1m`) |
+Copy `.env.example` to `.env`. Spotify requires `SPOTIFY_CLIENT_ID` and
+`SPOTIFY_CLIENT_SECRET`. AI features require at least one supported provider key such as
+`GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `CEREBRAS_API_KEY`, or
+`MISTRAL_API_KEY`. Runtime selection uses `LLM_PROVIDER` and optionally `LLM_MODEL`.
+Trading defaults can be changed with `TRADING_SYMBOL` and `TRADING_INTERVAL`.
 
-## Tech Stack
+Environment values are parsed only by named configuration factories and passed into
+runtime composition. Never commit `.env` or credentials.
+
+## Stack
 
 | Layer | Technology |
-| ----- | ---------- |
-| **UI** | SvelteKit, Svelte 5 (runes), Vite 7, Tailwind CSS 4, Chart.js |
-| **Server** | Elysia (Node.js adapter), `tsx` dev runtime |
-| **Database** | SQLite (better-sqlite3) |
-| **API client** | Eden Treaty (end-to-end typed) |
-| **Validation** | TypeBox (Elysia `t`) |
-| **Testing** | Vitest (+ coverage v8, Testing Library), Playwright |
-| **Logging** | Pino |
+| --- | --- |
+| UI | SvelteKit, Svelte 5 runes, Vite 7, Tailwind CSS 4, Chart.js |
+| API | ElysiaJS on Node.js, TypeBox validation |
+| Data | better-sqlite3 |
+| Typed RPC | Eden Treaty |
+| Tests | Vitest, Testing Library, Playwright, Node test runner |
+| Logging | Pino |
 
 ## Documentation
 
-- [Conventions & Best Practices](docs/conventions.md) — the engineering rules (start here)
-- [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) — entry point for AI agents
-- [System Map](docs/architecture/system-map.md) — package boundaries, flow contract, refactor lanes
-- [Backend Architecture](docs/architecture/backend.md) — bounded-context flows, layers, LLM
-- [UI Architecture](docs/architecture/ui.md) — SvelteKit, flows registry, Eden client
-- [Architecture Roadmap](docs/refactor-proposals/future-architecture.md)
-- [Design System](docs/design-system.md)
-- [Future Tasks (Bucket)](docs/bucket.md)
+Start at the [documentation index](docs/README.md). The principal sources of truth are:
 
-## Quality gate
+- [Conventions](docs/conventions.md): engineering and delivery rules.
+- [Roadmap](docs/ROADMAP.md): product direction and execution order.
+- [System map](docs/architecture/system-map.md): package boundaries.
+- [Testing strategy](docs/testing/README.md): required test layers and gates.
+- [Design system](docs/design-system.md): shared UI primitives and tokens.
+- [AGENTS.md](AGENTS.md): concise operating instructions for coding agents.
 
-Personal project, minimal ceremony: short-lived branches open PRs directly to
-`main`; there is no `develop` branch. Run the full local gate before pushing
-anything non-trivial:
+## Delivery
+
+Work happens on short-lived branches through PRs to `main`; there is no `develop`
+branch or deployment pipeline. Before pushing non-trivial work, run:
 
 ```bash
-pnpm verify   # lint && typecheck && check && test
+pnpm verify
+pnpm build
 ```
 
-Coverage: `pnpm test:coverage`.
+CI performs a clean install, full build, static checks, and coverage on every PR and push
+to `main`. UI behavior changes also require focused Playwright coverage or a documented
+manual desktop/mobile verification.
 
 ## License
 

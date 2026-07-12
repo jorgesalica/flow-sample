@@ -1,7 +1,7 @@
 name: CI
 
-# Light gate for a personal project: one job running the same checks as `pnpm verify`,
-# on pushes to main and on PRs. No deploy / CD.
+# Light gate for a personal project: build, repository contracts, static checks, and
+# coverage on pushes to main and PRs. No deploy / CD.
 on:
   push:
     branches: [main]
@@ -33,6 +33,8 @@ jobs:
       # Build first: typecheck/check resolve workspace deps against compiled dist.
       - run: pnpm build
 
+      - run: pnpm check:docs
+      - run: pnpm check:architecture
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm check

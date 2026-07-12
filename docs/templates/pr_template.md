@@ -28,8 +28,10 @@
 
 ## Verification
 
-- [ ] `pnpm lint`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm check`
-- [ ] `pnpm test`
-- [ ] `pnpm build` when package entrypoints or build behavior changed
+- [ ] `pnpm verify`
+- [ ] `pnpm build` for non-trivial package/backend/frontend changes
+- [ ] Relevant Playwright or desktop/mobile checks for UI behavior
+
+## Documentation
+
+- [ ] Owner docs updated when architecture, API, configuration, flows, tests, or workflow changed
