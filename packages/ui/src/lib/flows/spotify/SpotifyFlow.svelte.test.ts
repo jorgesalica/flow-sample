@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import type { Track, SearchOptions } from '@flows/shared';
 import type { TopStats } from '@lib/types';
@@ -111,24 +111,39 @@ describe('SpotifyFlow render states', () => {
     render(SpotifyFlow, { props: props() });
 
     expect(screen.getByRole('heading', { name: 'Spotify Flow' })).toBeInTheDocument();
-    expect(screen.getByText('Cosmic Flow — Spotify Edition')).toBeInTheDocument();
+    expect(screen.getByText('Flow Sample - Spotify')).toBeInTheDocument();
   });
 
-  it('shows loading skeletons when loading with no tracks yet', () => {
+  it('shows the shared loading state when loading with no tracks yet', () => {
     // Drive the loading state via the runes store before render (no tracks yet).
     spotifyStore.isLoading = true;
-    const { container } = render(SpotifyFlow, { props: props() });
+    render(SpotifyFlow, { props: props() });
 
-    // Eight skeleton placeholders, and no empty-state message while loading.
-    expect(container.querySelectorAll('.skeleton')).toHaveLength(8);
+    expect(screen.getByRole('status')).toHaveTextContent('Loading your library');
     expect(screen.queryByText(/no tracks found/i)).not.toBeInTheDocument();
   });
 
   it('shows the empty state with a clear-filters action when not loading and no tracks', () => {
     render(SpotifyFlow, { props: props() });
 
-    expect(screen.getByText(/no tracks found matching your filters/i)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('No tracks found');
     expect(screen.getByRole('button', { name: /clear all filters/i })).toBeInTheDocument();
+  });
+
+  it('clears all search and filter options from the empty state', async () => {
+    render(SpotifyFlow, { props: props() });
+
+    await fireEvent.click(screen.getByRole('button', { name: /clear all filters/i }));
+
+    expect(loadTracks).toHaveBeenCalledWith({
+      page: 1,
+      limit: 24,
+      q: '',
+      genre: undefined,
+      year: undefined,
+      sortBy: 'added_at',
+      sortOrder: 'desc',
+    });
   });
 
   it('renders a track card per track in the data state', async () => {

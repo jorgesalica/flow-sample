@@ -315,6 +315,10 @@ body::after {
 .ui-field__control::placeholder {
   color: var(--ui-text-muted);
 }
+.ui-select {
+  cursor: pointer;
+  appearance: auto;
+}
 .ui-field__control--mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }

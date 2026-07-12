@@ -1,20 +1,34 @@
 <script lang="ts">
-  import { spotifyStore } from '../stores.svelte';
+  import type { GenreCount, SelectOption, YearCount } from '@flows/shared';
+  import { Badge, Button } from '@lib/components';
   import { loadTracks } from '../api';
-  import type { GenreCount, YearCount } from '@flows/shared';
+  import { spotifyStore } from '../stores.svelte';
+  import FilterSelect from './FilterSelect.svelte';
 
   let { genres = [], years = [] }: { genres?: GenreCount[]; years?: YearCount[] } = $props();
-
   let isOpen = $state(false);
-
-  // Local filter values (synced with store)
   let selectedGenre = $state(spotifyStore.searchOptions.genre || '');
   let selectedYear = $state(spotifyStore.searchOptions.year?.toString() || '');
   let sortBy = $state(spotifyStore.searchOptions.sortBy || 'added_at');
   let sortOrder = $state(spotifyStore.searchOptions.sortOrder || 'desc');
 
-  // Count active filters
-  let activeFilterCount = $derived(
+  const genreOptions = $derived<SelectOption[]>([
+    { value: '', label: 'All Genres' },
+    ...genres.map(({ genre, count }) => ({ value: genre, label: `${genre} (${count})` })),
+  ]);
+  const yearOptions = $derived<SelectOption[]>([
+    { value: '', label: 'All Years' },
+    ...years.map(({ year, count }) => ({ value: year.toString(), label: `${year} (${count})` })),
+  ]);
+  const sortOptions: SelectOption[] = [
+    { value: 'added_at', label: 'Date Added' },
+    { value: 'title', label: 'Title' },
+  ];
+  const orderOptions: SelectOption[] = [
+    { value: 'desc', label: 'Descending' },
+    { value: 'asc', label: 'Ascending' },
+  ];
+  const activeFilterCount = $derived(
     (selectedGenre ? 1 : 0) +
       (selectedYear ? 1 : 0) +
       (sortBy !== 'added_at' || sortOrder !== 'desc' ? 1 : 0)
@@ -23,7 +37,7 @@
   function applyFilters() {
     loadTracks({
       genre: selectedGenre || undefined,
-      year: selectedYear ? parseInt(selectedYear) : undefined,
+      year: selectedYear ? Number.parseInt(selectedYear, 10) : undefined,
       sortBy: sortBy as 'added_at' | 'title',
       sortOrder: sortOrder as 'asc' | 'desc',
       page: 1,
@@ -38,115 +52,79 @@
     sortOrder = 'desc';
     loadTracks({ page: 1 });
   }
-
-  function togglePanel() {
-    isOpen = !isOpen;
-  }
 </script>
 
-<!-- Filter Button -->
-<button
-  onclick={togglePanel}
-  class="glass px-4 py-2 rounded-xl text-cosmic outline-none cursor-pointer hover:bg-nebula/20 active:scale-95 transition-all flex items-center gap-2"
->
-  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="2"
-      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-    />
-  </svg>
-  <span>Filters</span>
-  {#if activeFilterCount > 0}
-    <span class="ml-1 px-1.5 py-0.5 text-[10px] bg-aurora rounded-full font-bold text-void"
-      >{activeFilterCount}</span
-    >
-  {/if}
-  <svg
-    class="w-4 h-4 transition-transform {isOpen ? 'rotate-180' : ''}"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
+<div class="relative">
+  <Button
+    variant="secondary"
+    onclick={() => (isOpen = !isOpen)}
+    aria-expanded={isOpen}
+    aria-controls="spotify-filter-panel"
   >
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-  </svg>
-</button>
+    Filters
+    {#if activeFilterCount > 0}<Badge tone="info">{activeFilterCount}</Badge>{/if}
+  </Button>
 
-<!-- Expandable Panel -->
-{#if isOpen}
-  <div
-    class="absolute top-full left-0 right-0 mt-2 p-4 rounded-xl border border-white/20 bg-nebula z-50 shadow-2xl shadow-aurora/10"
-  >
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Genre Filter -->
-      <div class="flex flex-col gap-1">
-        <label for="filter-genre" class="text-xs text-pulsar uppercase tracking-wide">Genre</label>
-        <select
+  {#if isOpen}
+    <div id="spotify-filter-panel" class="spotify-filter-panel" aria-label="Spotify filters">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FilterSelect
           id="filter-genre"
-          class="glass px-3 py-2 rounded-lg bg-void text-cosmic outline-none cursor-pointer text-sm focus:ring-2 focus:ring-aurora/50"
+          label="Genre"
           bind:value={selectedGenre}
-        >
-          <option value="" class="bg-void">All Genres</option>
-          {#each genres as g (g.genre)}
-            <option value={g.genre} class="bg-void">{g.genre} ({g.count})</option>
-          {/each}
-        </select>
-      </div>
-
-      <!-- Year Filter -->
-      <div class="flex flex-col gap-1">
-        <label for="filter-year" class="text-xs text-pulsar uppercase tracking-wide">Year</label>
-        <select
+          options={genreOptions}
+        />
+        <FilterSelect
           id="filter-year"
-          class="glass px-3 py-2 rounded-lg bg-void text-cosmic outline-none cursor-pointer text-sm focus:ring-2 focus:ring-aurora/50"
+          label="Year"
           bind:value={selectedYear}
-        >
-          <option value="" class="bg-void">All Years</option>
-          {#each years as y (y.year)}
-            <option value={y.year.toString()} class="bg-void">{y.year} ({y.count})</option>
-          {/each}
-        </select>
-      </div>
-
-      <!-- Sort By -->
-      <div class="flex flex-col gap-1">
-        <label for="filter-sortby" class="text-xs text-pulsar uppercase tracking-wide"
-          >Sort By</label
-        >
-        <select
+          options={yearOptions}
+        />
+        <FilterSelect
           id="filter-sortby"
-          class="glass px-3 py-2 rounded-lg bg-void text-cosmic outline-none cursor-pointer text-sm focus:ring-2 focus:ring-aurora/50"
+          label="Sort By"
           bind:value={sortBy}
-        >
-          <option value="added_at" class="bg-void">Date Added</option>
-          <option value="title" class="bg-void">Title</option>
-        </select>
-      </div>
-
-      <!-- Sort Order -->
-      <div class="flex flex-col gap-1">
-        <label for="filter-order" class="text-xs text-pulsar uppercase tracking-wide">Order</label>
-        <select
+          options={sortOptions}
+        />
+        <FilterSelect
           id="filter-order"
-          class="glass px-3 py-2 rounded-lg bg-void text-cosmic outline-none cursor-pointer text-sm focus:ring-2 focus:ring-aurora/50"
+          label="Order"
           bind:value={sortOrder}
-        >
-          <option value="desc" class="bg-void">Descending</option>
-          <option value="asc" class="bg-void">Ascending</option>
-        </select>
+          options={orderOptions}
+        />
+      </div>
+      <div class="mt-4 flex flex-wrap justify-end gap-2 border-t border-white/10 pt-4">
+        <Button variant="ghost" onclick={clearFilters}>Clear all</Button>
+        <Button onclick={applyFilters}>Apply filters</Button>
       </div>
     </div>
+  {/if}
+</div>
 
-    <!-- Action Buttons -->
-    <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-nebula/20">
-      <button
-        onclick={clearFilters}
-        class="px-4 py-2 rounded-lg text-sm text-pulsar hover:text-cosmic transition-colors"
-      >
-        Clear All
-      </button>
-      <button onclick={applyFilters} class="btn-primary"> Apply Filters </button>
-    </div>
-  </div>
-{/if}
+<style>
+  .spotify-filter-panel {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 55;
+    width: min(32rem, calc(100vw - 2rem));
+    padding: 1rem;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.5rem;
+    background: var(--ui-surface);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.35);
+  }
+
+  @media (max-width: 640px) {
+    .spotify-filter-panel {
+      position: fixed;
+      top: 4.5rem;
+      right: 1rem;
+      bottom: auto;
+      left: 1rem;
+      width: auto;
+      max-height: calc(100vh - 5.5rem);
+      overflow-y: auto;
+    }
+  }
+</style>

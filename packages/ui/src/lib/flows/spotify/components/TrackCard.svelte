@@ -3,6 +3,7 @@
   import AlbumArt from './AlbumArt.svelte';
   import GenreBadges from './GenreBadges.svelte';
   import LyricsModal from '@lib/flows/lyrics/components/LyricsModal.svelte';
+  import { Button } from '@lib/components';
 
   interface Props {
     track: Track;
@@ -74,8 +75,9 @@
     <!-- Footer Stats -->
     <div class="flex justify-between items-center mt-auto pt-3">
       <!-- Lyrics Button -->
-      <button
-        class="text-[10px] text-white/90 hover:text-aurora transition-colors px-2 py-1 bg-white/5 hover:bg-white/10 rounded font-medium"
+      <Button
+        variant="ghost"
+        size="sm"
         onclick={(e) => {
           e.stopPropagation();
           showLyrics = true;
@@ -83,7 +85,7 @@
         title="View lyrics"
       >
         Lyrics
-      </button>
+      </Button>
 
       <!-- Added date -->
       <span class="text-[10px] text-pulsar/80 ml-2">
