@@ -6,6 +6,9 @@
  */
 
 import type { Candle } from './types';
+import { logger } from '@flows/core';
+
+const log = logger.child({ module: 'BinanceRestAdapter' });
 
 const BINANCE_REST_BASE = 'https://api.binance.com/api/v3';
 
@@ -44,14 +47,14 @@ export async function fetchKlines(
   url.searchParams.set('interval', interval);
   url.searchParams.set('limit', Math.min(limit, 1000).toString());
 
-  console.log(`[BinanceREST] Fetching ${limit} klines for ${symbol}@${interval}`);
+  log.debug({ symbol, interval, limit }, 'Fetching historical klines');
 
   try {
     const response = await fetch(url.toString());
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[BinanceREST] API error: ${response.status} - ${errorText}`);
+      log.error({ status: response.status, response: errorText }, 'Binance API error');
       throw new Error(`Binance API error: ${response.status}`);
     }
 
@@ -70,10 +73,10 @@ export async function fetchKlines(
       isClosed: true, // Historical klines are always closed
     }));
 
-    console.log(`[BinanceREST] Fetched ${candles.length} klines successfully`);
+    log.debug({ symbol, interval, count: candles.length }, 'Historical klines fetched');
     return candles;
   } catch (error) {
-    console.error(`[BinanceREST] Failed to fetch klines:`, error);
+    log.error({ error }, 'Failed to fetch historical klines');
     throw error;
   }
 }

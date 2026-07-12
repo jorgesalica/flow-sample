@@ -1,94 +1,9 @@
 <script lang="ts">
   import CandleChart from './CandleChart.svelte';
   import type { Candle, AdvisorNote } from '../trading';
-
-  interface TimeframeStep {
-    id: number;
-    label: string;
-    interval: string;
-    focus: string;
-    icon: string;
-    candleLimit: number;
-    promptContext: string;
-  }
-
-  const STEPS: TimeframeStep[] = [
-    {
-      id: 1,
-      label: '1D',
-      interval: '1d', // Daily candles over ~10 months
-      focus: 'Daily Candles',
-      icon: '🌍',
-      candleLimit: 300, // ~10 months of daily candles
-      promptContext:
-        'Analyze the last 10 MONTHS of price action using DAILY candles to determine the overall market bias. Is this a trending or ranging market? What is the dominant direction? Identify key support/resistance zones visible at this macro scale.',
-    },
-    {
-      id: 2,
-      label: '4H',
-      interval: '4h', // 4-hour candles over ~1 month
-      focus: '4-Hour Candles',
-      icon: '🏗️',
-      candleLimit: 180, // 30 days × 6 candles/day = 180
-      promptContext:
-        'Analyze the last MONTH using 4-HOUR candles to identify key structural levels. Where are the major support and resistance zones? Are there any structural shifts (higher highs/lows or lower highs/lows)?',
-    },
-    {
-      id: 3,
-      label: '1H',
-      interval: '1h', // Hourly candles over ~1 month
-      focus: 'Hourly Candles',
-      icon: '🎯',
-      candleLimit: 720, // 30 days × 24 candles/day = 720
-      promptContext:
-        'Analyze the last MONTH using HOURLY candles to look for trade setups. Are there any candlestick patterns forming? Is price approaching a key level where a reaction is likely? What is the short-term trend direction?',
-    },
-    {
-      id: 4,
-      label: '15m',
-      interval: '15m', // 15-minute candles (~10 days due to Binance 1000 limit)
-      focus: '15-Min Candles',
-      icon: '⚡',
-      candleLimit: 1000, // 30 days × 96/day = 2880, capped at 1000 (~10 days)
-      promptContext:
-        'Analyze the most recent price action using 15-MINUTE candles for entry timing. What is the immediate price action? Where would be the optimal entry point and stop loss? Look for micro-patterns and momentum signals.',
-    },
-  ];
-
-  interface RegimeAnalysis {
-    classification: string;
-    hurst_exponent: number;
-    fractal_dimension: number;
-  }
-
-  interface FractalStructure {
-    nearest_resistance: string | number;
-    distance_to_resistance: string;
-    nearest_support: string | number;
-    distance_to_support: string;
-    support_touch_count: number;
-    resistance_touch_count: number;
-  }
-
-  interface Indicators {
-    rsi?: string;
-    macd?: {
-      histogram: string;
-      bias: string;
-    };
-  }
-
-  interface WizardAnalysis {
-    regime_analysis?: RegimeAnalysis;
-    fractal_structure?: FractalStructure;
-    indicators?: Indicators;
-    candle_patterns?: string[];
-  }
-
-  interface WizardInsightResult {
-    insight: AdvisorNote;
-    analysis: WizardAnalysis;
-  }
+  import type { WizardAnalysis, WizardInsightViewModel } from '../types';
+  import { calculateWizardMetrics, formatCompactVolume, TRADING_WIZARD_STEPS } from '../wizard';
+  import { clientLogger } from '@lib/client-logger';
 
   interface Props {
     onFetchKlines: (interval: string, limit: number) => Promise<Candle[]>;
@@ -98,7 +13,7 @@
       previousInsights: { label: string; insight: AdvisorNote }[],
       interval: string,
       limit: number
-    ) => Promise<WizardInsightResult | null>;
+    ) => Promise<WizardInsightViewModel | null>;
   }
 
   let { onFetchKlines, onGenerateInsightForTimeframe }: Props = $props();
@@ -113,17 +28,18 @@
   // Per-step analysis data (from backend computation)
   let stepAnalysis: Record<string, WizardAnalysis> = $state({});
 
-  const activeStep = $derived(STEPS[currentStep]);
-  const canGoNext = $derived(currentStep < STEPS.length - 1);
+  const activeStep = $derived(TRADING_WIZARD_STEPS[currentStep]);
+  const canGoNext = $derived(currentStep < TRADING_WIZARD_STEPS.length - 1);
   const canGoPrev = $derived(currentStep > 0);
   const currentInsight = $derived(stepInsights[activeStep.label] || null);
+  const metrics = $derived(calculateWizardMetrics(candles));
 
   async function loadStepData() {
     isLoadingCandles = true;
     try {
       candles = await onFetchKlines(activeStep.interval, activeStep.candleLimit);
     } catch (error) {
-      console.error('Failed to fetch klines:', error);
+      clientLogger.error('Trading wizard failed to fetch klines', { error });
       candles = [];
     } finally {
       isLoadingCandles = false;
@@ -138,16 +54,17 @@
       // MATRIOSHKA: Collect insights from all previous steps
       const previousInsights: { label: string; insight: AdvisorNote }[] = [];
       for (let i = 0; i < currentStep; i++) {
-        const step = STEPS[i];
+        const step = TRADING_WIZARD_STEPS[i];
         const insight = stepInsights[step.label];
         if (insight) {
           previousInsights.push({ label: step.label, insight });
         }
       }
 
-      console.log(
-        `[Wizard Matrioshka] Step ${activeStep.label} has ${previousInsights.length} previous insights`
-      );
+      clientLogger.debug('Trading wizard assembled cascade context', {
+        step: activeStep.label,
+        previousInsightCount: previousInsights.length,
+      });
 
       const result = await onGenerateInsightForTimeframe(
         activeStep.label,
@@ -161,7 +78,7 @@
         stepAnalysis[activeStep.label] = result.analysis;
       }
     } catch (error) {
-      console.error('Failed to generate insight:', error);
+      clientLogger.error('Trading wizard failed to generate insight', { error });
     } finally {
       isLoadingInsight = false;
     }
@@ -182,7 +99,7 @@
   }
 
   async function goToStep(stepIndex: number) {
-    if (stepIndex >= 0 && stepIndex < STEPS.length) {
+    if (stepIndex >= 0 && stepIndex < TRADING_WIZARD_STEPS.length) {
       currentStep = stepIndex;
       await loadStepData();
     }
@@ -197,7 +114,7 @@
 <div class="space-y-6">
   <!-- Step Navigation -->
   <div class="flex items-center justify-center gap-2 flex-wrap">
-    {#each STEPS as step, index (step.id)}
+    {#each TRADING_WIZARD_STEPS as step, index (step.id)}
       <button
         onclick={() => goToStep(index)}
         class="relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300
@@ -213,7 +130,7 @@
           <span class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></span>
         {/if}
       </button>
-      {#if index < STEPS.length - 1}
+      {#if index < TRADING_WIZARD_STEPS.length - 1}
         <span class="text-white/20 hidden md:inline">→</span>
       {/if}
     {/each}
@@ -249,25 +166,7 @@
       <h4 class="text-sm font-semibold text-white/40 uppercase tracking-wider mb-3">
         📊 Metrics ({activeStep.label})
       </h4>
-      {#if candles.length > 0}
-        {@const firstCandle = candles[0]}
-        {@const lastCandle = candles[candles.length - 1]}
-        {@const highMax = Math.max(...candles.map((c) => c.high))}
-        {@const lowMin = Math.min(...candles.map((c) => c.low))}
-        {@const priceChange = ((lastCandle.close - firstCandle.open) / firstCandle.open) * 100}
-        {@const volatility = ((highMax - lowMin) / lastCandle.close) * 100}
-        {@const totalVolume = candles.reduce((sum, c) => sum + c.volume, 0)}
-        {@const dateFrom = new Date(firstCandle.openTime).toLocaleDateString('es-AR', {
-          day: '2-digit',
-          month: 'short',
-          year: '2-digit',
-        })}
-        {@const dateTo = new Date(lastCandle.closeTime).toLocaleDateString('es-AR', {
-          day: '2-digit',
-          month: 'short',
-          year: '2-digit',
-        })}
-
+      {#if metrics}
         <div class="grid grid-cols-2 gap-3 text-sm">
           <!-- Fetched data -->
           <div
@@ -276,11 +175,11 @@
             <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-semibold"
               >📡 Fetched</span
             >
-            <span>{dateFrom} → {dateTo}</span>
+            <span>{metrics.dateFrom} → {metrics.dateTo}</span>
           </div>
           <div>
             <span class="text-white/50">Velas:</span>
-            <span class="font-bold text-white">{candles.length}</span>
+            <span class="font-bold text-white">{metrics.candleCount}</span>
           </div>
           <div>
             <span class="text-white/50">Intervalo:</span>
@@ -289,16 +188,12 @@
           <div>
             <span class="text-white/50">Último:</span>
             <span class="font-bold text-amber-400">
-              ${lastCandle.close.toLocaleString()}
+              ${metrics.last.toLocaleString()}
             </span>
           </div>
           <div>
             <span class="text-white/50">Volumen Total:</span>
-            <span class="font-bold text-white"
-              >{totalVolume >= 1000
-                ? (totalVolume / 1000).toFixed(1) + 'K'
-                : totalVolume.toFixed(1)}</span
-            >
+            <span class="font-bold text-white">{formatCompactVolume(metrics.totalVolume)}</span>
           </div>
 
           <!-- Calculated data -->
@@ -312,24 +207,28 @@
           <div>
             <span class="text-white/50">High:</span>
             <span class="font-bold text-green-400">
-              ${highMax.toLocaleString()}
+              ${metrics.high.toLocaleString()}
             </span>
           </div>
           <div>
             <span class="text-white/50">Low:</span>
             <span class="font-bold text-red-400">
-              ${lowMin.toLocaleString()}
+              ${metrics.low.toLocaleString()}
             </span>
           </div>
           <div>
             <span class="text-white/50">Variación:</span>
-            <span class="font-bold {priceChange >= 0 ? 'text-green-400' : 'text-red-400'}">
-              {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
+            <span
+              class="font-bold {metrics.priceChangePercent >= 0
+                ? 'text-green-400'
+                : 'text-red-400'}"
+            >
+              {metrics.priceChangePercent >= 0 ? '+' : ''}{metrics.priceChangePercent.toFixed(2)}%
             </span>
           </div>
           <div>
             <span class="text-white/50">Volatilidad:</span>
-            <span class="font-bold text-orange-400">{volatility.toFixed(2)}%</span>
+            <span class="font-bold text-orange-400">{metrics.volatilityPercent.toFixed(2)}%</span>
           </div>
         </div>
       {:else}
@@ -517,7 +416,7 @@
     </button>
 
     <span class="text-white/40 text-sm">
-      Step {currentStep + 1} of {STEPS.length}
+      Step {currentStep + 1} of {TRADING_WIZARD_STEPS.length}
     </span>
 
     <button

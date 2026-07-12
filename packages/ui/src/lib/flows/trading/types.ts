@@ -34,9 +34,35 @@ export interface InsightResponse {
 export interface WizardInsightResponse {
   success: boolean;
   insight?: AdvisorNote;
-  analysis?: Record<string, unknown>;
+  analysis?: WizardAnalysis;
   meta?: Record<string, unknown>;
   error?: string;
+}
+
+export interface WizardAnalysis {
+  regime_analysis?: {
+    classification: string;
+    hurst_exponent: number;
+    fractal_dimension: number;
+  };
+  fractal_structure?: {
+    nearest_resistance: string | number;
+    distance_to_resistance: string;
+    nearest_support: string | number;
+    distance_to_support: string;
+    support_touch_count: number;
+    resistance_touch_count: number;
+  };
+  indicators?: {
+    rsi?: string;
+    macd?: { histogram: string; bias: string };
+  };
+  candle_patterns?: string[];
+}
+
+export interface WizardInsightViewModel {
+  insight: AdvisorNote;
+  analysis: WizardAnalysis;
 }
 
 /**
