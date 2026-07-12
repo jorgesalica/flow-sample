@@ -1,5 +1,5 @@
 import type { GenreCount, YearRange } from '@flows/shared';
-import type { TrackRepository } from './repository';
+import type { TrackRepository } from '@flows/shared';
 
 export interface TopStats {
   totalTracks: number;

@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia';
 import { SpotifyUseCase } from './usecase';
 import { calculateStats } from './stats.service';
 import { SpotifyApiAdapter } from './adapter';
-import { SQLiteTrackRepository } from './repository';
+import { SQLiteTrackRepository } from '@flows/music';
 import { SQLiteTokenRepository } from './token.repository';
 import { SimpleCache, logger } from '@flows/core';
 

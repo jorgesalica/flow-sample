@@ -15,12 +15,6 @@ const IGNORED_PARTS = new Set([
   '__stubs__',
 ]);
 
-const FLOW_IMPORT_EXCEPTIONS = new Set([
-  'packages/flows/lyrics/src/backend/routes.ts',
-  'packages/flows/lyrics/src/backend/repository.ts',
-  'packages/flows/lyrics/src/backend/canvas/repository.ts',
-]);
-
 function normalize(file) {
   return path.relative(ROOT, file).replaceAll('\\', '/');
 }
@@ -74,10 +68,10 @@ export function checkSource(file, source) {
   }
 
   const flowMatch = file.match(/^packages\/flows\/([^/]+)\/src\//);
-  if (flowMatch && !FLOW_IMPORT_EXCEPTIONS.has(file)) {
+  if (flowMatch) {
     for (const match of source.matchAll(flowImport)) {
       if (match[1] !== flowMatch[1]) {
-        violations.push(violation(file, source, match, 'no-sibling-flow-imports', 'Depend on @flows/shared, @flows/core, or an injected port instead.'));
+        violations.push(violation(file, source, match, 'no-sibling-flow-imports', 'Depend on @flows/shared, @flows/core, @flows/music, or an injected port instead.'));
       }
     }
   }

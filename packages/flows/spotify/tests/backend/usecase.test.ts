@@ -5,7 +5,7 @@ import type { SpotifySourcePort, ArtistDetails } from '../../src/backend/usecase
 // Mock the database module so importing the use case never touches a real
 // music.db file. rebuildFtsIndex is a side-effect we just want to observe.
 const rebuildFtsIndex = vi.fn();
-vi.mock('../../src/backend/database', () => ({ rebuildFtsIndex }));
+vi.mock('@flows/music', () => ({ rebuildFtsIndex }));
 
 const { SpotifyUseCase } = await import('../../src/backend/usecase');
 

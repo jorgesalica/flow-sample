@@ -3,13 +3,13 @@ import Database from 'better-sqlite3';
 import { ArtistCacheRepository } from '../../src/backend/artist-cache.repository';
 
 // We need to mock the musicDb used inside ArtistCacheRepository.
-// The repository imports from './database', so we mock that module.
+// The repository imports the shared database from @flows/music.
 import { vi } from 'vitest';
 
 // Create an in-memory SQLite database for testing
 let testDb: Database.Database;
 
-vi.mock('../../src/backend/database', () => {
+vi.mock('@flows/music', () => {
     return {
         musicDb: (() => {
             const db = new Database(':memory:');
@@ -31,7 +31,7 @@ describe('ArtistCacheRepository', () => {
 
     beforeEach(async () => {
         // Import the mocked musicDb and clear it
-        const { musicDb } = await import('../../src/backend/database');
+        const { musicDb } = await import('@flows/music');
         testDb = musicDb as unknown as Database.Database;
         testDb.exec('DELETE FROM artist_cache');
 

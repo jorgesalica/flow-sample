@@ -13,6 +13,7 @@
     },
     "dependencies": {
         "@flows/core": "workspace:*",
+        "@flows/music": "workspace:*",
         "@flows/shared": "workspace:*",
         "axios": "^1.13.2",
         "better-sqlite3": "^12.5.0",

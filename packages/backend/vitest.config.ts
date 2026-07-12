@@ -19,6 +19,7 @@ export default defineConfig({
       '@flows/lyrics': path.resolve(__dirname, '../flows/lyrics/src/index.ts'),
       '@flows/shared': path.resolve(__dirname, '../shared/src/index.ts'),
       '@flows/spotify': path.resolve(__dirname, '../flows/spotify/src/index.ts'),
+      '@flows/music': path.resolve(__dirname, '../music/src/index.ts'),
       '@flows/trading': path.resolve(__dirname, '../flows/trading/src/index.ts'),
     },
   },

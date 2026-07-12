@@ -9,6 +9,10 @@ The backend has been refactored from a monolithic layered architecture into isol
 
 The central `packages/backend` workspace now acts strictly as an **Application Host**: it initializes the Elysia server, sets up global middleware (CORS, static files), and mounts the independent flow routes.
 
+`packages/music` is a neutral in-process persistence package shared by Spotify and
+Lyrics. It owns `music.db`, the track/artist/genre schema, FTS, and the track repository;
+it is not a flow or separately deployed service.
+
 ## Bounded Contexts (Flows)
 
 Each flow encapsulates its own Domain, Infrastructure, and API layers. They are isolated from one another and share only core infrastructure and types.
@@ -52,9 +56,9 @@ export function createDatabase(filename: string) {
 }
 ```
 
-> **Note:** the shared `music.db` (used by spotify + lyrics) is currently created
-> inside `@flows/spotify` and exported as `musicDb`. Relocating it to neutral
-> ownership is a B2 item — see issue #18.
+The shared `music.db` connection is created by `@flows/music`. Spotify owns its token and
+provider artist-cache repositories; Lyrics owns lyrics and interpretation repositories.
+All use the same compatible SQLite file without importing sibling flow internals.
 
 ## LLM Provider Architecture
 

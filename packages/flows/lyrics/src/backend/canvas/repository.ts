@@ -1,4 +1,4 @@
-import { musicDb } from '@flows/spotify';
+import { musicDb } from '@flows/music';
 import type Database from 'better-sqlite3';
 
 export interface LyricsCanvasTrack {

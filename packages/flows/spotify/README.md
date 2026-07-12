@@ -1,28 +1,25 @@
 # @flows/spotify
 
-Spotify integration flow — syncs liked tracks, enriches artist metadata (genres, images), and stores everything in SQLite.
+Spotify integration flow: syncs liked tracks and enriches artist metadata. Shared track,
+artist, genre, and FTS persistence is owned by `@flows/music`; Spotify owns OAuth, API
+adaptation, synchronization, token cache, and provider-specific artist cache.
 
-## Architecture
+## Boundaries
 
 ```text
-adapter/    → Spotify Web API client (axios), OAuth2 auth flow
-repository  → SQLite storage (tracks, artists, genres)
-routes      → Elysia API routes (/api/spotify/*)
+adapter/       Spotify Web API and OAuth
+usecase.ts     sync and enrichment orchestration
+routes.ts      Elysia routes under /api/spotify
+@flows/music   shared SQLite track persistence
 ```
 
-## Key Features
-
-- OAuth2 authorization code flow with token refresh
-- Paginated fetch of all liked tracks (up to 3000+)
-- Batch artist enrichment (genres + images) in chunks of 50
-- Full-text search via SQLite FTS5
-- Genre/year filtering and sorting
-- 5-minute response cache with manual invalidation
+Spotify does not own lyrics persistence and `@flows/music` does not know about Spotify's
+API or credentials.
 
 ## API Routes
 
 | Method | Path | Description |
-| :----- | :--- | :---------- |
+| --- | --- | --- |
 | GET | `/api/spotify/tracks` | Paginated track list |
 | GET | `/api/spotify/genres` | Genre counts |
 | GET | `/api/spotify/years` | Year distribution |
@@ -30,3 +27,6 @@ routes      → Elysia API routes (/api/spotify/*)
 | POST | `/api/spotify/sync` | Full sync from Spotify |
 | GET | `/api/spotify/auth/login` | Start OAuth flow |
 | GET | `/api/spotify/auth/callback` | OAuth callback |
+
+Run `pnpm --filter @flows/spotify test`; shared repository tests run under
+`pnpm --filter @flows/music test`.

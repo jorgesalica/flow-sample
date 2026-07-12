@@ -20,10 +20,7 @@ testDb.exec(`
   );
 `);
 
-vi.mock('@flows/spotify', async (importOriginal) => {
-    const original = await importOriginal<typeof import('@flows/spotify')>();
-    return { ...original, musicDb: testDb };
-});
+vi.mock('@flows/music', () => ({ musicDb: testDb }));
 
 // Import after mock is in place
 const { SQLiteLyricsRepository } = await import('../../src/backend/repository');

@@ -25,26 +25,20 @@ follow-up polish.
 - CI builds the monorepo and runs lint, type checks, Svelte checks, and coverage.
 - Short-lived branches and PRs to `main` are the delivery contract.
 
-The known architectural exception is music database ownership: Lyrics currently depends
-on Spotify's `musicDb`. Neutral ownership should be established before deeper
-Spotify/Lyrics integration.
+Shared music database ownership is neutral in `@flows/music`; Spotify and Lyrics no
+longer import each other's internals.
 
 ## Execution Queue
 
-1. **Documentation and quality housekeeping
-   ([#45](https://github.com/jorgesalica/flow-sample/issues/45))**: align current docs,
-   workflow, testing guidance, and automated documentation checks.
-2. **Neutral music persistence ownership**: create a focused issue and remove the
-   Lyrics-to-Spotify architecture exception.
-3. **UI design system
+1. **UI design system
    ([#24](https://github.com/jorgesalica/flow-sample/issues/24))**: migrate remaining
    flows in small slices and complete accessibility/responsive coverage.
-4. **Board v1 ([#42](https://github.com/jorgesalica/flow-sample/issues/42))**: accessible
+2. **Board v1 ([#42](https://github.com/jorgesalica/flow-sample/issues/42))**: accessible
    reorder, collapse, size preferences, and versioned local persistence.
-5. **Board card contracts
+3. **Board card contracts
    ([#43](https://github.com/jorgesalica/flow-sample/issues/43))**: typed summaries,
    expansion, and async states without flow-specific renderer branches.
-6. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
+4. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
    repository-backed persistence, API, loader integration, and local migration.
 
 Relationships and graph edges get a separate issue only after the board and card

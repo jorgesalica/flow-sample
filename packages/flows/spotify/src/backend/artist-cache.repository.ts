@@ -1,4 +1,4 @@
-import { musicDb } from './database';
+import { musicDb } from '@flows/music';
 import { logger } from '@flows/core';
 
 const log = logger.child({ module: 'ArtistCacheRepository' });
@@ -11,6 +11,17 @@ export interface CachedArtist {
 }
 
 export class ArtistCacheRepository {
+    constructor() {
+        musicDb.exec(`
+          CREATE TABLE IF NOT EXISTS artist_cache (
+            id TEXT PRIMARY KEY,
+            genres TEXT,
+            image_url TEXT,
+            cached_at INTEGER
+          )
+        `);
+    }
+
     /**
      * Get multiple artists from cache. Returns a map of found entries
      * and an array of IDs that were not in the cache.
