@@ -4,7 +4,7 @@
   import type { LyricsPageData, LyricsTrackRow } from '../../../routes/lyrics/+page';
   import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from './api';
   import { toast } from '@lib/toast';
-  import { AsyncState, Badge, Button, FlowLayout, IconButton } from '@lib/components';
+  import { AsyncState, Badge, Button, FlowLayout, IconButton, Panel } from '@lib/components';
   import LyricsModal from './components/LyricsModal.svelte';
   import LyricsCanvas from './LyricsCanvas.svelte';
 
@@ -173,24 +173,22 @@
 </script>
 
 <FlowLayout>
-  <div class="h-full w-full overflow-hidden flex flex-col pb-8" data-theme="organic">
+  <div class="lyrics-flow">
     <!-- Header -->
-    <header
-      class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
-    >
+    <header class="lyrics-header">
       <div>
-        <h1 class="flex min-w-0 items-center gap-3 text-2xl font-bold sm:text-3xl md:text-4xl">
+        <h1 class="lyrics-title">
           <span aria-hidden="true">🎤</span>
-          <span class="min-w-0 text-cosmic">Lyrics Dashboard</span>
+          <span>Lyrics Dashboard</span>
         </h1>
-        <p class="text-pulsar mt-2 max-w-xl">
+        <p class="lyrics-subtitle">
           Manage lyrics availability. To read lyrics, visit the
-          <a href="/spotify" class="text-aurora hover:underline">Spotify Flow</a>.
+          <a href="/spotify">Spotify Flow</a>.
         </p>
       </div>
 
       <!-- Actions -->
-      <div class="flex items-center gap-3">
+      <div class="lyrics-actions">
         <!-- Retry Failed Button -->
         <Button
           onclick={() => handleFetchAllLyrics(true)}
@@ -247,7 +245,7 @@
       <AsyncState state="error" title="Error Loading Data" message={error} action={retryAction} />
     {:else if canvasTrackId}
       <div class="flex flex-col h-full">
-        <div class="p-4 border-b border-white/5">
+        <div class="border-b border-border p-4">
           <Button variant="ghost" onclick={() => (canvasTrackId = null)}>Back to Dashboard</Button>
         </div>
         <div class="flex-grow overflow-hidden relative">
@@ -256,45 +254,51 @@
       </div>
     {:else if stats}
       <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+      <div class="lyrics-stats">
         <!-- Total Tracks -->
-        <div class="glass p-5 rounded-2xl border-l-4 border-nebula">
-          <h3 class="text-pulsar text-xs font-bold uppercase tracking-wider mb-1">Total Tracks</h3>
-          <p class="text-3xl font-bold text-cosmic">{stats.total}</p>
-        </div>
+        <Panel padding="md">
+          <div class="lyrics-stat">
+            <h3>Total Tracks</h3>
+            <p>{stats.total}</p>
+          </div>
+        </Panel>
 
         <!-- Found -->
-        <div class="glass p-5 rounded-2xl border-l-4 border-aurora">
-          <h3 class="text-pulsar text-xs font-bold uppercase tracking-wider mb-1">Found</h3>
-          <div class="flex justify-between items-end">
-            <p class="text-3xl font-bold text-cosmic">{stats.found}</p>
-            <p class="text-sm text-aurora font-medium">{getPercentage(stats.found, stats.total)}</p>
+        <Panel padding="md">
+          <div class="lyrics-stat lyrics-stat--success">
+            <h3>Found</h3>
+            <div>
+              <p>{stats.found}</p>
+              <Badge tone="success">{getPercentage(stats.found, stats.total)}</Badge>
+            </div>
           </div>
-        </div>
+        </Panel>
 
         <!-- Not Found -->
-        <div class="glass p-5 rounded-2xl border-l-4 border-red-400">
-          <h3 class="text-pulsar text-xs font-bold uppercase tracking-wider mb-1">Not Found</h3>
-          <div class="flex justify-between items-end">
-            <p class="text-3xl font-bold text-cosmic">{stats.notFound}</p>
-            <p class="text-sm text-red-400 font-medium">
-              {getPercentage(stats.notFound, stats.total)}
-            </p>
+        <Panel padding="md">
+          <div class="lyrics-stat lyrics-stat--danger">
+            <h3>Not Found</h3>
+            <div>
+              <p>{stats.notFound}</p>
+              <Badge tone="danger">{getPercentage(stats.notFound, stats.total)}</Badge>
+            </div>
           </div>
-        </div>
+        </Panel>
 
         <!-- Pending -->
-        <div class="glass p-5 rounded-2xl border-l-4 border-pulsar">
-          <h3 class="text-pulsar text-xs font-bold uppercase tracking-wider mb-1">Pending</h3>
-          <p class="text-3xl font-bold text-cosmic">{stats.pending}</p>
-        </div>
+        <Panel padding="md">
+          <div class="lyrics-stat lyrics-stat--info">
+            <h3>Pending</h3>
+            <p>{stats.pending}</p>
+          </div>
+        </Panel>
       </div>
 
       <!-- Tracks Table -->
-      <div class="glass rounded-2xl overflow-hidden border border-white/5">
-        <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+      <Panel padding="none">
+        <div class="flex items-center justify-between border-b border-border bg-surface-subtle p-4">
           <div class="flex items-center gap-4">
-            <h2 class="text-lg font-bold text-cosmic">Recent Tracks</h2>
+            <h2 class="text-lg font-bold">Recent Tracks</h2>
 
             <!-- Filter Control -->
             <div class="relative">
@@ -326,7 +330,7 @@
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="border-b border-white/5 text-xs text-pulsar uppercase tracking-wider">
+                <tr class="border-b border-border text-xs uppercase text-muted">
                   <th class="p-4 font-medium w-16">Cover</th>
                   <th class="p-4 font-medium">Title</th>
                   <th class="p-4 font-medium">Artist</th>
@@ -334,10 +338,10 @@
                   <th class="p-4 font-medium w-24 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-white/5">
+              <tbody class="divide-y divide-border">
                 {#each tracks as track (track.id)}
                   <tr
-                    class="hover:bg-white/5 transition-colors group {track.status === 'found'
+                    class="group transition-colors hover:bg-surface-raised {track.status === 'found'
                       ? 'cursor-pointer'
                       : ''}"
                     onclick={() => {
@@ -367,16 +371,16 @@
                         />
                       {:else}
                         <div
-                          class="w-10 h-10 rounded bg-white/10 flex items-center justify-center text-xl"
+                          class="flex h-10 w-10 items-center justify-center rounded bg-surface-raised text-xl"
                         >
                           🎵
                         </div>
                       {/if}
                     </td>
-                    <td class="p-4 text-white font-medium group-hover:text-aurora transition-colors"
+                    <td class="p-4 font-medium transition-colors group-hover:text-accent"
                       >{track.title}</td
                     >
-                    <td class="p-4 text-pulsar">{track.artist}</td>
+                    <td class="p-4 text-muted">{track.artist}</td>
                     <td class="p-4 text-right">
                       <Badge tone={getStatusTone(track.status)}>
                         {track.status.replace('_', ' ')}
@@ -473,13 +477,13 @@
 
         <!-- Load More Action -->
         {#if hasMore && tracks.length > 0}
-          <div class="p-4 border-t border-white/5 flex justify-center">
+          <div class="flex justify-center border-t border-border p-4">
             <Button onclick={handleLoadMore} disabled={loading} {loading} variant="secondary">
               {loading ? 'Loading more...' : 'Load More'}
             </Button>
           </div>
         {/if}
-      </div>
+      </Panel>
     {/if}
   </div>
 </FlowLayout>
@@ -487,3 +491,126 @@
 {#if selectedTrack}
   <LyricsModal track={selectedTrack} onclose={() => (selectedTrack = null)} />
 {/if}
+
+<style>
+  .lyrics-flow {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 2rem;
+  }
+
+  .lyrics-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .lyrics-title {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    font-size: 2.25rem;
+    letter-spacing: 0;
+  }
+
+  .lyrics-subtitle {
+    max-width: 36rem;
+    margin: 0.5rem 0 0;
+    color: var(--ui-text-muted);
+  }
+
+  .lyrics-subtitle a {
+    color: var(--ui-accent);
+  }
+
+  .lyrics-subtitle a:focus-visible {
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
+  }
+
+  .lyrics-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .lyrics-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .lyrics-stat {
+    display: grid;
+    gap: 0.5rem;
+    border-left: 3px solid var(--ui-border);
+    padding-left: 0.75rem;
+  }
+
+  .lyrics-stat--success {
+    border-left-color: var(--ui-success);
+  }
+
+  .lyrics-stat--danger {
+    border-left-color: var(--ui-danger);
+  }
+
+  .lyrics-stat--info {
+    border-left-color: var(--ui-accent);
+  }
+
+  .lyrics-stat h3 {
+    margin: 0;
+    color: var(--ui-text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+  }
+
+  .lyrics-stat > div {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .lyrics-stat p {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 48rem) {
+    .lyrics-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .lyrics-title {
+      font-size: 1.75rem;
+    }
+
+    .lyrics-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .lyrics-actions :global(.ui-button) {
+      flex: 1 1 10rem;
+    }
+
+    .lyrics-stats {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,6 +1,7 @@
 # B1 — Ordering Pass (order in place, don't change intent)
 
-> **Status:** active · **Companion:** B2 vision → [GitHub issue #18](https://github.com/jorgesalica/flow-sample/issues/18)
+> **Status:** historical audit; execution is superseded by the current roadmap and GitHub
+> issues. **Companion:** B2 vision → [GitHub issue #18](https://github.com/jorgesalica/flow-sample/issues/18)
 >
 > **The rule of B1:** clean and order what already exists **without moving modules
 > between packages and without changing behavior/intent**. The app must look and
@@ -186,7 +187,8 @@ URLs `#/spotify` → `/spotify`.
 - [ ] (d) Port **Spotify** end-to-end via `[flow]/+page.svelte` (the reference pattern).
 - [ ] (e) Port trading, lyrics, chat (verify SSE through the new proxy; chat is the risky one).
 - [ ] (f) Verify Eden + proxy parity; build static + serve via backend for prod parity.
-- [ ] (g) Re-point Playwright e2e (`#/spotify` → `/spotify`); text selectors unchanged.
+- [x] (g) Re-point Playwright e2e (`#/spotify` → `/spotify`) and replace stale text
+      selectors with role/name locators.
 - [ ] (h) Remove old `main.ts`/`App.svelte`/`index.html` + vestigial configs (last).
 
 ### Component decomposition + unit tests (vitest + @testing-library/svelte + jsdom)

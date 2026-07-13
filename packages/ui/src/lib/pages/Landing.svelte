@@ -91,7 +91,7 @@
 
   .flow-index__header h1 {
     margin: 0;
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-size: 2rem;
   }
 
   .flow-index__summary {
@@ -112,19 +112,23 @@
     gap: 1rem;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 56.25rem) {
     .flow-index__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 40rem) {
     .flow-index {
       gap: 1rem;
     }
 
     .flow-index__header {
       align-items: flex-start;
+    }
+
+    .flow-index__header h1 {
+      font-size: 1.75rem;
     }
 
     .flow-index__grid {

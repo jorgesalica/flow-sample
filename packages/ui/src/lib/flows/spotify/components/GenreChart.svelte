@@ -1,81 +1,57 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import {
+    ArcElement,
+    CategoryScale,
     Chart,
+    DoughnutController,
+    Legend,
     Title,
     Tooltip,
-    Legend,
-    ArcElement,
-    DoughnutController,
-    CategoryScale,
     type ChartConfiguration,
   } from 'chart.js';
   import type { GenreCount } from '@flows/shared';
+  import { THEME_CHANGE_EVENT } from '@lib/theme';
+  import { readChartTheme } from '@lib/chart-theme';
 
   Chart.register(Title, Tooltip, Legend, ArcElement, DoughnutController, CategoryScale);
 
-  let { data } = $props<{
-    data: GenreCount[];
-  }>();
-
+  let { data }: { data: GenreCount[] } = $props();
   let canvas: HTMLCanvasElement;
-  let chart: Chart | null = null;
+  let chart: Chart<'doughnut'> | null = null;
 
-  // Cosmic Flow color palette for charts
-  const cosmicColors = [
-    'rgba(52, 211, 153, 0.85)', // Aurora (emerald)
-    'rgba(59, 130, 246, 0.85)', // Nebula (blue)
-    'rgba(139, 92, 246, 0.85)', // Cosmic purple
-    'rgba(236, 72, 153, 0.85)', // Pink accent
-    'rgba(6, 182, 212, 0.85)', // Cyan
-    'rgba(16, 185, 129, 0.85)', // Teal
-    'rgba(99, 102, 241, 0.85)', // Indigo
-    'rgba(168, 85, 247, 0.85)', // Purple
-  ];
+  function createChart(): void {
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    chart?.destroy();
 
-  function updateChart() {
-    if (!chart) return;
-
-    chart.data.labels = data.map((d: GenreCount) => d.genre);
-    chart.data.datasets[0].data = data.map((d: GenreCount) => d.count);
-    chart.update();
-  }
-
-  onMount(() => {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
+    const theme = readChartTheme(getComputedStyle(document.documentElement));
     const config: ChartConfiguration<'doughnut'> = {
       type: 'doughnut',
       data: {
-        labels: data.map((d: GenreCount) => d.genre),
+        labels: data.map((item) => item.genre),
         datasets: [
           {
-            data: data.map((d: GenreCount) => d.count),
-            backgroundColor: cosmicColors,
-            borderColor: 'rgba(15, 23, 42, 0.8)',
+            data: data.map((item) => item.count),
+            backgroundColor: theme.colors,
+            borderColor: theme.surface,
             borderWidth: 2,
           },
         ],
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'right',
-            labels: {
-              color: 'rgba(148, 163, 184, 0.9)',
-              padding: 12,
-              font: {
-                size: 11,
-              },
-            },
+            labels: { color: theme.muted, padding: 12, font: { size: 11 } },
           },
           tooltip: {
-            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-            titleColor: 'rgba(226, 232, 240, 1)',
-            bodyColor: 'rgba(148, 163, 184, 1)',
-            borderColor: 'rgba(52, 211, 153, 0.3)',
+            backgroundColor: theme.surface,
+            titleColor: theme.text,
+            bodyColor: theme.muted,
+            borderColor: theme.border,
             borderWidth: 1,
             padding: 12,
             cornerRadius: 8,
@@ -84,22 +60,40 @@
       },
     };
 
-    chart = new Chart(ctx, config);
+    chart = new Chart(context, config);
+  }
+
+  function updateChart(): void {
+    if (!chart) return;
+    chart.data.labels = data.map((item) => item.genre);
+    chart.data.datasets[0].data = data.map((item) => item.count);
+    chart.update();
+  }
+
+  onMount(() => {
+    createChart();
+    window.addEventListener(THEME_CHANGE_EVENT, createChart);
   });
 
   onDestroy(() => {
-    if (chart) {
-      chart.destroy();
-      chart = null;
-    }
+    window.removeEventListener(THEME_CHANGE_EVENT, createChart);
+    chart?.destroy();
+    chart = null;
   });
 
   $effect(() => {
-    // React to data changes
     if (data) updateChart();
   });
 </script>
 
-<div class="h-64 flex justify-center items-center w-full">
-  <canvas bind:this={canvas} class="max-h-full"></canvas>
+<div class="chart-container">
+  <canvas bind:this={canvas}></canvas>
 </div>
+
+<style>
+  .chart-container {
+    width: 100%;
+    height: 16rem;
+    min-width: 0;
+  }
+</style>

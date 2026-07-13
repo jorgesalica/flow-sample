@@ -14,7 +14,7 @@
     class: className = '',
   }: {
     value?: string;
-    label?: string;
+    label: string;
     labelHidden?: boolean;
     placeholder?: string;
     type?: 'text' | 'search';
@@ -31,7 +31,7 @@
 </script>
 
 <label class="ui-field {className}" for={id}>
-  {#if label}<span class:sr-only={labelHidden} class="ui-field__label">{label}</span>{/if}
+  <span class:sr-only={labelHidden} class="ui-field__label">{label}</span>
   {#if multiline}
     <textarea
       {id}

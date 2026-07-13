@@ -58,12 +58,13 @@ describe('Sidebar', () => {
 
   it('always renders the New Chat button', () => {
     renderWith([]);
-    expect(screen.getByText('New Chat')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /new chat/i })).toBeInTheDocument();
   });
 
   it('shows the empty-history placeholder when there are no conversations', () => {
     renderWith([]);
-    expect(screen.getByText('No history yet. Start a conversation!')).toBeInTheDocument();
+    expect(screen.getByText('No history yet')).toBeInTheDocument();
+    expect(screen.getByText('Start a conversation.')).toBeInTheDocument();
   });
 
   it('lists conversation titles once loaded', () => {
@@ -75,7 +76,7 @@ describe('Sidebar', () => {
     expect(screen.getByText('Trip planning')).toBeInTheDocument();
     expect(screen.getByText('Recipe ideas')).toBeInTheDocument();
     // Negative space: placeholder gone.
-    expect(screen.queryByText('No history yet. Start a conversation!')).not.toBeInTheDocument();
+    expect(screen.queryByText('No history yet')).not.toBeInTheDocument();
   });
 
   it('renders a deterministic relative timestamp', () => {
@@ -87,7 +88,7 @@ describe('Sidebar', () => {
 
   it('clicking New Chat starts a fresh conversation in the store', async () => {
     renderWith([]);
-    await fireEvent.click(screen.getByText('New Chat'));
+    await fireEvent.click(screen.getByRole('button', { name: /new chat/i }));
 
     expect(chatStore.activeConversationId).toBeTruthy();
   });
@@ -106,7 +107,7 @@ describe('Sidebar', () => {
     renderWith([makeConversation({ id: 'conv-9', title: 'Delete me' })]);
     deleteConversation.mockResolvedValueOnce(undefined);
 
-    await fireEvent.click(screen.getByTitle('Delete conversation'));
+    await fireEvent.click(screen.getByRole('button', { name: 'Delete conversation Delete me' }));
 
     expect(deleteConversation).toHaveBeenCalledWith('conv-9');
   });
@@ -116,9 +117,17 @@ describe('Sidebar', () => {
     deleteConversation.mockResolvedValueOnce(undefined);
     fetchMessages.mockClear();
 
-    await fireEvent.click(screen.getByTitle('Delete conversation'));
+    await fireEvent.click(screen.getByRole('button', { name: 'Delete conversation Delete me' }));
 
     // handleDelete stops propagation, so selectConversation must not run.
     expect(fetchMessages).not.toHaveBeenCalled();
+  });
+
+  it('marks the active conversation for assistive technology', async () => {
+    renderWith([makeConversation({ id: 'conv-7', title: 'Current chat' })]);
+    fetchMessages.mockResolvedValueOnce([]);
+    await fireEvent.click(screen.getByTitle('Current chat'));
+
+    expect(screen.getByTitle('Current chat')).toHaveAttribute('aria-current', 'page');
   });
 });

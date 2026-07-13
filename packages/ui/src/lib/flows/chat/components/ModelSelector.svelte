@@ -1,72 +1,71 @@
 <script lang="ts">
-  import { chatStore } from '../stores.svelte';
   import type { ChatProviderGroup } from '@flows/shared';
+  import { Badge } from '@lib/components';
   import { slide } from 'svelte/transition';
+  import { chatStore } from '../stores.svelte';
+
+  type BadgeTone = 'neutral' | 'info' | 'success' | 'warning';
 
   let dropdownOpen = $state(false);
 
-  function setMode(mode: 'rotation' | 'specific') {
+  function setMode(mode: 'rotation' | 'specific'): void {
     chatStore.setMode(mode);
-    if (mode === 'rotation') {
-      dropdownOpen = false;
-    }
+    if (mode === 'rotation') dropdownOpen = false;
   }
 
-  function selectModel(provider: string, modelId: string) {
+  function selectModel(provider: string, modelId: string): void {
     chatStore.setModel(`${provider}:${modelId}`);
     dropdownOpen = false;
   }
 
-  function toggleDropdown() {
-    if (chatStore.chatMode === 'specific') {
-      dropdownOpen = !dropdownOpen;
-    }
+  function toggleDropdown(): void {
+    if (chatStore.chatMode === 'specific') dropdownOpen = !dropdownOpen;
   }
 
-  function handleClickOutside(e: MouseEvent) {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.model-selector-container')) {
-      dropdownOpen = false;
-    }
+  function handleClickOutside(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.model-selector')) dropdownOpen = false;
   }
 
-  function parseSelected(sel: string): { provider: string; model: string } {
-    const idx = sel.indexOf(':');
-    if (idx === -1) return { provider: '', model: sel };
-    return { provider: sel.slice(0, idx), model: sel.slice(idx + 1) };
+  function parseSelected(selection: string): { provider: string; model: string } {
+    const separator = selection.indexOf(':');
+    if (separator === -1) return { provider: '', model: selection };
+    return {
+      provider: selection.slice(0, separator),
+      model: selection.slice(separator + 1),
+    };
   }
 
   function getModelDisplayName(modelId: string, catalog: ChatProviderGroup[]): string {
     for (const group of catalog) {
-      const found = group.models.find((m) => m.id === modelId);
-      if (found) return found.name;
+      const match = group.models.find((model) => model.id === modelId);
+      if (match) return match.name;
     }
+
     return modelId
       .split(/[-/]/)
-      .filter((w) => w !== 'free' && w !== '')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .filter((word) => word !== 'free' && word !== '')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
 
-  function tierColor(tier: string): string {
+  function tierTone(tier: string): BadgeTone {
     switch (tier) {
       case 'very_high':
-        return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
+        return 'warning';
       case 'high':
-        return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
+        return 'success';
       case 'medium':
-        return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
-      case 'low':
-        return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
+        return 'info';
       default:
-        return 'text-slate-500 bg-slate-500/10 border-slate-500/20';
+        return 'neutral';
     }
   }
 
   function tierLabel(tier: string): string {
     switch (tier) {
       case 'very_high':
-        return '★';
+        return 'VH';
       case 'high':
         return 'H';
       case 'medium':
@@ -84,147 +83,312 @@
 
 <svelte:window onclick={handleClickOutside} />
 
-<div class="model-selector-container relative flex items-center gap-1.5">
-  <!-- Mode Toggle (labeled) -->
-  <div
-    class="flex bg-slate-800 rounded-lg border border-slate-700 overflow-hidden text-xs font-medium"
-  >
+<div class="model-selector">
+  <div class="model-selector__modes" role="group" aria-label="Chat mode">
     <button
-      class="flex items-center gap-1 px-3 py-1.5 transition-all"
-      class:bg-cosmic-600={chatStore.chatMode === 'rotation'}
-      class:text-white={chatStore.chatMode === 'rotation'}
-      class:text-slate-400={chatStore.chatMode !== 'rotation'}
-      class:hover:text-slate-200={chatStore.chatMode !== 'rotation'}
+      class:active={chatStore.chatMode === 'rotation'}
+      aria-pressed={chatStore.chatMode === 'rotation'}
       onclick={() => setMode('rotation')}
       title="Round-robin across free providers"
     >
-      <svg
-        class="w-3.5 h-3.5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
-          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          stroke-width="2"
+          d="M4 4v5h5m11 11v-5h-5M5 9a8 8 0 0 1 13-3m1 9a8 8 0 0 1-13 3"
         />
       </svg>
-      <span class="hidden sm:inline">Rotate</span>
+      <span>Rotate</span>
     </button>
     <button
-      class="flex items-center gap-1 px-3 py-1.5 transition-all"
-      class:bg-cosmic-600={chatStore.chatMode === 'specific'}
-      class:text-white={chatStore.chatMode === 'specific'}
-      class:text-slate-400={chatStore.chatMode !== 'specific'}
-      class:hover:text-slate-200={chatStore.chatMode !== 'specific'}
+      class:active={chatStore.chatMode === 'specific'}
+      aria-pressed={chatStore.chatMode === 'specific'}
       onclick={() => setMode('specific')}
       title="Choose a specific provider and model"
     >
-      <svg
-        class="w-3.5 h-3.5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
-          d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
+          stroke-width="2"
+          d="m5 4 14 7-6 2-2 6L5 4Z"
         />
       </svg>
-      <span class="hidden sm:inline">Specific</span>
+      <span>Specific</span>
     </button>
   </div>
 
-  <!-- Badge / Selector -->
   {#if chatStore.chatMode === 'rotation'}
-    <div
-      class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800/50 rounded-lg border border-slate-700/50 text-xs"
-    >
+    <div class="model-selector__summary" aria-live="polite">
       {#if chatStore.lastProvider}
-        <span class="text-cosmic-400 font-medium capitalize">{chatStore.lastProvider}</span>
-        <span class="text-slate-600">/</span>
-        <span class="text-slate-300 truncate max-w-[140px]">
-          {getModelDisplayName(chatStore.lastModel, chatStore.catalog)}
-        </span>
+        <strong>{chatStore.lastProvider}</strong>
+        <span aria-hidden="true">/</span>
+        <span>{getModelDisplayName(chatStore.lastModel, chatStore.catalog)}</span>
       {:else}
-        <span class="text-slate-400 italic">Auto-rotate</span>
+        <span>Auto-rotate</span>
       {/if}
     </div>
   {:else}
     <button
-      class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 rounded-lg border border-slate-700 hover:border-cosmic-600 transition-colors text-xs cursor-pointer"
+      class="model-selector__trigger"
+      aria-expanded={dropdownOpen}
+      aria-controls="chat-model-menu"
+      aria-haspopup="menu"
       onclick={toggleDropdown}
     >
-      <span class="text-cosmic-400 font-medium capitalize">{selected.provider}</span>
-      <span class="text-slate-600">/</span>
-      <span class="text-slate-200 truncate max-w-[140px]">{selectedDisplayName}</span>
-      <svg
-        class="w-3 h-3 text-slate-400 ml-0.5 transition-transform"
-        class:rotate-180={dropdownOpen}
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      <strong>{selected.provider || 'Model'}</strong>
+      <span aria-hidden="true">/</span>
+      <span>{selectedDisplayName || 'Select'}</span>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class:open={dropdownOpen}>
+        <path
+          fill-rule="evenodd"
+          d="M5.2 7.2a.75.75 0 0 1 1.1 0l3.7 3.7 3.7-3.7a.75.75 0 1 1 1.1 1.1l-4.3 4.2a.75.75 0 0 1-1 0L5.2 8.3a.75.75 0 0 1 0-1.1Z"
+          clip-rule="evenodd"
+        />
       </svg>
     </button>
   {/if}
 
-  <!-- Dropdown -->
   {#if dropdownOpen}
     <div
+      id="chat-model-menu"
+      class="model-selector__menu"
+      role="menu"
       transition:slide={{ duration: 150 }}
-      class="absolute top-full right-0 mt-1.5 w-72 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl shadow-black/40 z-50 overflow-hidden"
     >
-      <div class="max-h-[360px] overflow-y-auto scrollbar-thin">
-        {#each chatStore.catalog as group (group.provider)}
-          {#if group.models.length > 0}
-            <div
-              class="sticky top-0 px-3 py-2 bg-slate-800/95 backdrop-blur-sm border-b border-slate-700/50"
+      {#each chatStore.catalog as group (group.provider)}
+        {#if group.models.length > 0}
+          <div class="model-selector__group-label">{group.provider}</div>
+          {#each group.models as model (model.id)}
+            {@const fullId = `${group.provider}:${model.id}`}
+            {@const isSelected = chatStore.selectedModel === fullId}
+            <button
+              class="model-selector__option"
+              class:selected={isSelected}
+              role="menuitemradio"
+              aria-checked={isSelected}
+              onclick={() => selectModel(group.provider, model.id)}
             >
-              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider"
-                >{group.provider}</span
+              <span class="model-selector__option-copy">
+                <strong>{model.name}</strong>
+                {#if model.description}<small>{model.description}</small>{/if}
+              </span>
+              <span title={model.tier}
+                ><Badge tone={tierTone(model.tier)}>{tierLabel(model.tier)}</Badge></span
               >
-            </div>
-
-            {#each group.models as model (model.id)}
-              {@const fullId = `${group.provider}:${model.id}`}
-              {@const isSelected = chatStore.selectedModel === fullId}
-              <button
-                class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-700/50 transition-colors {isSelected
-                  ? 'bg-cosmic-600/10'
-                  : ''}"
-                onclick={() => selectModel(group.provider, model.id)}
-              >
-                <span
-                  class="w-1.5 h-1.5 rounded-full shrink-0 {isSelected
-                    ? 'bg-cosmic-500'
-                    : 'bg-transparent'}"
-                ></span>
-
-                <div class="flex-1 min-w-0">
-                  <div class="text-sm text-slate-200 truncate">{model.name}</div>
-                  {#if model.description}
-                    <div class="text-[10px] text-slate-500 truncate">{model.description}</div>
-                  {/if}
-                </div>
-
-                <span
-                  class="text-[10px] font-bold px-1.5 py-0.5 rounded border {tierColor(model.tier)}"
-                  title={model.tier}
-                >
-                  {tierLabel(model.tier)}
-                </span>
-              </button>
-            {/each}
-          {/if}
-        {/each}
-      </div>
+            </button>
+          {/each}
+        {/if}
+      {/each}
     </div>
   {/if}
 </div>
+
+<style>
+  .model-selector {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .model-selector__modes {
+    display: flex;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.375rem;
+    background: var(--ui-surface);
+  }
+
+  .model-selector__modes button {
+    display: flex;
+    min-height: 2rem;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+    color: var(--ui-text-muted);
+    padding: 0.375rem 0.625rem;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .model-selector__modes button + button {
+    border-left: 1px solid var(--ui-border);
+  }
+
+  .model-selector__modes button:hover,
+  .model-selector__modes button.active {
+    background: var(--ui-accent-strong);
+    color: var(--ui-accent-contrast);
+  }
+
+  .model-selector button:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
+  }
+
+  .model-selector__modes svg,
+  .model-selector__trigger svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex: 0 0 auto;
+  }
+
+  .model-selector__summary,
+  .model-selector__trigger {
+    display: flex;
+    min-width: 0;
+    min-height: 2rem;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.375rem;
+    background: var(--ui-surface);
+    color: var(--ui-text-muted);
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .model-selector__summary strong,
+  .model-selector__trigger strong {
+    color: var(--ui-accent);
+    text-transform: capitalize;
+  }
+
+  .model-selector__summary > span:last-child,
+  .model-selector__trigger > span:not([aria-hidden]) {
+    max-width: 9rem;
+    overflow: hidden;
+    color: var(--ui-text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .model-selector__trigger {
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+  }
+
+  .model-selector__trigger:hover {
+    border-color: var(--ui-border-strong);
+  }
+
+  .model-selector__trigger svg {
+    transition: transform 150ms ease;
+  }
+
+  .model-selector__trigger svg.open {
+    transform: rotate(180deg);
+  }
+
+  .model-selector__menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 50;
+    width: min(18rem, calc(100vw - 1.5rem));
+    max-height: 22.5rem;
+    overflow-y: auto;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 0.5rem;
+    background: var(--ui-surface-raised);
+    box-shadow: var(--ui-shadow);
+  }
+
+  .model-selector__group-label {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--ui-border);
+    background: var(--ui-surface-raised);
+    color: var(--ui-text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .model-selector__option {
+    display: flex;
+    width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    border: 0;
+    border-bottom: 1px solid var(--ui-border);
+    background: transparent;
+    color: var(--ui-text);
+    padding: 0.625rem 0.75rem;
+    text-align: left;
+  }
+
+  .model-selector__option:hover,
+  .model-selector__option.selected {
+    background: var(--ui-surface-subtle);
+  }
+
+  .model-selector__option.selected {
+    box-shadow: inset 3px 0 var(--ui-accent);
+  }
+
+  .model-selector__option-copy {
+    display: grid;
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 0.125rem;
+  }
+
+  .model-selector__option-copy strong,
+  .model-selector__option-copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .model-selector__option-copy strong {
+    font-size: 0.8rem;
+  }
+
+  .model-selector__option-copy small {
+    color: var(--ui-text-muted);
+    font-size: 0.7rem;
+  }
+
+  @media (max-width: 40rem) {
+    .model-selector__modes span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    .model-selector__modes button {
+      width: 2.25rem;
+      justify-content: center;
+      padding-inline: 0.5rem;
+    }
+
+    .model-selector__summary > span:last-child,
+    .model-selector__trigger > span:not([aria-hidden]) {
+      max-width: 5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .model-selector__trigger svg {
+      transition: none;
+    }
+  }
+</style>

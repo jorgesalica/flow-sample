@@ -51,3 +51,31 @@ test('allows environment reads in explicitly named config modules', () => {
   );
   assert.deepEqual(violations, []);
 });
+
+test('rejects legacy UI utilities and retired palette variables', () => {
+  const violations = checkSource(
+    'packages/ui/src/lib/example.svelte',
+    '<div class="glass text-cosmic-400" style="color: var(--surface-100)"></div>',
+  );
+  assert.deepEqual(violations.map(({ rule }) => rule), [
+    'no-legacy-ui-styles',
+    'no-legacy-ui-styles',
+    'no-legacy-ui-styles',
+  ]);
+});
+
+test('rejects gradients in production UI styles', () => {
+  const violations = checkSource(
+    'packages/ui/src/app.css',
+    '.hero { background: linear-gradient(red, blue); }',
+  );
+  assert.equal(violations[0]?.rule, 'no-ui-gradients');
+});
+
+test('rejects Svelte accessibility suppressions', () => {
+  const violations = checkSource(
+    'packages/ui/src/lib/example.svelte',
+    '<!-- svelte-ignore a11y_no_static_element_interactions -->',
+  );
+  assert.equal(violations[0]?.rule, 'no-a11y-suppression');
+});

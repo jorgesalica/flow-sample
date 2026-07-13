@@ -46,7 +46,7 @@ pnpm dev
 ## Connect (First Time)
 
 1. Open `http://localhost:5173`
-2. Navigate to **Spotify Flow** (`#/spotify`)
+2. Navigate to **Spotify Flow** (`/spotify`)
 3. Click **"Connect with Spotify"**
 4. Authorize in the Spotify popup
 5. You'll be redirected back — connection established

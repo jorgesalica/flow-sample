@@ -102,18 +102,22 @@ the flow's `api.ts` and be covered by a contract test.
 
 ## Styling
 
-Tailwind v4, CSS-first: `app.css` does `@import 'tailwindcss'` and declares brand and
-semantic UI tokens. Shared and migrated components consume `--ui-*` variables through
-component-scoped styles; inline `style` is reserved for dynamic values. Legacy
-`glass`/`cosmic` utilities remain only for flow-local surfaces awaiting migration. There
-is no `tailwind.config.js` (v4).
+Tailwind v4, CSS-first: `app.css` does `@import 'tailwindcss'` and owns semantic `--ui-*`
+tokens plus their Tailwind aliases. `lib/theme.ts` and the navbar `ThemeSwitcher` apply
+galaxy, fire, or organic at the application root and persist the selection; flows never
+own palette state. Shared primitives live under `components/ui`, while component-scoped
+styles consume semantic tokens and reserve inline `style` for runtime values.
+
+Chart.js and Lightweight Charts receive computed colors through `lib/chart-theme.ts` and
+react to the global theme-change event. There is no `tailwind.config.js` (v4), legacy
+cosmic/glass utility layer, or gradient-based production UI.
 
 ## Testing
 
 Unit/component tests run under Vitest + `@testing-library/svelte` (jsdom), beside the code
 as `*.svelte.test.ts` / `*.test.ts`. Mock the Eden client (`@lib/client`) — never hit the
-network. Chart-heavy components (chart.js / lightweight-charts) are not unit-tested under
-jsdom. E2E lives in `e2e/` (Playwright).
+network. Pure chart-theme mapping is unit-tested; chart canvas rendering and responsive
+theme behavior are verified in a real browser. E2E lives in `e2e/` (Playwright).
 
 ## Tooling
 

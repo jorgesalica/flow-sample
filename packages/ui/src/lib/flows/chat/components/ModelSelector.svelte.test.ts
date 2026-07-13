@@ -68,8 +68,11 @@ describe('ModelSelector', () => {
 
   it('renders both mode toggle buttons', () => {
     render(ModelSelector);
-    expect(screen.getByText('Rotate')).toBeInTheDocument();
-    expect(screen.getByText('Specific')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rotate' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Specific' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 
   it('shows the selected provider and model name in specific mode', () => {
@@ -84,6 +87,10 @@ describe('ModelSelector', () => {
     // Trigger button shows the current selection; click it to open the list.
     await fireEvent.click(screen.getByText('GPT-4o'));
 
+    expect(screen.getByRole('button', { name: /openai.*gpt-4o/i })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
     expect(screen.getByText('GPT-4o Mini')).toBeInTheDocument();
     expect(screen.getByText('Llama 3')).toBeInTheDocument();
     expect(screen.getByText('Flagship multimodal')).toBeInTheDocument();

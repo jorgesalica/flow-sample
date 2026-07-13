@@ -29,10 +29,11 @@ A robust, distributed system implemented within a type-safe monorepo. The core p
 
 ### Product Instance (`flow-sample`)
 
-* **Identity:** A "Cosmic UI" playground.
+* **Identity:** A focused analysis playground with galaxy, fire, and organic themes.
 * **Function:** Syncs external personal data (Spotify) to a local environment.
 * **Experience:**
-  * **Immersion:** Dark mode, glassmorphism, and fluid animations create a premium feel.
+  * **Clarity:** Dark semantic surfaces, accessible contrast, and restrained motion keep dense tools readable.
+  * **Adaptability:** One global token contract supports palette choice, mobile layouts, and flow-specific data visualizations.
   * **Discovery:** Visualization tools (charts, decade analysis) allow users to *explore* their music, not just view a list.
   * **Performance:** Instantaneous interactions driven by smart caching and optimistic UI updates.
 

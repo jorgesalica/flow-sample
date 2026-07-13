@@ -1,60 +1,40 @@
 <script lang="ts">
-  import Sidebar from './components/Sidebar.svelte';
-  import MessageList from './components/MessageList.svelte';
-  import ChatInput from './components/ChatInput.svelte';
-  import ModelSelector from './components/ModelSelector.svelte';
-  import FlowLayout from '../../components/layout/FlowLayout.svelte';
+  import { FlowLayout, IconButton } from '@lib/components';
   import { onMount } from 'svelte';
+  import ChatInput from './components/ChatInput.svelte';
+  import MessageList from './components/MessageList.svelte';
+  import ModelSelector from './components/ModelSelector.svelte';
+  import Sidebar from './components/Sidebar.svelte';
   import { chatStore, type ChatInitialData } from './stores.svelte';
 
   let { initialData }: { initialData: ChatInitialData } = $props();
+  let isMobileMenuOpen = $state(false);
 
-  // Seed the store with the data fetched by the route loader.
   onMount(() => {
     chatStore.hydrate(initialData);
   });
-
-  let isMobileMenuOpen = $state(false);
-
-  function toggleMobileMenu() {
-    isMobileMenuOpen = !isMobileMenuOpen;
-  }
 </script>
 
-<!-- Using absolute positioning override for the inner layout to maximize screen real estate, over the nav if possible -->
-<FlowLayout>
-  <div class="fixed inset-0 pt-16 flex bg-slate-950 overflow-hidden">
-    <!-- Sidebar -->
+<FlowLayout fullBleed>
+  <div class="chat-flow">
     <Sidebar bind:isMobileMenuOpen />
 
-    <!-- Main Chat Area -->
-    <main class="flex-1 flex flex-col h-full bg-slate-950 relative">
-      <!-- Sticky Header inside Chat Area -->
-      <header
-        class="h-14 flex items-center justify-between px-4 border-b border-cosmic-800/50 bg-slate-900/80 backdrop-blur-md z-10 shrink-0"
-      >
-        <div class="flex items-center gap-3">
-          <button
-            class="md:hidden text-slate-400 hover:text-white"
-            aria-label="Toggle mobile menu"
-            onclick={toggleMobileMenu}
+    <section class="chat-workspace" aria-label="Chat workspace">
+      <header class="chat-toolbar">
+        <div class="chat-toolbar__identity">
+          <IconButton
+            class="chat-toolbar__menu"
+            label="Toggle conversation menu"
+            onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-              />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-width="1.5" d="M4 7h16M4 12h16M4 17h16" />
             </svg>
-          </button>
-          <h1 class="text-lg font-semibold text-slate-200">Chat</h1>
+          </IconButton>
+          <div>
+            <h1>Chat</h1>
+            <span>AI workspace</span>
+          </div>
         </div>
 
         <ModelSelector />
@@ -62,16 +42,106 @@
 
       <MessageList />
       <ChatInput />
-    </main>
+    </section>
 
-    <!-- Overlay for mobile when sidebar is open -->
     {#if isMobileMenuOpen}
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="fixed inset-0 bg-black/60 z-10 md:hidden"
+      <button
+        class="chat-overlay"
+        aria-label="Close conversation menu"
         onclick={() => (isMobileMenuOpen = false)}
-      ></div>
+      ></button>
     {/if}
   </div>
 </FlowLayout>
+
+<style>
+  .chat-flow {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--ui-background);
+    color: var(--ui-text);
+  }
+
+  .chat-workspace {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .chat-toolbar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    min-height: 3.5rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--ui-border);
+    background: var(--ui-nav);
+  }
+
+  .chat-toolbar__identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .chat-toolbar__identity div {
+    display: grid;
+    min-width: 0;
+    gap: 0.125rem;
+  }
+
+  .chat-toolbar h1 {
+    margin: 0;
+    font-size: 0.875rem;
+    letter-spacing: 0;
+  }
+
+  .chat-toolbar span {
+    color: var(--ui-text-muted);
+    font-size: 0.7rem;
+  }
+
+  .chat-toolbar__identity :global(.chat-toolbar__menu) {
+    display: none;
+  }
+
+  .chat-toolbar svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .chat-overlay {
+    position: fixed;
+    inset: var(--app-nav-height) 0 0;
+    z-index: 15;
+    display: none;
+    border: 0;
+    background: var(--ui-overlay);
+  }
+
+  @media (max-width: 48rem) {
+    .chat-toolbar__identity :global(.chat-toolbar__menu),
+    .chat-overlay {
+      display: grid;
+    }
+
+    .chat-toolbar {
+      padding-inline: 0.75rem;
+    }
+
+    .chat-toolbar__identity span {
+      display: none;
+    }
+  }
+</style>

@@ -21,7 +21,10 @@ follow-up polish.
 - SvelteKit loaders, typed Eden access, and centralized invalidation are established.
 - Runtime environment ownership is explicit and injected.
 - Architecture contracts enforce key package and layering rules.
-- Shared UI primitives and semantic theme tokens have their first production users.
+- Shared UI primitives and the galaxy/fire/organic theme system cover every production
+  flow, including browser-rendered charts and responsive workspaces.
+- Architecture contracts reject retired UI styles, gradients, and accessibility
+  suppressions.
 - CI builds the monorepo and runs lint, type checks, Svelte checks, and coverage.
 - Short-lived branches and PRs to `main` are the delivery contract.
 
@@ -30,15 +33,12 @@ longer import each other's internals.
 
 ## Execution Queue
 
-1. **UI design system
-   ([#24](https://github.com/jorgesalica/flow-sample/issues/24))**: migrate remaining
-   flows in small slices and complete accessibility/responsive coverage.
-2. **Board v1 ([#42](https://github.com/jorgesalica/flow-sample/issues/42))**: accessible
+1. **Board v1 ([#42](https://github.com/jorgesalica/flow-sample/issues/42))**: accessible
    reorder, collapse, size preferences, and versioned local persistence.
-3. **Board card contracts
+2. **Board card contracts
    ([#43](https://github.com/jorgesalica/flow-sample/issues/43))**: typed summaries,
    expansion, and async states without flow-specific renderer branches.
-4. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
+3. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
    repository-backed persistence, API, loader integration, and local migration.
 
 Relationships and graph edges get a separate issue only after the board and card

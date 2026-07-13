@@ -29,7 +29,7 @@ describe('SpotifyHeader', () => {
     expect(screen.getByText('142')).toBeInTheDocument();
     expect(screen.getByText('indie rock')).toBeInTheDocument();
     expect(screen.getByText('Tracks')).toBeInTheDocument();
-    expect(screen.getByText('Top Genre')).toBeInTheDocument();
+    expect(screen.getByText(/top genre/i)).toBeInTheDocument();
   });
 
   it('renders the placeholder top genre when none is set', () => {

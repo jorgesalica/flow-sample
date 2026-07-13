@@ -1,111 +1,191 @@
 <script lang="ts">
+  import { AsyncState, Button, IconButton } from '@lib/components';
   import { canvasStore } from './stores.svelte';
 
   let { isMobileMenuOpen = $bindable(false) }: { isMobileMenuOpen?: boolean } = $props();
 
-  function handleSelect(id: string) {
+  function handleSelect(id: string): void {
     canvasStore.loadCanvas(id);
     isMobileMenuOpen = false;
   }
 
-  function handleNew() {
+  function handleNew(): void {
     canvasStore.clearActive();
     isMobileMenuOpen = false;
   }
 </script>
 
-<aside
-  class="w-64 border-r border-cosmic-800/50 bg-slate-900/95 flex flex-col absolute inset-y-0 left-0 z-20 transform transition-transform duration-300 md:relative md:transform-none"
-  class:-translate-x-full={!isMobileMenuOpen}
->
-  <!-- Header / New Button -->
-  <div class="p-4 border-b border-cosmic-800/50 flex-shrink-0">
-    <button
-      class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors"
-      onclick={handleNew}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path
-          fill-rule="evenodd"
-          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-          clip-rule="evenodd"
-        />
+<aside class="canvas-sidebar" class:canvas-sidebar--open={isMobileMenuOpen} aria-label="Canvases">
+  <div class="canvas-sidebar__header">
+    <Button onclick={handleNew} class="canvas-sidebar__new">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M9 3a1 1 0 0 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H3a1 1 0 1 1 0-2h6V3Z" />
       </svg>
-      New Canvas
-    </button>
+      New canvas
+    </Button>
   </div>
 
-  <!-- Canvas List -->
-  <div class="flex-1 overflow-y-auto overflow-x-hidden p-2 custom-scrollbar">
+  <div class="canvas-sidebar__content">
     {#if canvasStore.isLoading}
-      <div class="flex items-center justify-center p-8">
-        <div
-          class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"
-        ></div>
-      </div>
+      <AsyncState state="loading" title="Loading canvases" />
     {:else if canvasStore.canvases.length === 0}
-      <div class="p-4 text-center text-sm text-slate-500">
-        No canvases yet.<br />Create one to start analyzing text!
-      </div>
+      <AsyncState state="empty" title="No canvases yet" message="Create one to begin." />
     {:else}
-      <div class="space-y-1">
+      <ul>
         {#each canvasStore.canvases as canvas (canvas.sourceId)}
           {@const isActive = canvasStore.activeCanvas?.sourceId === canvas.sourceId}
-          <div class="group flex items-center gap-1">
+          <li>
             <button
-              class="flex-1 text-left px-3 py-2 rounded-md text-sm transition-colors truncate
-                                   {isActive
-                ? 'bg-primary-500/20 text-primary-300 font-medium'
-                : 'text-slate-300 hover:bg-slate-800 hover:text-white'}"
+              class="canvas-sidebar__item"
+              class:canvas-sidebar__item--active={isActive}
+              aria-current={isActive ? 'page' : undefined}
               onclick={() => handleSelect(canvas.sourceId)}
             >
-              <div class="truncate text-sm font-medium">{canvas.meta?.title || 'Untitled'}</div>
-              <div class="text-xs text-slate-500 truncate">{canvas.meta?.author || 'User'}</div>
+              <strong>{canvas.meta?.title || 'Untitled'}</strong>
+              <span>{canvas.meta?.author || 'User'}</span>
             </button>
 
-            <button
-              class="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md opacity-0 group-hover:opacity-100 transition-all focus:opacity-100 flex-shrink-0"
-              title="Delete Canvas"
+            <IconButton
+              label={`Delete canvas ${canvas.meta?.title || 'Untitled'}`}
+              variant="danger"
+              size="sm"
+              class="canvas-sidebar__delete"
               onclick={() => canvasStore.deleteCanvas(canvas.sourceId)}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path
-                  fill-rule="evenodd"
-                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                  clip-rule="evenodd"
+                  d="M7 3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1h3a1 1 0 1 1 0 2h-1v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6H4a1 1 0 0 1 0-2h3V3Zm2 4a1 1 0 0 0-2 0v7a1 1 0 1 0 2 0V7Zm4 0a1 1 0 1 0-2 0v7a1 1 0 1 0 2 0V7Z"
                 />
               </svg>
-            </button>
-          </div>
+            </IconButton>
+          </li>
         {/each}
-      </div>
+      </ul>
     {/if}
   </div>
 </aside>
 
 <style>
-  /* Add custom scrollbar styling if desired */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+  .canvas-sidebar {
+    z-index: 20;
+    display: flex;
+    width: 16rem;
+    min-width: 16rem;
+    height: 100%;
+    flex-direction: column;
+    border-right: 1px solid var(--ui-border);
+    background: var(--ui-surface);
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
+
+  .canvas-sidebar__header {
+    flex: 0 0 auto;
+    padding: 1rem;
+    border-bottom: 1px solid var(--ui-border);
+  }
+
+  .canvas-sidebar__header :global(.canvas-sidebar__new) {
+    width: 100%;
+  }
+
+  .canvas-sidebar svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .canvas-sidebar__content {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0.5rem;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .canvas-sidebar__item {
+    display: grid;
+    min-width: 0;
+    min-height: 2.75rem;
+    flex: 1 1 auto;
+    gap: 0.125rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
     background: transparent;
+    color: var(--ui-text-muted);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--surface-800);
-    border-radius: 4px;
+
+  .canvas-sidebar__item:hover,
+  .canvas-sidebar__item--active {
+    border-color: var(--ui-border);
+    background: var(--ui-surface-raised);
+    color: var(--ui-text);
   }
-  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: var(--surface-700);
+
+  .canvas-sidebar__item--active {
+    border-left-color: var(--ui-accent);
+  }
+
+  .canvas-sidebar__item:focus-visible {
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
+  }
+
+  .canvas-sidebar__item strong,
+  .canvas-sidebar__item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .canvas-sidebar__item strong {
+    font-size: 0.875rem;
+  }
+
+  .canvas-sidebar__item span {
+    color: var(--ui-text-muted);
+    font-size: 0.75rem;
+  }
+
+  .canvas-sidebar__content :global(.canvas-sidebar__delete) {
+    opacity: 0;
+  }
+
+  li:hover :global(.canvas-sidebar__delete),
+  :global(.canvas-sidebar__delete:focus-visible) {
+    opacity: 1;
+  }
+
+  @media (max-width: 48rem) {
+    .canvas-sidebar {
+      position: absolute;
+      inset: 0 auto 0 0;
+      transform: translateX(-100%);
+      transition: transform 150ms ease;
+    }
+
+    .canvas-sidebar--open {
+      transform: translateX(0);
+    }
+  }
+
+  @media (hover: none) {
+    .canvas-sidebar__content :global(.canvas-sidebar__delete) {
+      opacity: 1;
+    }
   }
 </style>

@@ -1,197 +1,98 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-void: #0a0e17;
-  --color-nebula: #111827;
-  --color-stardust: #1f2937;
-  --color-aurora: #10b981;
-  --color-pulsar: #06b6d4;
-  --color-cosmic: #8b5cf6;
-  --color-fire: #f43f5e;
-  --color-organic: #84cc16;
+@theme inline {
+  --color-app: var(--ui-background);
+  --color-surface: var(--ui-surface);
+  --color-surface-raised: var(--ui-surface-raised);
+  --color-surface-subtle: var(--ui-surface-subtle);
+  --color-accent: var(--ui-accent);
+  --color-accent-strong: var(--ui-accent-strong);
+  --color-border: var(--ui-border);
+  --color-foreground: var(--ui-text);
+  --color-muted: var(--ui-text-muted);
+  --color-danger: var(--ui-danger);
+  --color-success: var(--ui-success);
+  --color-warning: var(--ui-warning);
 }
 
-/* Cosmic Flow Design System variables (legacy/fallback if needed, or removed if @theme handles it) */
 :root {
-  /* Glass effect */
-  --glass-bg: rgba(17, 24, 39, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --ui-accent: #06b6d4;
-  --ui-accent-strong: #0891b2;
-  --ui-focus: #22d3ee;
-  --ui-danger: #fb7185;
+  color-scheme: dark;
+  --ui-background: #090d16;
+  --ui-nav: rgba(9, 13, 22, 0.96);
   --ui-surface: #111827;
-  --ui-surface-raised: #1f2937;
-  --ui-border: rgba(148, 163, 184, 0.24);
+  --ui-surface-raised: #1e293b;
+  --ui-surface-subtle: #151f30;
+  --ui-border: rgba(148, 163, 184, 0.25);
   --ui-text: #f8fafc;
-  --ui-text-muted: #94a3b8;
+  --ui-text-muted: #9aa8bc;
+  --ui-accent: #22d3ee;
+  --ui-accent-strong: #0e7490;
+  --ui-focus: #67e8f9;
+  --ui-danger: #fb7185;
+  --ui-success: #4ade80;
+  --ui-warning: #facc15;
+  --ui-chart-1: #22d3ee;
+  --ui-chart-2: #818cf8;
+  --ui-chart-3: #f472b6;
+  --ui-chart-4: #4ade80;
+  --ui-chart-5: #facc15;
+  --ui-chart-6: #fb7185;
+  --ui-border-strong: color-mix(in srgb, var(--ui-text-muted) 48%, transparent);
+  --ui-accent-contrast: #ffffff;
+  --ui-accent-hover-contrast: #020617;
+  --ui-overlay: rgba(2, 6, 23, 0.72);
+  --ui-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.4);
   --app-nav-height: 4rem;
 }
 
 [data-theme='fire'] {
-  --ui-accent: #f43f5e;
-  --ui-accent-strong: #e11d48;
-  --ui-focus: #fb7185;
+  --ui-background: #120c12;
+  --ui-nav: rgba(18, 12, 18, 0.96);
+  --ui-surface: #1c121b;
+  --ui-surface-raised: #2b1825;
+  --ui-surface-subtle: #22151f;
+  --ui-border: rgba(251, 113, 133, 0.26);
+  --ui-text-muted: #b7a0aa;
+  --ui-accent: #fb7185;
+  --ui-accent-strong: #be123c;
+  --ui-focus: #fda4af;
+  --ui-chart-1: #fb7185;
+  --ui-chart-2: #f97316;
+  --ui-chart-3: #facc15;
+  --ui-chart-4: #22d3ee;
+  --ui-chart-5: #c084fc;
+  --ui-chart-6: #4ade80;
 }
 
 [data-theme='organic'] {
-  --ui-accent: #84cc16;
-  --ui-accent-strong: #65a30d;
-  --ui-focus: #a3e635;
+  --ui-background: #0b100d;
+  --ui-nav: rgba(11, 16, 13, 0.96);
+  --ui-surface: #121b16;
+  --ui-surface-raised: #1d2a21;
+  --ui-surface-subtle: #17221b;
+  --ui-border: rgba(163, 230, 53, 0.22);
+  --ui-text-muted: #a5b2a6;
+  --ui-accent: #a3e635;
+  --ui-accent-strong: #4d7c0f;
+  --ui-focus: #bef264;
+  --ui-chart-1: #a3e635;
+  --ui-chart-2: #34d399;
+  --ui-chart-3: #22d3ee;
+  --ui-chart-4: #facc15;
+  --ui-chart-5: #fb7185;
+  --ui-chart-6: #c084fc;
 }
 
-/* ========================================
-   Background Effects
-   ======================================== */
-
 body {
-  background: var(--color-void);
   min-height: 100vh;
-  color: white;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--ui-background);
+  color: var(--ui-text);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Animated gradient background */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 60% at 60% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
-  animation: gradient-shift 15s ease-in-out infinite alternate;
-  pointer-events: none;
-  z-index: -2;
-}
-
-@keyframes gradient-shift {
-  0% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.7;
-  }
-
-  50% {
-    transform: scale(1.15) rotate(4deg);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(1) rotate(8deg);
-    opacity: 0.7;
-  }
-}
-
-/* Stars effect */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    radial-gradient(2px 2px at 15% 25%, rgba(255, 255, 255, 0.8) 0%, transparent 100%),
-    radial-gradient(2px 2px at 35% 65%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 75% 15%, rgba(255, 255, 255, 0.7) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 25% 85%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-    radial-gradient(2px 2px at 55% 45%, rgba(255, 255, 255, 0.9) 0%, transparent 100%),
-    radial-gradient(1px 1px at 85% 35%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-    radial-gradient(2px 2px at 10% 55%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 65% 75%, rgba(255, 255, 255, 0.8) 0%, transparent 100%),
-    radial-gradient(2px 2px at 90% 10%, rgba(255, 255, 255, 0.7) 0%, transparent 100%),
-    radial-gradient(2px 2px at 45% 90%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-    radial-gradient(2.5px 2.5px at 60% 20%, rgba(255, 255, 255, 0.8) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 20% 70%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-    radial-gradient(2px 2px at 50% 10%, rgba(255, 255, 255, 0.9) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 80% 55%, rgba(255, 255, 255, 0.7) 0%, transparent 100%),
-    radial-gradient(2px 2px at 30% 95%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 95% 80%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-    radial-gradient(2.5px 2.5px at 5% 5%, rgba(255, 255, 255, 0.8) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 40% 60%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-    radial-gradient(2px 2px at 70% 30%, rgba(255, 255, 255, 0.7) 0%, transparent 100%),
-    radial-gradient(2px 2px at 15% 45%, rgba(255, 255, 255, 0.7) 0%, transparent 100%);
-  animation: stars-twinkle 6s ease-in-out infinite;
-  pointer-events: none;
-  z-index: -1;
-}
-
-@keyframes stars-twinkle {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-
-  25% {
-    opacity: 0.8;
-  }
-
-  50% {
-    opacity: 0.5;
-  }
-
-  75% {
-    opacity: 0.9;
-  }
-}
-
-/* ========================================
-   Glass Morphism
-   ======================================== */
-
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-}
-
-.glass-hover {
-  transition: all 0.3s ease;
-}
-
-.glass-hover:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 0 30px -10px rgba(16, 185, 129, 0.2);
-}
-
-/* ========================================
-   Typography
-   ======================================== */
-
-/* Gradient text - Aurora */
-.text-aurora {
-  background: linear-gradient(135deg, var(--color-aurora) 0%, var(--color-pulsar) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Gradient text - Cosmic */
-.text-cosmic {
-  background: linear-gradient(135deg, white 0%, var(--color-pulsar) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ========================================
-   Utilities
-   ======================================== */
-
-.btn-primary {
-  @apply px-4 py-2 rounded-lg font-semibold text-white transition-all shadow-lg;
-  background: linear-gradient(135deg, var(--color-aurora) 0%, var(--color-pulsar) 100%);
-}
-
-.btn-primary:hover:not(:disabled) {
-  @apply brightness-110 -translate-y-0.5;
-  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.3);
-}
-
-.btn-primary:active:not(:disabled) {
-  @apply translate-y-0 scale-95;
+  transition: background-color 150ms ease;
 }
 
 .ui-button,
@@ -227,58 +128,71 @@ body::after {
   padding: 0.375rem 0.75rem;
   font-size: 0.75rem;
 }
+
 .ui-button--md {
   min-height: 2.5rem;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
 }
+
 .ui-button--lg {
   min-height: 3rem;
   padding: 0.75rem 1.25rem;
   font-size: 1rem;
 }
+
 .ui-button--primary,
 .ui-icon-button--primary {
   background: var(--ui-accent-strong);
-  color: white;
+  color: var(--ui-accent-contrast);
 }
+
 .ui-button--primary:hover:not(:disabled),
 .ui-icon-button--primary:hover:not(:disabled) {
   background: var(--ui-accent);
+  color: var(--ui-accent-hover-contrast);
 }
+
 .ui-button--secondary,
 .ui-icon-button--secondary {
-  background: var(--ui-surface-raised);
   border-color: var(--ui-border);
+  background: var(--ui-surface-raised);
   color: var(--ui-text);
 }
+
 .ui-button--ghost,
 .ui-icon-button--ghost {
   background: transparent;
   color: var(--ui-text-muted);
 }
+
 .ui-button--ghost:hover:not(:disabled),
 .ui-icon-button--ghost:hover:not(:disabled) {
   background: var(--ui-surface-raised);
   color: var(--ui-text);
 }
+
 .ui-button--danger,
 .ui-icon-button--danger {
   background: color-mix(in srgb, var(--ui-danger) 16%, transparent);
   color: var(--ui-danger);
 }
+
 .ui-icon-button {
-  padding: 0;
   flex: 0 0 auto;
+  padding: 0;
 }
+
 .ui-icon-button--sm {
   width: 2rem;
   height: 2rem;
 }
+
 .ui-icon-button--md {
   width: 2.5rem;
   height: 2.5rem;
 }
+
 .ui-button__spinner,
 .ui-async-state__spinner {
   width: 1rem;
@@ -288,6 +202,7 @@ body::after {
   border-radius: 50%;
   animation: ui-spin 700ms linear infinite;
 }
+
 @keyframes ui-spin {
   to {
     transform: rotate(360deg);
@@ -300,29 +215,35 @@ body::after {
   flex-direction: column;
   gap: 0.375rem;
 }
+
 .ui-field__label {
   color: var(--ui-text-muted);
   font-size: 0.75rem;
   font-weight: 600;
 }
+
 .ui-field__control {
   width: 100%;
+  padding: 0.75rem;
   border: 1px solid var(--ui-border);
   border-radius: 0.5rem;
   background: var(--ui-surface);
   color: var(--ui-text);
-  padding: 0.75rem;
 }
+
 .ui-field__control::placeholder {
   color: var(--ui-text-muted);
 }
+
 .ui-select {
   cursor: pointer;
   appearance: auto;
 }
+
 .ui-field__control--mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
+
 .ui-field__textarea {
   resize: none;
 }
@@ -330,24 +251,29 @@ body::after {
 .ui-badge {
   display: inline-flex;
   align-items: center;
+  padding: 0.125rem 0.5rem;
   border: 1px solid var(--ui-border);
   border-radius: 999px;
-  padding: 0.125rem 0.5rem;
   font-size: 0.75rem;
   font-weight: 600;
 }
+
 .ui-badge--neutral {
   color: var(--ui-text-muted);
 }
+
 .ui-badge--info {
   color: var(--ui-focus);
 }
+
 .ui-badge--success {
-  color: #4ade80;
+  color: var(--ui-success);
 }
+
 .ui-badge--warning {
-  color: #facc15;
+  color: var(--ui-warning);
 }
+
 .ui-badge--danger {
   color: var(--ui-danger);
 }
@@ -360,24 +286,29 @@ body::after {
   color: var(--ui-text-muted);
   text-align: center;
 }
+
 .ui-async-state strong {
   color: var(--ui-text);
 }
+
 .ui-async-state p {
-  margin: 0;
   max-width: 32rem;
+  margin: 0;
 }
+
 .ui-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 60;
   display: grid;
-  place-items: center;
   padding: 1rem;
-  background: rgba(2, 6, 23, 0.78);
+  place-items: center;
+  background: var(--ui-overlay);
 }
+
 .ui-modal {
   display: flex;
+  width: 100%;
   max-height: min(42rem, calc(100dvh - 2rem));
   min-height: 0;
   flex-direction: column;
@@ -385,17 +316,21 @@ body::after {
   border: 1px solid var(--ui-border);
   border-radius: 0.5rem;
   background: var(--ui-surface);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--ui-shadow);
 }
+
 .ui-modal--sm {
-  width: min(28rem, 100%);
+  max-width: 28rem;
 }
+
 .ui-modal--md {
-  width: min(36rem, 100%);
+  max-width: 36rem;
 }
+
 .ui-modal--lg {
-  width: min(48rem, 100%);
+  max-width: 48rem;
 }
+
 .ui-modal__header,
 .ui-modal__footer {
   display: flex;
@@ -404,16 +339,20 @@ body::after {
   gap: 1rem;
   padding: 1rem;
 }
+
 .ui-modal__header {
   border-bottom: 1px solid var(--ui-border);
 }
+
 .ui-modal__media {
   flex: 0 0 auto;
 }
+
 .ui-modal__heading {
   min-width: 0;
   flex: 1 1 auto;
 }
+
 .ui-modal__header h2 {
   margin: 0;
   overflow: hidden;
@@ -421,6 +360,7 @@ body::after {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .ui-modal__heading p {
   margin: 0.25rem 0 0;
   overflow: hidden;
@@ -429,24 +369,50 @@ body::after {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .ui-modal__actions {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 0.5rem;
 }
+
 .ui-modal__body {
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
   padding: 1rem;
 }
+
 .ui-modal__footer {
   justify-content: flex-end;
   border-top: 1px solid var(--ui-border);
 }
 
-@media (max-width: 640px) {
+::-webkit-scrollbar {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ui-background);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 0.25rem;
+  background: var(--ui-surface-raised);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ui-accent-strong);
+}
+
+select option {
+  background-color: var(--ui-surface);
+  color: var(--ui-text);
+}
+
+@media (max-width: 40rem) {
   .ui-modal-backdrop {
     align-items: stretch;
     padding: 0.5rem;
@@ -467,31 +433,25 @@ body::after {
   }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: var(--color-void);
-}
+@media (hover: none) {
+  .ui-button--sm {
+    min-height: 2.75rem;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-stardust);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-pulsar);
-}
-
-/* ========================================
-   Forms & Inputs
-   ======================================== */
-
-/* Dark Dropdown Options */
-select option {
-  background-color: var(--color-void) !important;
-  color: white !important;
-  padding: 8px;
+  .ui-icon-button--sm,
+  .ui-icon-button--md {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
 }

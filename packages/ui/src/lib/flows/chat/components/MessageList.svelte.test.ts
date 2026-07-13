@@ -137,8 +137,7 @@ describe('MessageList', () => {
 
     render(MessageList);
 
-    // Bouncing dots use animate-bounce; assert at least one is present.
-    expect(document.querySelector('.animate-bounce')).not.toBeNull();
+    expect(screen.getByRole('status', { name: 'Generating response' })).toBeInTheDocument();
     // Empty placeholder must be hidden while streaming.
     expect(screen.queryByText('How can I help you today?')).not.toBeInTheDocument();
 

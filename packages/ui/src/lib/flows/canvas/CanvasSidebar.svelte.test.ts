@@ -48,12 +48,12 @@ describe('CanvasSidebar', () => {
     expect(screen.getByText(/No canvases yet/i)).toBeInTheDocument();
   });
 
-  it('shows a loading spinner instead of the empty/list state while loading', () => {
+  it('shows the shared loading state instead of the empty/list state while loading', () => {
     mockCanvasStore.isLoading = true;
     render(CanvasSidebar);
 
     expect(screen.queryByText(/No canvases yet/i)).not.toBeInTheDocument();
-    expect(document.querySelector('.animate-spin')).not.toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent('Loading canvases');
   });
 
   it('lists canvases with title and author', () => {
@@ -91,7 +91,7 @@ describe('CanvasSidebar', () => {
     mockCanvasStore.canvases = [makeCanvas({ sourceId: 'del-me', meta: { title: 'Delete Me' } })];
     render(CanvasSidebar);
 
-    await fireEvent.click(screen.getByTitle('Delete Canvas'));
+    await fireEvent.click(screen.getByRole('button', { name: 'Delete canvas Delete Me' }));
 
     expect(mockCanvasStore.deleteCanvas).toHaveBeenCalledWith('del-me');
   });
@@ -102,13 +102,13 @@ describe('CanvasSidebar', () => {
     expect(mockCanvasStore.clearActive).toHaveBeenCalledOnce();
   });
 
-  it('highlights the active canvas row', () => {
+  it('marks the active canvas row semantically', () => {
     const active = makeCanvas({ sourceId: 'active', meta: { title: 'Active One' } });
     mockCanvasStore.canvases = [active];
     mockCanvasStore.activeCanvas = active;
     render(CanvasSidebar);
 
     const row = screen.getByText('Active One').closest('button') as HTMLElement;
-    expect(row.className).toContain('text-primary-300');
+    expect(row).toHaveAttribute('aria-current', 'page');
   });
 });

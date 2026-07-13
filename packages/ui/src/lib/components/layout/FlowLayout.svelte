@@ -5,17 +5,23 @@
   interface Props {
     children: Snippet;
     currentPath?: string;
+    fullBleed?: boolean;
   }
 
-  let { children, currentPath }: Props = $props();
+  let { children, currentPath, fullBleed = false }: Props = $props();
 </script>
 
 <div class="app-shell">
   <a class="app-shell__skip-link" href="#main-content">Skip to content</a>
   <Navbar {currentPath} />
 
-  <main id="main-content" class="app-shell__main" tabindex="-1">
-    <div class="app-shell__content">
+  <main
+    id="main-content"
+    class="app-shell__main"
+    class:app-shell__main--flush={fullBleed}
+    tabindex="-1"
+  >
+    <div class="app-shell__content" class:app-shell__content--full={fullBleed}>
       {@render children()}
     </div>
   </main>
@@ -34,7 +40,7 @@
     padding: 0.5rem 0.75rem;
     border-radius: 0.375rem;
     background: var(--ui-accent-strong);
-    color: white;
+    color: var(--ui-accent-contrast);
     font-weight: 700;
     text-decoration: none;
     transform: translateY(calc(-100% - 1rem));
@@ -56,15 +62,28 @@
     outline: none;
   }
 
+  .app-shell__main--flush {
+    padding: var(--app-nav-height) 0 0;
+  }
+
   .app-shell__content {
     width: min(80rem, 100%);
     margin: 0 auto;
   }
 
-  @media (max-width: 640px) {
+  .app-shell__content--full {
+    width: 100%;
+    height: calc(100dvh - var(--app-nav-height));
+  }
+
+  @media (max-width: 40rem) {
     .app-shell__main {
       padding-top: calc(var(--app-nav-height) + 1rem);
       padding-bottom: 1.5rem;
+    }
+
+    .app-shell__main--flush {
+      padding: var(--app-nav-height) 0 0;
     }
   }
 </style>

@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGES = path.join(ROOT, 'packages');
-const SOURCE_EXTENSIONS = new Set(['.ts', '.svelte']);
+const SOURCE_EXTENSIONS = new Set(['.css', '.ts', '.svelte']);
 const IGNORED_PARTS = new Set([
   '.svelte-kit',
   'dist',
@@ -48,6 +48,10 @@ export function checkSource(file, source) {
   const sqlCall = /\.(?:prepare|exec)\s*\(/g;
   const flowImport = /from\s+['"]@flows\/(spotify|lyrics|trading|chat|canvas)(?:\/[^'"]*)?['"]/g;
   const processEnv = /process\.env/g;
+  const legacyUiUtility = /\b(?:glass|(?:text|bg|border|shadow)-(?:cosmic|aurora|pulsar|nebula|stardust|void)(?:-[\w/]+)?)\b/g;
+  const legacyUiVariable = /var\(--(?:surface|primary|secondary)-\d+\)/g;
+  const uiGradient = /(?:linear|radial|conic)-gradient\s*\(/g;
+  const accessibilitySuppression = /svelte-ignore\s+a11y_/g;
 
   for (const match of source.matchAll(explicitAny)) {
     violations.push(violation(file, source, match, 'no-explicit-any', 'Replace `any` with a concrete type or safe narrowing.'));
@@ -80,6 +84,21 @@ export function checkSource(file, source) {
   if (!isEnvOwner) {
     for (const match of source.matchAll(processEnv)) {
       violations.push(violation(file, source, match, 'env-in-config-only', 'Read environment variables in an explicitly named config/env factory and inject the result.'));
+    }
+  }
+
+  if (file.startsWith('packages/ui/src/')) {
+    for (const match of source.matchAll(legacyUiUtility)) {
+      violations.push(violation(file, source, match, 'no-legacy-ui-styles', 'Use shared primitives and semantic `--ui-*` tokens.'));
+    }
+    for (const match of source.matchAll(legacyUiVariable)) {
+      violations.push(violation(file, source, match, 'no-legacy-ui-styles', 'Replace retired palette variables with semantic `--ui-*` tokens.'));
+    }
+    for (const match of source.matchAll(uiGradient)) {
+      violations.push(violation(file, source, match, 'no-ui-gradients', 'Use a solid semantic surface or accent token.'));
+    }
+    for (const match of source.matchAll(accessibilitySuppression)) {
+      violations.push(violation(file, source, match, 'no-a11y-suppression', 'Fix the control semantics instead of suppressing the Svelte accessibility warning.'));
     }
   }
 
