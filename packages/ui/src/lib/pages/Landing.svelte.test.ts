@@ -1,10 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import type { FlowDefinition, FlowStats } from '@lib/flows';
 
-// Mock the board manifest edge: control exactly which flows exist and what
-// stats they resolve to, so we test Landing's rendering contract — not the
-// real registry or any flow's network call.
 const getFlows = vi.fn<() => FlowDefinition[]>();
 vi.mock('@lib/flows', () => ({
   getFlows: () => getFlows(),
@@ -28,7 +25,6 @@ function makeFlow(
   };
 }
 
-// Import after the mock is registered.
 const { default: Landing } = await import('./Landing.svelte');
 
 describe('Landing board', () => {
@@ -40,55 +36,44 @@ describe('Landing board', () => {
     expect(document.title).toBe('Cosmic Flow - Data Exploration Hub');
   });
 
-  it('shows three skeleton placeholders while stats load', () => {
-    // A never-resolving getStats keeps the page in its loading state.
+  it('uses the shared loading state while flow stats resolve', () => {
     getFlows.mockReturnValue([makeFlow('spotify', () => new Promise<FlowStats>(() => {}))]);
 
-    const { container } = render(Landing);
+    render(Landing);
 
-    expect(container.querySelectorAll('.skeleton')).toHaveLength(3);
+    expect(screen.getByRole('status')).toHaveTextContent('Loading flow status');
   });
 
-  it('renders a card per registered flow plus the YouTube placeholder', async () => {
+  it('renders every registered flow plus the YouTube placeholder', async () => {
     getFlows.mockReturnValue([
       makeFlow('spotify', { count: 12, status: 'active' }, { name: 'Spotify Flow' }),
     ]);
 
     render(Landing);
 
-    expect(await screen.findByText('Spotify Flow')).toBeInTheDocument();
-    // The hardcoded "coming soon" placeholder always appears.
+    expect(await screen.findByRole('link', { name: 'Open Spotify Flow' })).toBeInTheDocument();
     expect(screen.getByText('YouTube Flow')).toBeInTheDocument();
-    // Skeletons are gone once loaded.
-    expect(document.querySelectorAll('.skeleton')).toHaveLength(0);
   });
 
-  it('makes active flows clickable links to their route', async () => {
+  it('renders active and configured flows as route links', async () => {
     getFlows.mockReturnValue([
       makeFlow('spotify', { count: 5, status: 'active' }, { name: 'Spotify Flow' }),
-    ]);
-
-    render(Landing);
-
-    const card = (await screen.findByText('Spotify Flow')).closest('a');
-    expect(card).toHaveAttribute('href', '/spotify');
-    expect(card?.className).toContain('cursor-pointer');
-    expect(card?.className).not.toContain('cursor-not-allowed');
-  });
-
-  it('treats configured flows as clickable too', async () => {
-    getFlows.mockReturnValue([
       makeFlow('lyrics', { count: 0, status: 'configured' }, { name: 'Lyrics Flow' }),
     ]);
 
     render(Landing);
 
-    const card = (await screen.findByText('Lyrics Flow')).closest('a');
-    expect(card).toHaveAttribute('href', '/lyrics');
-    expect(card?.className).toContain('cursor-pointer');
+    expect(await screen.findByRole('link', { name: 'Open Spotify Flow' })).toHaveAttribute(
+      'href',
+      '/spotify'
+    );
+    expect(screen.getByRole('link', { name: 'Open Lyrics Flow' })).toHaveAttribute(
+      'href',
+      '/lyrics'
+    );
   });
 
-  it('renders disabled flows as non-clickable (no href, not-allowed cursor)', async () => {
+  it('renders disabled flows as non-interactive articles', async () => {
     getFlows.mockReturnValue([
       makeFlow(
         'trading',
@@ -99,12 +84,12 @@ describe('Landing board', () => {
 
     render(Landing);
 
-    const card = (await screen.findByText('Trading Flow')).closest('a');
-    expect(card).not.toHaveAttribute('href');
-    expect(card?.className).toContain('cursor-not-allowed');
+    const heading = await screen.findByText('Trading Flow');
+    expect(heading.closest('article')).toHaveAttribute('data-state', 'unavailable');
+    expect(screen.queryByRole('link', { name: 'Open Trading Flow' })).not.toBeInTheDocument();
   });
 
-  it('shows the item count only when greater than zero', async () => {
+  it('shows item counts only when they are positive', async () => {
     getFlows.mockReturnValue([
       makeFlow('spotify', { count: 42, status: 'active' }, { name: 'Spotify Flow' }),
       makeFlow('empty', { count: 0, status: 'active' }, { name: 'Empty Flow' }),
@@ -112,26 +97,24 @@ describe('Landing board', () => {
 
     render(Landing);
 
-    await screen.findByText('Spotify Flow');
+    await screen.findByRole('link', { name: 'Open Spotify Flow' });
     expect(screen.getByText('42')).toBeInTheDocument();
-    // Items label appears once, for the flow that has a positive count.
     expect(screen.getAllByText('Items')).toHaveLength(1);
   });
 
-  it('falls back to an error status when a flow getStats rejects', async () => {
+  it('isolates a stats failure to the affected flow card', async () => {
     getFlows.mockReturnValue([
       makeFlow('broken', () => Promise.reject(new Error('boom')), { name: 'Broken Flow' }),
     ]);
 
     render(Landing);
 
-    const card = (await screen.findByText('Broken Flow')).closest('a');
-    // An error flow is not clickable.
-    expect(card).not.toHaveAttribute('href');
-    expect(screen.getByText('Error')).toBeInTheDocument();
+    const heading = await screen.findByText('Broken Flow');
+    expect(heading.closest('article')).toHaveAttribute('data-state', 'unavailable');
+    expect(screen.getByText('Error')).toHaveClass('ui-badge--danger');
   });
 
-  it('uses the status message as the badge label when provided', async () => {
+  it('preserves custom status messages from the registry', async () => {
     getFlows.mockReturnValue([
       makeFlow(
         'spotify',
@@ -142,21 +125,18 @@ describe('Landing board', () => {
 
     render(Landing);
 
-    await screen.findByText('Spotify Flow');
-    expect(screen.getByText('8 genres')).toBeInTheDocument();
+    expect(await screen.findByText('8 genres')).toHaveClass('ui-badge--success');
   });
 
-  it('renders the board header and footer chrome', async () => {
+  it('summarizes ready and total flows in the compact header', async () => {
     getFlows.mockReturnValue([]);
 
     render(Landing);
 
-    // "Cosmic Flow" appears in the navbar brand too, so target the board heading.
-    expect(screen.getByRole('heading', { name: 'Cosmic Flow' })).toBeInTheDocument();
-    expect(screen.getByText('Your data flow playground')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Flows' })).toBeInTheDocument();
     await waitFor(() => {
-      // Even with no registered flows, the YouTube placeholder still shows.
-      expect(screen.getByText('YouTube Flow')).toBeInTheDocument();
+      expect(screen.getByText('0 ready')).toBeInTheDocument();
+      expect(screen.getByText('1 total')).toBeInTheDocument();
     });
   });
 });
