@@ -84,11 +84,13 @@ describe('StepWizard — initial render & first step', () => {
 
   it('renders the four timeframe step buttons', async () => {
     const onFetchKlines = defaultFetch();
-    render(StepWizard, { props: { onFetchKlines } });
+    const { container } = render(StepWizard, { props: { onFetchKlines } });
     await tick();
     for (const label of ['1D', '4H', '1H', '15m']) {
       expect(screen.getByRole('button', { name: new RegExp(label) })).toBeInTheDocument();
     }
+    expect(screen.getByRole('button', { name: '1D' })).toHaveAttribute('aria-current', 'step');
+    expect(container.querySelector('.glass')).toBeNull();
   });
 
   it('disables Previous on the first step and enables Next', async () => {
@@ -190,7 +192,7 @@ describe('StepWizard — insight generation', () => {
     // Insight renders for the active step.
     await waitFor(() => expect(screen.getByText('Daily Macro Bias')).toBeInTheDocument());
     expect(screen.getByText('Respect the daily trend')).toBeInTheDocument();
-    expect(screen.getByText(/BULLISH/)).toBeInTheDocument();
+    expect(screen.getByText('Bullish')).toHaveClass('ui-badge--success');
   });
 
   it('passes previously generated insights forward (matrioshka cascade)', async () => {

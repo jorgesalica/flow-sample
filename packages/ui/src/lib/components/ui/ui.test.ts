@@ -7,6 +7,7 @@ import Button from './Button.svelte';
 import Field from './Field.svelte';
 import IconButton from './IconButton.svelte';
 import ModalShell from './ModalShell.svelte';
+import Panel from './Panel.svelte';
 
 const textSnippet = (text: string) => createRawSnippet(() => ({ render: () => text }));
 
@@ -53,6 +54,23 @@ describe('UI primitives', () => {
   it('AsyncState uses alert semantics for failures', () => {
     render(AsyncState, { props: { state: 'error', title: 'Request failed' } });
     expect(screen.getByRole('alert')).toHaveTextContent('Request failed');
+  });
+
+  it('Panel exposes its semantic element, label, and surface variant', () => {
+    render(Panel, {
+      props: {
+        element: 'section',
+        ariaLabel: 'Market summary',
+        raised: true,
+        padding: 'sm',
+        children: textSnippet('Summary content'),
+      },
+    });
+
+    expect(screen.getByRole('region', { name: 'Market summary' })).toHaveClass(
+      'ui-panel--raised',
+      'ui-panel--sm'
+    );
   });
 
   it('ModalShell exposes dialog semantics and closes from its command', async () => {

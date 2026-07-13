@@ -4,6 +4,9 @@
   import type { WizardAnalysis, WizardInsightViewModel } from '../types';
   import { calculateWizardMetrics, formatCompactVolume, TRADING_WIZARD_STEPS } from '../wizard';
   import { clientLogger } from '@lib/client-logger';
+  import { AsyncState, Badge, Button, Panel } from '@lib/components';
+
+  type BadgeTone = 'danger' | 'neutral' | 'success';
 
   interface Props {
     onFetchKlines: (interval: string, limit: number) => Promise<Candle[]>;
@@ -33,6 +36,18 @@
   const canGoPrev = $derived(currentStep > 0);
   const currentInsight = $derived(stepInsights[activeStep.label] || null);
   const metrics = $derived(calculateWizardMetrics(candles));
+
+  function getSentimentTone(bias: AdvisorNote['sentiment_bias']): BadgeTone {
+    if (bias === 'LONG') return 'success';
+    if (bias === 'SHORT') return 'danger';
+    return 'neutral';
+  }
+
+  function getSentimentLabel(bias: AdvisorNote['sentiment_bias']): string {
+    if (bias === 'LONG') return 'Bullish';
+    if (bias === 'SHORT') return 'Bearish';
+    return 'Neutral';
+  }
 
   async function loadStepData() {
     isLoadingCandles = true;
@@ -111,58 +126,49 @@
   });
 </script>
 
-<div class="space-y-6">
+<div class="wizard">
   <!-- Step Navigation -->
-  <div class="flex items-center justify-center gap-2 flex-wrap">
+  <nav class="step-navigation" aria-label="Analysis timeframes">
     {#each TRADING_WIZARD_STEPS as step, index (step.id)}
-      <button
+      <Button
+        size="sm"
+        variant={index === currentStep ? 'primary' : index < currentStep ? 'secondary' : 'ghost'}
+        class="wizard-step"
         onclick={() => goToStep(index)}
-        class="relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300
-          {index === currentStep
-          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-lg shadow-amber-500/20'
-          : index < currentStep
-            ? 'bg-green-500/10 text-green-400 border border-green-500/30'
-            : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}"
+        aria-current={index === currentStep ? 'step' : undefined}
       >
-        <span class="text-lg">{step.icon}</span>
-        <span class="font-semibold">{step.label}</span>
+        <span aria-hidden="true">{step.icon}</span>
+        <span>{step.label}</span>
         {#if stepInsights[step.label]}
-          <span class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></span>
+          <span class="step-complete" aria-hidden="true"></span>
         {/if}
-      </button>
-      {#if index < TRADING_WIZARD_STEPS.length - 1}
-        <span class="text-white/20 hidden md:inline">→</span>
-      {/if}
+      </Button>
     {/each}
-  </div>
+  </nav>
 
   <!-- Current Step Info -->
-  <div class="text-center">
-    <h3 class="text-xl font-bold text-amber-400">
+  <div class="step-heading">
+    <h3>
       {activeStep.icon} Step {activeStep.id}: {activeStep.focus}
     </h3>
-    <p class="text-white/40 text-sm">
-      Analyzing {activeStep.label} timeframe
-    </p>
+    <p>Analyzing {activeStep.label} timeframe</p>
   </div>
 
   <!-- Chart Area -->
-  <div class="glass p-4 rounded-xl">
+  <Panel padding="none" class="chart-panel">
     {#if isLoadingCandles}
-      <div class="flex items-center justify-center h-[400px]">
-        <div
-          class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400"
-        ></div>
+      <div class="chart-state">
+        <AsyncState state="loading" title="Loading candles" />
       </div>
     {:else}
       <CandleChart {candles} height={400} />
     {/if}
-  </div>
+  </Panel>
 
   <!-- Step Info Panel -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <!-- Metrics -->
-    <div class="glass p-4 rounded-xl">
+    <Panel padding="md">
       <h4 class="text-sm font-semibold text-white/40 uppercase tracking-wider mb-3">
         📊 Metrics ({activeStep.label})
       </h4>
@@ -232,22 +238,19 @@
           </div>
         </div>
       {:else}
-        <p class="text-white/30">No data available</p>
+        <AsyncState state="empty" title="No data available" />
       {/if}
-    </div>
+    </Panel>
 
     <!-- Analysis Data (from backend computation) -->
     {#if stepAnalysis[activeStep.label]}
       {@const analysis = stepAnalysis[activeStep.label]}
-      <div class="glass p-4 rounded-xl">
+      <Panel padding="md">
         <div class="flex items-center gap-2 mb-3">
           <h4 class="text-sm font-semibold text-white/40 uppercase tracking-wider">
             🖥️ Análisis Técnico ({activeStep.label})
           </h4>
-          <span
-            class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-semibold"
-            >Backend</span
-          >
+          <Badge tone="success">Backend</Badge>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
           {#if analysis.regime_analysis}
@@ -352,25 +355,24 @@
             </div>
           {/if}
         </div>
-      </div>
+      </Panel>
     {/if}
 
     <!-- Insight for this step -->
-    <div class="glass p-4 rounded-xl">
+    <Panel padding="md">
       <div class="flex items-center justify-between mb-3">
         <h4 class="text-sm font-semibold text-white/40 uppercase tracking-wider">
           🧠 {activeStep.label} Insight
         </h4>
-        <button
+        <Button
+          size="sm"
+          variant="secondary"
           onclick={generateInsightForCurrentStep}
           disabled={isLoadingInsight || !onGenerateInsightForTimeframe}
-          class="px-3 py-1 text-xs rounded-lg transition-all
-            {isLoadingInsight
-            ? 'bg-white/10 text-white/40 cursor-wait'
-            : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/50'}"
+          loading={isLoadingInsight}
         >
-          {isLoadingInsight ? '⏳ Generating...' : '✨ Generate'}
-        </button>
+          Generate
+        </Button>
       </div>
 
       {#if currentInsight}
@@ -378,20 +380,9 @@
           <p class="text-sm font-semibold text-amber-400">{currentInsight.title}</p>
           <p class="text-sm text-white/80">{currentInsight.mentor_tip}</p>
           {#if currentInsight.sentiment_bias}
-            <span
-              class="inline-block px-2 py-1 rounded text-xs font-bold
-                {currentInsight.sentiment_bias === 'LONG'
-                ? 'bg-green-500/20 text-green-400'
-                : currentInsight.sentiment_bias === 'SHORT'
-                  ? 'bg-red-500/20 text-red-400'
-                  : 'bg-gray-500/20 text-gray-400'}"
-            >
-              {currentInsight.sentiment_bias === 'LONG'
-                ? '🐂 BULLISH'
-                : currentInsight.sentiment_bias === 'SHORT'
-                  ? '🐻 BEARISH'
-                  : '⚖️ NEUTRAL'}
-            </span>
+            <Badge tone={getSentimentTone(currentInsight.sentiment_bias)}>
+              {getSentimentLabel(currentInsight.sentiment_bias)}
+            </Badge>
           {/if}
         </div>
       {:else}
@@ -399,35 +390,108 @@
           Click "Generate" to get AI insight for {activeStep.label} timeframe
         </p>
       {/if}
-    </div>
+    </Panel>
   </div>
 
   <!-- Navigation Buttons -->
-  <div class="flex items-center justify-between">
-    <button
-      onclick={goPrev}
-      disabled={!canGoPrev}
-      class="px-6 py-2 rounded-lg flex items-center gap-2 transition-all
-        {canGoPrev
-        ? 'bg-white/10 text-white hover:bg-white/20'
-        : 'bg-white/5 text-white/20 cursor-not-allowed'}"
-    >
-      ← Previous
-    </button>
+  <div class="step-actions">
+    <Button variant="secondary" onclick={goPrev} disabled={!canGoPrev}>Previous</Button>
 
     <span class="text-white/40 text-sm">
       Step {currentStep + 1} of {TRADING_WIZARD_STEPS.length}
     </span>
 
-    <button
-      onclick={goNext}
-      disabled={!canGoNext}
-      class="px-6 py-2 rounded-lg flex items-center gap-2 transition-all
-        {canGoNext
-        ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/50'
-        : 'bg-white/5 text-white/20 cursor-not-allowed'}"
-    >
-      Next →
-    </button>
+    <Button onclick={goNext} disabled={!canGoNext}>Next</Button>
   </div>
 </div>
+
+<style>
+  .wizard {
+    display: grid;
+    min-width: 0;
+    gap: 1.25rem;
+  }
+
+  .step-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .step-navigation :global(.wizard-step) {
+    position: relative;
+    gap: 0.5rem;
+  }
+
+  .step-complete {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #4ade80;
+  }
+
+  .step-heading {
+    text-align: center;
+  }
+
+  .step-heading h3 {
+    margin: 0;
+    color: var(--ui-focus);
+    font-size: 1.125rem;
+    letter-spacing: 0;
+  }
+
+  .step-heading p {
+    margin: 0.25rem 0 0;
+    color: var(--ui-text-muted);
+    font-size: 0.875rem;
+  }
+
+  .wizard :global(.chart-panel) {
+    min-height: 25rem;
+    overflow: hidden;
+  }
+
+  .chart-state {
+    display: grid;
+    min-height: 25rem;
+    place-items: center;
+  }
+
+  .step-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .step-actions :global(.ui-button:first-child) {
+    justify-self: start;
+  }
+
+  .step-actions :global(.ui-button:last-child) {
+    justify-self: end;
+  }
+
+  @media (max-width: 35rem) {
+    .step-navigation :global(.wizard-step) {
+      flex: 1 1 calc(50% - 0.5rem);
+    }
+
+    .step-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .step-actions > span {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      justify-self: center;
+    }
+
+    .step-actions :global(.ui-button) {
+      grid-row: 2;
+      width: 100%;
+    }
+  }
+</style>
