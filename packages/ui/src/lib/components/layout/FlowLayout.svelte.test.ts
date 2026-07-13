@@ -11,10 +11,10 @@ const childContent = createRawSnippet(() => ({
 
 describe('FlowLayout', () => {
   it('renders the navbar chrome around the page', () => {
-    render(FlowLayout, { props: { children: childContent } });
+    render(FlowLayout, { props: { children: childContent, currentPath: '/lyrics' } });
 
-    // Navbar's brand wordmark proves the layout mounts the navbar.
     expect(screen.getByText('Cosmic Flow')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lyrics' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders the provided children snippet', () => {
@@ -23,5 +23,16 @@ describe('FlowLayout', () => {
     const child = screen.getByTestId('child');
     expect(child).toBeInTheDocument();
     expect(child).toHaveTextContent('Inner page content');
+  });
+
+  it('provides a keyboard skip link and semantic main target', () => {
+    render(FlowLayout, { props: { children: childContent } });
+
+    expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute(
+      'href',
+      '#main-content'
+    );
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
+    expect(screen.getByRole('main')).toHaveAttribute('tabindex', '-1');
   });
 });

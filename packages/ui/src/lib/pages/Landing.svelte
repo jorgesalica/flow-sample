@@ -4,7 +4,7 @@
   import { FlowLayout } from '@lib/components';
 
   // Page title
-  const pageTitle = 'Flow - Data Exploration Hub';
+  const pageTitle = 'Cosmic Flow - Data Exploration Hub';
 
   interface FlowCard extends FlowDefinition {
     stats?: FlowStats;

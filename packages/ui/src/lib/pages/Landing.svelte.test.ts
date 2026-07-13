@@ -32,6 +32,14 @@ function makeFlow(
 const { default: Landing } = await import('./Landing.svelte');
 
 describe('Landing board', () => {
+  it('sets the branded page title', () => {
+    getFlows.mockReturnValue([]);
+
+    render(Landing);
+
+    expect(document.title).toBe('Cosmic Flow - Data Exploration Hub');
+  });
+
   it('shows three skeleton placeholders while stats load', () => {
     // A never-resolving getStats keeps the page in its loading state.
     getFlows.mockReturnValue([makeFlow('spotify', () => new Promise<FlowStats>(() => {}))]);
