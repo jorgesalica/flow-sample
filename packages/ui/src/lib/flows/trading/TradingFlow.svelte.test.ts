@@ -131,9 +131,9 @@ describe('TradingFlow — status panel', () => {
   it('shows Disconnected and a start button when not running', () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
     expect(screen.getByText('Disconnected')).toBeInTheDocument();
-    expect(screen.getByText(/Start Stream/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start stream/i })).toBeInTheDocument();
     // Negative space: no stop button in the stopped state.
-    expect(screen.queryByText(/Stop Stream/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Stop stream/i })).not.toBeInTheDocument();
   });
 
   it('shows Connected and a stop button when running', async () => {
@@ -148,8 +148,8 @@ describe('TradingFlow — status panel', () => {
     });
     await tick();
     expect(screen.getByText('Connected')).toBeInTheDocument();
-    expect(screen.getByText(/Stop Stream/)).toBeInTheDocument();
-    expect(screen.queryByText(/Start Stream/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Stop stream/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Start stream/i })).not.toBeInTheDocument();
   });
 
   it('renders the formatted last price and candle count', async () => {
@@ -169,16 +169,26 @@ describe('TradingFlow — status panel', () => {
     expect(screen.getByText(/1[.,]500/)).toBeInTheDocument();
   });
 
-  it('shows the em-dash placeholder for price when there is no candle', () => {
+  it('shows the unavailable placeholder for price when there is no candle', () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
-    expect(screen.getByText('$—')).toBeInTheDocument();
+    expect(screen.getByText('$N/A')).toBeInTheDocument();
+  });
+
+  it('renders a zero price instead of treating it as missing', async () => {
+    render(TradingFlow, { props: { initialData: emptyData() } });
+    tradingStore.updateTradingState((state) => ({
+      ...state,
+      lastCandle: makeCandle({ close: 0 }),
+    }));
+    await tick();
+    expect(screen.getByText('$0.00')).toBeInTheDocument();
   });
 });
 
 describe('TradingFlow — control buttons', () => {
   it('invokes startTrading when the start button is clicked', async () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
-    await fireEvent.click(screen.getByText(/Start Stream/));
+    await fireEvent.click(screen.getByRole('button', { name: /Start stream/i }));
     expect(actions.startTrading).toHaveBeenCalledOnce();
   });
 
@@ -186,34 +196,32 @@ describe('TradingFlow — control buttons', () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
     tradingStore.updateTradingState((s) => ({ ...s, isRunning: true }));
     await tick();
-    await fireEvent.click(screen.getByText(/Stop Stream/));
+    await fireEvent.click(screen.getByRole('button', { name: /Stop stream/i }));
     expect(actions.stopTrading).toHaveBeenCalledOnce();
   });
 
   it('invokes toggleAdvisor and reflects advisor on/off label', async () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
-    expect(screen.getByText(/Advisor OFF/)).toBeInTheDocument();
-    await fireEvent.click(screen.getByText(/Advisor OFF/));
+    expect(screen.getByRole('button', { name: /Advisor off/i })).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: /Advisor off/i }));
     expect(actions.toggleAdvisor).toHaveBeenCalledOnce();
 
     tradingStore.updateAdvisorState((s) => ({ ...s, isEnabled: true }));
     await tick();
-    expect(screen.getByText(/Advisor ON/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Advisor on/i })).toBeInTheDocument();
   });
 
   it('invokes generateInsight and disables the button while loading', async () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
-    // Target the control button by role — the empty-state copy also mentions
-    // "Generate Insight", so a plain text query is ambiguous.
-    const btn = screen.getByRole('button', { name: /Generate Insight/ });
+    const btn = screen.getByRole('button', { name: /Generate insight/i });
     await fireEvent.click(btn);
     expect(actions.generateInsight).toHaveBeenCalledOnce();
 
     tradingStore.setLoadingInsight(true);
     await tick();
-    const loadingBtn = screen.getByRole('button', { name: /Generating/ });
-    expect(loadingBtn).toBeInTheDocument();
+    const loadingBtn = screen.getByRole('button', { name: /Generate insight/i });
     expect(loadingBtn).toBeDisabled();
+    expect(loadingBtn).toHaveAttribute('aria-busy', 'true');
   });
 });
 
@@ -223,22 +231,20 @@ describe('TradingFlow — candle feed', () => {
     expect(screen.getByText(/No candles yet/)).toBeInTheDocument();
   });
 
-  it('renders candle rows with an up arrow for a green candle', async () => {
+  it('renders a positive candle change with semantic styling', async () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
     tradingStore.setCandles([makeCandle({ openTime: 1, open: 100, close: 105 })]);
     await tick();
     expect(screen.queryByText(/No candles yet/)).not.toBeInTheDocument();
     expect(screen.getByText('$105.00')).toBeInTheDocument();
-    // 5% gain -> up arrow + percentage to 3 decimals.
-    expect(screen.getByText(/↑/)).toBeInTheDocument();
-    expect(screen.getByText(/5\.000%/)).toBeInTheDocument();
+    expect(screen.getByText('+5.000%')).toHaveClass('positive');
   });
 
-  it('renders a down arrow for a red candle', async () => {
+  it('renders a negative candle change with semantic styling', async () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
     tradingStore.setCandles([makeCandle({ openTime: 2, open: 100, close: 90 })]);
     await tick();
-    expect(screen.getByText(/↓/)).toBeInTheDocument();
+    expect(screen.getByText('-10.000%')).toHaveClass('negative');
   });
 
   it('renders candles supplied by the loader without a client-side fetch', async () => {
@@ -258,16 +264,16 @@ describe('TradingFlow — candle feed', () => {
 describe('TradingFlow — advisor insight panel', () => {
   it('shows the empty-state message when there is no insight', () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
-    expect(screen.getByText(/No insights available yet/)).toBeInTheDocument();
+    expect(screen.getByText('No insight available')).toBeInTheDocument();
   });
 
   it('renders insight title, bullish badge, scenarios and risk management', async () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
     tradingStore.setLatestInsight(makeNote({ sentiment_bias: 'LONG' }));
     await tick();
-    expect(screen.queryByText(/No insights available yet/)).not.toBeInTheDocument();
+    expect(screen.queryByText('No insight available')).not.toBeInTheDocument();
     expect(screen.getByText('BTC Breakout Setup')).toBeInTheDocument();
-    expect(screen.getByText(/BULLISH/)).toBeInTheDocument();
+    expect(screen.getByText('Bullish')).toHaveClass('ui-badge--success');
     expect(screen.getByText('Strong trending regime')).toBeInTheDocument();
     expect(screen.getByText('Breaks above resistance')).toBeInTheDocument();
     expect(screen.getByText('Loses key support')).toBeInTheDocument();
@@ -281,7 +287,7 @@ describe('TradingFlow — advisor insight panel', () => {
       props: { initialData: emptyData({ insight: makeNote({ title: 'Loader Insight' }) }) },
     });
     await tick();
-    expect(screen.queryByText(/No insights available yet/)).not.toBeInTheDocument();
+    expect(screen.queryByText('No insight available')).not.toBeInTheDocument();
     expect(screen.getByText('Loader Insight')).toBeInTheDocument();
   });
 
@@ -289,14 +295,14 @@ describe('TradingFlow — advisor insight panel', () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
     tradingStore.setLatestInsight(makeNote({ sentiment_bias: 'SHORT' }));
     await tick();
-    expect(screen.getByText(/BEARISH/)).toBeInTheDocument();
+    expect(screen.getByText('Bearish')).toHaveClass('ui-badge--danger');
   });
 
   it('renders a neutral badge for a NEUTRAL bias', async () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
     tradingStore.setLatestInsight(makeNote({ sentiment_bias: 'NEUTRAL' }));
     await tick();
-    expect(screen.getByText(/NEUTRAL/)).toBeInTheDocument();
+    expect(screen.getByText('Neutral')).toHaveClass('ui-badge--neutral');
   });
 
   it('renders the logic trace factors and confidence score', async () => {
@@ -315,14 +321,24 @@ describe('TradingFlow — wizard toggle', () => {
   it('switches to wizard mode and back to dashboard', async () => {
     render(TradingFlow, { props: { initialData: emptyData() } });
     // Dashboard shows the live candle panel; wizard heading is absent.
-    expect(screen.getByText('Live Candles')).toBeInTheDocument();
-    expect(screen.queryByText(/Cascade Analysis Wizard/)).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Live candles' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /Cascade analysis wizard/i })
+    ).not.toBeInTheDocument();
 
-    await fireEvent.click(screen.getByText(/Open Wizard/));
-    expect(screen.getByText(/Cascade Analysis Wizard/)).toBeInTheDocument();
-    expect(screen.queryByText('Live Candles')).not.toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: /Open wizard/i }));
+    expect(screen.getByRole('heading', { name: /Cascade analysis wizard/i })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Live candles' })).not.toBeInTheDocument();
 
-    await fireEvent.click(screen.getByText(/Back to Dashboard/));
-    expect(screen.getByText('Live Candles')).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: /Back to dashboard/i }));
+    expect(screen.getByRole('region', { name: 'Live candles' })).toBeInTheDocument();
+  });
+});
+
+describe('TradingFlow — semantic surfaces', () => {
+  it('uses shared panels without legacy glass utilities', () => {
+    const { container } = render(TradingFlow, { props: { initialData: emptyData() } });
+    expect(screen.getByRole('region', { name: 'Trading controls' })).toHaveClass('ui-panel');
+    expect(container.querySelector('.glass')).toBeNull();
   });
 });

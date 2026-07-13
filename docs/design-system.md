@@ -10,17 +10,17 @@ not leak into component implementation.
 Base and Tailwind theme tokens live in `packages/ui/src/app.css`. Shared components consume
 semantic variables rather than palette names:
 
-| Token | Purpose |
-| --- | --- |
-| `--ui-accent` | primary action and selected state |
-| `--ui-accent-strong` | active/pressed accent |
-| `--ui-focus` | keyboard focus indicator |
-| `--ui-danger` | destructive/error action |
-| `--ui-surface` | base component surface |
-| `--ui-surface-raised` | elevated surface |
-| `--ui-border` | standard boundary |
-| `--ui-text` | primary text |
-| `--ui-text-muted` | secondary text |
+| Token                 | Purpose                           |
+| --------------------- | --------------------------------- |
+| `--ui-accent`         | primary action and selected state |
+| `--ui-accent-strong`  | active/pressed accent             |
+| `--ui-focus`          | keyboard focus indicator          |
+| `--ui-danger`         | destructive/error action          |
+| `--ui-surface`        | base component surface            |
+| `--ui-surface-raised` | elevated surface                  |
+| `--ui-border`         | standard boundary                 |
+| `--ui-text`           | primary text                      |
+| `--ui-text-muted`     | secondary text                    |
 
 Palette selection uses `data-theme` on an ancestor. The default galaxy palette is cyan;
 `data-theme="fire"` uses rose accents; `data-theme="organic"` uses lime accents. Palette
@@ -36,6 +36,8 @@ Shared primitives live in `packages/ui/src/lib/components/ui` and are exported t
 - `Field` for label, control, hint, and error relationships.
 - `Badge` for compact status/category metadata.
 - `AsyncState` for loading, empty, and error presentation.
+- `Panel` for bounded application surfaces with semantic element, padding, and elevation
+  options. It frames a single tool or repeated item; do not nest panels for decoration.
 - `ModalShell` for dialog structure, dismissal, and focus behavior.
 
 New UI composes these primitives before introducing a flow-local equivalent. A local
@@ -54,8 +56,9 @@ component is justified when it owns domain behavior, not merely different colors
 
 ## Migration Status
 
-The application shell, root flow dashboard, Canvas editor controls, Chat send/stop
-actions, Spotify controls, and the Lyrics list, analysis, and detail modal surfaces use
-semantic tokens and shared primitives. Remaining flow-local surfaces should migrate in
-small PRs under issue #24. Legacy cosmic/glass utilities remain in `app.css`; removing or
-consolidating them is part of that migration, not documentation housekeeping.
+The application shell, root flow dashboard, Trading dashboard and cascade wizard, Canvas
+editor controls, Chat send/stop actions, Spotify controls, and the Lyrics list, analysis,
+and detail modal surfaces use semantic tokens and shared primitives. Remaining flow-local
+surfaces should migrate in small PRs under issue #24. Legacy cosmic/glass utilities remain
+in `app.css`; removing or consolidating them is part of that migration, not documentation
+housekeeping.
