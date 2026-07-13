@@ -48,7 +48,11 @@ ui/
 │       ├── client.ts             # Eden Treaty client (typed against the backend App)
 │       ├── toast.ts              # svelte-5-french-toast wrapper (Toaster, showError…)
 │       ├── types.ts              # local UI types (domain types come from @flows/shared)
-│       ├── pages/Landing.svelte  # the board UI (flow cards + live stats)
+│       ├── pages/
+│       │   ├── Landing.svelte    # flow registry orchestration + live stats
+│       │   ├── types.ts          # root dashboard presentation model
+│       │   └── components/
+│       │       └── FlowCard.svelte # semantic board card presentation
 │       ├── components/
 │       │   ├── layout/           # Navbar, FlowLayout
 │       │   ├── common/           # InfiniteScroll, …
@@ -68,9 +72,10 @@ ui/
 ## Routing
 
 File-based. Each flow is a route under `src/routes/<flow>/+page.svelte` that renders the
-flow's page component from `lib/flows/<flow>/`. The home route renders the board
-(`Landing.svelte`), which links to each flow via `<a href="/spotify">` etc. (The old
-`#/`-hash router was removed in the SvelteKit migration.)
+flow's page component from `lib/flows/<flow>/`. The home route renders the flow index
+(`Landing.svelte`), which resolves registry stats and delegates each item to a semantic
+`FlowCard`. Available flows are links; unavailable and failed flows are non-interactive
+articles. (The old `#/`-hash router was removed in the SvelteKit migration.)
 
 ## Flows registry
 
@@ -97,9 +102,11 @@ the flow's `api.ts` and be covered by a contract test.
 
 ## Styling
 
-Tailwind v4, CSS-first: `app.css` does `@import 'tailwindcss'` and declares brand tokens
-in `@theme { … }` ("cosmic" dark theme + glassmorphism). Component-scoped `<style>` for
-the rest; inline `style` only for dynamic values. There is no `tailwind.config.js` (v4).
+Tailwind v4, CSS-first: `app.css` does `@import 'tailwindcss'` and declares brand and
+semantic UI tokens. Shared and migrated components consume `--ui-*` variables through
+component-scoped styles; inline `style` is reserved for dynamic values. Legacy
+`glass`/`cosmic` utilities remain only for flow-local surfaces awaiting migration. There
+is no `tailwind.config.js` (v4).
 
 ## Testing
 
