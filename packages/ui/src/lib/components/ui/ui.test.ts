@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { createRawSnippet } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import AsyncState from './AsyncState.svelte';
@@ -63,5 +63,54 @@ describe('UI primitives', () => {
     expect(screen.getByRole('dialog', { name: 'Details' })).toBeInTheDocument();
     await fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onclose).toHaveBeenCalledOnce();
+  });
+
+  it('ModalShell closes on Escape and backdrop clicks', async () => {
+    const onclose = vi.fn();
+    render(ModalShell, {
+      props: { title: 'Details', children: textSnippet('Content'), onclose },
+    });
+
+    await fireEvent.keyDown(window, { key: 'Escape' });
+    await fireEvent.click(screen.getByRole('presentation'));
+
+    expect(onclose).toHaveBeenCalledTimes(2);
+  });
+
+  it('ModalShell moves focus inside and restores it when unmounted', async () => {
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    trigger.focus();
+
+    const view = render(ModalShell, {
+      props: { title: 'Details', children: textSnippet('Content'), onclose: vi.fn() },
+    });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+    view.unmount();
+    expect(trigger).toHaveFocus();
+
+    trigger.remove();
+  });
+
+  it('ModalShell keeps keyboard focus inside the dialog', async () => {
+    render(ModalShell, {
+      props: {
+        title: 'Details',
+        actions: textSnippet('<button>Header action</button>'),
+        children: textSnippet('<button>Body action</button>'),
+        onclose: vi.fn(),
+      },
+    });
+
+    const headerAction = screen.getByRole('button', { name: 'Header action' });
+    const bodyAction = screen.getByRole('button', { name: 'Body action' });
+    await waitFor(() => expect(headerAction).toHaveFocus());
+
+    await fireEvent.keyDown(window, { key: 'Tab', shiftKey: true });
+    expect(bodyAction).toHaveFocus();
+
+    await fireEvent.keyDown(window, { key: 'Tab' });
+    expect(headerAction).toHaveFocus();
   });
 });

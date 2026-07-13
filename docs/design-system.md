@@ -54,8 +54,8 @@ component is justified when it owns domain behavior, not merely different colors
 
 ## Migration Status
 
-Canvas editor controls, Chat send/stop actions, Spotify controls, and the Lyrics list and
-analysis surfaces use the shared primitives. Remaining surfaces and the application shell
-should migrate in small PRs under issue #24. Legacy
+Canvas editor controls, Chat send/stop actions, Spotify controls, and the Lyrics list,
+analysis, and detail modal surfaces use the shared primitives. Remaining surfaces and the
+application shell should migrate in small PRs under issue #24. Legacy
 cosmic/glass utilities remain in `app.css`; removing or consolidating them is part of that
 migration, not documentation housekeeping.
