@@ -1,48 +1,45 @@
 <script lang="ts">
-  import { chatStore } from '../stores.svelte';
   import { IconButton } from '@lib/components';
+  import { chatStore } from '../stores.svelte';
 
   let inputContent = $state('');
   let textareaEl: HTMLTextAreaElement;
 
-  // Auto-resize textarea
-  function handleInput() {
+  function handleInput(): void {
     if (!textareaEl) return;
     textareaEl.style.height = 'auto';
-    textareaEl.style.height = Math.min(textareaEl.scrollHeight, 200) + 'px';
+    textareaEl.style.height = `${Math.min(textareaEl.scrollHeight, 200)}px`;
   }
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
+  function handleKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
       submit();
     }
   }
 
-  function submit() {
+  function submit(): void {
     if (!inputContent.trim() || chatStore.isLoading) return;
 
     chatStore.sendMessage(inputContent.trim());
     inputContent = '';
 
-    // Reset textarea height instantly
     setTimeout(() => {
       if (textareaEl) textareaEl.style.height = 'auto';
     }, 0);
   }
 </script>
 
-<div class="p-4 bg-slate-900 border-t border-cosmic-800">
-  <div
-    class="max-w-4xl mx-auto relative flex items-end bg-slate-800 rounded-xl border border-slate-700 focus-within:border-cosmic-500 focus-within:shadow-glow transition-all"
-  >
+<footer class="chat-composer">
+  <div class="chat-composer__field">
+    <label class="chat-composer__label" for="chat-message">Message</label>
     <textarea
+      id="chat-message"
       bind:this={textareaEl}
       bind:value={inputContent}
       oninput={handleInput}
       onkeydown={handleKeydown}
       placeholder="Send a message..."
-      class="w-full bg-transparent text-slate-200 resize-none outline-none py-3.5 pl-4 pr-12 max-h-[200px] overflow-y-auto scrollbar-thin text-sm leading-relaxed"
       rows="1"
       disabled={chatStore.isLoading}
     ></textarea>
@@ -53,14 +50,9 @@
         variant="secondary"
         size="sm"
         onclick={() => chatStore.stopStreaming()}
-        class="absolute right-2 bottom-2"
+        class="chat-composer__action"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="w-3.5 h-3.5"
-        >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <rect x="6" y="6" width="12" height="12" rx="1.5" />
         </svg>
       </IconButton>
@@ -71,14 +63,9 @@
         size="sm"
         onclick={submit}
         disabled={!inputContent.trim() || chatStore.isLoading}
-        class="absolute right-2 bottom-2"
+        class="chat-composer__action"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="w-4 h-4"
-        >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path
             d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z"
           />
@@ -86,7 +73,90 @@
       </IconButton>
     {/if}
   </div>
-  <p class="text-center mt-2 text-[11px] text-slate-500 cursor-default select-none">
-    AI can make mistakes. Consider verifying important information.
-  </p>
-</div>
+
+  <p>AI can make mistakes. Consider verifying important information.</p>
+</footer>
+
+<style>
+  .chat-composer {
+    flex: 0 0 auto;
+    padding: 1rem;
+    border-top: 1px solid var(--ui-border);
+    background: var(--ui-nav);
+  }
+
+  .chat-composer__field {
+    position: relative;
+    display: flex;
+    width: min(56rem, 100%);
+    min-height: 3rem;
+    margin: 0 auto;
+    align-items: flex-end;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 0.5rem;
+    background: var(--ui-surface-raised);
+  }
+
+  .chat-composer__field:focus-within {
+    border-color: var(--ui-focus);
+    outline: 2px solid color-mix(in srgb, var(--ui-focus) 25%, transparent);
+    outline-offset: 1px;
+  }
+
+  .chat-composer__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  textarea {
+    width: 100%;
+    max-height: 12.5rem;
+    resize: none;
+    overflow-y: auto;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ui-text);
+    padding: 0.875rem 3.25rem 0.875rem 1rem;
+    font: inherit;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  textarea::placeholder {
+    color: var(--ui-text-muted);
+  }
+
+  textarea:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+
+  .chat-composer__field :global(.chat-composer__action) {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+  }
+
+  .chat-composer svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .chat-composer p {
+    margin: 0.5rem 0 0;
+    color: var(--ui-text-muted);
+    font-size: 0.7rem;
+    text-align: center;
+  }
+
+  @media (max-width: 40rem) {
+    .chat-composer {
+      padding: 0.75rem;
+    }
+  }
+</style>

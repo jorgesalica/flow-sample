@@ -77,7 +77,8 @@ describe('ChatFlow', () => {
   it('shows the sidebar empty-history placeholder when there are no conversations', () => {
     renderFlow(makeInitialData());
 
-    expect(screen.getByText('No history yet. Start a conversation!')).toBeInTheDocument();
+    expect(screen.getByText('No history yet')).toBeInTheDocument();
+    expect(screen.getByText('Start a conversation.')).toBeInTheDocument();
   });
 
   it('renders loaded conversations in the sidebar (data state)', () => {
@@ -90,16 +91,20 @@ describe('ChatFlow', () => {
     );
 
     expect(screen.getByText('Astronomy questions')).toBeInTheDocument();
-    expect(screen.queryByText('No history yet. Start a conversation!')).not.toBeInTheDocument();
+    expect(screen.queryByText('No history yet')).not.toBeInTheDocument();
   });
 
-  it('exposes a mobile menu toggle button', async () => {
+  it('opens and closes the mobile conversation menu', async () => {
     renderFlow();
-    const toggle = screen.getByLabelText('Toggle mobile menu');
-    expect(toggle).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: 'Toggle conversation menu' });
 
-    // Clicking opens the overlay without throwing.
     await fireEvent.click(toggle);
-    expect(toggle).toBeInTheDocument();
+    const close = screen.getByRole('button', { name: 'Close conversation menu' });
+    expect(close).toBeInTheDocument();
+
+    await fireEvent.click(close);
+    expect(
+      screen.queryByRole('button', { name: 'Close conversation menu' })
+    ).not.toBeInTheDocument();
   });
 });

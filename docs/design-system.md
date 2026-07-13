@@ -1,64 +1,89 @@
 # Flow UI Design System
 
-This document describes the implemented shared UI foundation and the direction tracked by
-[issue #24](https://github.com/jorgesalica/flow-sample/issues/24). The system is dark,
-workable on mobile, accessible by keyboard, and uses semantic tokens so flow identity does
-not leak into component implementation.
+The Flow UI is a dark, responsive application system shared by Spotify, Lyrics, Trading,
+Chat, Canvas, and the root board. It uses semantic tokens and behavior-oriented Svelte
+components so palette identity does not leak into flow implementation.
 
-## Implemented Tokens
+## Theme Contract
 
-Base and Tailwind theme tokens live in `packages/ui/src/app.css`. Shared components consume
-semantic variables rather than palette names:
+Theme definitions live in `packages/ui/src/app.css`; theme state and persistence live in
+`packages/ui/src/lib/theme.ts`. The application root owns `data-theme` and the navbar
+`ThemeSwitcher` offers three palettes:
 
-| Token                 | Purpose                           |
-| --------------------- | --------------------------------- |
-| `--ui-accent`         | primary action and selected state |
-| `--ui-accent-strong`  | active/pressed accent             |
-| `--ui-focus`          | keyboard focus indicator          |
-| `--ui-danger`         | destructive/error action          |
-| `--ui-surface`        | base component surface            |
-| `--ui-surface-raised` | elevated surface                  |
-| `--ui-border`         | standard boundary                 |
-| `--ui-text`           | primary text                      |
-| `--ui-text-muted`     | secondary text                    |
+| Theme | Intent | Primary accent |
+| --- | --- | --- |
+| `galaxy` | cool analytical default | cyan |
+| `fire` | warm high-energy alternative | rose |
+| `organic` | natural exploratory alternative | lime |
 
-Palette selection uses `data-theme` on an ancestor. The default galaxy palette is cyan;
-`data-theme="fire"` uses rose accents; `data-theme="organic"` uses lime accents. Palette
-names configure semantic tokens but must not appear in generic component logic.
+The selected value is stored under `flow-sample:theme`. Applying a theme updates the root
+attribute and dispatches `flow-sample:theme-change`, allowing browser-rendered charts to
+reapply computed CSS colors without recreating flow state. A flow must not set its own
+`data-theme`; theme selection is an application-shell concern.
+
+## Semantic Tokens
+
+Components consume `--ui-*` variables or their Tailwind v4 semantic aliases. Palette
+names are valid only in the theme definitions and selector metadata.
+
+| Token group | Purpose |
+| --- | --- |
+| `--ui-background`, `--ui-nav` | page and persistent navigation surfaces |
+| `--ui-surface`, `--ui-surface-raised`, `--ui-surface-subtle` | component hierarchy |
+| `--ui-border`, `--ui-border-strong` | standard and emphasized boundaries |
+| `--ui-text`, `--ui-text-muted` | primary and secondary copy |
+| `--ui-accent`, `--ui-accent-strong` | selection and primary action |
+| `--ui-focus` | keyboard focus indicator |
+| `--ui-danger`, `--ui-success`, `--ui-warning` | semantic status feedback |
+| `--ui-chart-1` through `--ui-chart-6` | ordered visualization series |
+| `--ui-overlay`, `--ui-shadow` | modal/drawer layering and elevation |
+
+Tailwind aliases include `app`, `foreground`, `surface`, `surface-raised`,
+`surface-subtle`, `accent`, `border`, `muted`, `danger`, `success`, and `warning`.
+`packages/ui/src/lib/chart-theme.ts` is the shared adapter from computed CSS variables to
+Chart.js and Lightweight Charts configuration.
+
+Retired palette variables, flow-local cosmic utilities, glass surfaces, and CSS gradients
+are not part of the contract. Solid semantic surfaces provide hierarchy with predictable
+contrast across all themes.
 
 ## Shared Primitives
 
-Shared primitives live in `packages/ui/src/lib/components/ui` and are exported through
+Primitives live in `packages/ui/src/lib/components/ui` and are exported through
 `@lib/components`:
 
-- `Button` for text commands and variants.
-- `IconButton` for familiar compact actions with an accessible name.
-- `Field` for label, control, hint, and error relationships.
-- `Badge` for compact status/category metadata.
+- `Button` for explicit text commands and variants.
+- `IconButton` for familiar compact actions with a required accessible name.
+- `Field` for labels, controls, hints, and errors.
+- `Badge` for compact status or category metadata.
 - `AsyncState` for loading, empty, and error presentation.
-- `Panel` for bounded application surfaces with semantic element, padding, and elevation
-  options. It frames a single tool or repeated item; do not nest panels for decoration.
+- `Panel` for one bounded tool or repeated item; panels are not nested for decoration.
 - `ModalShell` for dialog structure, dismissal, and focus behavior.
 
-New UI composes these primitives before introducing a flow-local equivalent. A local
-component is justified when it owns domain behavior, not merely different colors or copy.
+`FlowLayout` owns the global navbar, skip link, and standard content bounds. Chat and
+Canvas use its `fullBleed` mode for dense workspaces while keeping the same shell and
+responsive drawer behavior.
+
+Compose these primitives before introducing a flow-local equivalent. A local component
+is justified when it owns domain behavior, not merely different colors or copy.
 
 ## Interaction Rules
 
-- Every control has an accessible name and visible keyboard focus.
-- Icon-only actions use a familiar icon and tooltip where meaning is not universal.
-- Loading disables duplicate submission without hiding current context.
-- Error and empty states explain the state and expose a recovery action when possible.
-- Motion respects reduced-motion preferences.
-- Layout is verified at desktop and mobile sizes without horizontal overflow.
-- Component tests assert roles, names, states, and callbacks; Playwright covers responsive
-  and browser-dependent interaction.
+- Every control has an accessible name, native keyboard behavior, and visible focus.
+- Icon-only actions use a familiar icon and an accessible tooltip/name.
+- Loading prevents duplicate submission without hiding current context.
+- Error and empty states explain the state and expose recovery when possible.
+- Motion respects `prefers-reduced-motion`.
+- Fixed-format controls have stable dimensions and do not shift on hover or loading.
+- Desktop and mobile layouts have no incoherent overlap or horizontal page overflow.
+- Component tests assert roles, names, states, and callbacks rather than CSS internals.
+- Browser verification covers global theme switching and every flow at desktop/mobile
+  viewports when the shared system changes.
 
-## Migration Status
+## Enforcement
 
-The application shell, root flow dashboard, Trading dashboard and cascade wizard, Canvas
-editor controls, Chat send/stop actions, Spotify controls, and the Lyrics list, analysis,
-and detail modal surfaces use semantic tokens and shared primitives. Remaining flow-local
-surfaces should migrate in small PRs under issue #24. Legacy cosmic/glass utilities remain
-in `app.css`; removing or consolidating them is part of that migration, not documentation
-housekeeping.
+`pnpm check:architecture` scans production UI sources, including CSS, and rejects legacy
+visual utilities, retired variables, gradients, and Svelte accessibility suppressions.
+`pnpm --filter @flows/ui check` must finish with zero errors and zero warnings. The full
+delivery gate remains `pnpm verify`, `pnpm build`, and applicable Playwright or documented
+desktop/mobile verification.

@@ -2,6 +2,7 @@
   import GenreChart from './GenreChart.svelte';
   import DecadeChart from './DecadeChart.svelte';
   import type { TopStats } from '@lib/types';
+  import { Panel } from '@lib/components';
 
   interface Props {
     stats: TopStats;
@@ -11,17 +12,17 @@
 </script>
 
 {#if stats.genres.length > 0}
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <!-- Genre Chart -->
-    <div class="glass glass-hover p-6">
-      <h3 class="text-lg font-semibold text-white/90 mb-4">Top Genres</h3>
+    <Panel element="section" ariaLabel="Top genres">
+      <h3 class="mb-4 text-lg font-semibold">Top Genres</h3>
       <GenreChart data={stats.genres.slice(0, 6)} />
-    </div>
+    </Panel>
 
     <!-- Decade/Timeline Chart -->
-    <div class="glass glass-hover p-6">
-      <h3 class="text-lg font-semibold text-white/90 mb-4">Eras</h3>
+    <Panel element="section" ariaLabel="Track eras">
+      <h3 class="mb-4 text-lg font-semibold">Eras</h3>
       <DecadeChart data={stats.decadeDistribution} />
-    </div>
+    </Panel>
   </div>
 {/if}

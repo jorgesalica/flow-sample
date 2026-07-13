@@ -274,7 +274,7 @@
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 40rem) {
     .album-art {
       width: 2.5rem;
       height: 2.5rem;

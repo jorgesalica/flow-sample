@@ -115,6 +115,9 @@ from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
   `<a href="/path">`. No hand-rolled routers.
 - **Tailwind v4** (CSS-first `@import 'tailwindcss'` + `@theme` tokens). Component-scoped
   `<style>` for the rest; inline `style` only for dynamic values. No `tailwind.config.js`.
+- **Shared design system first**: compose primitives from `@lib/components` and consume
+  semantic `--ui-*` tokens. Palette state belongs to the application root; flows do not
+  define themes, gradients, legacy cosmic/glass utilities, or accessibility suppressions.
 - **Data access** goes through the typed Eden client (`@lib/client`), wrapped per flow in
   `api.ts`. Preferred target: SvelteKit `+page.ts` loaders (universal load) over `onMount`.
 
@@ -181,8 +184,9 @@ branch: **PRs target `main`**. There is no `develop` branch here.
 `pnpm check:architecture` enforces the rules that can be detected reliably without a
 heavy static-analysis framework. It checks production sources for explicit `any`,
 hardcoded localhost origins in UI API modules, SQL calls outside persistence modules,
-environment reads outside named config factories, and direct imports between sibling flow packages. The command is part of `pnpm verify`,
-and its own behavior is covered by `pnpm test:architecture`.
+environment reads outside named config factories, direct imports between sibling flow
+packages, and retired UI styles or accessibility suppressions. The command is part of
+`pnpm verify`, and its own behavior is covered by `pnpm test:architecture`.
 
 `pnpm check:docs` validates local Markdown links. Both contract checks are part of
 `pnpm verify` and run in CI.

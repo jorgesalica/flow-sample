@@ -18,9 +18,9 @@ describe('CanvasEditor', () => {
     render(CanvasEditor);
 
     expect(screen.getByRole('heading', { name: 'New Canvas' })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Title (optional)')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Author (optional)')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Paste your text here...')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Canvas title' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Canvas author' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Text to analyze' })).toBeInTheDocument();
   });
 
   it('disables the analyze button while text is empty', () => {

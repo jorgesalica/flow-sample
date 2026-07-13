@@ -18,7 +18,7 @@
 </script>
 
 {#if visible && annotations.length > 0}
-  <div class="tooltip-container" style="left: {x}px; top: {y}px;">
+  <div class="tooltip-container" role="tooltip" style="left: {x}px; top: {y}px;">
     <div class="tooltip-content">
       {#each annotations as ann, i (`${ann.layerId}_${i}`)}
         {@const layerInfo = getLayerInfo(ann.layerId)}
@@ -46,19 +46,16 @@
   }
 
   .tooltip-content {
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--aurora);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    width: max-content;
-    max-width: 450px;
-    box-shadow:
-      0 10px 25px -5px rgba(0, 0, 0, 0.8),
-      0 8px 10px -6px rgba(0, 0, 0, 0.8);
     display: flex;
+    width: max-content;
+    max-width: min(28rem, calc(100vw - 2rem));
     flex-direction: column;
     gap: 0.75rem;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 0.5rem;
+    background: var(--ui-surface-raised);
+    padding: 1rem;
+    box-shadow: var(--ui-shadow);
   }
 
   .annotation-detail {
@@ -68,7 +65,7 @@
   }
 
   .annotation-detail:not(:last-child) {
-    border-bottom: 1px solid var(--surface-800);
+    border-bottom: 1px solid var(--ui-border);
     padding-bottom: 0.75rem;
   }
 
@@ -82,21 +79,21 @@
   .layer-name {
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0;
   }
 
   .label {
-    color: var(--surface-100);
+    color: var(--ui-text);
     font-weight: 600;
     margin-left: auto;
-    background: var(--surface-800);
+    background: var(--ui-surface-subtle);
     padding: 0.2rem 0.5rem;
     border-radius: 0.25rem;
   }
 
   .detail {
     font-size: 0.95rem;
-    color: var(--surface-200);
+    color: var(--ui-text-muted);
     line-height: 1.5;
   }
 </style>

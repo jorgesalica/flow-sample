@@ -22,11 +22,11 @@
       disabled={currentPage === 1}
       variant="secondary"
     >
-      ← Previous
+      Previous
     </Button>
 
-    <div class="flex items-center gap-1 px-4 text-white/50">
-      <span class="font-semibold text-white">{currentPage}</span>
+    <div class="flex items-center gap-1 px-4 text-muted">
+      <span class="font-semibold text-foreground">{currentPage}</span>
       <span>/</span>
       <span>{totalPages}</span>
     </div>
@@ -36,7 +36,7 @@
       disabled={currentPage === totalPages}
       variant="secondary"
     >
-      Next →
+      Next
     </Button>
   </div>
 {/if}

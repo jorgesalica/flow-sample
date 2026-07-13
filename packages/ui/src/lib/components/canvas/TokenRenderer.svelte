@@ -57,10 +57,32 @@
     ontokenhover?.(null);
   }
 
+  function getTokenLabel(text: string, anns: Annotation[]): string | undefined {
+    if (anns.length === 0) return undefined;
+    return `${text}. ${anns.map((ann) => `${ann.label}: ${ann.detail}`).join('. ')}`;
+  }
+
   function abbreviateVocal(label: string): string {
     return label.charAt(0).toUpperCase();
   }
 </script>
+
+{#snippet tokenContent(text: string, displayAnns: Annotation[])}
+  {#if displayAnns.length > 0}
+    <span class="badge-row">
+      {#each displayAnns as ann, i (`${ann.layerId}_${i}`)}
+        <span class="layer-badge layer-{ann.layerId}">
+          {ann.layerId === 'vocal' ? abbreviateVocal(ann.label) : ann.label}
+        </span>
+        {#if i < displayAnns.length - 1}
+          <span class="badge-separator" aria-hidden="true">&middot;</span>
+        {/if}
+      {/each}
+    </span>
+  {/if}
+
+  <span class="token-text">{text}</span>
+{/snippet}
 
 <div class="canvas-renderer" class:has-layers={activeLayers.length > 0}>
   {#each tokenAst.sections as section (section.id)}
@@ -89,32 +111,30 @@
               {@const displayAnns = activeAnns.filter((a) => a.layerId !== 'meaning')}
               {@const tokenHoverAnns = [...displayAnns, ...lineMeaningAnns]}
 
-              <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <span
-                class="token"
-                class:annotated={displayAnns.length > 0}
-                class:has-meaning={lineHasMeaning}
-                data-id={token.id}
-                onmouseenter={(e) =>
-                  handleTokenMouseEnter(token.id, tokenHoverAnns, e.currentTarget, lineId)}
-                onmouseleave={handleTokenMouseLeave}
-              >
-                <!-- All badges inline ABOVE the text -->
-                {#if displayAnns.length > 0}
-                  <span class="badge-row">
-                    {#each displayAnns as ann, i (`${ann.layerId}_${i}`)}
-                      <span class="layer-badge layer-{ann.layerId}">
-                        {ann.layerId === 'vocal' ? abbreviateVocal(ann.label) : ann.label}
-                      </span>
-                      {#if i < displayAnns.length - 1}
-                        <span class="badge-separator">·</span>
-                      {/if}
-                    {/each}
-                  </span>
-                {/if}
-
-                <span class="token-text">{token.text}</span>
-              </span>
+              {#if tokenHoverAnns.length > 0}
+                <button
+                  type="button"
+                  class="token"
+                  class:annotated={displayAnns.length > 0}
+                  class:has-meaning={lineHasMeaning}
+                  data-id={token.id}
+                  aria-label={getTokenLabel(token.text, tokenHoverAnns)}
+                  onmouseenter={(event) =>
+                    handleTokenMouseEnter(token.id, tokenHoverAnns, event.currentTarget, lineId)}
+                  onmouseleave={handleTokenMouseLeave}
+                  onfocus={(event) =>
+                    handleTokenMouseEnter(token.id, tokenHoverAnns, event.currentTarget, lineId)}
+                  onblur={handleTokenMouseLeave}
+                  onclick={(event) =>
+                    handleTokenMouseEnter(token.id, tokenHoverAnns, event.currentTarget, lineId)}
+                >
+                  {@render tokenContent(token.text, displayAnns)}
+                </button>
+              {:else}
+                <span class="token" class:has-meaning={lineHasMeaning} data-id={token.id}>
+                  {@render tokenContent(token.text, displayAnns)}
+                </span>
+              {/if}
             {/each}
           </div>
         {/each}
@@ -129,7 +149,7 @@
     flex-direction: column;
     gap: 2rem;
     font-family: var(--font-mono);
-    color: var(--surface-100);
+    color: var(--ui-text);
     padding: 1rem;
   }
 
@@ -140,7 +160,7 @@
   }
 
   .section-header {
-    border-bottom: 1px solid var(--surface-800);
+    border-bottom: 1px solid var(--ui-border);
     padding-bottom: 0.25rem;
     margin-bottom: 0.5rem;
   }
@@ -148,13 +168,13 @@
   .section-type {
     font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0;
     font-weight: 800;
-    color: var(--primary-400);
-    background: rgba(30, 41, 59, 0.5);
+    color: var(--ui-accent);
+    background: var(--ui-surface-subtle);
     padding: 0.3rem 0.85rem;
     border-radius: 1rem;
-    border: 1px solid var(--surface-700);
+    border: 1px solid var(--ui-border);
     display: inline-block;
   }
 
@@ -177,8 +197,8 @@
   }
 
   .canvas-line.line-highlighted {
-    background: rgba(34, 211, 238, 0.08);
-    box-shadow: inset 2px 0 0 rgba(34, 211, 238, 0.5);
+    background: color-mix(in srgb, var(--ui-accent) 10%, transparent);
+    box-shadow: inset 2px 0 0 var(--ui-accent);
   }
 
   /* ── Token layout: flex column ── */
@@ -187,17 +207,26 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-end; /* Push text to bottom */
-    cursor: pointer;
+    cursor: default;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font: inherit;
     transition: color 0.2s;
     gap: 0.15rem;
   }
 
   .token.annotated {
-    color: var(--primary-400);
+    cursor: pointer;
+    color: var(--ui-accent);
   }
 
-  .token:hover .token-text {
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  .token:focus-visible {
+    border-radius: 0.25rem;
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
   }
 
   .token-text {
@@ -215,7 +244,7 @@
   }
 
   .badge-separator {
-    color: var(--surface-500);
+    color: var(--ui-text-muted);
     font-size: 0.6rem;
   }
 
@@ -229,28 +258,27 @@
   }
 
   .layer-chords {
-    color: #4ade80;
+    color: var(--ui-success);
     font-size: 0.75rem;
   }
 
   .layer-vocal {
     font-size: 0.65rem;
-    color: #f59e0b;
+    color: var(--ui-warning);
   }
 
   .layer-production {
-    color: #818cf8;
+    color: var(--ui-chart-4);
     font-size: 0.65rem;
   }
 
   /* ── Meaning: visual-only (underline) ── */
   .token.has-meaning .token-text {
-    border-bottom: 2px dashed rgba(34, 211, 238, 0.4);
+    border-bottom: 2px dashed color-mix(in srgb, var(--ui-accent) 45%, transparent);
     padding-bottom: 2px;
   }
 
   .canvas-line.line-highlighted .token.has-meaning .token-text {
-    border-bottom-color: rgba(34, 211, 238, 1);
-    text-shadow: 0 0 12px rgba(34, 211, 238, 0.5);
+    border-bottom-color: var(--ui-accent);
   }
 </style>

@@ -169,14 +169,14 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <!-- Metrics -->
     <Panel padding="md">
-      <h4 class="text-sm font-semibold text-white/40 uppercase tracking-wider mb-3">
+      <h4 class="mb-3 text-sm font-semibold uppercase text-muted">
         📊 Metrics ({activeStep.label})
       </h4>
       {#if metrics}
         <div class="grid grid-cols-2 gap-3 text-sm">
           <!-- Fetched data -->
           <div
-            class="col-span-2 flex items-center gap-2 text-xs text-white/30 border-b border-white/10 pb-2 mb-1"
+            class="col-span-2 mb-1 flex items-center gap-2 border-b border-border pb-2 text-xs text-muted"
           >
             <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-semibold"
               >📡 Fetched</span
@@ -184,46 +184,47 @@
             <span>{metrics.dateFrom} → {metrics.dateTo}</span>
           </div>
           <div>
-            <span class="text-white/50">Velas:</span>
-            <span class="font-bold text-white">{metrics.candleCount}</span>
+            <span class="text-muted">Velas:</span>
+            <span class="font-bold text-foreground">{metrics.candleCount}</span>
           </div>
           <div>
-            <span class="text-white/50">Intervalo:</span>
+            <span class="text-muted">Intervalo:</span>
             <span class="font-bold text-cyan-400">{activeStep.interval}</span>
           </div>
           <div>
-            <span class="text-white/50">Último:</span>
+            <span class="text-muted">Último:</span>
             <span class="font-bold text-amber-400">
               ${metrics.last.toLocaleString()}
             </span>
           </div>
           <div>
-            <span class="text-white/50">Volumen Total:</span>
-            <span class="font-bold text-white">{formatCompactVolume(metrics.totalVolume)}</span>
+            <span class="text-muted">Volumen Total:</span>
+            <span class="font-bold text-foreground">{formatCompactVolume(metrics.totalVolume)}</span
+            >
           </div>
 
           <!-- Calculated data -->
           <div
-            class="col-span-2 flex items-center gap-2 text-xs text-white/30 border-b border-white/10 pb-2 mb-1 mt-2"
+            class="col-span-2 mb-1 mt-2 flex items-center gap-2 border-b border-border pb-2 text-xs text-muted"
           >
             <span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-semibold"
               >🔢 Calculated</span
             >
           </div>
           <div>
-            <span class="text-white/50">High:</span>
+            <span class="text-muted">High:</span>
             <span class="font-bold text-green-400">
               ${metrics.high.toLocaleString()}
             </span>
           </div>
           <div>
-            <span class="text-white/50">Low:</span>
+            <span class="text-muted">Low:</span>
             <span class="font-bold text-red-400">
               ${metrics.low.toLocaleString()}
             </span>
           </div>
           <div>
-            <span class="text-white/50">Variación:</span>
+            <span class="text-muted">Variación:</span>
             <span
               class="font-bold {metrics.priceChangePercent >= 0
                 ? 'text-green-400'
@@ -233,7 +234,7 @@
             </span>
           </div>
           <div>
-            <span class="text-white/50">Volatilidad:</span>
+            <span class="text-muted">Volatilidad:</span>
             <span class="font-bold text-orange-400">{metrics.volatilityPercent.toFixed(2)}%</span>
           </div>
         </div>
@@ -247,7 +248,7 @@
       {@const analysis = stepAnalysis[activeStep.label]}
       <Panel padding="md">
         <div class="flex items-center gap-2 mb-3">
-          <h4 class="text-sm font-semibold text-white/40 uppercase tracking-wider">
+          <h4 class="text-sm font-semibold uppercase text-muted">
             🖥️ Análisis Técnico ({activeStep.label})
           </h4>
           <Badge tone="success">Backend</Badge>
@@ -255,52 +256,56 @@
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
           {#if analysis.regime_analysis}
             <div>
-              <span class="text-white/50">Régimen:</span>
+              <span class="text-muted">Régimen:</span>
               <span
                 class="font-bold {analysis.regime_analysis.classification === 'TRENDING'
                   ? 'text-cyan-400'
                   : analysis.regime_analysis.classification === 'RANGING'
                     ? 'text-yellow-400'
-                    : 'text-white/60'}"
+                    : 'text-muted'}"
               >
                 {analysis.regime_analysis.classification}
               </span>
             </div>
             <div>
-              <span class="text-white/50">Hurst:</span>
-              <span class="font-bold text-white">{analysis.regime_analysis.hurst_exponent}</span>
+              <span class="text-muted">Hurst:</span>
+              <span class="font-bold text-foreground"
+                >{analysis.regime_analysis.hurst_exponent}</span
+              >
             </div>
             <div>
-              <span class="text-white/50">Dim. Fractal:</span>
-              <span class="font-bold text-white">{analysis.regime_analysis.fractal_dimension}</span>
+              <span class="text-muted">Dim. Fractal:</span>
+              <span class="font-bold text-foreground"
+                >{analysis.regime_analysis.fractal_dimension}</span
+              >
             </div>
           {/if}
           {#if analysis.fractal_structure}
             <div>
-              <span class="text-white/50">Resistencia:</span>
+              <span class="text-muted">Resistencia:</span>
               <span class="font-bold text-red-400">
                 {typeof analysis.fractal_structure.nearest_resistance === 'number'
                   ? '$' + analysis.fractal_structure.nearest_resistance.toLocaleString()
                   : analysis.fractal_structure.nearest_resistance}
               </span>
-              <span class="text-[10px] text-white/30"
+              <span class="text-[10px] text-muted"
                 >({analysis.fractal_structure.distance_to_resistance})</span
               >
             </div>
             <div>
-              <span class="text-white/50">Soporte:</span>
+              <span class="text-muted">Soporte:</span>
               <span class="font-bold text-green-400">
                 {typeof analysis.fractal_structure.nearest_support === 'number'
                   ? '$' + analysis.fractal_structure.nearest_support.toLocaleString()
                   : analysis.fractal_structure.nearest_support}
               </span>
-              <span class="text-[10px] text-white/30"
+              <span class="text-[10px] text-muted"
                 >({analysis.fractal_structure.distance_to_support})</span
               >
             </div>
             <div>
-              <span class="text-white/50">Toques S/R:</span>
-              <span class="font-bold text-white">
+              <span class="text-muted">Toques S/R:</span>
+              <span class="font-bold text-foreground">
                 S:{analysis.fractal_structure.support_touch_count} / R:{analysis.fractal_structure
                   .resistance_touch_count}
               </span>
@@ -309,13 +314,13 @@
           {#if analysis.indicators}
             {#if analysis.indicators.rsi && analysis.indicators.rsi !== 'N/A'}
               <div>
-                <span class="text-white/50">RSI:</span>
+                <span class="text-muted">RSI:</span>
                 <span
                   class="font-bold {parseFloat(analysis.indicators.rsi) > 70
                     ? 'text-red-400'
                     : parseFloat(analysis.indicators.rsi) < 30
                       ? 'text-green-400'
-                      : 'text-white'}"
+                      : 'text-foreground'}"
                 >
                   {analysis.indicators.rsi}
                 </span>
@@ -323,7 +328,7 @@
             {/if}
             {#if analysis.indicators.macd}
               <div>
-                <span class="text-white/50">MACD:</span>
+                <span class="text-muted">MACD:</span>
                 <span
                   class="font-bold {parseFloat(analysis.indicators.macd.histogram) > 0
                     ? 'text-green-400'
@@ -333,7 +338,7 @@
                 </span>
               </div>
               <div>
-                <span class="text-white/50">MACD Bias:</span>
+                <span class="text-muted">MACD Bias:</span>
                 <span
                   class="font-bold {analysis.indicators.macd.bias === 'Bullish'
                     ? 'text-green-400'
@@ -346,7 +351,7 @@
           {/if}
           {#if analysis.candle_patterns}
             <div class="col-span-2 md:col-span-3">
-              <span class="text-white/50">Patrones:</span>
+              <span class="text-muted">Patrones:</span>
               <span class="font-bold text-amber-400">
                 {Array.isArray(analysis.candle_patterns)
                   ? analysis.candle_patterns.join(', ')
@@ -361,7 +366,7 @@
     <!-- Insight for this step -->
     <Panel padding="md">
       <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-semibold text-white/40 uppercase tracking-wider">
+        <h4 class="text-sm font-semibold uppercase text-muted">
           🧠 {activeStep.label} Insight
         </h4>
         <Button
@@ -378,7 +383,7 @@
       {#if currentInsight}
         <div class="space-y-2">
           <p class="text-sm font-semibold text-amber-400">{currentInsight.title}</p>
-          <p class="text-sm text-white/80">{currentInsight.mentor_tip}</p>
+          <p class="text-sm text-foreground">{currentInsight.mentor_tip}</p>
           {#if currentInsight.sentiment_bias}
             <Badge tone={getSentimentTone(currentInsight.sentiment_bias)}>
               {getSentimentLabel(currentInsight.sentiment_bias)}
@@ -386,7 +391,7 @@
           {/if}
         </div>
       {:else}
-        <p class="text-white/30 text-sm">
+        <p class="text-sm text-muted">
           Click "Generate" to get AI insight for {activeStep.label} timeframe
         </p>
       {/if}
@@ -397,7 +402,7 @@
   <div class="step-actions">
     <Button variant="secondary" onclick={goPrev} disabled={!canGoPrev}>Previous</Button>
 
-    <span class="text-white/40 text-sm">
+    <span class="text-sm text-muted">
       Step {currentStep + 1} of {TRADING_WIZARD_STEPS.length}
     </span>
 
@@ -428,7 +433,7 @@
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
-    background: #4ade80;
+    background: var(--ui-success);
   }
 
   .step-heading {

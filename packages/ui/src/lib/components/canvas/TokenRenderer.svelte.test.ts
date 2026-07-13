@@ -117,6 +117,21 @@ describe('TokenRenderer', () => {
     expect(line.className).toContain('line-highlighted');
   });
 
+  it('exposes annotated tokens as named native controls', async () => {
+    render(TokenRenderer, {
+      props: { tokenAst: AST, annotations: ANNOTATIONS, activeLayers: ['meaning'] },
+    });
+
+    const annotatedToken = screen.getByRole('button', {
+      name: 'Hello. theme: Opening greeting.',
+    });
+    expect(annotatedToken).toBe(tokenSpan('t_001'));
+    expect(tokenSpan('t_003').tagName).toBe('SPAN');
+
+    await fireEvent.focus(annotatedToken);
+    expect(lineOf('t_001').className).toContain('line-highlighted');
+  });
+
   it('does not react when hovering a token with no active annotations', async () => {
     render(TokenRenderer, {
       props: { tokenAst: AST, annotations: ANNOTATIONS, activeLayers: ['meaning'] },

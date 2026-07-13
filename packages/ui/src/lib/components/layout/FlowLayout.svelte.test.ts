@@ -35,4 +35,11 @@ describe('FlowLayout', () => {
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
     expect(screen.getByRole('main')).toHaveAttribute('tabindex', '-1');
   });
+
+  it('exposes the full-bleed workspace contract without removing the main landmark', () => {
+    render(FlowLayout, { props: { children: childContent, fullBleed: true } });
+
+    expect(screen.getByRole('main')).toHaveClass('app-shell__main--flush');
+    expect(screen.getByTestId('child').parentElement).toHaveClass('app-shell__content--full');
+  });
 });

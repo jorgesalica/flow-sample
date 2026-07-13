@@ -41,6 +41,7 @@ journeys. Do not pursue coverage by duplicating implementation details in tests.
 | Shared DTO/package export | producer and consumer tests + full build |
 | Loader, invalidation, or API facade | focused UI tests + UI build |
 | Interactive/responsive UI | component tests + Playwright desktop/mobile |
+| Shared theme or UI contract | primitive/token tests + every flow at desktop/mobile |
 | Docs/workflow only | `pnpm check:docs` + relevant gate |
 
 SSE, browser-only charting, drag-and-drop, keyboard reordering, persistence migration, and

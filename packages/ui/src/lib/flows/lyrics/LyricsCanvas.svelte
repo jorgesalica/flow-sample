@@ -137,7 +137,7 @@
   }
 </script>
 
-<div class="canvas-container" data-theme="organic">
+<div class="canvas-container">
   {#if loading}
     <div class="center-state">
       <AsyncState state="loading" title="Loading canvas" />
@@ -215,7 +215,7 @@
               {@html renderMarkdown(interpretation)}
               {#if isInterpreting}
                 <span
-                  class="inline-block w-0.5 h-4 bg-aurora animate-pulse ml-0.5 align-text-bottom"
+                  class="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-accent align-text-bottom"
                 ></span>
               {/if}
             </div>
@@ -252,7 +252,8 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: var(--surface-900);
+    background: var(--ui-background);
+    color: var(--ui-text);
     overflow-y: auto;
   }
 
@@ -268,30 +269,28 @@
   }
 
   .album-art {
-    width: 120px;
-    height: 120px;
+    width: 7.5rem;
+    height: 7.5rem;
     border-radius: 0.5rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--ui-shadow);
   }
 
   h2 {
     font-size: 2rem;
     margin: 0;
-    background: linear-gradient(to right, var(--primary-400), var(--secondary-400));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--ui-accent);
+    letter-spacing: 0;
   }
 
   .author {
     font-size: 1.25rem;
-    color: var(--surface-300);
+    color: var(--ui-text);
     margin: 0;
   }
 
   .description {
-    color: var(--surface-400);
-    max-width: 400px;
+    color: var(--ui-text-muted);
+    max-width: 25rem;
     line-height: 1.5;
   }
 
@@ -307,14 +306,13 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--surface-800);
+    background: var(--ui-nav);
+    border-bottom: 1px solid var(--ui-border);
     padding: 1.5rem 2rem;
   }
 
   .header-content {
-    max-width: 1000px;
+    max-width: 62.5rem;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -346,7 +344,7 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
-    max-width: 1400px;
+    max-width: 87.5rem;
     margin: 0 auto;
     padding: 2rem;
     width: 100%;
@@ -359,17 +357,17 @@
   }
 
   .canvas-sidebar {
-    background: rgba(15, 23, 42, 0.4);
-    border: 1px solid var(--surface-800);
-    border-radius: 1rem;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: 0.5rem;
     overflow: hidden;
     position: sticky;
-    top: 120px; /* offset from header */
+    top: 7.5rem;
   }
 
   .sidebar-header {
-    background: rgba(15, 23, 42, 0.8);
-    border-bottom: 1px solid var(--surface-800);
+    background: var(--ui-surface-raised);
+    border-bottom: 1px solid var(--ui-border);
     padding: 1rem 1.5rem;
   }
 
@@ -377,19 +375,19 @@
     margin: 0;
     font-size: 1rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--aurora);
+    letter-spacing: 0;
+    color: var(--ui-accent);
   }
 
   .sidebar-content {
     padding: 1.5rem;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 12.5rem);
     overflow-y: auto;
   }
 
   .empty-meaning {
     text-align: center;
-    color: var(--surface-400);
+    color: var(--ui-text-muted);
     padding: 2rem 0;
   }
 
@@ -397,7 +395,7 @@
     margin-top: 1rem;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 56.25rem) {
     .canvas-header {
       padding: 1rem;
     }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import ThemeSwitcher from './ThemeSwitcher.svelte';
 
   interface Props {
     currentPath?: string;
@@ -15,10 +16,28 @@
 
   let { currentPath }: Props = $props();
   let browserPath = $state('');
+  let scrollContainer: HTMLDivElement;
   const activePath = $derived(currentPath ?? browserPath);
 
   onMount(() => {
     browserPath = window.location.pathname;
+  });
+
+  $effect(() => {
+    void activePath;
+    queueMicrotask(() => {
+      const activeLink = scrollContainer?.querySelector<HTMLElement>('[aria-current="page"]');
+      if (!activeLink) return;
+
+      const visibleLeft = scrollContainer.scrollLeft;
+      const visibleRight = visibleLeft + scrollContainer.clientWidth;
+      const linkLeft = activeLink.offsetLeft;
+      const linkRight = linkLeft + activeLink.offsetWidth;
+
+      if (linkLeft < visibleLeft) scrollContainer.scrollLeft = linkLeft;
+      else if (linkRight > visibleRight)
+        scrollContainer.scrollLeft = linkRight - scrollContainer.clientWidth;
+    });
   });
 
   function isActive(href: string): boolean {
@@ -38,7 +57,7 @@
       <span class="app-navbar__wordmark">Cosmic Flow</span>
     </a>
 
-    <div class="app-navbar__scroll">
+    <div class="app-navbar__scroll" bind:this={scrollContainer}>
       <div class="app-navbar__links">
         {#each navigationItems as item (item.href)}
           <a
@@ -52,6 +71,7 @@
         {/each}
       </div>
     </div>
+    <ThemeSwitcher />
   </div>
 </nav>
 
@@ -62,8 +82,7 @@
     z-index: 50;
     height: var(--app-nav-height);
     border-bottom: 1px solid var(--ui-border);
-    background: rgba(10, 14, 23, 0.94);
-    backdrop-filter: blur(14px);
+    background: var(--ui-nav);
   }
 
   .app-navbar__inner {
@@ -73,7 +92,7 @@
     margin: 0 auto;
     align-items: center;
     gap: 1.5rem;
-    padding: 0 clamp(1rem, 3vw, 2rem);
+    padding: 0 2rem;
   }
 
   .app-navbar__brand {
@@ -163,7 +182,13 @@
     transform: scaleX(1);
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 80rem) {
+    .app-navbar__inner {
+      padding: 0 1rem;
+    }
+  }
+
+  @media (max-width: 40rem) {
     .app-navbar__inner {
       gap: 0.5rem;
       padding: 0 0.75rem;

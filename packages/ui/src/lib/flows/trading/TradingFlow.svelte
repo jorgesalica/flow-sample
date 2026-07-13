@@ -437,7 +437,7 @@
   }
 
   .positive {
-    color: #4ade80;
+    color: var(--ui-success);
   }
 
   .negative {
@@ -474,7 +474,7 @@
   }
 
   .positive-block {
-    border-left-color: #4ade80;
+    border-left-color: var(--ui-success);
   }
 
   .negative-block {
@@ -482,7 +482,7 @@
   }
 
   .warning-block {
-    border-left-color: #facc15;
+    border-left-color: var(--ui-warning);
   }
 
   .info-block {
@@ -521,8 +521,8 @@
     overflow: auto;
     border: 1px solid var(--ui-border);
     border-radius: 0.5rem;
-    background: #020617;
-    color: #86efac;
+    background: var(--ui-background);
+    color: var(--ui-success);
     font-size: 0.7rem;
   }
 

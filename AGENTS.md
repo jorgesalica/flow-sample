@@ -46,6 +46,8 @@ packages (`pnpm build:shared` or `pnpm --filter @flows/core build`).
 - Route handlers validate and map HTTP; services own orchestration.
 - Environment reads stay in composition roots or named env factories.
 - New Svelte code uses Svelte 5 runes and typed Eden access.
+- UI code composes shared primitives and semantic `--ui-*` tokens; theme state stays in
+  the application shell.
 
 Full details and justified exceptions live in [conventions](docs/conventions.md).
 

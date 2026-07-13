@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import type { IChartApi, ISeriesApi, Time, CandlestickData, LineData } from 'lightweight-charts';
+  import { readChartTheme } from '@lib/chart-theme';
+  import { THEME_CHANGE_EVENT } from '@lib/theme';
   import type { Candle } from '../trading';
 
   interface Props {
@@ -18,6 +20,33 @@
   let supportLine: ISeriesApi<'Line'> | null = null;
   let resistanceLine: ISeriesApi<'Line'> | null = null;
   let lineSeriesDefinition: typeof import('lightweight-charts').LineSeries | null = null;
+
+  function getTheme() {
+    return readChartTheme(getComputedStyle(document.documentElement));
+  }
+
+  function applyChartTheme(): void {
+    const theme = getTheme();
+    chart?.applyOptions({
+      layout: { background: { color: 'transparent' }, textColor: theme.muted },
+      grid: {
+        vertLines: { color: theme.border },
+        horzLines: { color: theme.border },
+      },
+      rightPriceScale: { borderColor: theme.border },
+      timeScale: { borderColor: theme.border },
+    });
+    candlestickSeries?.applyOptions({
+      upColor: theme.success,
+      downColor: theme.danger,
+      borderUpColor: theme.success,
+      borderDownColor: theme.danger,
+      wickUpColor: theme.success,
+      wickDownColor: theme.danger,
+    });
+    supportLine?.applyOptions({ color: theme.success });
+    resistanceLine?.applyOptions({ color: theme.danger });
+  }
 
   // Transform candles to lightweight-charts format (time in seconds)
   function transformCandles(data: Candle[]): CandlestickData<Time>[] {
@@ -45,7 +74,7 @@
     if (supportLevel && candles.length > 0) {
       if (!supportLine) {
         supportLine = chart.addSeries(lineSeriesDefinition, {
-          color: '#22c55e',
+          color: getTheme().success,
           lineWidth: 2,
           lineStyle: 2, // Dashed
         });
@@ -63,7 +92,7 @@
     if (resistanceLevel && candles.length > 0) {
       if (!resistanceLine) {
         resistanceLine = chart.addSeries(lineSeriesDefinition, {
-          color: '#ef4444',
+          color: getTheme().danger,
           lineWidth: 2,
           lineStyle: 2, // Dashed
         });
@@ -80,12 +109,15 @@
 
     let disposed = false;
     let resizeObserver: ResizeObserver | null = null;
+    const handleThemeChange = () => applyChartTheme();
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
 
     async function initChart() {
       const { createChart, CandlestickSeries, LineSeries } = await import('lightweight-charts');
       if (disposed || !chartContainer) return;
 
       lineSeriesDefinition = LineSeries;
+      const theme = getTheme();
 
       // Create chart with v5 API
       chart = createChart(chartContainer, {
@@ -93,17 +125,17 @@
         height: height,
         layout: {
           background: { color: 'transparent' },
-          textColor: 'rgba(255, 255, 255, 0.7)',
+          textColor: theme.muted,
         },
         grid: {
-          vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-          horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+          vertLines: { color: theme.border },
+          horzLines: { color: theme.border },
         },
         rightPriceScale: {
-          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderColor: theme.border,
         },
         timeScale: {
-          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderColor: theme.border,
           timeVisible: true,
           secondsVisible: false,
         },
@@ -122,12 +154,12 @@
 
       // Add candlestick series using v5 API
       candlestickSeries = chart.addSeries(CandlestickSeries, {
-        upColor: '#22c55e',
-        downColor: '#ef4444',
-        borderUpColor: '#22c55e',
-        borderDownColor: '#ef4444',
-        wickUpColor: '#22c55e',
-        wickDownColor: '#ef4444',
+        upColor: theme.success,
+        downColor: theme.danger,
+        borderUpColor: theme.success,
+        borderDownColor: theme.danger,
+        wickUpColor: theme.success,
+        wickDownColor: theme.danger,
       });
 
       // Set initial data
@@ -152,6 +184,7 @@
 
     return () => {
       disposed = true;
+      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
@@ -188,11 +221,11 @@
   });
 </script>
 
-<div class="w-full rounded-xl overflow-hidden bg-black/20 border border-white/10">
+<div class="w-full overflow-hidden rounded-lg border border-border bg-surface-subtle">
   {#if candles.length > 0}
     <div bind:this={chartContainer} style="height: {height}px;"></div>
   {:else}
-    <div class="flex items-center justify-center text-white/30" style="height: {height}px;">
+    <div class="flex items-center justify-center text-muted" style="height: {height}px;">
       No candle data available
     </div>
   {/if}

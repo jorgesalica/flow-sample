@@ -2,6 +2,20 @@
 
 Changelog for the frontend (Svelte) application.
 
+## 2026-07-13 - Semantic Design System
+
+Issue #24 completed the migration from flow-local cosmic/glass styling to one global UI
+contract:
+
+- Added persistent galaxy, fire, and organic themes at the application shell.
+- Standardized buttons, icon actions, fields, badges, async states, panels, and dialogs.
+- Migrated Spotify, Lyrics, Trading, Chat, Canvas, and browser-rendered charts to semantic
+  tokens.
+- Reworked Chat and Canvas as responsive full-bleed workspaces with native controls.
+- Removed retired palette variables, gradients, accessibility suppressions, and legacy
+  visual utilities from production UI.
+- Added architecture checks to prevent those styles from returning.
+
 ---
 
 ## 2025-12-09 — Lyrics Flow (UI)

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-5-french-toast';
   import type { GenreCount, SearchOptions, Track, YearCount } from '@flows/shared';
-  import { AsyncState, Button, FlowLayout } from '@lib/components';
+  import { AsyncState, Button, FlowLayout, Panel } from '@lib/components';
   import InfiniteScroll from '@lib/components/common/InfiniteScroll.svelte';
   import type { TopStats } from '@lib/types';
   import { loadTracks } from './api';
@@ -47,7 +47,6 @@
     if (url.searchParams.get('connected') === 'true') {
       toast.success('Successfully connected to Spotify!', {
         position: 'bottom-right',
-        className: 'glass text-cosmic font-medium',
       });
       url.searchParams.delete('connected');
       window.history.replaceState({}, '', url.toString());
@@ -76,17 +75,19 @@
 </svelte:head>
 
 <FlowLayout>
-  <div class="flex flex-col gap-6" data-theme="organic">
+  <div class="spotify-flow">
     <SpotifyHeader stats={spotifyStore.topStats} />
     <InsightsPanel stats={spotifyStore.topStats} />
 
     <div class="flex items-center"><Controls /></div>
 
-    <div
-      class="glass sticky top-4 z-10 flex flex-col items-center justify-between gap-4 p-4 md:flex-row"
-    >
-      <div class="w-full flex-grow md:w-auto"><SearchBar /></div>
-      <div class="flex w-full gap-2 md:w-auto"><FilterPanel {genres} {years} /></div>
+    <div class="spotify-toolbar">
+      <Panel padding="sm">
+        <div class="spotify-toolbar__content">
+          <div class="spotify-toolbar__search"><SearchBar /></div>
+          <div><FilterPanel {genres} {years} /></div>
+        </div>
+      </Panel>
     </div>
 
     <section class="min-h-[50vh]" aria-label="Spotify tracks">
@@ -119,6 +120,48 @@
       />
     {/if}
 
-    <footer class="mt-12 pb-8 text-center text-sm text-white/20">Flow Sample - Spotify</footer>
+    <footer>Flow Sample - Spotify</footer>
   </div>
 </FlowLayout>
+
+<style>
+  .spotify-flow {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .spotify-toolbar {
+    position: sticky;
+    top: calc(var(--app-nav-height) + 0.5rem);
+    z-index: 10;
+  }
+
+  .spotify-toolbar__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .spotify-toolbar__search {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  footer {
+    margin-top: 2rem;
+    padding-bottom: 2rem;
+    color: var(--ui-text-muted);
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  @media (max-width: 48rem) {
+    .spotify-toolbar__content {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>

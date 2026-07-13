@@ -1,33 +1,24 @@
 <script lang="ts">
-  import { chatStore } from '../stores.svelte';
-  import { marked } from 'marked';
+  import { AsyncState, Badge } from '@lib/components';
   import DOMPurify from 'dompurify';
+  import { marked } from 'marked';
+  import { chatStore } from '../stores.svelte';
 
   let listContainer: HTMLDivElement;
 
-  // Auto-scroll to bottom whenever messages / streaming content update.
   $effect(() => {
-    // Track the reactive values that should trigger a scroll.
     void chatStore.messages;
     void chatStore.streamingContent;
-    if (listContainer) {
-      listContainer.scrollTop = listContainer.scrollHeight;
-    }
+    if (listContainer) listContainer.scrollTop = listContainer.scrollHeight;
   });
 
-  // Configure marked for clean output
-  marked.setOptions({
-    breaks: true,
-    gfm: true,
-  });
+  marked.setOptions({ breaks: true, gfm: true });
 
-  /** Render markdown → sanitized HTML. */
   function renderMarkdown(text: string): string {
-    // Transform <think> tags into a collapsible details block
     const processedText = text
       .replace(
         /<think>/g,
-        '\n<details class="mb-3 border border-slate-700 rounded-md bg-slate-800/40 overflow-hidden"><summary class="px-3 py-2 cursor-pointer text-[10px] uppercase tracking-wider font-semibold text-slate-400 hover:text-slate-300 bg-slate-800/80 select-none flex items-center gap-2"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Thought Process</summary><div class="px-4 py-3 text-sm text-slate-400 border-t border-slate-700/50 italic">\n\n'
+        '\n<details class="chat-thought"><summary>Thought process</summary><div>\n\n'
       )
       .replace(/<\/think>/g, '\n\n</div></details>\n');
 
@@ -38,149 +29,294 @@
     });
   }
 
-  function getModelDisplayName(msg: { modelUsed?: string; providerUsed?: string }): string {
-    if (!msg.modelUsed) return '';
-    const provider = msg.providerUsed || '';
-    const model = msg.modelUsed || '';
+  function getModelDisplayName(message: { modelUsed?: string; providerUsed?: string }): string {
+    if (!message.modelUsed) return '';
 
-    // Try to find human-readable name from catalog
+    const provider = message.providerUsed || '';
+    const model = message.modelUsed;
     for (const group of chatStore.catalog) {
-      if (group.provider === provider) {
-        const found = group.models.find((m) => m.id === model);
-        if (found) return `${provider} / ${found.name}`;
-      }
+      if (group.provider !== provider) continue;
+      const match = group.models.find((candidate) => candidate.id === model);
+      if (match) return `${provider} / ${match.name}`;
     }
-    // Fallback: clean ID
+
     const cleaned = model
       .replace(/:free$/, '')
       .split(/[-/]/)
-      .filter((w) => w !== '')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
 
     return provider ? `${provider} / ${cleaned}` : cleaned;
   }
 </script>
 
-<div
-  bind:this={listContainer}
-  class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin scroll-smooth"
->
+<div bind:this={listContainer} class="message-list" aria-live="polite">
   {#if chatStore.messages.length === 0 && !chatStore.isStreaming}
-    <div class="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
-      <div
-        class="w-16 h-16 rounded-full bg-cosmic-900/50 flex items-center justify-center border border-cosmic-500/30"
-      >
-        <span class="text-3xl">✨</span>
-      </div>
-      <h3 class="text-xl font-medium text-slate-300">How can I help you today?</h3>
-      <p class="max-w-md text-center text-sm">
-        Select a model from the top menu and send a message to begin.
-      </p>
+    <div class="message-list__empty">
+      <AsyncState
+        state="empty"
+        title="How can I help you today?"
+        message="Select a model from the top menu and send a message to begin."
+      />
     </div>
   {/if}
 
-  {#each chatStore.messages as msg (msg.id)}
-    <div class={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-      <!-- Avatar for assistant -->
-      {#if msg.role === 'assistant'}
-        <div
-          class="w-8 h-8 rounded-full bg-cosmic-700 flex-shrink-0 flex items-center justify-center mr-3 mt-1 shadow-glow-sm"
-        >
-          <svg
-            class="w-4 h-4 text-cosmic-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
+  {#each chatStore.messages as message (message.id)}
+    <article class="message" class:message--user={message.role === 'user'}>
+      {#if message.role === 'assistant'}
+        <span class="message__avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
-              d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"
+              stroke-width="1.5"
+              d="M9.8 15.9 9 18.8l-.8-2.9a4.5 4.5 0 0 0-3.1-3.1L2.3 12l2.8-.8a4.5 4.5 0 0 0 3.1-3.1L9 5.3l.8 2.8a4.5 4.5 0 0 0 3.1 3.1l2.9.8-2.9.8a4.5 4.5 0 0 0-3.1 3.1Z"
             />
           </svg>
-        </div>
+        </span>
       {/if}
 
-      <div
-        class={`max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 ${
-          msg.role === 'user'
-            ? 'bg-slate-700 text-white rounded-tr-sm shadow-md'
-            : 'bg-transparent border border-cosmic-800 text-slate-200 rounded-tl-sm shadow-sm'
-        }`}
-      >
-        {#if msg.role === 'user'}
-          <p class="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+      <div class="message__bubble">
+        {#if message.role === 'user'}
+          <p class="message__plain">{message.content}</p>
         {:else}
-          <div
-            class="prose prose-invert prose-sm max-w-none leading-relaxed prose-p:my-1 prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-code:text-cosmic-300 prose-code:before:content-[''] prose-code:after:content-['']"
-          >
+          <div class="message__markdown">
             <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-            {@html renderMarkdown(msg.content)}
+            {@html renderMarkdown(message.content)}
           </div>
         {/if}
 
-        {#if msg.role === 'assistant' && msg.modelUsed}
-          <div class="mt-2 text-[10px] text-slate-500 flex justify-end">
-            <span class="bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700 capitalize">
-              {getModelDisplayName(msg)}
-            </span>
+        {#if message.role === 'assistant' && message.modelUsed}
+          <div class="message__model">
+            <Badge>{getModelDisplayName(message)}</Badge>
           </div>
         {/if}
       </div>
-    </div>
+    </article>
   {/each}
 
-  <!-- Streaming message (in progress) -->
   {#if chatStore.isStreaming}
-    <div class="flex w-full justify-start">
-      <div
-        class="w-8 h-8 rounded-full bg-cosmic-700 flex-shrink-0 flex items-center justify-center mr-3 mt-1 shadow-glow-sm"
-      >
-        <svg
-          class="w-4 h-4 text-cosmic-300 animate-pulse"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="1.5"
-        >
+    <article class="message">
+      <span class="message__avatar message__avatar--active" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"
+            stroke-width="1.5"
+            d="M9.8 15.9 9 18.8l-.8-2.9a4.5 4.5 0 0 0-3.1-3.1L2.3 12l2.8-.8a4.5 4.5 0 0 0 3.1-3.1L9 5.3l.8 2.8a4.5 4.5 0 0 0 3.1 3.1l2.9.8-2.9.8a4.5 4.5 0 0 0-3.1 3.1Z"
           />
         </svg>
-      </div>
-      <div
-        class="max-w-[85%] md:max-w-[75%] bg-transparent border border-cosmic-800 rounded-2xl rounded-tl-sm px-5 py-3 shadow-sm"
-      >
+      </span>
+
+      <div class="message__bubble">
         {#if chatStore.streamingContent}
-          <div
-            class="prose prose-invert prose-sm max-w-none leading-relaxed prose-p:my-1 prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-code:text-cosmic-300 prose-code:before:content-[''] prose-code:after:content-['']"
-          >
+          <div class="message__markdown">
             <!-- eslint-disable-next-line svelte/no-at-html-tags -->
             {@html renderMarkdown(chatStore.streamingContent)}
           </div>
-          <span class="inline-block w-0.5 h-4 bg-cosmic-400 animate-pulse ml-0.5 align-text-bottom"
-          ></span>
+          <span class="message__caret" aria-hidden="true"></span>
         {:else}
-          <div class="flex items-center gap-1.5 py-1">
-            <div
-              class="w-2 h-2 bg-cosmic-400 rounded-full animate-bounce"
-              style="animation-delay: 0ms"
-            ></div>
-            <div
-              class="w-2 h-2 bg-cosmic-400 rounded-full animate-bounce"
-              style="animation-delay: 150ms"
-            ></div>
-            <div
-              class="w-2 h-2 bg-cosmic-400 rounded-full animate-bounce"
-              style="animation-delay: 300ms"
-            ></div>
+          <div class="typing-indicator" role="status" aria-label="Generating response">
+            <span></span><span></span><span></span>
           </div>
         {/if}
       </div>
-    </div>
+    </article>
   {/if}
 </div>
+
+<style>
+  .message-list {
+    display: grid;
+    min-height: 0;
+    flex: 1 1 auto;
+    align-content: start;
+    gap: 1.5rem;
+    overflow-y: auto;
+    padding: 1.5rem;
+    scroll-behavior: smooth;
+  }
+
+  .message-list__empty {
+    display: grid;
+    min-height: 100%;
+    place-items: center;
+  }
+
+  .message {
+    display: flex;
+    width: min(56rem, 100%);
+    margin: 0 auto;
+    align-items: flex-start;
+  }
+
+  .message--user {
+    justify-content: flex-end;
+  }
+
+  .message__avatar {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 2rem;
+    margin: 0.25rem 0.75rem 0 0;
+    place-items: center;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 50%;
+    background: var(--ui-surface-raised);
+    color: var(--ui-accent);
+  }
+
+  .message__avatar svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .message__avatar--active {
+    animation: chat-pulse 1.5s ease-in-out infinite;
+  }
+
+  .message__bubble {
+    max-width: min(75%, 46rem);
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.5rem;
+    background: var(--ui-surface);
+    color: var(--ui-text);
+  }
+
+  .message--user .message__bubble {
+    border-color: color-mix(in srgb, var(--ui-accent) 45%, var(--ui-border));
+    background: var(--ui-accent-strong);
+    color: var(--ui-accent-contrast);
+  }
+
+  .message__plain {
+    margin: 0;
+    white-space: pre-wrap;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .message__markdown {
+    overflow-wrap: anywhere;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .message__markdown :global(:first-child) {
+    margin-top: 0;
+  }
+
+  .message__markdown :global(:last-child) {
+    margin-bottom: 0;
+  }
+
+  .message__markdown :global(pre) {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0.875rem;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.375rem;
+    background: var(--ui-background);
+  }
+
+  .message__markdown :global(code) {
+    color: var(--ui-accent);
+  }
+
+  .message__markdown :global(.chat-thought) {
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.375rem;
+    background: var(--ui-surface-subtle);
+  }
+
+  .message__markdown :global(.chat-thought summary) {
+    cursor: pointer;
+    padding: 0.625rem 0.75rem;
+    color: var(--ui-text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .message__markdown :global(.chat-thought > div) {
+    padding: 0.75rem;
+    border-top: 1px solid var(--ui-border);
+    color: var(--ui-text-muted);
+    font-style: italic;
+  }
+
+  .message__model {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+  }
+
+  .message__caret {
+    display: inline-block;
+    width: 2px;
+    height: 1rem;
+    margin-left: 0.25rem;
+    vertical-align: text-bottom;
+    background: var(--ui-accent);
+    animation: chat-pulse 1s ease-in-out infinite;
+  }
+
+  .typing-indicator {
+    display: flex;
+    min-width: 3.75rem;
+    min-height: 1.5rem;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .typing-indicator span {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--ui-accent);
+    animation: chat-bounce 900ms ease-in-out infinite;
+  }
+
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 150ms;
+  }
+
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 300ms;
+  }
+
+  @keyframes chat-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  @keyframes chat-bounce {
+    50% {
+      transform: translateY(-0.25rem);
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .message-list {
+      gap: 1rem;
+      padding: 1rem 0.75rem;
+    }
+
+    .message__bubble {
+      max-width: calc(100% - 2.75rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .message__avatar--active,
+    .message__caret,
+    .typing-indicator span {
+      animation: none;
+    }
+  }
+</style>

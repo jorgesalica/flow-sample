@@ -1,147 +1,103 @@
 <script lang="ts">
-  import CanvasSidebar from './CanvasSidebar.svelte';
-  import CanvasEditor from './CanvasEditor.svelte';
-  import TokenRenderer from '@components/canvas/TokenRenderer.svelte';
-  import LayerToggle from '@components/canvas/LayerToggle.svelte';
-  import TokenTooltip from '@components/canvas/TokenTooltip.svelte';
-  import FlowLayout from '../../components/layout/FlowLayout.svelte';
-  import { canvasStore } from './stores.svelte';
   import type { Annotation, CanvasAnalysis } from '@flows/shared';
+  import LayerToggle from '@components/canvas/LayerToggle.svelte';
+  import TokenRenderer from '@components/canvas/TokenRenderer.svelte';
+  import TokenTooltip from '@components/canvas/TokenTooltip.svelte';
+  import { FlowLayout, IconButton, Panel } from '@lib/components';
+  import CanvasEditor from './CanvasEditor.svelte';
+  import CanvasSidebar from './CanvasSidebar.svelte';
+  import { canvasStore } from './stores.svelte';
 
-  // Initial canvas list comes from the route loader (+page.ts).
   let { canvases = [] }: { canvases?: CanvasAnalysis[] } = $props();
 
-  // Keep the store aligned when a mutation invalidates and reruns the loader.
   $effect(() => canvasStore.setCanvases(canvases));
 
   let isMobileMenuOpen = $state(false);
-
-  // UI State for viewer
   let activeLayers: string[] = $state(['meaning']);
-
-  // Tooltip State
   let tooltipX = $state(0);
   let tooltipY = $state(0);
   let tooltipVisible = $state(false);
   let tooltipAnnotations: Annotation[] = $state([]);
 
-  function toggleMobileMenu() {
-    isMobileMenuOpen = !isMobileMenuOpen;
-  }
-
-  function handleTokenHover(detail: { tokenId: string; el: HTMLElement } | null) {
+  function handleTokenHover(detail: { tokenId: string; el: HTMLElement } | null): void {
     const analysis = canvasStore.activeCanvas;
-
     if (!detail || !analysis) {
       tooltipVisible = false;
       return;
     }
 
-    const { tokenId, el } = detail;
-
-    // Find active annotations for this token
-    const anns = analysis.annotations.filter(
-      (a) => a.tokenId === tokenId && activeLayers.includes(a.layerId)
+    const annotations = analysis.annotations.filter(
+      (annotation) =>
+        annotation.tokenId === detail.tokenId && activeLayers.includes(annotation.layerId)
     );
-
-    if (anns.length > 0) {
-      const rect = el.getBoundingClientRect();
-      tooltipX = rect.left + rect.width / 2;
-      tooltipY = rect.bottom + 10;
-      tooltipAnnotations = anns;
-      tooltipVisible = true;
-    } else {
+    if (annotations.length === 0) {
       tooltipVisible = false;
+      return;
     }
+
+    const rect = detail.el.getBoundingClientRect();
+    tooltipX = rect.left + rect.width / 2;
+    tooltipY = rect.bottom + 10;
+    tooltipAnnotations = annotations;
+    tooltipVisible = true;
   }
 </script>
 
-<FlowLayout>
-  <div class="fixed inset-0 pt-16 flex bg-slate-950 overflow-hidden text-slate-100">
-    <!-- Sidebar -->
+<FlowLayout fullBleed>
+  <div class="canvas-flow">
     <CanvasSidebar bind:isMobileMenuOpen />
 
-    <!-- Main Area -->
-    <main
-      class="flex-1 flex flex-col h-full bg-slate-950 relative custom-scrollbar overflow-y-auto"
-    >
-      <!-- Header -->
-      <header
-        class="h-14 flex items-center justify-between px-4 border-b border-cosmic-800/50 bg-slate-900/80 backdrop-blur-md sticky top-0 z-10 shrink-0"
-      >
-        <div class="flex items-center gap-3">
-          <button
-            class="md:hidden text-slate-400 hover:text-white"
-            aria-label="Toggle mobile menu"
-            onclick={toggleMobileMenu}
+    <section class="canvas-workspace" aria-label="Canvas workspace">
+      <header class="canvas-toolbar">
+        <div class="canvas-toolbar__identity">
+          <IconButton
+            class="canvas-toolbar__menu"
+            label="Toggle canvas menu"
+            onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-              />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-width="1.5" d="M4 7h16M4 12h16M4 17h16" />
             </svg>
-          </button>
+          </IconButton>
 
           {#if canvasStore.activeCanvas}
-            <div class="flex flex-col">
-              <h1 class="text-sm font-semibold text-slate-200">
-                {canvasStore.activeCanvas.meta?.title || 'Untitled'}
-              </h1>
-              <span class="text-xs text-slate-500">
-                {canvasStore.activeCanvas.meta?.author || 'User'}
-              </span>
+            <div>
+              <h1>{canvasStore.activeCanvas.meta?.title || 'Untitled'}</h1>
+              <span>{canvasStore.activeCanvas.meta?.author || 'User'}</span>
             </div>
           {:else}
-            <h1 class="text-lg font-semibold text-slate-200">Text Analysis Canvas</h1>
+            <h1>Text Analysis Canvas</h1>
           {/if}
         </div>
 
         {#if canvasStore.activeCanvas}
-          <!-- Layer Toggles -->
-          <div class="flex gap-2">
-            <LayerToggle layers={canvasStore.activeCanvas.layers} bind:activeLayers />
-          </div>
+          <LayerToggle layers={canvasStore.activeCanvas.layers} bind:activeLayers />
         {/if}
       </header>
 
-      <div class="flex-1">
+      <div class="canvas-workspace__content">
         {#if canvasStore.activeCanvas}
-          <div class="max-w-4xl mx-auto p-4 md:p-8 relative min-h-full">
-            <!-- Meta summary if exists -->
+          <div class="canvas-document">
             {#if canvasStore.activeCanvas.meta?.summary}
-              <div class="mb-8 p-6 bg-slate-900/50 border border-cosmic-800/50 rounded-xl">
-                <h3 class="text-lg font-semibold text-white mb-2">Overview</h3>
-                <p class="text-slate-300">{canvasStore.activeCanvas.meta.summary}</p>
+              <Panel element="section" ariaLabel="Overview">
+                <h2>Overview</h2>
+                <p>{canvasStore.activeCanvas.meta.summary}</p>
 
-                <div class="flex gap-4 mt-4 pt-4 border-t border-slate-800">
+                <dl class="canvas-overview__meta">
                   {#if canvasStore.activeCanvas.meta.theme}
                     <div>
-                      <span class="text-xs text-slate-500 uppercase tracking-wider block"
-                        >Theme</span
-                      >
-                      <span class="text-sm text-primary-300"
-                        >{canvasStore.activeCanvas.meta.theme}</span
-                      >
+                      <dt>Theme</dt>
+                      <dd>{canvasStore.activeCanvas.meta.theme}</dd>
                     </div>
                   {/if}
                   {#if canvasStore.activeCanvas.meta.tone}
                     <div>
-                      <span class="text-xs text-slate-500 uppercase tracking-wider block">Tone</span
-                      >
-                      <span class="text-sm text-aurora">{canvasStore.activeCanvas.meta.tone}</span>
+                      <dt>Tone</dt>
+                      <dd>{canvasStore.activeCanvas.meta.tone}</dd>
                     </div>
                   {/if}
-                </div>
-              </div>
+                </dl>
+              </Panel>
             {/if}
 
             <TokenRenderer
@@ -162,32 +118,159 @@
           <CanvasEditor />
         {/if}
       </div>
-    </main>
+    </section>
 
-    <!-- Overlay for mobile when sidebar is open -->
     {#if isMobileMenuOpen}
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="fixed inset-0 bg-black/60 z-10 md:hidden"
+      <button
+        class="canvas-overlay"
+        aria-label="Close canvas menu"
         onclick={() => (isMobileMenuOpen = false)}
-      ></div>
+      ></button>
     {/if}
   </div>
 </FlowLayout>
 
 <style>
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+  .canvas-flow {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    overflow: hidden;
+    background: var(--ui-background);
+    color: var(--ui-text);
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+
+  .canvas-workspace {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--surface-800);
-    border-radius: 4px;
+
+  .canvas-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    min-height: 3.5rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--ui-border);
+    background: var(--ui-nav);
   }
-  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: var(--surface-700);
+
+  .canvas-toolbar__identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .canvas-toolbar__identity div {
+    min-width: 0;
+  }
+
+  .canvas-toolbar h1 {
+    margin: 0;
+    overflow: hidden;
+    font-size: 0.875rem;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .canvas-toolbar span {
+    color: var(--ui-text-muted);
+    font-size: 0.75rem;
+  }
+
+  .canvas-toolbar__identity :global(.canvas-toolbar__menu) {
+    display: none;
+  }
+
+  .canvas-toolbar svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .canvas-workspace__content {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+  }
+
+  .canvas-document {
+    position: relative;
+    width: min(56rem, 100%);
+    min-height: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .canvas-document :global(.ui-panel) {
+    margin-bottom: 2rem;
+  }
+
+  .canvas-document h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+    letter-spacing: 0;
+  }
+
+  .canvas-document p {
+    margin: 0;
+    color: var(--ui-text-muted);
+  }
+
+  .canvas-overview__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--ui-border);
+  }
+
+  .canvas-overview__meta div {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .canvas-overview__meta dt {
+    color: var(--ui-text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+  }
+
+  .canvas-overview__meta dd {
+    margin: 0;
+    color: var(--ui-accent);
+    font-size: 0.875rem;
+  }
+
+  .canvas-overlay {
+    position: fixed;
+    inset: var(--app-nav-height) 0 0;
+    z-index: 15;
+    display: none;
+    border: 0;
+    background: var(--ui-overlay);
+  }
+
+  @media (max-width: 48rem) {
+    .canvas-toolbar__identity :global(.canvas-toolbar__menu),
+    .canvas-overlay {
+      display: grid;
+    }
+
+    .canvas-document {
+      padding: 1rem;
+    }
   }
 </style>

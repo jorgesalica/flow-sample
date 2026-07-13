@@ -1,95 +1,86 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import {
+    BarController,
+    BarElement,
+    CategoryScale,
     Chart,
+    Legend,
+    LinearScale,
     Title,
     Tooltip,
-    Legend,
-    BarElement,
-    BarController,
-    CategoryScale,
-    LinearScale,
     type ChartConfiguration,
   } from 'chart.js';
+  import { THEME_CHANGE_EVENT } from '@lib/theme';
+  import { readChartTheme } from '@lib/chart-theme';
 
   Chart.register(Title, Tooltip, Legend, BarElement, BarController, CategoryScale, LinearScale);
 
-  let { data } = $props<{
-    data: Record<string, number>;
-  }>();
-
+  let { data }: { data: Record<string, number> } = $props();
   let canvas: HTMLCanvasElement;
-  let chart: Chart | null = null;
+  let chart: Chart<'bar'> | null = null;
 
-  function updateChart() {
-    if (!chart) return;
-
+  function getChartData(): { labels: string[]; values: number[] } {
     const labels = Object.keys(data).sort();
-    const values = labels.map((k) => data[k]);
-
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
-    chart.update();
+    return { labels, values: labels.map((label) => data[label]) };
   }
 
-  onMount(() => {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  function createChart(): void {
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    chart?.destroy();
 
-    const labels = Object.keys(data).sort();
-    const values = labels.map((k) => data[k]);
-
-    const config: ChartConfiguration = {
+    const { labels, values } = getChartData();
+    const theme = readChartTheme(getComputedStyle(document.documentElement));
+    const config: ChartConfiguration<'bar'> = {
       type: 'bar',
       data: {
         labels,
         datasets: [
           {
-            label: 'Tracks by Decade',
+            label: 'Tracks by decade',
             data: values,
-            backgroundColor: 'rgba(168, 85, 247, 0.6)', // Purple-500
-            borderColor: 'rgba(168, 85, 247, 1)',
+            backgroundColor: theme.colors[1],
+            borderColor: theme.colors[0],
             borderWidth: 1,
           },
         ],
       },
       options: {
         responsive: true,
-        plugins: {
-          legend: {
-            display: false,
-          },
-        },
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
         scales: {
           y: {
             beginAtZero: true,
-            grid: {
-              color: 'rgba(255, 255, 255, 0.1)',
-            },
-            ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-            },
+            grid: { color: theme.border },
+            ticks: { color: theme.muted },
           },
-          x: {
-            grid: {
-              display: false,
-            },
-            ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-            },
-          },
+          x: { grid: { display: false }, ticks: { color: theme.muted } },
         },
       },
     };
 
-    chart = new Chart(ctx, config);
+    chart = new Chart(context, config);
+  }
+
+  function updateChart(): void {
+    if (!chart) return;
+    const { labels, values } = getChartData();
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
+    chart.update();
+  }
+
+  onMount(() => {
+    createChart();
+    window.addEventListener(THEME_CHANGE_EVENT, createChart);
   });
 
   onDestroy(() => {
-    if (chart) {
-      chart.destroy();
-      chart = null;
-    }
+    window.removeEventListener(THEME_CHANGE_EVENT, createChart);
+    chart?.destroy();
+    chart = null;
   });
 
   $effect(() => {
@@ -97,6 +88,14 @@
   });
 </script>
 
-<div class="h-64 w-full flex justify-center items-center">
-  <canvas bind:this={canvas} class="w-full h-full"></canvas>
+<div class="chart-container">
+  <canvas bind:this={canvas}></canvas>
 </div>
+
+<style>
+  .chart-container {
+    width: 100%;
+    height: 16rem;
+    min-width: 0;
+  }
+</style>

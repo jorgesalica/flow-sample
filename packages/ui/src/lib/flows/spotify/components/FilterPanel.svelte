@@ -93,7 +93,7 @@
           options={orderOptions}
         />
       </div>
-      <div class="mt-4 flex flex-wrap justify-end gap-2 border-t border-white/10 pt-4">
+      <div class="mt-4 flex flex-wrap justify-end gap-2 border-t border-border pt-4">
         <Button variant="ghost" onclick={clearFilters}>Clear all</Button>
         <Button onclick={applyFilters}>Apply filters</Button>
       </div>
@@ -112,10 +112,10 @@
     border: 1px solid var(--ui-border);
     border-radius: 0.5rem;
     background: var(--ui-surface);
-    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.35);
+    box-shadow: var(--ui-shadow);
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 40rem) {
     .spotify-filter-panel {
       position: fixed;
       top: 4.5rem;

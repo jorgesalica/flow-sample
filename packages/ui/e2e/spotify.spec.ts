@@ -4,60 +4,43 @@ test.describe('Spotify Flow Page', () => {
   test('can navigate to Spotify Flow page', async ({ page }) => {
     await page.goto('/');
 
-    // Click on Spotify Flow card/link
-    await page.getByText('Spotify Flow').click();
-
-    // Wait for navigation
-    await page.waitForURL('**/#/spotify');
-
-    // Verify we're on the Spotify Flow page
-    await expect(page.locator('h1')).toContainText('Spotify');
+    await page.getByRole('link', { name: 'Open Spotify Flow' }).click();
+    await page.waitForURL('**/spotify');
+    await expect(page.getByRole('heading', { name: 'Spotify Flow' })).toBeVisible();
   });
 
-  test('Spotify Flow page shows track grid or loading state', async ({ page }) => {
-    await page.goto('/#/spotify');
-
-    // Wait for the page to load
+  test('Spotify Flow page exposes the track region', async ({ page }) => {
+    await page.goto('/spotify');
     await page.waitForLoadState('networkidle');
 
-    // Should show either tracks or a "Sync" button
-    const hasContent = await page
-      .locator('[data-testid="track-card"], button:has-text("Sync")')
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    expect(hasContent || (await page.getByText('Sync').isVisible())).toBeTruthy();
+    await expect(page.getByRole('region', { name: 'Spotify tracks' })).toBeVisible();
   });
 
   test('can navigate back to landing from Spotify Flow', async ({ page }) => {
-    await page.goto('/#/spotify');
+    await page.goto('/spotify');
 
-    // Click back link
-    await page.getByText('Back to Flows').click();
-
-    // Should be on landing
-    await page.waitForURL('**/#/');
-    await expect(page.getByText('Spotify Flow')).toBeVisible();
+    await page.getByRole('link', { name: 'Back to flows' }).click();
+    await page.waitForURL('**/');
+    await expect(page.getByRole('heading', { name: 'Flows' })).toBeVisible();
   });
 });
 
 test.describe('Search', () => {
   test('search bar is visible on Spotify Flow page', async ({ page }) => {
-    await page.goto('/#/spotify');
+    await page.goto('/spotify');
     await page.waitForLoadState('networkidle');
 
     // Search input should be visible
-    const searchInput = page.locator('input[type="search"], input[placeholder*="Search"]');
+    const searchInput = page.getByRole('searchbox');
     await expect(searchInput).toBeVisible();
   });
 
   test('can type in search bar', async ({ page }) => {
-    await page.goto('/#/spotify');
+    await page.goto('/spotify');
     await page.waitForLoadState('networkidle');
 
     // Find and type in search
-    const searchInput = page.locator('input[type="search"], input[placeholder*="Search"]');
+    const searchInput = page.getByRole('searchbox');
     await searchInput.fill('rock');
 
     // Verify the input value

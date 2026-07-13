@@ -35,7 +35,8 @@ Que quiero ser inmortal
 
 ## 2. Canvas View — Pre-Analysis
 
-User clicks "Open Canvas" on the track → navigates to `#/lyrics/canvas/4iV5W9uYEdYUVa79Axb7Rh`.
+User clicks "Open Canvas" on the track and the Lyrics route opens its embedded Canvas
+workspace for `4iV5W9uYEdYUVa79Axb7Rh`.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐

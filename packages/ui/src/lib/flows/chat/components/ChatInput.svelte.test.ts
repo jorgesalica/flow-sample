@@ -63,7 +63,7 @@ describe('ChatInput', () => {
   it('renders the textarea and a disabled send button while empty', () => {
     render(ChatInput);
 
-    const textarea = screen.getByPlaceholderText('Send a message...');
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
     expect(textarea).toBeInTheDocument();
     expect(textarea).toBeEnabled();
     expect(screen.getByTitle('Send message')).toBeDisabled();
