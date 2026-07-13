@@ -50,8 +50,9 @@ describe('LyricsModal', () => {
 
     render(LyricsModal, { props: { track: makeTrack(), onclose: vi.fn() } });
 
-    expect(await screen.findByText('Bohemian Rhapsody')).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Bohemian Rhapsody' })).toBeInTheDocument();
     expect(screen.getByText('Queen')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'A Night at the Opera' })).toBeInTheDocument();
   });
 
   it('shows a loading state while lyrics are being fetched', () => {
@@ -59,7 +60,7 @@ describe('LyricsModal', () => {
 
     render(LyricsModal, { props: { track: makeTrack(), onclose: vi.fn() } });
 
-    expect(screen.getByText('Fetching lyrics...')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Fetching lyrics');
   });
 
   it('renders the lyrics content on success', async () => {
@@ -76,6 +77,7 @@ describe('LyricsModal', () => {
     render(LyricsModal, { props: { track: makeTrack(), onclose: vi.fn() } });
 
     expect(await screen.findByText('No lyrics found')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('It might be an instrumental song');
     expect(screen.getByRole('button', { name: 'Retry Retrieval' })).toBeInTheDocument();
   });
 
@@ -84,9 +86,24 @@ describe('LyricsModal', () => {
 
     render(LyricsModal, { props: { track: makeTrack(), onclose: vi.fn() } });
 
-    expect(await screen.findByText('Failed to load lyrics')).toBeInTheDocument();
-    expect(screen.getByText('Network down')).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Failed to load lyrics');
+    expect(alert).toHaveTextContent('Network down');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
+  it('retries a failed lyrics request with force enabled', async () => {
+    getLyrics
+      .mockRejectedValueOnce(new Error('Network down'))
+      .mockResolvedValueOnce({ plainLyrics: 'Recovered lyrics', status: 'found' });
+
+    render(LyricsModal, { props: { track: makeTrack(), onclose: vi.fn() } });
+    await fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+    await waitFor(() => {
+      expect(getLyrics).toHaveBeenNthCalledWith(2, 'track-1', { force: true });
+    });
+    expect(await screen.findByText('Recovered lyrics')).toBeInTheDocument();
   });
 
   it('does NOT render lyrics content while in the error state (negative space)', async () => {
@@ -171,6 +188,25 @@ describe('LyricsModal', () => {
     expect(screen.getByText('AI Interpretation')).toBeInTheDocument();
   });
 
+  it('regenerates a cached interpretation from its shared action', async () => {
+    getLyrics.mockResolvedValue({
+      plainLyrics: 'words',
+      status: 'found',
+      interpretation: 'Cached meaning text.',
+    });
+    interpretLyrics.mockImplementation(
+      async (_id: string, onEvent: (e: InterpretEvent) => void) => {
+        onEvent({ type: 'cached', interpretation: 'Regenerated meaning text.' });
+      }
+    );
+
+    render(LyricsModal, { props: { track: makeTrack(), onclose: vi.fn() } });
+    await fireEvent.click(await screen.findByRole('button', { name: 'Regenerate' }));
+
+    expect(interpretLyrics).toHaveBeenCalledWith('track-1', expect.any(Function));
+    expect(await screen.findByText('Regenerated meaning text.')).toBeInTheDocument();
+  });
+
   it('renders an interpretation error returned by the stream', async () => {
     getLyrics.mockResolvedValue({ plainLyrics: 'words', status: 'found' });
     interpretLyrics.mockImplementation(
@@ -182,6 +218,9 @@ describe('LyricsModal', () => {
     render(LyricsModal, { props: { track: makeTrack(), onclose: vi.fn() } });
     await fireEvent.click(await screen.findByRole('button', { name: 'Interpret' }));
 
-    expect(await screen.findByText('LLM unavailable')).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Interpretation failed');
+    expect(alert).toHaveTextContent('LLM unavailable');
+    expect(screen.getByRole('button', { name: 'Try Again' })).toBeInTheDocument();
   });
 });
