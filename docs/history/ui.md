@@ -2,6 +2,24 @@
 
 Changelog for the frontend (Svelte) application.
 
+## 2026-07-13 - Board card contracts
+
+Issue #43 replaced the board's implicit stats model with an explicit presentation
+contract:
+
+- Added validated immutable flow registration and rejected duplicate or incomplete
+  definitions at construction time.
+- Added generic loading, ready, empty, error, and stale card states with summaries and
+  optional expansion; collapsed cards keep their summary visible.
+- Added rich Spotify and Lyrics producers plus a compatibility adapter for Trading, Chat,
+  and Canvas, without flow-specific renderer branches.
+- Kept prior successful content visible when refresh fails and exposed recovery through
+  the board refresh action.
+- Added producer, registry, renderer, component, and Playwright coverage for success,
+  malformed/failure paths, live expansion, stale refresh, and mobile behavior.
+
+---
+
 ## 2026-07-13 - Board v1
 
 Issue #42 replaced the fixed landing grid with the first persistent flow board:

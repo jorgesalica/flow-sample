@@ -121,6 +121,9 @@ from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
 - **Browser preferences are contracts**: version and validate persisted `localStorage`
   data, reconcile it against current identifiers, and provide a safe default/reset path.
   Do not mix presentation preferences with backend or cross-boundary DTOs.
+- **Board flows publish presentation contracts**: register immutable definitions through
+  `createFlowRegistry()`, keep card DTOs generic, and render discriminated async states.
+  The board must not import flow internals or select renderers by flow ID.
 - **Data access** goes through the typed Eden client (`@lib/client`), wrapped per flow in
   `api.ts`. Preferred target: SvelteKit `+page.ts` loaders (universal load) over `onMount`.
 

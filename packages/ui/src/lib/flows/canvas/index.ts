@@ -1,4 +1,5 @@
-import type { FlowDefinition, FlowStats } from '../registry';
+import { createStatsBoardCard, FlowStatus, type FlowStats } from '../board-card';
+import type { FlowDefinition } from '../registry';
 import { fetchCanvasList } from './api';
 
 async function getStats(): Promise<FlowStats> {
@@ -6,13 +7,12 @@ async function getStats(): Promise<FlowStats> {
     const canvases = await fetchCanvasList();
     return {
       count: canvases.length,
-      status: 'active',
-      statusMessage: `${canvases.length} Canvases`,
+      status: canvases.length > 0 ? FlowStatus.ACTIVE : FlowStatus.CONFIGURED,
     };
   } catch {
     return {
       count: 0,
-      status: 'error',
+      status: FlowStatus.ERROR,
       statusMessage: 'Backend unavailable',
     };
   }
@@ -24,6 +24,11 @@ export const canvasFlow: FlowDefinition = {
   icon: '📝',
   description: 'Paste any text and get a deep literary AI analysis.',
   route: '/canvas',
-  color: 'from-cyan-400 to-blue-500',
-  getStats,
+  boardCard: createStatsBoardCard(getStats, {
+    metricLabel: 'Canvases',
+    emptyTitle: 'No canvases yet',
+    emptyMessage: 'Open Text Canvas to create an analysis.',
+    errorTitle: 'Canvas summary unavailable',
+    errorMessage: 'Connect the backend and refresh the board to try again.',
+  }),
 };

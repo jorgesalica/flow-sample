@@ -14,6 +14,7 @@ journeys. Do not pursue coverage by duplicating implementation details in tests.
 | Service | Vitest with ports mocked | orchestration, calls made and deliberately not made |
 | Route/application | Vitest and `app.handle()` | validation, status/error mapping, dependency wiring |
 | Loader/API facade | Vitest with Eden mocked | DTO mapping, invalidation, empty/error behavior |
+| UI contract/registry | Vitest | manifest validation, state mapping, stale preservation |
 | Svelte component | Testing Library | accessible behavior and user-observable state |
 | Critical journey | Playwright | real navigation and desktop/mobile interaction |
 | Architecture/docs | Node check scripts | repository contracts and valid local links |
@@ -48,9 +49,13 @@ SSE, browser-only charting, drag-and-drop, keyboard reordering, persistence migr
 multi-step flows deserve Playwright or explicit manual verification because jsdom cannot
 fully model their runtime behavior.
 
-Board changes pair pure layout-contract tests with component role/callback tests.
-Playwright must prove explicit keyboard reorder, native drag-and-drop, reload persistence,
-reset behavior, and a no-overflow mobile fallback when those behaviors change.
+Board changes pair pure layout and card-contract tests with registry validation and
+component role/callback tests. Flow contract producers cover success, empty/malformed
+data, and provider failure. The generic renderer covers loading, ready, empty, error,
+stale, collapsed negative space, and expanded content without flow-specific branches.
+Playwright must prove representative live summary/expansion, stale refresh preservation,
+explicit keyboard reorder, native drag-and-drop, reload persistence, reset behavior, and
+a no-overflow mobile fallback when those behaviors change.
 
 ## Commands And CI
 

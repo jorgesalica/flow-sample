@@ -1,29 +1,43 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/svelte';
-import type { FlowDefinition, FlowStats } from '@lib/flows';
+import { render, screen } from '@testing-library/svelte';
+import {
+  BoardCardState,
+  BoardCardTone,
+  type BoardCardSnapshot,
+  type FlowDefinition,
+} from '@lib/flows';
 
 const getFlows = vi.fn<() => FlowDefinition[]>();
-vi.mock('@lib/flows', () => ({
+vi.mock('@lib/flows', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@lib/flows')>()),
   getFlows: () => getFlows(),
 }));
 
 function makeFlow(
   id: string,
-  stats: FlowStats | (() => Promise<FlowStats>),
+  snapshot: BoardCardSnapshot | (() => Promise<BoardCardSnapshot>),
   overrides: Partial<FlowDefinition> = {}
 ): FlowDefinition {
-  const getStats = typeof stats === 'function' ? stats : async () => stats;
+  const load = typeof snapshot === 'function' ? snapshot : async () => snapshot;
   return {
     id,
     name: `${id} Flow`,
-    icon: '🎵',
+    icon: 'M',
     description: `${id} description`,
     route: `/${id}`,
-    color: 'from-green-400 to-emerald-500',
-    getStats,
+    boardCard: { load },
     ...overrides,
   };
 }
+
+const readyCard: BoardCardSnapshot = {
+  state: BoardCardState.READY,
+  canOpen: true,
+  summary: {
+    status: { label: 'Active', tone: BoardCardTone.SUCCESS },
+    primary: { label: 'Tracks', value: '12' },
+  },
+};
 
 const { default: Landing } = await import('./Landing.svelte');
 
@@ -34,36 +48,26 @@ describe('Landing board', () => {
 
   it('sets the branded page title', () => {
     getFlows.mockReturnValue([]);
-
     render(Landing);
-
     expect(document.title).toBe('Cosmic Flow - Data Exploration Hub');
   });
 
-  it('uses the shared loading state while flow stats resolve', () => {
-    getFlows.mockReturnValue([makeFlow('spotify', () => new Promise<FlowStats>(() => {}))]);
-
-    render(Landing);
-
-    expect(screen.getByRole('status')).toHaveTextContent('Loading flow status');
-  });
-
-  it('renders registered flows without inventing unregistered board items', async () => {
+  it('renders registered items immediately while their summaries load independently', async () => {
     getFlows.mockReturnValue([
-      makeFlow('spotify', { count: 12, status: 'active' }, { name: 'Spotify Flow' }),
+      makeFlow('spotify', () => new Promise<BoardCardSnapshot>(() => {}), {
+        name: 'Spotify Flow',
+      }),
     ]);
 
     render(Landing);
 
-    expect(await screen.findByRole('link', { name: 'Open Spotify Flow' })).toBeInTheDocument();
+    expect(await screen.findByText('Spotify Flow')).toBeInTheDocument();
+    expect(screen.getByText('Loading summary')).toBeInTheDocument();
     expect(screen.queryByText('YouTube Flow')).not.toBeInTheDocument();
   });
 
-  it('renders active and configured flows as route links', async () => {
-    getFlows.mockReturnValue([
-      makeFlow('spotify', { count: 5, status: 'active' }, { name: 'Spotify Flow' }),
-      makeFlow('lyrics', { count: 0, status: 'configured' }, { name: 'Lyrics Flow' }),
-    ]);
+  it('preserves route navigation supplied by a successful card contract', async () => {
+    getFlows.mockReturnValue([makeFlow('spotify', readyCard, { name: 'Spotify Flow' })]);
 
     render(Landing);
 
@@ -71,76 +75,25 @@ describe('Landing board', () => {
       'href',
       '/spotify'
     );
-    expect(screen.getByRole('link', { name: 'Open Lyrics Flow' })).toHaveAttribute(
-      'href',
-      '/lyrics'
-    );
+    expect(screen.getByText('12')).toBeInTheDocument();
   });
 
-  it('renders disabled flows as non-interactive articles', async () => {
+  it('isolates a failed summary contract to its board item', async () => {
     getFlows.mockReturnValue([
-      makeFlow(
-        'trading',
-        { count: 0, status: 'disabled', statusMessage: 'Coming Soon' },
-        { name: 'Trading Flow' }
-      ),
+      makeFlow('broken', {
+        state: BoardCardState.ERROR,
+        canOpen: false,
+        status: { label: 'Error', tone: BoardCardTone.DANGER },
+        title: 'Summary unavailable',
+        message: 'Try refreshing the board.',
+      }),
+      makeFlow('spotify', readyCard, { name: 'Spotify Flow' }),
     ]);
 
     render(Landing);
 
-    const heading = await screen.findByText('Trading Flow');
-    expect(heading.closest('article')).toHaveAttribute('data-state', 'unavailable');
-    expect(screen.queryByRole('link', { name: 'Open Trading Flow' })).not.toBeInTheDocument();
-  });
-
-  it('shows item counts only when they are positive', async () => {
-    getFlows.mockReturnValue([
-      makeFlow('spotify', { count: 42, status: 'active' }, { name: 'Spotify Flow' }),
-      makeFlow('empty', { count: 0, status: 'active' }, { name: 'Empty Flow' }),
-    ]);
-
-    render(Landing);
-
-    await screen.findByRole('link', { name: 'Open Spotify Flow' });
-    expect(screen.getByText('42')).toBeInTheDocument();
-    expect(screen.getAllByText('Items')).toHaveLength(1);
-  });
-
-  it('isolates a stats failure to the affected flow card', async () => {
-    getFlows.mockReturnValue([
-      makeFlow('broken', () => Promise.reject(new Error('boom')), { name: 'Broken Flow' }),
-    ]);
-
-    render(Landing);
-
-    const heading = await screen.findByText('Broken Flow');
-    expect(heading.closest('article')).toHaveAttribute('data-state', 'unavailable');
-    expect(screen.getByText('Error')).toHaveClass('ui-badge--danger');
-  });
-
-  it('preserves custom status messages from the registry', async () => {
-    getFlows.mockReturnValue([
-      makeFlow(
-        'spotify',
-        { count: 3, status: 'active', statusMessage: '8 genres' },
-        { name: 'Spotify Flow' }
-      ),
-    ]);
-
-    render(Landing);
-
-    expect(await screen.findByText('8 genres')).toHaveClass('ui-badge--success');
-  });
-
-  it('summarizes ready and total flows in the compact header', async () => {
-    getFlows.mockReturnValue([]);
-
-    render(Landing);
-
-    expect(screen.getByRole('heading', { name: 'Board' })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText('0 ready')).toBeInTheDocument();
-      expect(screen.getByText('0 total')).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('link', { name: 'Open Spotify Flow' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open broken Flow' })).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Summary unavailable');
   });
 });

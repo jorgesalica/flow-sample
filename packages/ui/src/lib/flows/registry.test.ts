@@ -1,85 +1,87 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { FlowDefinition, FlowStats } from './registry';
+import { describe, expect, it } from 'vitest';
+import { BoardCardState, type BoardCardContract } from './board-card';
+import { createFlowRegistry, type FlowDefinition } from './registry';
 
-// The registry is a module-level singleton. Each test gets a fresh module
-// instance (and therefore an empty registry) via dynamic import after a reset,
-// so registrations from one test never leak into another.
-async function freshRegistry() {
-  vi.resetModules();
-  return import('./registry');
-}
+const boardCard: BoardCardContract = {
+  load: async () => ({
+    state: BoardCardState.EMPTY,
+    canOpen: true,
+    status: { label: 'Configured', tone: 'info' },
+    title: 'No items',
+    message: 'Nothing has been created yet.',
+  }),
+};
 
 function makeFlow(overrides: Partial<FlowDefinition> = {}): FlowDefinition {
-  const stats: FlowStats = { count: 0, status: 'active' };
   return {
     id: 'spotify',
     name: 'Spotify Flow',
-    icon: '🎵',
+    icon: 'M',
     description: 'Explore your music.',
     route: '/spotify',
-    color: 'from-green-400 to-emerald-500',
-    getStats: async () => stats,
+    boardCard,
     ...overrides,
   };
 }
 
 describe('flow registry', () => {
-  let registerFlow: typeof import('./registry').registerFlow;
-  let getFlows: typeof import('./registry').getFlows;
-  let getFlow: typeof import('./registry').getFlow;
+  it('keeps validated definitions in manifest order', () => {
+    const spotify = makeFlow();
+    const lyrics = makeFlow({ id: 'lyrics', name: 'Lyrics Flow', route: '/lyrics' });
+    const registry = createFlowRegistry([spotify, lyrics]);
 
-  beforeEach(async () => {
-    ({ registerFlow, getFlows, getFlow } = await freshRegistry());
+    expect(registry.getFlows()).toEqual([spotify, lyrics]);
+    expect(registry.getFlow('lyrics')).toEqual(lyrics);
+    expect(registry.getFlow('lyrics')).not.toBe(lyrics);
+    expect(registry.getFlow('missing')).toBeUndefined();
   });
 
-  it('starts empty', () => {
-    expect(getFlows()).toEqual([]);
-    expect(getFlow('spotify')).toBeUndefined();
+  it('rejects duplicate ids instead of silently discarding a definition', () => {
+    expect(() => createFlowRegistry([makeFlow(), makeFlow({ name: 'Duplicate Spotify' })])).toThrow(
+      'Duplicate flow id "spotify"'
+    );
   });
 
-  it('registers a flow and retrieves it by id', () => {
-    const flow = makeFlow();
-    registerFlow(flow);
-
-    expect(getFlows()).toHaveLength(1);
-    expect(getFlow('spotify')).toBe(flow);
+  it.each([
+    {},
+    { id: '', name: 'Missing id', icon: 'M', description: 'Description', route: '/missing' },
+    { id: 'missing-name', name: '', icon: 'M', description: 'Description', route: '/missing' },
+    { id: 'missing-route', name: 'Missing route', icon: 'M', description: 'Description' },
+    {
+      id: 'missing-board-card',
+      name: 'Missing card',
+      icon: 'M',
+      description: 'Description',
+      route: '/missing',
+    },
+    {
+      id: 'invalid-route',
+      name: 'Invalid route',
+      icon: 'M',
+      description: 'Description',
+      route: 'missing-leading-slash',
+      boardCard,
+    },
+    {
+      id: 'invalid-card',
+      name: 'Invalid card',
+      icon: 'M',
+      description: 'Description',
+      route: '/invalid-card',
+      boardCard: { load: 'not-a-function' },
+    },
+  ])('rejects incomplete runtime definitions', (definition) => {
+    expect(() => createFlowRegistry([definition])).toThrow(/Invalid flow definition/);
   });
 
-  it('registers multiple distinct flows in insertion order', () => {
-    const spotify = makeFlow({ id: 'spotify' });
-    const lyrics = makeFlow({ id: 'lyrics', name: 'Lyrics Flow' });
+  it('returns a defensive manifest copy', () => {
+    const registry = createFlowRegistry([makeFlow()]);
+    const snapshot = registry.getFlows();
+    expect(Object.isFrozen(snapshot[0])).toBe(true);
+    expect(Object.isFrozen(snapshot[0]?.boardCard)).toBe(true);
+    snapshot.push(makeFlow({ id: 'injected', route: '/injected' }));
 
-    registerFlow(spotify);
-    registerFlow(lyrics);
-
-    expect(getFlows().map((f) => f.id)).toEqual(['spotify', 'lyrics']);
-  });
-
-  it('ignores duplicate ids (first registration wins)', () => {
-    const first = makeFlow({ id: 'spotify', name: 'Original' });
-    const duplicate = makeFlow({ id: 'spotify', name: 'Replacement' });
-
-    registerFlow(first);
-    registerFlow(duplicate);
-
-    expect(getFlows()).toHaveLength(1);
-    expect(getFlow('spotify')?.name).toBe('Original');
-  });
-
-  it('returns undefined for an unknown id', () => {
-    registerFlow(makeFlow({ id: 'spotify' }));
-
-    expect(getFlow('does-not-exist')).toBeUndefined();
-  });
-
-  it('getFlows returns a defensive copy, not the internal array', () => {
-    registerFlow(makeFlow({ id: 'spotify' }));
-
-    const snapshot = getFlows();
-    snapshot.push(makeFlow({ id: 'injected' }));
-
-    // Mutating the returned array must not affect the registry.
-    expect(getFlows()).toHaveLength(1);
-    expect(getFlow('injected')).toBeUndefined();
+    expect(registry.getFlows()).toHaveLength(1);
+    expect(registry.getFlow('injected')).toBeUndefined();
   });
 });

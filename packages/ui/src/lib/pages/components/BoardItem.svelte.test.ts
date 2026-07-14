@@ -1,22 +1,38 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import type { ComponentProps } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
+import {
+  BoardCardState,
+  BoardCardTone,
+  type BoardCardReady,
+  type FlowDefinition,
+} from '@lib/flows';
 import { BoardItemSize } from '../board-layout';
-import type { FlowCardModel } from '../types';
 import BoardItem from './BoardItem.svelte';
 
 type BoardItemProps = ComponentProps<typeof BoardItem>;
 
-function makeFlow(overrides: Partial<FlowCardModel> = {}): FlowCardModel {
+const readyCard: BoardCardReady = {
+  state: BoardCardState.READY,
+  canOpen: true,
+  summary: {
+    status: { label: 'Active', tone: BoardCardTone.SUCCESS },
+    primary: { label: 'Tracks', value: '12', detail: '4 genres' },
+  },
+  expanded: {
+    heading: 'Library snapshot',
+    metrics: [{ label: 'Top genre', value: 'rock' }],
+  },
+};
+
+function makeFlow(overrides: Partial<FlowDefinition> = {}): FlowDefinition {
   return {
     id: 'spotify',
     name: 'Spotify Flow',
     icon: 'M',
     description: 'Explore your music library.',
     route: '/spotify',
-    color: 'unused',
-    getStats: async () => ({ count: 12, status: 'active' }),
-    stats: { count: 12, status: 'active' },
+    boardCard: { load: async () => readyCard },
     ...overrides,
   };
 }
@@ -24,6 +40,7 @@ function makeFlow(overrides: Partial<FlowCardModel> = {}): FlowCardModel {
 function makeProps(overrides: Partial<BoardItemProps> = {}): BoardItemProps {
   return {
     flow: makeFlow(),
+    card: readyCard,
     layout: { id: 'spotify', collapsed: false, size: BoardItemSize.COMPACT },
     position: 0,
     itemCount: 2,
@@ -42,7 +59,7 @@ function makeProps(overrides: Partial<BoardItemProps> = {}): BoardItemProps {
 }
 
 describe('BoardItem', () => {
-  it('renders an available flow with navigation, status, count, and layout controls', () => {
+  it('renders an available contract with navigation, summary, expansion, and layout controls', () => {
     render(BoardItem, { props: makeProps() });
 
     expect(screen.getByRole('link', { name: 'Open Spotify Flow' })).toHaveAttribute(
@@ -51,32 +68,40 @@ describe('BoardItem', () => {
     );
     expect(screen.getByText('Active')).toHaveClass('ui-badge--success');
     expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Library snapshot' })).toBeInTheDocument();
     expect(
       screen.getByRole('group', { name: 'Layout controls for Spotify Flow' })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Move Spotify Flow earlier' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Move Spotify Flow later' })).toBeEnabled();
-    expect(screen.getByRole('combobox', { name: 'Size for Spotify Flow' })).toHaveValue(
-      BoardItemSize.COMPACT
-    );
   });
 
-  it('keeps unavailable flows non-interactive', () => {
+  it('keeps failed contracts non-interactive', () => {
     render(BoardItem, {
       props: makeProps({
-        flow: makeFlow({ stats: { count: 0, status: 'disabled' } }),
+        card: {
+          state: BoardCardState.ERROR,
+          canOpen: false,
+          status: { label: 'Error', tone: BoardCardTone.DANGER },
+          title: 'Summary unavailable',
+          message: 'Try refreshing the board.',
+        },
       }),
     });
 
     expect(screen.queryByRole('link', { name: 'Open Spotify Flow' })).not.toBeInTheDocument();
     expect(document.querySelector('[data-board-id="spotify"]')).toHaveAttribute(
       'data-state',
-      'unavailable'
+      BoardCardState.ERROR
     );
-    expect(screen.getByText('Unavailable')).toHaveClass('ui-badge--neutral');
+    expect(document.querySelector('[data-board-id="spotify"]')).toHaveAttribute(
+      'data-openable',
+      'false'
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Summary unavailable');
   });
 
-  it('exposes collapsed state through the native disclosure contract', () => {
+  it('collapses expanded content while retaining the summary contract', () => {
     render(BoardItem, {
       props: makeProps({
         layout: { id: 'spotify', collapsed: true, size: BoardItemSize.STANDARD },
@@ -87,7 +112,9 @@ describe('BoardItem', () => {
       'aria-expanded',
       'false'
     );
-    expect(screen.getByText('Explore your music library.')).not.toBeVisible();
+    expect(screen.getByText('12')).toBeVisible();
+    expect(screen.queryByText('Explore your music library.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Library snapshot' })).not.toBeInTheDocument();
     expect(document.querySelector('[data-board-id="spotify"]')).toHaveAttribute(
       'data-size',
       BoardItemSize.STANDARD

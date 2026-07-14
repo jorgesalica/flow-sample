@@ -49,19 +49,20 @@ ui/
 │       ├── toast.ts              # svelte-5-french-toast wrapper (Toaster, showError…)
 │       ├── types.ts              # local UI types (domain types come from @flows/shared)
 │       ├── pages/
-│       │   ├── Landing.svelte    # flow registry orchestration + live stats
+│       │   ├── Landing.svelte    # validated flow-manifest handoff
 │       │   ├── board-layout.ts   # versioned local layout contract + operations
-│       │   ├── types.ts          # root dashboard presentation model
 │       │   └── components/
 │       │       ├── FlowBoard.svelte # state, persistence, reset, drag/drop
-│       │       └── BoardItem.svelte # flow presentation + accessible controls
+│       │       ├── BoardItem.svelte # flow presentation + accessible controls
+│       │       └── BoardCardContent.svelte # generic async/summary/expansion renderer
 │       ├── components/
 │       │   ├── layout/           # Navbar, FlowLayout
 │       │   ├── common/           # InfiniteScroll, …
 │       │   └── canvas/           # TokenRenderer, TokenTooltip, LayerToggle
 │       └── flows/
-│           ├── registry.ts       # FlowDefinition + registerFlow/getFlows/getFlow
-│           ├── index.ts          # the board manifest (registers every flow)
+│           ├── board-card.ts     # typed card states, content, and stats adapter
+│           ├── registry.ts       # validated FlowDefinition registry factory
+│           ├── index.ts          # immutable board manifest
 │           └── <flow>/           # SpotifyFlow.svelte + components/ + api.ts + stores.ts + index.ts
 ├── vite.config.ts                # sveltekit() + tailwindcss(); /api + /outputs dev proxy
 ├── svelte.config.js              # adapter-static (SPA), @lib/@components aliases
@@ -75,17 +76,29 @@ ui/
 
 File-based. Each flow is a route under `src/routes/<flow>/+page.svelte` that renders the
 flow's page component from `lib/flows/<flow>/`. The home route renders the flow index
-(`Landing.svelte`), which resolves registry stats and delegates registered flows to
-`FlowBoard`. Available flows retain route links inside each `BoardItem`; unavailable and
-failed flows remain non-interactive. (The old `#/`-hash router was removed in the
+(`Landing.svelte`), which delegates the validated manifest to `FlowBoard`. The board
+loads each card contract independently. Available flows retain route links inside each
+`BoardItem`; unavailable and failed flows remain non-interactive. (The old `#/`-hash router was removed in the
 SvelteKit migration.)
 
 ## Flows registry
 
-`lib/flows/registry.ts` defines `FlowDefinition` (id, name, icon, description, route,
-color, `getStats()`); `lib/flows/index.ts` registers each flow. The board reads the
-registry to render cards and pull live stats. Each flow's `index.ts` exports its
-`FlowDefinition`; its `api.ts` wraps the Eden calls; `stores.ts` holds flow state.
+`lib/flows/registry.ts` defines `FlowDefinition` (id, name, icon, description, route, and
+`boardCard`) plus `createFlowRegistry()`. Registry construction rejects duplicate IDs,
+missing metadata, invalid routes, and contracts without `boardCard.load`; lookups return
+defensive manifest copies. `lib/flows/index.ts` builds the immutable application manifest.
+
+`lib/flows/board-card.ts` owns the board-only presentation boundary. A contract resolves
+to `ready`, `empty`, or `error`; `FlowBoard` adds `loading` while a request is pending and
+converts refresh failures with prior data into `stale`. Summary status and metrics remain
+visible while collapsed; optional expanded metrics and notes render only when open.
+Spotify and Lyrics own representative rich contracts. Trading, Chat, and Canvas adapt
+their existing status/count response through `createStatsBoardCard()`. `BoardCardContent`
+renders every flow from the discriminated contract and never branches on a flow ID.
+
+Board DTOs are UI presentation types because they never cross the backend boundary.
+Provider/domain DTOs continue to live in `@flows/shared`; each flow's `api.ts` wraps its
+typed Eden calls, and `stores.ts` holds reusable flow state where needed.
 
 ## Board layout
 
@@ -134,9 +147,11 @@ cosmic/glass utility layer, or gradient-based production UI.
 
 Unit/component tests run under Vitest + `@testing-library/svelte` (jsdom), beside the code
 as `*.svelte.test.ts` / `*.test.ts`. Mock the Eden client (`@lib/client`) — never hit the
-network. Pure chart-theme and board-layout mapping are unit-tested; chart canvas
-rendering, keyboard reorder, native drag-and-drop, persistence reloads, and responsive
-behavior are verified in a real browser. E2E lives in `e2e/` (Playwright).
+network. Pure chart-theme, board-layout, registry, and card-contract mapping are
+unit-tested. The generic renderer covers every async state and negative space. Chart
+canvas rendering, live summary/expansion, stale refresh, keyboard reorder, native
+drag-and-drop, persistence reloads, and responsive behavior are verified in a real
+browser. E2E lives in `e2e/` (Playwright).
 
 ## Tooling
 

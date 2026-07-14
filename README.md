@@ -14,6 +14,9 @@ independently testable bounded module hosted by one Elysia API and one SvelteKit
 
 The home experience is an accessible board where flows can be reordered, collapsed, and
 resized with a versioned local layout while their dedicated routes remain available.
+Every registered flow publishes a typed card contract for its live summary, optional
+expanded metrics, and loading/empty/error/stale states; the board renders that contract
+without importing flow internals.
 
 The UI shares one semantic design system across all routes, with persistent galaxy,
 fire, and organic themes and responsive desktop/mobile workspaces.

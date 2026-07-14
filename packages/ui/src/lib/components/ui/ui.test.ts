@@ -56,6 +56,13 @@ describe('UI primitives', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Request failed');
   });
 
+  it('AsyncState offers a compact layout for constrained surfaces', () => {
+    render(AsyncState, {
+      props: { state: 'empty', title: 'No card data', compact: true },
+    });
+    expect(screen.getByRole('status')).toHaveClass('ui-async-state--compact');
+  });
+
   it('Panel exposes its semantic element, label, and surface variant', () => {
     render(Panel, {
       props: {

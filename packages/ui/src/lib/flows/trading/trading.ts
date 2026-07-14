@@ -5,7 +5,8 @@
 //   - stores.svelte.ts  → Runes-based state (tradingStore)
 //   - api.ts            → API functions + SSE streaming
 
-import { type FlowStats, type FlowDefinition } from '../registry';
+import { createStatsBoardCard, FlowStatus, type FlowStats } from '../board-card';
+import type { FlowDefinition } from '../registry';
 import { api } from '@lib/client';
 import type { StatusResponse } from './types';
 
@@ -40,13 +41,13 @@ async function getTradingStats(): Promise<FlowStats> {
     const result = data as unknown as StatusResponse;
     return {
       count: result.trading?.candleCount || 0,
-      status: result.trading?.isRunning ? 'active' : 'configured',
+      status: result.trading?.isRunning ? FlowStatus.ACTIVE : FlowStatus.CONFIGURED,
       statusMessage: result.trading?.isRunning ? 'Streaming' : 'Stopped',
     };
   } catch {
     return {
       count: 0,
-      status: 'error',
+      status: FlowStatus.ERROR,
       statusMessage: 'Disconnected',
     };
   }
@@ -59,8 +60,13 @@ export const tradingFlow: FlowDefinition = {
   icon: '📈',
   description: 'Real-time BTC analysis with Hurst exponent, fractals, and AI-powered insights.',
   route: '/trading',
-  color: 'from-amber-400 to-orange-500',
-  getStats: getTradingStats,
+  boardCard: createStatsBoardCard(getTradingStats, {
+    metricLabel: 'Candles',
+    emptyTitle: 'No market data yet',
+    emptyMessage: 'Open Trading Bot to start the stream.',
+    errorTitle: 'Trading summary unavailable',
+    errorMessage: 'Connect the backend and refresh the board to try again.',
+  }),
 };
 
 export { getTradingStats };
