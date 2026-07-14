@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { Badge, IconButton } from '@lib/components';
-  import type { FlowStats } from '@lib/flows';
+  import { IconButton } from '@lib/components';
+  import { BoardCardState, type BoardCardViewState, type FlowDefinition } from '@lib/flows';
   import { BoardItemSize, isBoardItemSize, type BoardItemLayout } from '../board-layout';
-  import type { FlowCardModel } from '../types';
+  import BoardCardContent from './BoardCardContent.svelte';
 
   interface Props {
-    flow: FlowCardModel;
+    flow: FlowDefinition;
+    card: BoardCardViewState;
     layout: BoardItemLayout;
     position: number;
     itemCount: number;
@@ -23,6 +24,7 @@
 
   let {
     flow,
+    card,
     layout,
     position,
     itemCount,
@@ -38,39 +40,9 @@
     onDrop,
   }: Props = $props();
 
-  const isClickable = $derived(
-    flow.stats.status === 'active' || flow.stats.status === 'configured'
-  );
+  const isClickable = $derived(card.canOpen);
   const titleId = $derived(`board-item-title-${flow.id}`);
   const contentId = $derived(`board-item-content-${flow.id}`);
-
-  function getStatusTone(status: FlowStats['status']): 'success' | 'info' | 'danger' | 'neutral' {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'configured':
-        return 'info';
-      case 'error':
-        return 'danger';
-      default:
-        return 'neutral';
-    }
-  }
-
-  function getStatusLabel(stats: FlowStats): string {
-    if (stats.statusMessage) return stats.statusMessage;
-
-    switch (stats.status) {
-      case 'active':
-        return 'Active';
-      case 'configured':
-        return 'Configured';
-      case 'error':
-        return 'Error';
-      default:
-        return 'Unavailable';
-    }
-  }
 
   function handleSizeChange(event: Event): void {
     const value = (event.currentTarget as HTMLSelectElement).value;
@@ -84,10 +56,12 @@
   class:board-item--dragging={isDragging}
   class:board-item--drop-target={isDropTarget}
   aria-labelledby={titleId}
+  aria-busy={card.state === BoardCardState.LOADING}
   data-board-id={flow.id}
   data-size={layout.size}
   data-collapsed={layout.collapsed}
-  data-state={isClickable ? undefined : 'unavailable'}
+  data-state={card.state}
+  data-openable={isClickable}
   draggable="true"
   ondragstart={onDragStart}
   ondragend={onDragEnd}
@@ -109,10 +83,7 @@
             {flow.name}
           {/if}
         </h2>
-        <div class="board-item__meta">
-          <Badge tone={getStatusTone(flow.stats.status)}>{getStatusLabel(flow.stats)}</Badge>
-          <span>{position + 1} of {itemCount}</span>
-        </div>
+        <span class="board-item__position">{position + 1} of {itemCount}</span>
       </div>
     </div>
 
@@ -151,28 +122,21 @@
         aria-controls={contentId}
         onclick={onToggleCollapsed}
       >
-        <span aria-hidden="true">{layout.collapsed ? '+' : '−'}</span>
+        <span aria-hidden="true"
+          >{#if layout.collapsed}+{:else}&minus;{/if}</span
+        >
       </IconButton>
     </div>
   </header>
 
-  <div id={contentId} class="board-item__content" hidden={layout.collapsed}>
-    <p>{flow.description}</p>
+  <div id={contentId} class="board-item__body">
+    <BoardCardContent {card} description={flow.description} showExpanded={!layout.collapsed} />
 
-    <footer class="board-item__footer">
-      {#if flow.stats.count > 0}
-        <span class="board-item__count">
-          <strong>{flow.stats.count}</strong>
-          <span>Items</span>
-        </span>
-      {:else}
-        <span></span>
-      {/if}
-
-      {#if isClickable}
-        <span class="board-item__action">Open flow <span aria-hidden="true">&rarr;</span></span>
-      {/if}
-    </footer>
+    {#if !layout.collapsed && isClickable}
+      <footer class="board-item__footer">
+        <span>Open flow <span aria-hidden="true">&rarr;</span></span>
+      </footer>
+    {/if}
   </div>
 </article>
 
@@ -209,7 +173,7 @@
   }
 
   .board-item--collapsed {
-    min-height: 0;
+    min-height: 9rem;
   }
 
   .board-item--dragging {
@@ -225,9 +189,7 @@
   .board-item__header,
   .board-item__identity,
   .board-item__controls,
-  .board-item__meta,
-  .board-item__footer,
-  .board-item__count {
+  .board-item__footer {
     display: flex;
     align-items: center;
   }
@@ -267,7 +229,9 @@
   }
 
   .board-item__heading {
+    display: grid;
     min-width: 0;
+    gap: 0.25rem;
   }
 
   .board-item__heading h2 {
@@ -290,11 +254,7 @@
     outline-offset: 2px;
   }
 
-  .board-item__meta {
-    min-height: 1.5rem;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-    margin-top: 0.25rem;
+  .board-item__position {
     color: var(--ui-text-muted);
     font-size: 0.6875rem;
   }
@@ -314,51 +274,26 @@
     font-size: 0.75rem;
   }
 
-  .board-item__content {
+  .board-item__body {
     display: flex;
     min-width: 0;
     flex: 1 1 auto;
     flex-direction: column;
-  }
-
-  .board-item__content[hidden] {
-    display: none;
-  }
-
-  .board-item__content > p {
-    margin: 0;
-    color: var(--ui-text-muted);
-    font-size: 0.875rem;
-    line-height: 1.5;
+    gap: 0.875rem;
   }
 
   .board-item__footer {
     min-height: 2rem;
     margin-top: auto;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: flex-end;
     padding-top: 0.875rem;
     border-top: 1px solid var(--ui-border);
   }
 
-  .board-item__count {
-    align-items: baseline;
-    gap: 0.375rem;
-  }
-
-  .board-item__count strong {
-    font-size: 1.125rem;
-  }
-
-  .board-item__count span,
-  .board-item__action {
-    color: var(--ui-text-muted);
+  .board-item__footer span {
+    color: var(--ui-accent);
     font-size: 0.75rem;
     font-weight: 600;
-  }
-
-  .board-item__action {
-    color: var(--ui-accent);
   }
 
   @media (max-width: 56.25rem) {

@@ -1,6 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { AsyncState, Badge, Button } from '@lib/components';
+  import { AsyncState, Badge, Button, IconButton } from '@lib/components';
+  import {
+    BoardCardState,
+    createBoardCardError,
+    createStaleBoardCard,
+    hasBoardCardData,
+    type BoardCardSnapshot,
+    type BoardCardViewState,
+    type FlowDefinition,
+  } from '@lib/flows';
   import {
     createDefaultBoardLayout,
     isDefaultBoardLayout,
@@ -12,23 +21,23 @@
     type BoardItemSize,
     type BoardLayout,
   } from '../board-layout';
-  import type { FlowCardModel } from '../types';
   import BoardItem from './BoardItem.svelte';
 
   interface Props {
-    flows: FlowCardModel[];
-    readyFlowCount: number;
+    flows: FlowDefinition[];
   }
 
   interface OrderedBoardItem {
-    flow: FlowCardModel;
+    flow: FlowDefinition;
     layout: BoardLayout['items'][number];
   }
 
-  let { flows, readyFlowCount }: Props = $props();
+  let { flows }: Props = $props();
   const flowIds = $derived(flows.map((flow) => flow.id));
   let layout = $state<BoardLayout>(createDefaultBoardLayout([]));
   let isLayoutReady = $state(false);
+  let cardStates = $state<Record<string, BoardCardViewState>>({});
+  let isRefreshing = $state(false);
   let draggingId = $state<string | null>(null);
   let dropTargetId = $state<string | null>(null);
   let announcement = $state('');
@@ -41,11 +50,60 @@
     });
   });
   const isDefaultLayout = $derived(!isLayoutReady || isDefaultBoardLayout(layout, flowIds));
+  const loadingCount = $derived(
+    flows.filter((flow) => cardStates[flow.id]?.state === BoardCardState.LOADING).length
+  );
+  const readyFlowCount = $derived(flows.filter((flow) => cardStates[flow.id]?.canOpen).length);
 
   onMount(() => {
     layout = loadBoardLayout(window.localStorage, flowIds);
     isLayoutReady = true;
+    void refreshSummaries(false);
   });
+
+  function cardFor(flowId: string): BoardCardViewState {
+    return cardStates[flowId] ?? { state: BoardCardState.LOADING, canOpen: false };
+  }
+
+  async function loadCard(
+    flow: FlowDefinition,
+    previous: BoardCardViewState | undefined
+  ): Promise<void> {
+    let next: BoardCardSnapshot;
+    try {
+      next = await flow.boardCard.load();
+    } catch {
+      next = createBoardCardError();
+    }
+
+    if (next.state === BoardCardState.ERROR && previous && hasBoardCardData(previous)) {
+      next = createStaleBoardCard(previous, 'Refresh failed. Showing the previous summary.');
+    }
+
+    cardStates = { ...cardStates, [flow.id]: next };
+  }
+
+  async function refreshSummaries(announce = true): Promise<void> {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    const previousStates = cardStates;
+    cardStates = Object.fromEntries(
+      flows.map((flow) => [flow.id, { state: BoardCardState.LOADING, canOpen: false }])
+    );
+
+    await Promise.all(flows.map((flow) => loadCard(flow, previousStates[flow.id])));
+    isRefreshing = false;
+
+    if (announce) {
+      const degradedCount = Object.values(cardStates).filter(
+        (card) => card.state === BoardCardState.ERROR || card.state === BoardCardState.STALE
+      ).length;
+      announcement =
+        degradedCount > 0
+          ? `Flow summaries refreshed with ${degradedCount} degraded.`
+          : 'Flow summaries refreshed.';
+    }
+  }
 
   function flowName(itemId: string): string {
     return flows.find((flow) => flow.id === itemId)?.name ?? itemId;
@@ -113,13 +171,25 @@
 <div class="flow-board">
   <div class="flow-board__toolbar">
     <div class="flow-board__summary" aria-label="Flow availability">
+      {#if loadingCount > 0}<Badge tone="info">{loadingCount} loading</Badge>{/if}
       <Badge tone="success">{readyFlowCount} ready</Badge>
       <Badge tone="neutral">{flows.length} total</Badge>
     </div>
-    <Button variant="secondary" size="sm" disabled={isDefaultLayout} onclick={resetLayout}>
-      <span aria-hidden="true">&#8634;</span>
-      Reset layout
-    </Button>
+    <div class="flow-board__actions">
+      <IconButton
+        label="Refresh summaries"
+        size="sm"
+        disabled={isRefreshing}
+        aria-busy={isRefreshing}
+        onclick={() => void refreshSummaries()}
+      >
+        <span aria-hidden="true">&#8635;</span>
+      </IconButton>
+      <Button variant="secondary" size="sm" disabled={isDefaultLayout} onclick={resetLayout}>
+        <span aria-hidden="true">&#8634;</span>
+        Reset layout
+      </Button>
+    </div>
   </div>
 
   {#if !isLayoutReady}
@@ -131,6 +201,7 @@
       {#each orderedItems as item, index (item.flow.id)}
         <BoardItem
           flow={item.flow}
+          card={cardFor(item.flow.id)}
           layout={item.layout}
           position={index}
           itemCount={orderedItems.length}
@@ -166,7 +237,8 @@
   }
 
   .flow-board__toolbar,
-  .flow-board__summary {
+  .flow-board__summary,
+  .flow-board__actions {
     display: flex;
     align-items: center;
   }
@@ -177,9 +249,14 @@
     gap: 1rem;
   }
 
-  .flow-board__summary {
+  .flow-board__summary,
+  .flow-board__actions {
     flex-wrap: wrap;
     gap: 0.5rem;
+  }
+
+  .flow-board__actions {
+    justify-content: flex-end;
   }
 
   .flow-board__grid {
@@ -204,6 +281,11 @@
     .flow-board__toolbar {
       align-items: flex-start;
       flex-direction: column;
+    }
+
+    .flow-board__actions {
+      width: 100%;
+      justify-content: space-between;
     }
   }
 </style>

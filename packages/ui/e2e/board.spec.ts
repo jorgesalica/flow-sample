@@ -2,6 +2,14 @@ import { expect, test, type Page } from '@playwright/test';
 
 const BOARD_LAYOUT_STORAGE_KEY = 'flow-sample:board-layout';
 const defaultOrder = ['spotify', 'trading', 'lyrics-flow', 'chat-flow', 'canvas-flow'];
+const spotifyStats = {
+  totalTracks: 42,
+  totalGenres: 8,
+  topGenres: [{ genre: 'rock', count: 12 }],
+  decadeDistribution: { '2020s': 20 },
+  yearRange: { oldest: 1998, newest: 2025 },
+};
+const lyricsStats = { total: 20, found: 12, notFound: 3, pending: 5 };
 
 async function openCleanBoard(page: Page): Promise<void> {
   await page.goto('/');
@@ -17,6 +25,46 @@ async function boardOrder(page: Page): Promise<string[]> {
 }
 
 test.describe('Board v1', () => {
+  test('renders representative live summary and expansion contracts', async ({ page }) => {
+    await page.route('**/api/spotify/stats', (route) => route.fulfill({ json: spotifyStats }));
+    await page.route('**/api/lyrics/stats', (route) => route.fulfill({ json: lyricsStats }));
+    await openCleanBoard(page);
+
+    const spotifyCard = page.locator('[data-board-id="spotify"]');
+    const lyricsCard = page.locator('[data-board-id="lyrics-flow"]');
+    await expect(spotifyCard.getByRole('region', { name: 'Library snapshot' })).toBeVisible();
+    await expect(spotifyCard.getByText('Top genre')).toBeVisible();
+    await expect(spotifyCard.getByText('rock')).toBeVisible();
+    await expect(lyricsCard.getByRole('region', { name: 'Lyrics coverage' })).toBeVisible();
+    await expect(lyricsCard.getByText('Coverage', { exact: true })).toBeVisible();
+    await expect(lyricsCard.getByText('60%')).toBeVisible();
+  });
+
+  test('keeps the previous summary as stale when refresh fails', async ({ page }) => {
+    let failSpotifyRefresh = false;
+    await page.route('**/api/spotify/stats', (route) =>
+      failSpotifyRefresh
+        ? route.fulfill({ status: 503, json: { error: 'unavailable' } })
+        : route.fulfill({ json: spotifyStats })
+    );
+    await page.goto('/');
+
+    const spotifyCard = page.locator('[data-board-id="spotify"]');
+    await expect(spotifyCard.getByRole('region', { name: 'Library snapshot' })).toBeVisible();
+    await expect(spotifyCard.getByText('42', { exact: true })).toBeVisible();
+    const refresh = page.getByRole('button', { name: 'Refresh summaries' });
+    await expect(refresh).toBeEnabled();
+
+    failSpotifyRefresh = true;
+    await refresh.click();
+
+    await expect(spotifyCard.getByText('Stale')).toBeVisible();
+    await expect(spotifyCard.getByText('42', { exact: true })).toBeVisible();
+    await expect(spotifyCard.getByRole('status')).toContainText(
+      'Refresh failed. Showing the previous summary.'
+    );
+  });
+
   test('keyboard controls persist order, collapsed state, size, and reset', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openCleanBoard(page);

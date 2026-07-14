@@ -125,6 +125,8 @@ flowchart TD
     flowUi --> sharedUi["Shared UI primitives\nlib/components/ui"]
     home --> registry["Flow registry\nlib/flows/registry.ts"]
     home --> board["FlowBoard + BoardItem\npages/components"]
+    registry --> cardContract["Board card contract\nflows/board-card.ts"]
+    cardContract --> board
     board --> layout["Versioned layout contract\npages/board-layout.ts"]
     layout --> localStorage[("localStorage")]
     board --> sharedUi
@@ -135,6 +137,8 @@ Target shape:
 - Route files stay thin: load data, pass props, render the flow surface.
 - Flow surfaces own page-level composition.
 - Components own visual fragments and ephemeral UI state.
+- Registered flows own summary/expansion production behind a generic board card contract;
+  `BoardCardContent` owns rendering and never imports flow-specific modules.
 - `*.svelte.ts` modules own reusable flow state only when there is a documented
   reason not to keep state local.
 - Server data comes from loaders and Eden, then mutations call Eden and
@@ -200,5 +204,6 @@ Target shape:
 
 8. **Board/Canvas vision (#18)**
    Board v1 (#42) now renders the `FlowDefinition` registry with local layout
-   persistence and accessible reorder controls. Continue with typed card contracts
-   (#43) and named server-persisted boards (#44) before cross-flow relationships.
+   persistence and accessible reorder controls. Typed card contracts (#43) now provide
+   validated summaries, expansion, and async/stale states. Continue with named
+   server-persisted boards (#44) before cross-flow relationships.

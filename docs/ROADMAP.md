@@ -25,6 +25,9 @@ follow-up polish.
   flow, including browser-rendered charts and responsive workspaces.
 - Board v1 renders the flow registry as reorderable, collapsible, resizable items with
   versioned local persistence, keyboard controls, drag-and-drop, and a reset command.
+- Registered flows publish typed board summaries and optional expanded content. Spotify
+  and Lyrics provide richer live contracts; the remaining flows use the generic stats
+  adapter. Loading, empty, error, and stale data share one renderer.
 - Architecture contracts reject retired UI styles, gradients, and accessibility
   suppressions.
 - CI builds the monorepo and runs lint, type checks, Svelte checks, and coverage.
@@ -35,14 +38,11 @@ longer import each other's internals.
 
 ## Execution Queue
 
-1. **Board card contracts
-   ([#43](https://github.com/jorgesalica/flow-sample/issues/43))**: typed summaries,
-   expansion, and async states without flow-specific renderer branches.
-2. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
+1. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
    repository-backed persistence, API, loader integration, and local migration.
 
-Relationships and graph edges get a separate issue only after the board and card
-contracts are proven. A DOM/CSS board is the default; an HTML canvas or graph library
+Relationships and graph edges get a separate issue only after named boards are proven.
+A DOM/CSS board is the default; an HTML canvas or graph library
 requires an interaction-driven spike first.
 
 ## Deferred Epics

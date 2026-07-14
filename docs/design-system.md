@@ -80,6 +80,13 @@ button with `aria-expanded`; size uses a native select; reset is an explicit tex
 Actions update a polite live region and persist only layout preferences. Board items are
 single cards with internal controls, never cards nested inside decorative cards.
 
+Each registered flow supplies a `BoardCardContract`; the board owns loading and refresh
+orchestration while `BoardCardContent` renders the discriminated state. Collapsed cards
+retain their status and summary metrics, hiding only optional expanded content. Loading,
+empty, and error use compact `AsyncState`; stale keeps the last successful content visible
+with a warning. The renderer consumes only generic status, metric, and note fields and
+must not import or branch on flow-specific modules.
+
 ## Interaction Rules
 
 - Every control has an accessible name, native keyboard behavior, and visible focus.

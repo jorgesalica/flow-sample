@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { BoardCardState } from '../board-card';
 import type { StatusResponse } from './types';
 
 // --- Mock the network edge (Eden client). Never hit a real backend. ---
@@ -143,23 +144,24 @@ describe('tradingFlow definition contract', () => {
     expect(tradingFlow.name).toBe('Trading Bot');
     expect(tradingFlow.route).toBe('/trading');
     expect(tradingFlow.icon).toBe('📈');
-    expect(tradingFlow.color).toContain('amber');
     expect(tradingFlow.description).toMatch(/Hurst/);
   });
 
-  it('exposes a getStats function (routing is file-based, no component field)', () => {
-    expect(typeof tradingFlow.getStats).toBe('function');
+  it('exposes a board card loader (routing remains file-based)', () => {
+    expect(typeof tradingFlow.boardCard.load).toBe('function');
   });
 
-  it('getStats on the definition delegates to getTradingStats', async () => {
+  it('maps trading stats through the generic board card contract', async () => {
     statusGet.mockResolvedValue({
       data: statusFixture({ isRunning: true, candleCount: 9 }),
       error: null,
     });
 
-    const stats = await tradingFlow.getStats();
+    const card = await tradingFlow.boardCard.load();
 
-    expect(stats.count).toBe(9);
-    expect(stats.status).toBe('active');
+    expect(card.state).toBe(BoardCardState.READY);
+    if (card.state !== BoardCardState.READY) throw new Error('Expected a ready card');
+    expect(card.summary.primary).toEqual({ label: 'Candles', value: '9' });
+    expect(card.summary.status.label).toBe('Streaming');
   });
 });
