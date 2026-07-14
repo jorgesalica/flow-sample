@@ -48,6 +48,10 @@ SSE, browser-only charting, drag-and-drop, keyboard reordering, persistence migr
 multi-step flows deserve Playwright or explicit manual verification because jsdom cannot
 fully model their runtime behavior.
 
+Board changes pair pure layout-contract tests with component role/callback tests.
+Playwright must prove explicit keyboard reorder, native drag-and-drop, reload persistence,
+reset behavior, and a no-overflow mobile fallback when those behaviors change.
+
 ## Commands And CI
 
 ```bash

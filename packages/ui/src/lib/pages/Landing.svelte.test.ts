@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import type { FlowDefinition, FlowStats } from '@lib/flows';
 
@@ -28,6 +28,10 @@ function makeFlow(
 const { default: Landing } = await import('./Landing.svelte');
 
 describe('Landing board', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('sets the branded page title', () => {
     getFlows.mockReturnValue([]);
 
@@ -44,7 +48,7 @@ describe('Landing board', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Loading flow status');
   });
 
-  it('renders every registered flow plus the YouTube placeholder', async () => {
+  it('renders registered flows without inventing unregistered board items', async () => {
     getFlows.mockReturnValue([
       makeFlow('spotify', { count: 12, status: 'active' }, { name: 'Spotify Flow' }),
     ]);
@@ -52,7 +56,7 @@ describe('Landing board', () => {
     render(Landing);
 
     expect(await screen.findByRole('link', { name: 'Open Spotify Flow' })).toBeInTheDocument();
-    expect(screen.getByText('YouTube Flow')).toBeInTheDocument();
+    expect(screen.queryByText('YouTube Flow')).not.toBeInTheDocument();
   });
 
   it('renders active and configured flows as route links', async () => {
@@ -133,10 +137,10 @@ describe('Landing board', () => {
 
     render(Landing);
 
-    expect(screen.getByRole('heading', { name: 'Flows' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Board' })).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText('0 ready')).toBeInTheDocument();
-      expect(screen.getByText('1 total')).toBeInTheDocument();
+      expect(screen.getByText('0 total')).toBeInTheDocument();
     });
   });
 });

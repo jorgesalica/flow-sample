@@ -21,7 +21,7 @@ test.describe('Spotify Flow Page', () => {
 
     await page.getByRole('link', { name: 'Back to flows' }).click();
     await page.waitForURL('**/');
-    await expect(page.getByRole('heading', { name: 'Flows' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Board' })).toBeVisible();
   });
 });
 

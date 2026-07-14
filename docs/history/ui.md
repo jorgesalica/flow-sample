@@ -2,6 +2,22 @@
 
 Changelog for the frontend (Svelte) application.
 
+## 2026-07-13 - Board v1
+
+Issue #42 replaced the fixed landing grid with the first persistent flow board:
+
+- Derived every item from the existing `FlowDefinition` manifest and removed the
+  unregistered YouTube placeholder.
+- Added explicit keyboard reorder, native drag-and-drop, collapse, compact/standard/wide
+  preferences, reset, and live announcements.
+- Added a versioned `flow-sample:board-layout` contract that safely reconciles registry
+  changes and rejects malformed or old data.
+- Preserved dedicated flow routes and non-interactive behavior for unavailable flows.
+- Added focused contract/component tests plus Playwright coverage for desktop, mobile,
+  reload persistence, keyboard controls, and drag-and-drop.
+
+---
+
 ## 2026-07-13 - Semantic Design System
 
 Issue #24 completed the migration from flow-local cosmic/glass styling to one global UI

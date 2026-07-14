@@ -50,9 +50,11 @@ ui/
 │       ├── types.ts              # local UI types (domain types come from @flows/shared)
 │       ├── pages/
 │       │   ├── Landing.svelte    # flow registry orchestration + live stats
+│       │   ├── board-layout.ts   # versioned local layout contract + operations
 │       │   ├── types.ts          # root dashboard presentation model
 │       │   └── components/
-│       │       └── FlowCard.svelte # semantic board card presentation
+│       │       ├── FlowBoard.svelte # state, persistence, reset, drag/drop
+│       │       └── BoardItem.svelte # flow presentation + accessible controls
 │       ├── components/
 │       │   ├── layout/           # Navbar, FlowLayout
 │       │   ├── common/           # InfiniteScroll, …
@@ -73,9 +75,10 @@ ui/
 
 File-based. Each flow is a route under `src/routes/<flow>/+page.svelte` that renders the
 flow's page component from `lib/flows/<flow>/`. The home route renders the flow index
-(`Landing.svelte`), which resolves registry stats and delegates each item to a semantic
-`FlowCard`. Available flows are links; unavailable and failed flows are non-interactive
-articles. (The old `#/`-hash router was removed in the SvelteKit migration.)
+(`Landing.svelte`), which resolves registry stats and delegates registered flows to
+`FlowBoard`. Available flows retain route links inside each `BoardItem`; unavailable and
+failed flows remain non-interactive. (The old `#/`-hash router was removed in the
+SvelteKit migration.)
 
 ## Flows registry
 
@@ -83,6 +86,21 @@ articles. (The old `#/`-hash router was removed in the SvelteKit migration.)
 color, `getStats()`); `lib/flows/index.ts` registers each flow. The board reads the
 registry to render cards and pull live stats. Each flow's `index.ts` exports its
 `FlowDefinition`; its `api.ts` wraps the Eden calls; `stores.ts` holds flow state.
+
+## Board layout
+
+`pages/board-layout.ts` owns the browser-only presentation contract. Version 1 stores an
+ordered list of `{ id, collapsed, size }` items under `flow-sample:board-layout`.
+`FlowBoard` reconciles that data against current registry IDs: removed flows are dropped,
+new flows are appended in manifest order, and malformed or mismatched-version data falls
+back to the default layout. Layout data never contains flow DTOs, stats, or server state.
+
+Explicit earlier/later buttons are the accessible reorder baseline. Native drag-and-drop
+uses the same immutable reorder operation as a progressive enhancement. Collapse, size,
+and reset changes persist immediately and announce their result through a polite live
+region. CSS grid maps compact, standard, and wide preferences to desktop columns and
+falls back to one column on mobile. Named or server-persisted boards remain separate
+work owned by issue #44.
 
 ## Data access
 
@@ -116,8 +134,9 @@ cosmic/glass utility layer, or gradient-based production UI.
 
 Unit/component tests run under Vitest + `@testing-library/svelte` (jsdom), beside the code
 as `*.svelte.test.ts` / `*.test.ts`. Mock the Eden client (`@lib/client`) — never hit the
-network. Pure chart-theme mapping is unit-tested; chart canvas rendering and responsive
-theme behavior are verified in a real browser. E2E lives in `e2e/` (Playwright).
+network. Pure chart-theme and board-layout mapping are unit-tested; chart canvas
+rendering, keyboard reorder, native drag-and-drop, persistence reloads, and responsive
+behavior are verified in a real browser. E2E lives in `e2e/` (Playwright).
 
 ## Tooling
 

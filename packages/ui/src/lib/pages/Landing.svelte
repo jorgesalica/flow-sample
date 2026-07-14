@@ -1,24 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { AsyncState, Badge, FlowLayout } from '@lib/components';
+  import { AsyncState, FlowLayout } from '@lib/components';
   import { getFlows, type FlowDefinition, type FlowStats } from '@lib/flows';
-  import FlowCard from './components/FlowCard.svelte';
+  import FlowBoard from './components/FlowBoard.svelte';
   import type { FlowCardModel } from './types';
 
   const pageTitle = 'Cosmic Flow - Data Exploration Hub';
-
-  const placeholderFlows: FlowCardModel[] = [
-    {
-      id: 'youtube',
-      name: 'YouTube Flow',
-      icon: '📺',
-      description: 'Import and explore YouTube Music library',
-      route: '/youtube',
-      color: 'from-red-400 to-pink-500',
-      stats: { count: 0, status: 'disabled', statusMessage: 'Coming Soon' },
-      getStats: async () => ({ count: 0, status: 'disabled' }),
-    },
-  ];
 
   let flows = $state<FlowCardModel[]>([]);
   let isLoading = $state(true);
@@ -37,7 +24,7 @@
 
   onMount(async () => {
     const flowsWithStats = await Promise.all(getFlows().map(resolveFlow));
-    flows = [...flowsWithStats, ...placeholderFlows];
+    flows = flowsWithStats;
     isLoading = false;
   });
 </script>
@@ -49,24 +36,14 @@
 <FlowLayout>
   <section class="flow-index" aria-labelledby="flow-index-title">
     <header class="flow-index__header">
-      <h1 id="flow-index-title">Flows</h1>
-      {#if !isLoading}
-        <div class="flow-index__summary" aria-label="Flow availability">
-          <Badge tone="success">{readyFlowCount} ready</Badge>
-          <Badge tone="neutral">{flows.length} total</Badge>
-        </div>
-      {/if}
+      <h1 id="flow-index-title">Board</h1>
     </header>
 
     <div class="flow-index__content">
       {#if isLoading}
         <AsyncState state="loading" title="Loading flow status" />
       {:else}
-        <div class="flow-index__grid">
-          {#each flows as flow (flow.id)}
-            <FlowCard {flow} />
-          {/each}
-        </div>
+        <FlowBoard {flows} {readyFlowCount} />
       {/if}
     </div>
   </section>
@@ -94,28 +71,10 @@
     font-size: 2rem;
   }
 
-  .flow-index__summary {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 0.5rem;
-  }
-
   .flow-index__content {
+    display: flex;
     min-height: 24rem;
     flex: 1 1 auto;
-  }
-
-  .flow-index__grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
-  @media (max-width: 56.25rem) {
-    .flow-index__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
   }
 
   @media (max-width: 40rem) {
@@ -123,16 +82,8 @@
       gap: 1rem;
     }
 
-    .flow-index__header {
-      align-items: flex-start;
-    }
-
     .flow-index__header h1 {
       font-size: 1.75rem;
-    }
-
-    .flow-index__grid {
-      grid-template-columns: minmax(0, 1fr);
     }
   }
 </style>

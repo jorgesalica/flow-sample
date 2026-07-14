@@ -67,6 +67,19 @@ responsive drawer behavior.
 Compose these primitives before introducing a flow-local equivalent. A local component
 is justified when it owns domain behavior, not merely different colors or copy.
 
+## Board Pattern
+
+The home board is a responsive CSS grid, not an HTML canvas. `FlowBoard` owns layout
+state and `BoardItem` combines one registered flow with its presentation controls. The
+default compact size uses three desktop columns; standard uses two and wide uses the full
+row. Every size falls back to one column on mobile.
+
+Reordering always exposes named earlier/later `IconButton` controls. Drag-and-drop is an
+optional pointer enhancement, not the only interaction. Collapse uses a disclosure
+button with `aria-expanded`; size uses a native select; reset is an explicit text command.
+Actions update a polite live region and persist only layout preferences. Board items are
+single cards with internal controls, never cards nested inside decorative cards.
+
 ## Interaction Rules
 
 - Every control has an accessible name, native keyboard behavior, and visible focus.

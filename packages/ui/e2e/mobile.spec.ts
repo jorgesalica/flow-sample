@@ -6,7 +6,7 @@ test.describe('Mobile Viewport Tests', () => {
   test('landing page is responsive on mobile', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: 'Flows' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Board' })).toBeVisible();
     await expect(page.getByText('Spotify Flow')).toBeVisible();
   });
 

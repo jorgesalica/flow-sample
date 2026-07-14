@@ -12,8 +12,8 @@ independently testable bounded module hosted by one Elysia API and one SvelteKit
 - **Chat** exposes multi-provider LLM chat with rotation fallback and SSE streaming.
 - **Canvas** tokenizes text and renders typed LLM annotations.
 
-The product direction is an accessible board where these flows become movable,
-expandable items while their dedicated routes remain available.
+The home experience is an accessible board where flows can be reordered, collapsed, and
+resized with a versioned local layout while their dedicated routes remain available.
 
 The UI shares one semantic design system across all routes, with persistent galaxy,
 fire, and organic themes and responsive desktop/mobile workspaces.
