@@ -23,6 +23,8 @@ follow-up polish.
 - Architecture contracts enforce key package and layering rules.
 - Shared UI primitives and the galaxy/fire/organic theme system cover every production
   flow, including browser-rendered charts and responsive workspaces.
+- Board v1 renders the flow registry as reorderable, collapsible, resizable items with
+  versioned local persistence, keyboard controls, drag-and-drop, and a reset command.
 - Architecture contracts reject retired UI styles, gradients, and accessibility
   suppressions.
 - CI builds the monorepo and runs lint, type checks, Svelte checks, and coverage.
@@ -33,12 +35,10 @@ longer import each other's internals.
 
 ## Execution Queue
 
-1. **Board v1 ([#42](https://github.com/jorgesalica/flow-sample/issues/42))**: accessible
-   reorder, collapse, size preferences, and versioned local persistence.
-2. **Board card contracts
+1. **Board card contracts
    ([#43](https://github.com/jorgesalica/flow-sample/issues/43))**: typed summaries,
    expansion, and async states without flow-specific renderer branches.
-3. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
+2. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
    repository-backed persistence, API, loader integration, and local migration.
 
 Relationships and graph edges get a separate issue only after the board and card
@@ -53,7 +53,7 @@ requires an interaction-driven spike first.
   song viewer, karaoke, and richer annotations.
 
 They remain intentionally outside the current execution queue and are not prerequisites
-for Board v1.
+for the board/card work.
 
 ## Definition Of Done
 

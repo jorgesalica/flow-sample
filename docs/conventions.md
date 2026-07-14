@@ -118,6 +118,9 @@ from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
 - **Shared design system first**: compose primitives from `@lib/components` and consume
   semantic `--ui-*` tokens. Palette state belongs to the application root; flows do not
   define themes, gradients, legacy cosmic/glass utilities, or accessibility suppressions.
+- **Browser preferences are contracts**: version and validate persisted `localStorage`
+  data, reconcile it against current identifiers, and provide a safe default/reset path.
+  Do not mix presentation preferences with backend or cross-boundary DTOs.
 - **Data access** goes through the typed Eden client (`@lib/client`), wrapped per flow in
   `api.ts`. Preferred target: SvelteKit `+page.ts` loaders (universal load) over `onMount`.
 

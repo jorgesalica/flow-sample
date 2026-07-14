@@ -1,6 +1,6 @@
 # System Map and Refactor Boundaries
 
-Status: 2026-07-09.
+Status: 2026-07-13.
 
 This document is the working map for future cleanup. It describes the current
 package/component boundaries, which boundaries are worth keeping, and which
@@ -122,8 +122,12 @@ flowchart TD
     flowUi --> flowState["Flow state\n*.svelte.ts"]
     flowUi --> flowApi["Flow API facade\napi.ts"]
     flowUi --> flowComponents["Flow components\ncomponents/*"]
-    flowUi --> sharedUi["Shared UI primitives\nlib/components/ui (target)"]
+    flowUi --> sharedUi["Shared UI primitives\nlib/components/ui"]
     home --> registry["Flow registry\nlib/flows/registry.ts"]
+    home --> board["FlowBoard + BoardItem\npages/components"]
+    board --> layout["Versioned layout contract\npages/board-layout.ts"]
+    layout --> localStorage[("localStorage")]
+    board --> sharedUi
 ```
 
 Target shape:
@@ -195,6 +199,6 @@ Target shape:
    `any`, no raw SQL outside repositories, and no hardcoded API origins.
 
 8. **Board/Canvas vision (#18)**
-   Start only after the base UI/data contracts are clearer. First slice should
-   render the existing `FlowDefinition` registry as board items before adding
-   persistence or cross-flow relationships.
+   Board v1 (#42) now renders the `FlowDefinition` registry with local layout
+   persistence and accessible reorder controls. Continue with typed card contracts
+   (#43) and named server-persisted boards (#44) before cross-flow relationships.
