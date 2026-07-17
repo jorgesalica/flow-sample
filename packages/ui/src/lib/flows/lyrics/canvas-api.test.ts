@@ -58,14 +58,20 @@ describe('canvas-api', () => {
       expect('id' in result && result.id).toBe('canvas-1');
     });
 
-    it('returns the needsAnalysis status body on a 404 without throwing', async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        jsonResponse(makeNeedsAnalysis(), { ok: false, status: 404 })
-      );
+    it('returns the needsAnalysis status body as a successful domain state', async () => {
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(makeNeedsAnalysis()));
 
       const result = await getCanvasAnalysis('track-1');
 
       expect('needsAnalysis' in result && result.needsAnalysis).toBe(true);
+    });
+
+    it('throws the server-provided message on a 404', async () => {
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        jsonResponse({ error: 'Track not found' }, { ok: false, status: 404 })
+      );
+
+      await expect(getCanvasAnalysis('track-1')).rejects.toThrow('Track not found');
     });
 
     it('throws on non-404 error responses', async () => {

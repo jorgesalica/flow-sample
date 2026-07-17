@@ -1,4 +1,4 @@
-import { api } from '@lib/client';
+import { api, type ApiClient } from '@lib/client';
 import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
 
 // Typed Eden client for the chat routes (mounted under /api/chat, like every flow)
@@ -33,14 +33,14 @@ function extractError(error: unknown): Error {
   return new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
 }
 
-export async function fetchModelCatalog(): Promise<ChatProviderGroup[]> {
-  const { data, error } = await chatApi.models.get();
+export async function fetchModelCatalog(client: ApiClient = api): Promise<ChatProviderGroup[]> {
+  const { data, error } = await client.api.chat.models.get();
   if (error) throw extractError(error);
   return data as ChatProviderGroup[];
 }
 
-export async function fetchConversations(): Promise<ChatConversation[]> {
-  const { data, error } = await chatApi.conversations.get();
+export async function fetchConversations(client: ApiClient = api): Promise<ChatConversation[]> {
+  const { data, error } = await client.api.chat.conversations.get();
   if (error) throw extractError(error);
   return data as ChatConversation[];
 }

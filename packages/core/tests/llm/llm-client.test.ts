@@ -88,6 +88,33 @@ describe('LLMClient constructor', () => {
     it('throws for createRotation when no free provider env vars are set', () => {
         expect(() => LLMClient.createRotation()).toThrow(/No free providers configured/);
     });
+
+    it('uses each provider default when rotation receives a global model override', () => {
+        const client = LLMClient.createRotation({
+            provider: 'rotation',
+            model: 'gemini-2.5-flash',
+            apiKeys: {
+                groq: 'groq-key',
+                openrouter: 'openrouter-key',
+                cerebras: 'cerebras-key',
+                mistral: 'mistral-key',
+            },
+        });
+        const providers = Reflect.get(client, 'rotationProviders') as Array<{
+            providerName: string;
+            defaultModel: string;
+        }>;
+
+        expect(Object.fromEntries(providers.map((provider) => [
+            provider.providerName,
+            provider.defaultModel,
+        ]))).toEqual({
+            groq: 'llama-3.3-70b-versatile',
+            openrouter: 'openrouter/free',
+            cerebras: 'gpt-oss-120b',
+            mistral: 'mistral-small-latest',
+        });
+    });
 });
 
 // ── Direct mode ───────────────────────────────────────────────────────

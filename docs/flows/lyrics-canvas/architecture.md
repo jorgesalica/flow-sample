@@ -108,6 +108,18 @@ flowchart TD
 
 ---
 
+## Runtime API Contract
+
+| Endpoint | Success | Domain absence | Provider failure |
+| --- | --- | --- | --- |
+| `GET /api/lyrics/:trackId/canvas` | `200` analysis | `200 { needsAnalysis: true, source }`; missing track/lyrics remain `404` | n/a |
+| `POST /api/lyrics/:trackId/canvas/analyze` | `200` persisted analysis | `400` when track or lyrics are unavailable | sanitized `503` |
+
+The analyzer persists the actual `providerUsed` and `modelUsed` returned by the rotation
+client. Provider response bodies remain server-side and are never forwarded to the UI.
+
+---
+
 ## Database
 
 Two databases, two concerns:

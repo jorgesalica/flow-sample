@@ -13,7 +13,7 @@ journeys. Do not pursue coverage by duplicating implementation details in tests.
 | Repository | Vitest with in-memory SQLite | SQL, hydration, absence, constraints, migrations |
 | Service | Vitest with ports mocked | orchestration, calls made and deliberately not made |
 | Route/application | Vitest and `app.handle()` | validation, status/error mapping, dependency wiring |
-| Loader/API facade | Vitest with Eden mocked | DTO mapping, invalidation, empty/error behavior |
+| Loader/API facade | Vitest with Eden mocked | request-scoped fetch, DTO mapping, invalidation, empty/error behavior |
 | UI contract/registry | Vitest | manifest validation, state mapping, stale preservation |
 | Svelte component | Testing Library | accessible behavior and user-observable state |
 | Critical journey | Playwright | real navigation and desktop/mobile interaction |
@@ -27,6 +27,7 @@ journeys. Do not pursue coverage by duplicating implementation details in tests.
 - Use factories for fixtures and fictional data only. Never use credentials or PII.
 - Repository tests use isolated temporary or in-memory databases.
 - Route tests import the app factory; they never start a listening process.
+- Universal loader tests prove the SvelteKit `fetch` is passed into `createApiClient`.
 - Component tests query by role/name when possible and assert behavior, not CSS internals.
 - Playwright locators use roles, labels, or stable product semantics rather than DOM shape.
 - A flaky test is a defect. Fix determinism or isolation instead of adding arbitrary waits.

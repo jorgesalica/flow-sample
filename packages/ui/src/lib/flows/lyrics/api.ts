@@ -1,5 +1,5 @@
 import type { Lyrics, LyricsStats, LyricsStatus } from '@flows/shared';
-import { api } from '@lib/client';
+import { api, type ApiClient } from '@lib/client';
 
 /**
  * Fetch lyrics for a specific track
@@ -38,8 +38,8 @@ export async function fetchAllLyrics(retryFailed = false): Promise<{
 /**
  * Get lyrics statistics
  */
-export async function getLyricsStats(): Promise<LyricsStats> {
-  const { data, error } = await api.api.lyrics.stats.get();
+export async function getLyricsStats(client: ApiClient = api): Promise<LyricsStats> {
+  const { data, error } = await client.api.lyrics.stats.get();
 
   if (error) throw new Error('Failed to fetch lyrics stats');
   return data as unknown as LyricsStats;
@@ -51,7 +51,8 @@ export async function getLyricsStats(): Promise<LyricsStats> {
 export async function getLyricsLibrary(
   page = 1,
   limit = 50,
-  status?: LyricsStatus
+  status?: LyricsStatus,
+  client: ApiClient = api
 ): Promise<
   Array<{
     id: string;
@@ -62,7 +63,7 @@ export async function getLyricsLibrary(
   }>
 > {
   const offset = (page - 1) * limit;
-  const { data, error } = await api.api.lyrics.tracks.get({
+  const { data, error } = await client.api.lyrics.tracks.get({
     query: {
       limit: limit.toString(),
       offset: offset.toString(),

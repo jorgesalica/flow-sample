@@ -1,6 +1,6 @@
 import type { GenreCount, Track, PaginatedResult, SearchOptions, YearCount } from '@flows/shared';
 import type { TopStats } from '@lib/types';
-import { api } from '@lib/client';
+import { createApiClient } from '@lib/client';
 import { mapTopStats } from '@lib/flows/spotify/api';
 import type { PageLoad } from './$types';
 import { INVALIDATION } from '@lib/invalidation';
@@ -31,8 +31,9 @@ export interface SpotifyPageData {
   isAuthenticated: boolean;
 }
 
-export const load: PageLoad = async ({ depends }): Promise<SpotifyPageData> => {
+export const load: PageLoad = async ({ depends, fetch }): Promise<SpotifyPageData> => {
   depends(INVALIDATION.SPOTIFY_LIBRARY);
+  const api = createApiClient(fetch);
   const searchOptions = { ...DEFAULT_SEARCH_OPTIONS };
 
   // Initial tracks (page 1, no filters).

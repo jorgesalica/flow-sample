@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
+  import { replaceState } from '$app/navigation';
   import type { LyricsStats, LyricsStatus, Track } from '@flows/shared';
   import type { LyricsPageData, LyricsTrackRow } from '../../../routes/lyrics/+page';
   import { getLyricsStats, getLyricsLibrary, fetchAllLyrics, getLyrics } from './api';
@@ -86,15 +87,16 @@
     return loadData(true);
   }
 
-  // Sync state to URL
-  $effect(() => {
-    const basePath = window.location.pathname;
-    if (canvasTrackId) {
-      window.history.replaceState(null, '', `${basePath}?canvasTrackId=${canvasTrackId}`);
-    } else if (window.location.search.includes('canvasTrackId')) {
-      window.history.replaceState(null, '', basePath);
+  function setCanvasTrack(trackId: string | null) {
+    canvasTrackId = trackId;
+    const url = new URL(window.location.href);
+    if (trackId) {
+      url.searchParams.set('canvasTrackId', trackId);
+    } else {
+      url.searchParams.delete('canvasTrackId');
     }
-  });
+    replaceState(url, {});
+  }
 
   async function handleFetchAllLyrics(retryFailed = false) {
     if (retryFailed) {
@@ -246,7 +248,7 @@
     {:else if canvasTrackId}
       <div class="flex flex-col h-full">
         <div class="border-b border-border p-4">
-          <Button variant="ghost" onclick={() => (canvasTrackId = null)}>Back to Dashboard</Button>
+          <Button variant="ghost" onclick={() => setCanvasTrack(null)}>Back to Dashboard</Button>
         </div>
         <div class="flex-grow overflow-hidden relative">
           <LyricsCanvas trackId={canvasTrackId} />
@@ -427,7 +429,7 @@
                             size="sm"
                             onclick={(e) => {
                               e.stopPropagation();
-                              canvasTrackId = track.id;
+                              setCanvasTrack(track.id);
                             }}
                           >
                             <svg

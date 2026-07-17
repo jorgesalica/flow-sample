@@ -4,12 +4,22 @@ import type { TextAnalysisResult } from '../../src/backend/schemas';
 
 // ── Mock the external edge: @flows/core's LLMClient + logger ──────────
 //
-// analyzeText() calls LLMClient.createRotation().generateObject(...). We mock
+// analyzeText() calls LLMClient.createRotation().generateObjectWithMetadata(...). We mock
 // the LLM rotation (the network/SDK edge) and run the REAL expansion domain
 // logic in text-analyzer.ts against a fixed structured result.
 
 const generateObject = vi.fn();
-const createRotation = vi.fn(() => ({ generateObject }));
+const generateObjectWithMetadata = vi.fn(async (request: unknown, schema: unknown) => ({
+    value: await generateObject(request, schema),
+    response: {
+        content: '{}',
+        model: 'gpt-oss-120b',
+        provider: 'cerebras',
+        usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        latencyMs: 1,
+    },
+}));
+const createRotation = vi.fn(() => ({ generateObjectWithMetadata }));
 
 vi.mock('@flows/core', () => {
     const noopLog = {
@@ -59,7 +69,7 @@ function makeResult(overrides: Partial<TextAnalysisResult> = {}): TextAnalysisRe
 
 beforeEach(() => {
     vi.clearAllMocks();
-    createRotation.mockReturnValue({ generateObject });
+    createRotation.mockReturnValue({ generateObjectWithMetadata });
 });
 
 // ── Wiring ────────────────────────────────────────────────────────────
@@ -68,10 +78,12 @@ describe('analyzeText — LLM wiring', () => {
     it('obtains a rotation client and calls generateObject once', async () => {
         generateObject.mockResolvedValue(makeResult());
 
-        await analyzeText(makeAst());
+        const result = await analyzeText(makeAst());
 
         expect(createRotation).toHaveBeenCalledOnce();
         expect(generateObject).toHaveBeenCalledOnce();
+        expect(result.providerUsed).toBe('cerebras');
+        expect(result.modelUsed).toBe('gpt-oss-120b');
     });
 
     it('passes the analysis schema and deterministic request params to generateObject', async () => {
@@ -81,7 +93,7 @@ describe('analyzeText — LLM wiring', () => {
 
         const [request, schema] = generateObject.mock.calls[0];
         expect(request.temperature).toBe(0.2);
-        expect(request.maxTokens).toBe(8192);
+        expect(request.maxTokens).toBe(4096);
         expect(request.messages).toHaveLength(1);
         expect(request.messages[0].role).toBe('user');
         expect(schema).toBeDefined();

@@ -7,6 +7,16 @@ import { load, type LyricsTrackRow, type LyricsPageData } from './+page';
 // in the component.
 const getLyricsStats = vi.fn();
 const getLyricsLibrary = vi.fn();
+const clientMocks = vi.hoisted(() => ({
+  requestApi: { scope: 'request' },
+  createApiClient: vi.fn(),
+}));
+vi.mock('@lib/client', () => ({
+  createApiClient: (requestFetch: typeof fetch) => {
+    clientMocks.createApiClient(requestFetch);
+    return clientMocks.requestApi;
+  },
+}));
 vi.mock('@lib/flows/lyrics/api', () => ({
   getLyricsStats: (...a: unknown[]) => getLyricsStats(...a),
   getLyricsLibrary: (...a: unknown[]) => getLyricsLibrary(...a),
@@ -28,14 +38,21 @@ function makeRow(overrides: Partial<LyricsTrackRow> = {}): LyricsTrackRow {
 }
 
 // Minimal stand-in for the SvelteKit load event — the loader only reads `url`.
+const requestFetch = vi.fn();
+
 function makeEvent(search = '') {
-  return { url: new URL(`http://localhost/lyrics${search}`) } as Parameters<typeof load>[0];
+  return {
+    url: new URL(`http://localhost/lyrics${search}`),
+    fetch: requestFetch,
+  } as unknown as Parameters<typeof load>[0];
 }
 
 describe('lyrics +page load', () => {
   beforeEach(() => {
     getLyricsStats.mockReset();
     getLyricsLibrary.mockReset();
+    clientMocks.createApiClient.mockReset();
+    requestFetch.mockReset();
   });
 
   it('returns the global stats and the first page of tracks', async () => {
@@ -60,8 +77,9 @@ describe('lyrics +page load', () => {
 
     await load(makeEvent());
 
-    expect(getLyricsStats).toHaveBeenCalledTimes(1);
-    expect(getLyricsLibrary).toHaveBeenCalledWith(1, 50);
+    expect(clientMocks.createApiClient).toHaveBeenCalledWith(requestFetch);
+    expect(getLyricsStats).toHaveBeenCalledWith(clientMocks.requestApi);
+    expect(getLyricsLibrary).toHaveBeenCalledWith(1, 50, undefined, clientMocks.requestApi);
   });
 
   it('restores the canvasTrackId deep-link from the URL', async () => {

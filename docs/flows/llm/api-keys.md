@@ -54,7 +54,9 @@ GROQ_API_KEY=gsk_...
 OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
-> **Tip:** Append `:free` to model IDs for free routing (e.g. `meta-llama/llama-3.3-70b-instruct:free`). Without the suffix, requests use paid credits.
+> **Tip:** Rotation defaults to `openrouter/free`, which selects a currently available
+> free model that supports the request. Pin a current `:free` model only when deterministic
+> model selection is more important than availability.
 
 ---
 
@@ -72,7 +74,9 @@ OPENROUTER_API_KEY=sk-or-v1-...
 CEREBRAS_API_KEY=csk-...
 ```
 
-> **Note:** All models share the 1M tokens/day pool. Cerebras inference is extremely fast (up to 2K tokens/sec on Llama 70B).
+> **Note:** Shared-endpoint availability changes. The application currently defaults to
+> `gpt-oss-120b` and also catalogs `zai-glm-4.7`; consult the provider model endpoint before
+> pinning another model.
 
 ---
 
@@ -100,6 +104,7 @@ After setting any key, test it:
 
 ```env
 LLM_PROVIDER=groq
+LLM_MODEL=llama-3.3-70b-versatile
 GROQ_API_KEY=gsk_your_key_here
 ```
 
@@ -117,4 +122,7 @@ CEREBRAS_API_KEY=csk-...
 MISTRAL_API_KEY=...
 ```
 
-The client will round-robin through all configured providers, automatically skipping any that return 429 rate limit errors.
+Do not set a cross-provider `LLM_MODEL` override for rotation. The client uses each
+provider's valid default (`llama-3.3-70b-versatile`, `openrouter/free`, `gpt-oss-120b`, or
+`mistral-small-latest`) and falls back to the next provider on any request error, including
+rate limits and model availability failures.

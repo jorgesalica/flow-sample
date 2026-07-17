@@ -6,10 +6,11 @@ const statsGet = vi.fn();
 const genresGet = vi.fn();
 const yearsGet = vi.fn();
 const authGet = vi.fn();
+const createApiClient = vi.fn();
 
 // Mock the typed Eden client the loader calls for its initial fetch.
-vi.mock('@lib/client', () => ({
-  api: {
+vi.mock('@lib/client', () => {
+  const client = {
     api: {
       spotify: {
         tracks: { search: { get: (...args: unknown[]) => tracksSearchGet(...args) } },
@@ -19,8 +20,15 @@ vi.mock('@lib/client', () => ({
         auth: { status: { get: (...args: unknown[]) => authGet(...args) } },
       },
     },
-  },
-}));
+  };
+  return {
+    api: client,
+    createApiClient: (requestFetch: typeof fetch) => {
+      createApiClient(requestFetch);
+      return client;
+    },
+  };
+});
 // Keep the toast re-export (pulled in transitively via api.ts) inert.
 vi.mock('@lib/toast', () => ({
   showError: vi.fn(),
@@ -46,7 +54,8 @@ const STATS_PAYLOAD = {
 
 // Minimal LoadEvent stub — the loader takes no arguments off the event.
 const depends = vi.fn();
-const event = { depends } as unknown as Parameters<typeof load>[0];
+const requestFetch = vi.fn();
+const event = { depends, fetch: requestFetch } as unknown as Parameters<typeof load>[0];
 
 describe('spotify +page loader', () => {
   beforeEach(() => {
@@ -55,7 +64,9 @@ describe('spotify +page loader', () => {
     genresGet.mockReset();
     yearsGet.mockReset();
     authGet.mockReset();
+    createApiClient.mockReset();
     depends.mockReset();
+    requestFetch.mockReset();
     genresGet.mockResolvedValue({ data: [], error: null });
     yearsGet.mockResolvedValue({ data: [], error: null });
     authGet.mockResolvedValue({ data: { connected: false }, error: null });
@@ -68,6 +79,7 @@ describe('spotify +page loader', () => {
     await load(event);
 
     expect(depends).toHaveBeenCalledWith('app:spotify-library');
+    expect(createApiClient).toHaveBeenCalledWith(requestFetch);
 
     expect(tracksSearchGet).toHaveBeenCalledWith({
       query: {

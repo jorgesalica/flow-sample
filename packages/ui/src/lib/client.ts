@@ -16,6 +16,8 @@ export function createApiClient(customFetch?: typeof fetch) {
   });
 }
 
+export type ApiClient = ReturnType<typeof createApiClient>;
+
 export const api = createApiClient();
 
 // Re-export types from the client for convenience

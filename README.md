@@ -74,7 +74,9 @@ The backend runs on `http://localhost:4173`; the Vite UI runs on
 Copy `.env.example` to `.env`. Spotify requires `SPOTIFY_CLIENT_ID` and
 `SPOTIFY_CLIENT_SECRET`. AI features require at least one supported provider key such as
 `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `CEREBRAS_API_KEY`, or
-`MISTRAL_API_KEY`. Runtime selection uses `LLM_PROVIDER` and optionally `LLM_MODEL`.
+`MISTRAL_API_KEY`. Runtime selection uses `LLM_PROVIDER`; `LLM_MODEL` is an optional
+direct-provider override and is deliberately ignored by rotation mode, which uses each
+provider's current default model.
 Trading defaults can be changed with `TRADING_SYMBOL` and `TRADING_INTERVAL`.
 
 Environment values are parsed only by named configuration factories and passed into

@@ -4,6 +4,9 @@ import type { Track, SearchOptions } from '@flows/shared';
 import type { TopStats } from '@lib/types';
 
 const loadTracks = vi.fn();
+const replaceState = vi.hoisted(() => vi.fn());
+
+vi.mock('$app/navigation', () => ({ replaceState }));
 
 // Mock the flow's interactive API edge; route data is loader-owned.
 // Initial tracks, stats, options, and auth arrive through loader props.
@@ -86,6 +89,7 @@ describe('SpotifyFlow render states', () => {
   beforeEach(() => {
     resetStore();
     loadTracks.mockClear();
+    replaceState.mockReset();
   });
 
   it('hydrates auth from loader props and does not refetch tracks', async () => {

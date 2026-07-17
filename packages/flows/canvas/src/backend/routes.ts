@@ -62,8 +62,8 @@ export const canvasFlowRoutes = new Elysia({ prefix: '/api/canvas' })
                 author: author || 'User',
                 ...analysisResult.meta
             },
-            modelUsed: 'gemini-2.5-pro',
-            providerUsed: 'gemini',
+            modelUsed: analysisResult.modelUsed,
+            providerUsed: analysisResult.providerUsed,
             createdAt: now,
             updatedAt: now,
         };
