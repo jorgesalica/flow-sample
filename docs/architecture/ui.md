@@ -122,6 +122,9 @@ The typed Eden client lives in `lib/client.ts` (`treaty<App>(...)`, importing
 are fully typed. In dev, Vite proxies `/api` and `/outputs` to the backend on `:4173`.
 
 Persistent route data belongs in SvelteKit `+page.ts` universal loaders and uses Eden.
+Each loader creates a request-scoped client with `createApiClient(fetch)`, passing the
+`fetch` supplied by its `load` event. Using the browser-global client inside a loader
+bypasses SvelteKit request tracking and emits runtime warnings.
 Loaders register stable dependency keys from `lib/invalidation.ts`; successful mutations
 call the `lib/invalidate.ts` adapter so SvelteKit reruns only the affected loader. Flow
 components receive loader data as props and hydrate their runes state reactively.
@@ -129,7 +132,8 @@ components receive loader data as props and hydrate their runes state reactively
 `onMount` remains appropriate for browser-only behavior such as chart construction,
 `IntersectionObserver`, URL cleanup after OAuth redirects, and SSE subscriptions. Raw
 `fetch` is reserved for endpoints Eden cannot model cleanly; each exception must stay in
-the flow's `api.ts` and be covered by a contract test.
+the flow's `api.ts` and be covered by a contract test. Client-side history updates use
+`pushState`/`replaceState` from `$app/navigation`, never `window.history` directly.
 
 ## Styling
 
@@ -152,6 +156,10 @@ unit-tested. The generic renderer covers every async state and negative space. C
 canvas rendering, live summary/expansion, stale refresh, keyboard reorder, native
 drag-and-drop, persistence reloads, and responsive behavior are verified in a real
 browser. E2E lives in `e2e/` (Playwright).
+
+Vitest uses the plain Svelte plugin, so `src/test/app-navigation.ts` supplies the unit-test
+adapter for SvelteKit's virtual navigation module. Tests may mock that adapter to assert
+navigation without mutating shared browser history.
 
 ## Tooling
 

@@ -6,13 +6,23 @@ import type { MusicalAnalysisResult } from '../../../src/backend/canvas/schemas'
 // generateObject resolves to a fixed structured result. The real analyzeLyrics
 // expansion logic runs against it.
 const generateObject = vi.fn();
+const generateObjectWithMetadata = vi.fn(async (request: unknown, schema: unknown) => ({
+    value: await generateObject(request, schema),
+    response: {
+        content: '{}',
+        model: 'llama-3.3-70b-versatile',
+        provider: 'groq',
+        usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        latencyMs: 1,
+    },
+}));
 
 vi.mock('@flows/core', () => {
     const noop = () => {};
     const childLogger = { info: noop, error: noop, warn: noop, debug: noop };
     return {
         LLMClient: {
-            createRotation: vi.fn(() => ({ generateObject })),
+            createRotation: vi.fn(() => ({ generateObjectWithMetadata })),
         },
         logger: { child: () => childLogger },
     };
@@ -168,7 +178,12 @@ describe('analyzeLyrics', () => {
             meta: { key: null, bpm: null, mood: null },
         } satisfies MusicalAnalysisResult);
 
-        await analyzeLyrics(makeAst(), TRACK_TITLE, ARTIST_NAME, 'A song about resilience.');
+        const result = await analyzeLyrics(
+            makeAst(),
+            TRACK_TITLE,
+            ARTIST_NAME,
+            'A song about resilience.',
+        );
 
         expect(generateObject).toHaveBeenCalledOnce();
         const [request] = generateObject.mock.calls[0];
@@ -181,6 +196,9 @@ describe('analyzeLyrics', () => {
         expect(prompt).toContain('A song about resilience.');
         // Deterministic generation params.
         expect(request.temperature).toBe(0.2);
+        expect(request.maxTokens).toBe(4096);
+        expect(result.providerUsed).toBe('groq');
+        expect(result.modelUsed).toBe('llama-3.3-70b-versatile');
     });
 
     it('returns an empty annotations array when the LLM yields none', async () => {

@@ -4,6 +4,9 @@ import type { LyricsStats } from '@flows/shared';
 import type { LyricsPageData, LyricsTrackRow } from '../../../routes/lyrics/+page';
 import LyricsFlow from './LyricsFlow.svelte';
 
+const replaceState = vi.hoisted(() => vi.fn());
+vi.mock('$app/navigation', () => ({ replaceState }));
+
 // Mock the flow's data edge. The INITIAL stats + first page now arrive via the
 // loader (passed in as the `data` prop); these mocks back the interactive
 // re-fetches that stay in the component (filtering, load-more, refresh, retry).
@@ -80,6 +83,7 @@ describe('LyricsFlow', () => {
     getLyricsLibrary.mockReset();
     fetchAllLyrics.mockReset();
     getLyrics.mockReset();
+    replaceState.mockReset();
     toast.loading.mockClear();
     toast.dismiss.mockClear();
     toast.success.mockClear();
@@ -260,6 +264,9 @@ describe('LyricsFlow', () => {
 
     expect(await screen.findByText('Back to Dashboard')).toBeInTheDocument();
     expect(screen.getByTestId('canvas-stub')).toHaveTextContent('track-1');
+    const openUrl = new URL(String(replaceState.mock.calls[0][0]));
+    expect(openUrl.pathname).toBe('/lyrics');
+    expect(openUrl.searchParams.get('canvasTrackId')).toBe('track-1');
   });
 
   it('restores the canvas view from a canvasTrackId provided by the loader', async () => {
@@ -267,6 +274,7 @@ describe('LyricsFlow', () => {
 
     expect(await screen.findByText('Back to Dashboard')).toBeInTheDocument();
     expect(screen.getByTestId('canvas-stub')).toHaveTextContent('track-99');
+    expect(replaceState).not.toHaveBeenCalled();
   });
 
   it('returns to the dashboard from the canvas view', async () => {
@@ -276,6 +284,9 @@ describe('LyricsFlow', () => {
     await fireEvent.click(screen.getByText('Back to Dashboard'));
 
     expect(await screen.findByText('Recent Tracks')).toBeInTheDocument();
+    const dashboardUrl = new URL(String(replaceState.mock.calls[0][0]));
+    expect(dashboardUrl.pathname).toBe('/lyrics');
+    expect(dashboardUrl.searchParams.has('canvasTrackId')).toBe(false);
   });
 
   it('retries an individual not_found track and flips it to found on success', async () => {

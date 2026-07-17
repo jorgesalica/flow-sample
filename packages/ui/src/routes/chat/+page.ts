@@ -1,4 +1,5 @@
 import { fetchModelCatalog, fetchConversations } from '@lib/flows/chat/api';
+import { createApiClient } from '@lib/client';
 import type { ChatInitialData } from '@lib/flows/chat/stores.svelte';
 import { showError } from '@lib/toast';
 import type { PageLoad } from './$types';
@@ -12,9 +13,13 @@ import type { PageLoad } from './$types';
  * page falls back to empty defaults so it still renders — matching the old
  * `init()` try/catch behaviour. SSR is disabled at the root layout.
  */
-export const load: PageLoad = async (): Promise<ChatInitialData> => {
+export const load: PageLoad = async ({ fetch }): Promise<ChatInitialData> => {
   try {
-    const [catalog, conversations] = await Promise.all([fetchModelCatalog(), fetchConversations()]);
+    const requestApi = createApiClient(fetch);
+    const [catalog, conversations] = await Promise.all([
+      fetchModelCatalog(requestApi),
+      fetchConversations(requestApi),
+    ]);
 
     // Default: first model of first provider
     let selectedModel = '';

@@ -10,6 +10,7 @@ export default defineConfig({
     alias: {
       '@lib': path.resolve(__dirname, './src/lib'),
       '@components': path.resolve(__dirname, './src/lib/components'),
+      '$app/navigation': path.resolve(__dirname, './src/test/app-navigation.ts'),
     },
     conditions: ['browser'],
   },

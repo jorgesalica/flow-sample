@@ -4,13 +4,14 @@ import type { ChatConversation, ChatProviderGroup } from '@flows/shared';
 // ── Mock the typed Eden client at the edge so the loader exercises the real
 //    flow api.ts (error extraction) without touching the network. The mock fns
 //    are hoisted alongside vi.mock so the factory can safely reference them. ──
-const { modelsGet, conversationsGet } = vi.hoisted(() => ({
+const { modelsGet, conversationsGet, createApiClient } = vi.hoisted(() => ({
   modelsGet: vi.fn(),
   conversationsGet: vi.fn(),
+  createApiClient: vi.fn(),
 }));
 
-vi.mock('@lib/client', () => ({
-  api: {
+vi.mock('@lib/client', () => {
+  const client = {
     // Chat routes are mounted under /api/chat, so the Eden tree is api.api.chat
     api: {
       chat: {
@@ -20,8 +21,15 @@ vi.mock('@lib/client', () => ({
         }),
       },
     },
-  },
-}));
+  };
+  return {
+    api: client,
+    createApiClient: (requestFetch: typeof fetch) => {
+      createApiClient(requestFetch);
+      return client;
+    },
+  };
+});
 
 vi.mock('@lib/toast', () => ({ showError: vi.fn() }));
 
@@ -54,11 +62,13 @@ function makeConversations(): ChatConversation[] {
 }
 
 /** Minimal SvelteKit load event — the loader takes no params/fetch. */
-const loadEvent = {} as Parameters<typeof load>[0];
+const requestFetch = vi.fn();
+const loadEvent = { fetch: requestFetch } as unknown as Parameters<typeof load>[0];
 
 describe('chat +page loader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    requestFetch.mockReset();
   });
 
   it('returns the catalog, conversations, and defaults to the first model of the first provider', async () => {
@@ -74,6 +84,7 @@ describe('chat +page loader', () => {
       conversations,
       selectedModel: 'openai:gpt-4o',
     });
+    expect(createApiClient).toHaveBeenCalledWith(requestFetch);
     expect(mockShowError).not.toHaveBeenCalled();
   });
 

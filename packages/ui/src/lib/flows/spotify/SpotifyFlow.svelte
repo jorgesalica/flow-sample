@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { replaceState } from '$app/navigation';
   import { toast } from 'svelte-5-french-toast';
   import type { GenreCount, SearchOptions, Track, YearCount } from '@flows/shared';
   import { AsyncState, Button, FlowLayout, Panel } from '@lib/components';
@@ -49,7 +50,7 @@
         position: 'bottom-right',
       });
       url.searchParams.delete('connected');
-      window.history.replaceState({}, '', url.toString());
+      replaceState(url, {});
     }
   });
 

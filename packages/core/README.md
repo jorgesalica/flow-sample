@@ -21,8 +21,8 @@ Unified interface for 5 LLM providers with a model catalog, tier system, and fre
 | -------- | ------- | ------- | ---------- |
 | **Gemini** | paid | `GEMINI_API_KEY` | Google AI Studio / Vertex. Frontier models. |
 | **Groq** | free | `GROQ_API_KEY` | Ultra-fast LPU inference. |
-| **OpenRouter** | free | `OPENROUTER_API_KEY` | Aggregator, 24+ free models. |
-| **Cerebras** | free | `CEREBRAS_API_KEY` | 1M tokens/day, fast inference. |
+| **OpenRouter** | free | `OPENROUTER_API_KEY` | Dynamic free-model router. |
+| **Cerebras** | free | `CEREBRAS_API_KEY` | GPT-OSS 120B default, fast inference. |
 | **Mistral** | free | `MISTRAL_API_KEY` | 4M tokens/month experiment tier. |
 
 ### Model Tiers
@@ -30,9 +30,9 @@ Unified interface for 5 LLM providers with a model catalog, tier system, and fre
 Each model in the catalog has a `tier` and `pricing`:
 
 - **`very_high`** — Frontier (Gemini 3.1 Pro, GPT-5, etc.)
-- **`high`** — Near-frontier (Llama 3.3 70B, Qwen 235B, Mistral Large)
-- **`medium`** — Solid generalist (Qwen 32B, Codestral, Llama 4 Scout)
-- **`low`** — Fast & lightweight (Llama 3.1 8B, Gemma 4B, Mistral Nemo)
+- **`high`** — Near-frontier (Llama 3.3 70B, GPT-OSS 120B, Mistral Large)
+- **`medium`** — Solid generalist (Codestral, Mistral Small)
+- **`low`** — Fast and lightweight models
 
 ### Usage
 
@@ -57,7 +57,7 @@ import { LLMClient } from '@flows/core';
 const client = new LLMClient('groq', groqApiKey, 'llama-3.3-70b-versatile');
 ```
 
-**Rotation mode** — round-robin across free providers (auto-fallback on 429):
+**Rotation mode** — round-robin across free providers with error fallback:
 
 ```typescript
 const client = createLLMClientFromEnv({
@@ -67,14 +67,22 @@ const client = createLLMClientFromEnv({
 });
 ```
 
+Rotation always uses each provider's own catalog default. `LLM_MODEL` is only a
+direct-mode override; model identifiers are not portable across providers.
+
+For structured generation that must persist audit metadata, use
+`generateObjectWithMetadata()`. It returns the validated value together with the actual
+provider response (`provider`, `model`, usage, and latency).
+
 ### File Structure
 
 ```
 src/llm/
-├── llm-client.ts           # LLMClient class
+├── client.ts               # LLMClient class
+├── env.ts                  # Runtime configuration factory
+├── types.ts                # LLMMessage, ModelInfo, ModelTier, etc.
 ├── index.ts                # Barrel + createLLMClient()
 └── providers/
-    ├── types.ts            # LLMMessage, ModelInfo, ModelTier, etc.
     ├── base-provider.ts    # Abstract BaseLLMProvider
     ├── gemini/             # @google/genai SDK
     ├── groq/               # OpenAI-compatible (fetch)

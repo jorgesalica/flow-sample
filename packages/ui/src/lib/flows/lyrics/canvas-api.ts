@@ -3,14 +3,13 @@ import type { CanvasAnalysis } from '@flows/shared';
 const API_BASE = '/api/lyrics';
 
 export interface CanvasStatusResponse {
-  error?: string;
-  needsAnalysis?: boolean;
+  needsAnalysis: true;
   source?: {
     sourceId: string;
     sourceType: string;
     title: string;
     author: string;
-    imageUrl: string;
+    imageUrl: string | null;
   };
 }
 
@@ -23,11 +22,18 @@ export async function getCanvasAnalysis(
 ): Promise<CanvasAnalysis | CanvasStatusResponse> {
   const res = await fetch(`${API_BASE}/${trackId}/canvas`);
 
-  if (!res.ok && res.status !== 404) {
-    throw new Error('Failed to fetch canvas analysis');
+  const data = (await res.json().catch(() => ({}))) as
+    | CanvasAnalysis
+    | CanvasStatusResponse
+    | {
+        error?: string;
+      };
+
+  if (!res.ok) {
+    throw new Error('error' in data && data.error ? data.error : 'Failed to fetch canvas analysis');
   }
 
-  return res.json();
+  return data as CanvasAnalysis | CanvasStatusResponse;
 }
 
 /**

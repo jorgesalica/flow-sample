@@ -17,24 +17,16 @@ export const CEREBRAS_MODELS: ModelInfo[] = [
         contextWindow: 128_000,
         description: 'OpenAI open-weight, fastest on Cerebras.',
     },
-    {
-        id: 'llama3.1-8b',
-        name: 'Llama 3.1 8B',
-        tier: 'low',
-        pricing: 'free',
-        contextWindow: 8_192,
-        description: 'Ultra-fast lightweight. ~2K tokens/sec.',
-    },
     // ── Preview ──
     {
-        id: 'qwen-3-235b-a22b-instruct-2507',
-        name: 'Qwen 3 235B',
+        id: 'zai-glm-4.7',
+        name: 'Z.ai GLM 4.7',
         tier: 'high',
         pricing: 'free',
-        contextWindow: 65_536,
-        description: 'Preview. Largest free model, MoE 22B active.',
+        contextWindow: 131_072,
+        description: 'Preview model for reasoning, coding, and tool use.',
     },
 ];
 
-export const CEREBRAS_DEFAULT_MODEL = 'llama3.1-8b';
+export const CEREBRAS_DEFAULT_MODEL = 'gpt-oss-120b';
 export const CEREBRAS_BASE_URL = 'https://api.cerebras.ai';

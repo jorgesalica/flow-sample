@@ -77,8 +77,8 @@ export class LyricsCanvasService {
       annotations: analysisResult.annotations,
       layers: [...MUSIC_LAYERS, MEANING_LAYER],
       meta: analysisResult.meta,
-      modelUsed: 'gemini-2.5-pro',
-      providerUsed: 'gemini',
+      modelUsed: analysisResult.modelUsed,
+      providerUsed: analysisResult.providerUsed,
       createdAt: now,
       updatedAt: now,
     };

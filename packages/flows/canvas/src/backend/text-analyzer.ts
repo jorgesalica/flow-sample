@@ -18,7 +18,12 @@ function formatAstForPrompt(ast: TokenAST): string {
     return output.trim();
 }
 
-export async function analyzeText(ast: TokenAST, title?: string, author?: string): Promise<{ annotations: Annotation[]; meta: TextAnalysisResult['meta'] }> {
+export async function analyzeText(ast: TokenAST, title?: string, author?: string): Promise<{
+    annotations: Annotation[];
+    meta: TextAnalysisResult['meta'];
+    modelUsed: string;
+    providerUsed: string;
+}> {
     const client = LLMClient.createRotation();
     const tokenizedText = formatAstForPrompt(ast);
     
@@ -52,11 +57,11 @@ IMPORTANT DENSITY RULE: Provide a dense, rich analysis identifying key moments i
     const startTime = Date.now();
     
     try {
-        const result = await client.generateObject(
+        const { value: result, response } = await client.generateObjectWithMetadata(
             {
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.2,
-                maxTokens: 8192,
+                maxTokens: 4096,
             },
             textAnalysisSchema
         );
@@ -70,7 +75,9 @@ IMPORTANT DENSITY RULE: Provide a dense, rich analysis identifying key moments i
 
         return {
             ...result,
-            annotations: expandedAnnotations
+            annotations: expandedAnnotations,
+            modelUsed: response.model,
+            providerUsed: response.provider,
         };
     } catch (error) {
         log.error({ error, title }, 'Failed to generate text analysis');

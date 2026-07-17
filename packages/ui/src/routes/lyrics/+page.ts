@@ -1,5 +1,6 @@
 import type { PageLoad } from './$types';
 import type { LyricsStats, LyricsStatus } from '@flows/shared';
+import { createApiClient } from '@lib/client';
 import { getLyricsStats, getLyricsLibrary } from '@lib/flows/lyrics/api';
 
 /** A single row in the lyrics library table, as rendered by the dashboard. */
@@ -34,13 +35,14 @@ const LIMIT = 50;
  * Errors are returned (not thrown) so the flow can render its existing inline
  * error UI instead of SvelteKit's error page — behaviour-preserving.
  */
-export const load: PageLoad = async ({ url }): Promise<LyricsPageData> => {
+export const load: PageLoad = async ({ url, fetch }): Promise<LyricsPageData> => {
   const canvasTrackId = url.searchParams.get('canvasTrackId');
+  const requestApi = createApiClient(fetch);
 
   try {
     const [stats, tracks] = await Promise.all([
-      getLyricsStats(), // Stats are always global
-      getLyricsLibrary(1, LIMIT),
+      getLyricsStats(requestApi), // Stats are always global
+      getLyricsLibrary(1, LIMIT, undefined, requestApi),
     ]);
 
     return { stats, tracks, canvasTrackId, error: null };

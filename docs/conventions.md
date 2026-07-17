@@ -126,6 +126,8 @@ from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
   The board must not import flow internals or select renderers by flow ID.
 - **Data access** goes through the typed Eden client (`@lib/client`), wrapped per flow in
   `api.ts`. Preferred target: SvelteKit `+page.ts` loaders (universal load) over `onMount`.
+  A loader must construct Eden with its event-scoped `fetch`; browser-global clients are
+  reserved for interactive calls after the loader completes.
 
 ---
 

@@ -4,6 +4,23 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2026-07-16 - Lyrics Canvas QA and LLM rotation repair
+
+Issue #66 repaired Canvas generation and made the provider boundary auditable:
+
+- Rotation now ignores the direct-mode `LLM_MODEL` override and initializes Groq,
+  OpenRouter, Cerebras, and Mistral with their own catalog defaults.
+- OpenRouter now defaults to the dynamic `openrouter/free` router; retired Cerebras model
+  IDs were replaced by `gpt-oss-120b` and `zai-glm-4.7`.
+- Structured output can return the actual provider/model response metadata, which Lyrics
+  Canvas and generic Canvas persist instead of hard-coded Gemini values.
+- Canvas completions use a 4096-token output budget compatible with free-provider quotas.
+- Missing analysis is a successful domain state; unavailable AI providers map to a
+  sanitized `503` while detailed failures remain in backend logs.
+- Added rotation, metadata, service, analyzer, and `app.handle()` route coverage.
+
+---
+
 ## 2025-12-09 — Lyrics Flow (Backend)
 
 ### Infrastructure

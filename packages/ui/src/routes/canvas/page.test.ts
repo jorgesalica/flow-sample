@@ -3,16 +3,24 @@ import type { CanvasAnalysis } from '@flows/shared';
 
 // ── Mock the typed Eden client edge ─────────────────────────────────
 const canvasGet = vi.fn();
+const createApiClient = vi.fn();
 
-vi.mock('@lib/client', () => ({
-  api: {
+vi.mock('@lib/client', () => {
+  const client = {
     api: {
       canvas: {
         get: (...args: unknown[]) => canvasGet(...args),
       },
     },
-  },
-}));
+  };
+  return {
+    api: client,
+    createApiClient: (requestFetch: typeof fetch) => {
+      createApiClient(requestFetch);
+      return client;
+    },
+  };
+});
 
 import { load } from './+page';
 
@@ -37,13 +45,16 @@ function makeCanvas(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
 // The loader takes no inputs we rely on, but `load` is typed as PageLoad —
 // pass a minimal typed stand-in for the SvelteKit load event.
 const depends = vi.fn();
-const event = { depends } as unknown as Parameters<typeof load>[0];
+const requestFetch = vi.fn();
+const event = { depends, fetch: requestFetch } as unknown as Parameters<typeof load>[0];
 const runLoad = () => load(event);
 
 describe('canvas +page loader', () => {
   beforeEach(() => {
     canvasGet.mockReset();
+    createApiClient.mockReset();
     depends.mockReset();
+    requestFetch.mockReset();
   });
 
   it('returns the canvas list fetched from the Eden client', async () => {
@@ -53,6 +64,7 @@ describe('canvas +page loader', () => {
     const result = await runLoad();
 
     expect(canvasGet).toHaveBeenCalledOnce();
+    expect(createApiClient).toHaveBeenCalledWith(requestFetch);
     expect(depends).toHaveBeenCalledWith('app:canvas-list');
     expect(result).toEqual({ canvases: list });
   });

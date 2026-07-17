@@ -66,7 +66,7 @@ The `@flows/core/llm` module provides a unified interface for multiple LLM provi
 
 ```text
 @flows/core/src/llm/
-├── client.ts              # LLMClient class (Direct + Rotation modes, generateObject)
+├── client.ts              # Direct/rotation client and structured output metadata
 ├── types.ts               # Shared types (LLMMessage, ModelInfo, ModelTier, etc.)
 ├── index.ts               # Barrel: re-exports + createLLMClient() factory
 └── providers/
@@ -74,7 +74,7 @@ The `@flows/core/llm` module provides a unified interface for multiple LLM provi
     ├── openai-compatible.ts # OpenAICompatibleProvider (shared base for groq/openrouter/cerebras/mistral)
     ├── gemini/             # Google Gemini (paid, @google/genai SDK)
     ├── groq/               # GroqCloud (free, OpenAI-compatible)
-    ├── openrouter/         # OpenRouter aggregator (free :free models)
+    ├── openrouter/         # OpenRouter dynamic free-model router
     ├── cerebras/           # Cerebras (free, 1M tokens/day)
     └── mistral/            # Mistral La Plateforme (free experiment tier)
 ```
@@ -92,11 +92,13 @@ Each provider has:
 // Direct: use specific provider
 const client = new LLMClient('groq');
 
-// Rotation: round-robin across free providers (fallback on 429)
+// Rotation: provider defaults with fallback on provider errors
 const client = LLMClient.createRotation();
 ```
 
-Configure via `.env`: `LLM_PROVIDER=rotation` or `LLM_PROVIDER=groq`.
+Configure via `.env`: `LLM_PROVIDER=rotation` or `LLM_PROVIDER=groq`. `LLM_MODEL`
+overrides the model only in direct mode. Rotation uses each provider's catalog default
+because model identifiers are not portable across providers.
 
 ## Data Flow (Example: Spotify Sync)
 

@@ -1,7 +1,10 @@
+import { logger } from '@flows/core';
 import { Elysia, t } from 'elysia';
 import type { LyricsRepository } from '../../domain/ports';
 import { SQLiteLyricsCanvasRepository } from './repository';
 import { LyricsCanvasService } from './service';
+
+const log = logger.child({ module: 'LyricsCanvasRoutes' });
 
 export function createCanvasRoutes(lyricsRepository: LyricsRepository) {
   const service = new LyricsCanvasService(new SQLiteLyricsCanvasRepository(), lyricsRepository);
@@ -22,9 +25,7 @@ export function createCanvasRoutes(lyricsRepository: LyricsRepository) {
             set.status = 404;
             return { error: 'Lyrics not available for this track' };
           case 'analysis_missing':
-            set.status = 404;
             return {
-              error: 'Analysis not found',
               needsAnalysis: true,
               source: result.source,
             };
@@ -39,14 +40,26 @@ export function createCanvasRoutes(lyricsRepository: LyricsRepository) {
     .post(
       '/analyze',
       async ({ params, set }) => {
-        const result = await service.analyze(params.trackId);
+        try {
+          const result = await service.analyze(params.trackId);
 
-        if (result.kind === 'source_unavailable') {
-          set.status = 400;
-          return { error: 'Track or lyrics not available' };
+          if (result.kind === 'source_unavailable') {
+            set.status = 400;
+            return { error: 'Track or lyrics not available' };
+          }
+
+          return result.analysis;
+        } catch (error) {
+          log.error(
+            {
+              trackId: params.trackId,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            'Canvas analysis failed',
+          );
+          set.status = 503;
+          return { error: 'AI analysis is temporarily unavailable' };
         }
-
-        return result.analysis;
       },
       {
         params: t.Object({

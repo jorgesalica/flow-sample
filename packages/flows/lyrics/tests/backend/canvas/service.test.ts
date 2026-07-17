@@ -73,6 +73,8 @@ describe('LyricsCanvasService', () => {
     mocks.analyzeLyrics.mockResolvedValue({
       annotations: [{ tokenId: 't_001', layerId: 'meaning', label: 'Theme', detail: 'Detail' }],
       meta: { key: 'C', bpm: 90, mood: 'Calm' },
+      modelUsed: 'llama-3.3-70b-versatile',
+      providerUsed: 'groq',
     });
   });
 
@@ -140,6 +142,8 @@ describe('LyricsCanvasService', () => {
         sourceType: 'track',
         sourceTextHash: expect.any(String),
         tokenAst: mocks.tokenAst,
+        modelUsed: 'llama-3.3-70b-versatile',
+        providerUsed: 'groq',
       }),
     );
   });

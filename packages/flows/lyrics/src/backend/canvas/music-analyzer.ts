@@ -32,7 +32,12 @@ export async function analyzeLyrics(
     trackTitle: string, 
     artistName: string, 
     interpretation?: string | null
-): Promise<{ annotations: Annotation[]; meta: MusicalAnalysisResult['meta'] }> {
+): Promise<{
+    annotations: Annotation[];
+    meta: MusicalAnalysisResult['meta'];
+    modelUsed: string;
+    providerUsed: string;
+}> {
     const client = LLMClient.createRotation();
     
     const tokenizedLyrics = formatAstForPrompt(ast);
@@ -105,11 +110,11 @@ EXAMPLE JSON OUTPUT:
     const startTime = Date.now();
     
     try {
-        const result = await client.generateObject(
+        const { value: result, response } = await client.generateObjectWithMetadata(
             {
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.2, // Low temperature for deterministic/factual analysis
-                maxTokens: 8192,  // Ensure the model has enough tokens for high density output
+                maxTokens: 4096,
             },
             musicalAnalysisSchema
         );
@@ -124,10 +129,15 @@ EXAMPLE JSON OUTPUT:
         
         return {
             ...result,
-            annotations: expandedAnnotations
+            annotations: expandedAnnotations,
+            modelUsed: response.model,
+            providerUsed: response.provider,
         };
     } catch (error) {
-        log.error({ error, trackTitle }, 'Failed to generate musical analysis');
+        log.error(
+            { error: error instanceof Error ? error.message : String(error), trackTitle },
+            'Failed to generate musical analysis',
+        );
         throw error;
     }
 }

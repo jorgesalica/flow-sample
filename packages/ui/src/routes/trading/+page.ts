@@ -5,7 +5,7 @@
 // client-side only (SSR is disabled in the root +layout.ts). The live
 // EventSource stream and all interactive mutations stay in the component /
 // flow api.ts.
-import { api } from '@lib/client';
+import { createApiClient, type ApiClient } from '@lib/client';
 import type {
   StatusResponse,
   CandlesResponse,
@@ -18,7 +18,7 @@ import { clientLogger } from '@lib/client-logger';
 // SPA only — SSR is disabled (also set globally in the root +layout.ts).
 export const ssr = false;
 
-async function loadStatus(): Promise<Pick<TradingPageData, 'trading' | 'advisor'>> {
+async function loadStatus(api: ApiClient): Promise<Pick<TradingPageData, 'trading' | 'advisor'>> {
   try {
     const { data, error } = await api.api.trading.status.get();
     if (error) throw new Error('Failed to fetch status');
@@ -33,7 +33,7 @@ async function loadStatus(): Promise<Pick<TradingPageData, 'trading' | 'advisor'
   }
 }
 
-async function loadCandles(limit: number): Promise<TradingPageData['candles']> {
+async function loadCandles(api: ApiClient, limit: number): Promise<TradingPageData['candles']> {
   try {
     const { data, error } = await api.api.trading.candles.get({
       query: { limit: limit.toString() },
@@ -47,7 +47,7 @@ async function loadCandles(limit: number): Promise<TradingPageData['candles']> {
   }
 }
 
-async function loadInsight(): Promise<TradingPageData['insight']> {
+async function loadInsight(api: ApiClient): Promise<TradingPageData['insight']> {
   try {
     const { data, error } = await api.api.trading.insight.get();
     if (error) throw new Error('Failed to fetch insight');
@@ -62,11 +62,12 @@ async function loadInsight(): Promise<TradingPageData['insight']> {
   }
 }
 
-export const load: PageLoad = async (): Promise<TradingPageData> => {
+export const load: PageLoad = async ({ fetch }): Promise<TradingPageData> => {
+  const api = createApiClient(fetch);
   const [status, candles, insight] = await Promise.all([
-    loadStatus(),
-    loadCandles(100),
-    loadInsight(),
+    loadStatus(api),
+    loadCandles(api, 100),
+    loadInsight(api),
   ]);
 
   return {

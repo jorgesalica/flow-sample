@@ -49,6 +49,17 @@ describe('LLMClient.generateObject', () => {
         expect(generate).toHaveBeenCalledOnce();
     });
 
+    it('returns the provider response alongside a validated object when requested', async () => {
+        const { client } = makeClientReturning(
+            JSON.stringify({ sentiment: 'focused', score: 0.8 }),
+        );
+
+        const result = await client.generateObjectWithMetadata(req, schema);
+
+        expect(result.value).toEqual({ sentiment: 'focused', score: 0.8 });
+        expect(result.response).toMatchObject({ provider: 'test', model: 'test-model' });
+    });
+
     it('passes the JSON schema as structured output to generate', async () => {
         const { client, generate } = makeClientReturning(
             JSON.stringify({ sentiment: 'sad', score: 0.1 }),

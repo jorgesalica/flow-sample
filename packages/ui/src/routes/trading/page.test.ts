@@ -9,14 +9,15 @@ import type { Candle, AdvisorNote } from '@flows/shared';
 
 // --- Mock the network edge (typed Eden client). Never hit a real backend. ---
 // `vi.hoisted` lets the mock fns exist before the hoisted vi.mock factory runs.
-const { statusGet, candlesGet, insightGet } = vi.hoisted(() => ({
+const { statusGet, candlesGet, insightGet, createApiClient } = vi.hoisted(() => ({
   statusGet: vi.fn(),
   candlesGet: vi.fn(),
   insightGet: vi.fn(),
+  createApiClient: vi.fn(),
 }));
 
-vi.mock('@lib/client', () => ({
-  api: {
+vi.mock('@lib/client', () => {
+  const client = {
     api: {
       trading: {
         status: { get: statusGet },
@@ -24,13 +25,20 @@ vi.mock('@lib/client', () => ({
         insight: { get: insightGet },
       },
     },
-  },
-}));
+  };
+  return {
+    createApiClient: (requestFetch: typeof fetch) => {
+      createApiClient(requestFetch);
+      return client;
+    },
+  };
+});
 
 import { load } from './+page';
 
 // Minimal SvelteKit load event — the trading loader reads nothing off it.
-const event = {} as Parameters<typeof load>[0];
+const requestFetch = vi.fn();
+const event = { fetch: requestFetch } as unknown as Parameters<typeof load>[0];
 
 // --- Fixtures (fixed, deterministic) ---------------------------------------
 function statusFixture(): StatusResponse {
@@ -81,6 +89,8 @@ beforeEach(() => {
   statusGet.mockReset();
   candlesGet.mockReset();
   insightGet.mockReset();
+  createApiClient.mockReset();
+  requestFetch.mockReset();
 });
 
 describe('trading loader — happy path', () => {
@@ -99,6 +109,7 @@ describe('trading loader — happy path', () => {
 
     const data = (await load(event)) as TradingPageData;
 
+    expect(createApiClient).toHaveBeenCalledWith(requestFetch);
     expect(data.trading?.isRunning).toBe(true);
     expect(data.trading?.candleCount).toBe(1234);
     expect(data.advisor?.isEnabled).toBe(true);

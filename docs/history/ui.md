@@ -2,6 +2,20 @@
 
 Changelog for the frontend (Svelte) application.
 
+## 2026-07-16 - SvelteKit loader and Canvas QA
+
+Issue #66 removed the runtime warnings found during Lyrics Canvas QA:
+
+- Spotify, Lyrics, Trading, Chat, and Canvas loaders now build a request-scoped Eden
+  client with the `fetch` supplied by SvelteKit.
+- OAuth and Lyrics deep-link URL cleanup now use `$app/navigation.replaceState`.
+- The Lyrics Canvas client treats missing analysis as a normal state and surfaces genuine
+  `404`/`503` responses as stable user-facing errors.
+- Added loader fetch-propagation tests, Canvas status/error contract tests, and a Vitest
+  adapter for SvelteKit's virtual navigation module.
+
+---
+
 ## 2026-07-13 - Board card contracts
 
 Issue #43 replaced the board's implicit stats model with an explicit presentation

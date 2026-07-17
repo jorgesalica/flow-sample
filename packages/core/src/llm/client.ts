@@ -64,7 +64,9 @@ export class LLMClient {
         for (const type of FREE_ROTATION_ORDER) {
             const key = config.apiKeys[type];
             if (key) {
-                providers.push(createProviderInstance(type, key, config.model));
+                // A global model override only makes sense in direct mode. Each
+                // rotation provider must use a model from its own catalog.
+                providers.push(createProviderInstance(type, key));
             }
         }
 
@@ -126,6 +128,15 @@ export class LLMClient {
      * ```
      */
     async generateObject<T>(request: LLMRequest, schema: ZodType<T>): Promise<T> {
+        const { value } = await this.generateObjectWithMetadata(request, schema);
+        return value;
+    }
+
+    /** Generate a typed object and retain the provider response metadata. */
+    async generateObjectWithMetadata<T>(
+        request: LLMRequest,
+        schema: ZodType<T>,
+    ): Promise<{ value: T; response: LLMResponse }> {
         // zod-to-json-schema@3 types target zod v3; this project is on zod v4, so the
         // ZodType shapes don't overlap. Cast through `unknown` (avoids `any`) — runtime is fine.
         const jsonSchema = zodToJsonSchema(
@@ -144,7 +155,10 @@ export class LLMClient {
         const response = await this.generate(structuredRequest);
 
         try {
-            return schema.parse(JSON.parse(stripJsonFences(response.content))) as T;
+            return {
+                value: schema.parse(JSON.parse(stripJsonFences(response.content))) as T,
+                response,
+            };
         } catch (firstError) {
             console.warn(
                 `[LLMClient] generateObject validation failed, retrying once. Error: ${
@@ -171,7 +185,10 @@ export class LLMClient {
             };
 
             const retryResponse = await this.generate(retryRequest);
-            return schema.parse(JSON.parse(stripJsonFences(retryResponse.content))) as T;
+            return {
+                value: schema.parse(JSON.parse(stripJsonFences(retryResponse.content))) as T,
+                response: retryResponse,
+            };
         }
     }
 
