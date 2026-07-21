@@ -14,6 +14,7 @@
     "test:coverage-tooling": "node --test scripts/run-coverage.test.mjs",
     "test:runtime-tooling": "node --test scripts/check-runtime-contracts.test.mjs",
     "test:coverage": "node scripts/run-coverage.mjs",
+    "security:audit": "pnpm audit --prod --audit-level high",
     "lint": "pnpm -r run --if-present lint",
     "check": "pnpm -r run --if-present check",
     "typecheck": "pnpm -r run --if-present typecheck",
@@ -37,8 +38,16 @@
   "volta": {
     "node": "22.19.0"
   },
+  "pnpm": {
+    "overrides": {
+      "file-type": "21.3.2"
+    }
+  },
+  "dependencies": {
+    "file-type": "21.3.2"
+  },
   "devDependencies": {
     "husky": "^9.1.7",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.1.3"
   }
 }

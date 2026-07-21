@@ -28,6 +28,7 @@ pnpm dev          # all flows, backend, and UI with hot reload
 pnpm build        # clean, build every package, and smoke-test compiled backend import
 pnpm verify       # docs + architecture + lint + types + Svelte check + tests
 pnpm test:coverage
+pnpm security:audit
 pnpm --filter @flows/ui test:e2e
 ```
 
@@ -37,6 +38,9 @@ Playwright coverage or documented desktop/mobile verification.
 
 After changing `@flows/shared` or `@flows/core`, rebuild it before checking downstream
 packages (`pnpm build:shared` or `pnpm --filter @flows/core build`).
+
+Dependency changes also run `pnpm security:audit` and `pnpm outdated -r --compatible`.
+Keep major upgrades in scoped issues instead of mixing them into security patches.
 
 ## Engineering Rules
 

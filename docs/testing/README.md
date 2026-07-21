@@ -71,6 +71,7 @@ pnpm verify                              # canonical local static/unit gate
 pnpm build                               # all package and UI builds
 pnpm test:tooling                        # architecture and coverage-runner contract tests
 pnpm test:coverage                       # all package ratchets + deterministic aggregate
+pnpm security:audit                      # high/critical production advisories
 pnpm --filter @flows/ui test:e2e         # Playwright journeys
 pnpm check:docs                          # local Markdown links
 pnpm check:architecture                  # package/layer contracts
@@ -78,9 +79,9 @@ pnpm check:runtime                       # manifests + compiled backend import (
 pnpm check:runtime:manifests             # source-independent workspace export contract
 ```
 
-CI runs a clean frozen install, builds first and imports the compiled backend, then runs
-documentation/architecture/runtime-manifest and tooling tests, lint, TypeScript, Svelte
-checks, and every package coverage ratchet.
+CI runs a clean frozen install, audits production dependencies, builds and imports the
+compiled backend, then runs documentation/architecture/runtime-manifest and tooling
+tests, lint, TypeScript, Svelte checks, and every package coverage ratchet.
 Playwright remains targeted until its runtime fixtures are fully deterministic; PRs with
 interaction changes must state which Playwright or manual desktop/mobile checks were run.
 
