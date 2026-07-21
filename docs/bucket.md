@@ -26,9 +26,9 @@ Last reviewed: 2026-07-21.
 - LLM analysis depth and multi-agent orchestration: issue #23.
 - Music/lyrics/canvas integration: issue #27.
 
-Board layout/card contracts (#42 and #43), the design-system migration (#24), and the
-technical closure through #73 plus named Board persistence (#44) are complete and belong
-in project history rather than this bucket.
+Board layout/card contracts (#42 and #43), the Board umbrella (#18), the design-system
+migration (#24), and the technical closure through #73 plus named Board persistence (#44)
+are complete and belong in project history rather than this bucket.
 
 Historical completed work is recorded in [project history](history/README.md) and GitHub
 PRs rather than maintained as a second checklist here.
