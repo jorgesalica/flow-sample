@@ -7,7 +7,7 @@ For the cross-package map and refactor lanes, see
 
 The backend has been refactored from a monolithic layered architecture into isolated **Bounded Contexts (Flows)**. Each flow is distributed as its own workspace package under `packages/flows/*`.
 
-The central `packages/backend` workspace now acts strictly as an **Application Host**: it initializes the Elysia server, sets up global middleware (CORS, static files), and mounts the independent flow routes.
+The central `packages/backend` workspace now acts strictly as an **Application Host**: it initializes the Elysia server, sets up global middleware (CORS, static files), mounts the independent flow routes, and keeps browser SPA fallback separate from JSON API 404s.
 
 `packages/music` is a neutral in-process persistence package shared by Spotify and
 Lyrics. It owns `music.db`, the track/artist/genre schema, FTS, and the track repository;
@@ -35,7 +35,8 @@ All five flows now follow the same high-level package shape: a `domain/` layer
 for pure concepts, ports, and typed errors, plus a `backend/` layer for Elysia
 routes, repositories, services, databases, and adapters. Every flow places material
 orchestration behind injectable application services. The remaining architectural work
-is shared quality-gate hardening rather than another flow-boundary migration.
+is product work rather than another flow-boundary migration. Backend workspaces extend
+the root `tsconfig.backend.json`; package configs own only output/declaration differences.
 
 ```text
 flow-package/

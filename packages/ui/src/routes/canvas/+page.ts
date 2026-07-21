@@ -1,5 +1,6 @@
 import type { CanvasAnalysis } from '@flows/shared';
 import { createApiClient } from '@lib/client';
+import { parseCanvasAnalysisList } from '@lib/flows/canvas/contract';
 import { INVALIDATION } from '@lib/invalidation';
 import type { PageLoad } from './$types';
 
@@ -28,5 +29,9 @@ export const load: PageLoad = async ({ depends, fetch }): Promise<CanvasPageData
     return { canvases: [] };
   }
 
-  return { canvases: (data ?? []) as unknown as CanvasAnalysis[] };
+  try {
+    return { canvases: parseCanvasAnalysisList(data ?? []) };
+  } catch {
+    return { canvases: [] };
+  }
 };

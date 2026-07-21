@@ -34,7 +34,10 @@ follow-up polish.
   adapter. Loading, empty, error, and stale data share one renderer.
 - Architecture contracts reject retired UI styles, gradients, and accessibility
   suppressions.
-- CI builds the monorepo and runs lint, type checks, Svelte checks, and coverage.
+- CI builds the monorepo and runs lint, type checks, Svelte checks, tooling contracts,
+  and conservative per-package coverage ratchets with a deterministic aggregate.
+- Backend workspaces share compiler defaults through one root config; UI API/loaders
+  reject unvalidated double casts at the architecture gate.
 - Short-lived branches and PRs to `main` are the delivery contract.
 
 Shared music database ownership is neutral in `@flows/music`; Spotify and Lyrics no
@@ -44,9 +47,7 @@ longer import each other's internals.
 
 The current queue closes architectural and testing debt before new product features:
 
-1. **Quality gate ([#73](https://github.com/jorgesalica/flow-sample/issues/73))**:
-   coverage ratchets, complete package participation, shared tooling, and regression QA.
-2. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
+1. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
    repository-backed persistence, API, loader integration, and local migration.
 
 After this queue, run a final architecture/browser audit and reconcile the Board umbrella

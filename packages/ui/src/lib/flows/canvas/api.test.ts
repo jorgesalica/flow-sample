@@ -54,6 +54,11 @@ describe('canvas Eden api', () => {
     await expect(fetchCanvasList()).rejects.toThrow('Failed to fetch canvases');
   });
 
+  it('rejects malformed list responses', async () => {
+    mocks.list.mockResolvedValue({ data: [{ id: 'partial' }], error: null });
+    await expect(fetchCanvasList()).rejects.toThrow('Invalid canvas list response');
+  });
+
   it('loads one canvas through the typed dynamic route', async () => {
     const canvas = makeCanvas();
     mocks.get.mockResolvedValue({ data: canvas, error: null });
@@ -64,6 +69,11 @@ describe('canvas Eden api', () => {
   it('reports missing canvases', async () => {
     mocks.get.mockResolvedValue({ data: { error: 'Canvas not found' }, error: null });
     await expect(fetchCanvas('missing')).rejects.toThrow('Failed to fetch canvas');
+  });
+
+  it('rejects malformed single-canvas responses', async () => {
+    mocks.get.mockResolvedValue({ data: { id: 'partial' }, error: null });
+    await expect(fetchCanvas('src_1')).rejects.toThrow('Invalid canvas response');
   });
 
   it('deletes through the typed dynamic route', async () => {
@@ -88,5 +98,10 @@ describe('canvas Eden api', () => {
   it('surfaces a backend create error', async () => {
     mocks.create.mockResolvedValue({ data: null, error: { value: { error: 'Text too long' } } });
     await expect(createAndAnalyzeCanvas('text')).rejects.toThrow('Text too long');
+  });
+
+  it('rejects malformed create responses', async () => {
+    mocks.create.mockResolvedValue({ data: { id: 'partial' }, error: null });
+    await expect(createAndAnalyzeCanvas('text')).rejects.toThrow('Invalid canvas response');
   });
 });

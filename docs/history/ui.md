@@ -2,6 +2,19 @@
 
 Changelog for the frontend (Svelte) application.
 
+## 2026-07-21 - Canvas response validation
+
+Issue #73 removed the remaining unsafe Canvas UI boundary casts:
+
+- Added structural validation for analyses, nested token ASTs, annotations, layers, and
+  metadata before API or loader data reaches UI state.
+- Interactive calls now reject malformed payloads; initial loaders degrade them to an
+  empty list instead of preserving invalid data.
+- Extended architecture checks so future unsafe double casts fail in every production UI
+  API facade and SvelteKit loader.
+
+---
+
 ## 2026-07-16 - SvelteKit loader and Canvas QA
 
 Issue #66 removed the runtime warnings found during Lyrics Canvas QA:

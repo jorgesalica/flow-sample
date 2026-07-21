@@ -84,4 +84,12 @@ describe('canvas +page loader', () => {
 
     expect(result).toEqual({ canvases: [] });
   });
+
+  it('falls back to an empty list when the response is malformed', async () => {
+    canvasGet.mockResolvedValueOnce({ data: [{ id: 'partial' }], error: null });
+
+    const result = await runLoad();
+
+    expect(result).toEqual({ canvases: [] });
+  });
 });

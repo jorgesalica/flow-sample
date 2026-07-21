@@ -1,16 +1,10 @@
 {
+    "extends": "../../tsconfig.backend.json",
     "compilerOptions": {
-        "target": "ES2024",
-        "module": "CommonJS",
-        "moduleResolution": "Node",
         "declaration": true,
         "declarationMap": true,
         "outDir": "./dist",
-        "rootDir": "./src",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
+        "rootDir": "./src"
     },
     "include": [
         "src/**/*"

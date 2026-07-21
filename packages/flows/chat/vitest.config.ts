@@ -15,13 +15,15 @@ export default defineConfig({
                 'src/**/*.types.ts',
                 'src/**/types/**',
                 'src/**/server.ts',
-                // HTTP route shells — thin Elysia wiring; logic lives in the
-                // tested services. Covered by integration tests, not units.
-                'src/**/routes.ts',
-                'src/**/*.routes.ts',
                 // Pure constants / config, no logic to exercise.
                 'src/**/config.ts',
             ],
+            thresholds: {
+                statements: 93,
+                branches: 85,
+                functions: 95,
+                lines: 93,
+            },
         },
     },
     resolve: {

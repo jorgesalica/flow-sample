@@ -148,8 +148,10 @@ The test-layer matrix and change-specific verification requirements live in
   fake data, never real credentials/PII.
 - **Constants from `@flows/shared`, never magic strings**, in tests too.
 - **Determinism:** no `Date.now()` / `Math.random()` in the body of a test; inject them.
-- **Coverage** is configured per package via `vitest.config.ts`; keep it from regressing.
-  Coverage is a signal, not a substitute for assertions at the correct layer.
+- **Coverage** is configured and ratcheted per package via `vitest.config.ts`.
+  `pnpm test:coverage` discovers every participating workspace and prints one stable,
+  count-weighted summary. Coverage is a signal, not a substitute for assertions at the
+  correct layer.
 - **Interactive UI changes** require focused Playwright coverage or documented
   desktop/mobile verification. Unit tests alone do not prove browser behavior.
 
@@ -191,10 +193,11 @@ branch: **PRs target `main`**. There is no `develop` branch here.
 
 `pnpm check:architecture` enforces the rules that can be detected reliably without a
 heavy static-analysis framework. It checks production sources for explicit `any`,
-hardcoded localhost origins in UI API modules, SQL calls outside persistence modules,
-environment reads outside named config factories, direct imports between sibling flow
-packages, and retired UI styles or accessibility suppressions. The command is part of
-`pnpm verify`, and its own behavior is covered by `pnpm test:architecture`.
+hardcoded localhost origins in UI API modules, unsafe double casts at UI API/loader
+boundaries, SQL calls outside persistence modules, environment reads outside named
+config factories, direct imports between sibling flow packages, and retired UI styles or
+accessibility suppressions. The command is part of `pnpm verify`, and its own behavior is
+covered by `pnpm test:architecture`.
 
 `pnpm check:docs` validates local Markdown links. Both contract checks are part of
 `pnpm verify` and run in CI.

@@ -65,7 +65,7 @@ The backend runs on `http://localhost:4173`; the Vite UI runs on
 | `pnpm dev` | Run every flow, backend, and UI with hot reload |
 | `pnpm build` | Build all workspace packages |
 | `pnpm verify` | Run docs/architecture checks, lint, types, Svelte check, and tests |
-| `pnpm test:coverage` | Run package test suites with coverage |
+| `pnpm test:coverage` | Run every coverage-bearing package and print a deterministic aggregate |
 | `pnpm --filter @flows/ui test:e2e` | Run Playwright journeys |
 | `pnpm format` | Format packages that provide a formatter |
 
@@ -114,9 +114,9 @@ pnpm verify
 pnpm build
 ```
 
-CI performs a clean install, full build, static checks, and coverage on every PR and push
-to `main`. UI behavior changes also require focused Playwright coverage or a documented
-manual desktop/mobile verification.
+CI performs a clean install, full build, static/tooling checks, and ratcheted package
+coverage on every PR and push to `main`. UI behavior changes also require focused
+Playwright coverage or a documented manual desktop/mobile verification.
 
 ## License
 

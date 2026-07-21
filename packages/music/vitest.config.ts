@@ -10,6 +10,12 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'html'],
       include: ['src/**/*.ts'],
       exclude: ['src/index.ts', 'src/database.ts'],
+      thresholds: {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
     },
   },
   resolve: {
