@@ -25,6 +25,8 @@ export interface TradingState {
   connectedAt: Date | null;
 }
 
+export type TradingServiceState = TradingState;
+
 /**
  * TradingService: Orchestrates the data ingestion pipeline (N1 + N2).
  *

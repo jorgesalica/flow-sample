@@ -18,15 +18,11 @@
 
   type BadgeTone = 'danger' | 'info' | 'neutral' | 'success' | 'warning';
 
-  interface EnhancedAdvisorNote extends AdvisorNote {
-    _debugContext?: unknown;
-  }
-
   let { initialData }: { initialData: TradingPageData } = $props();
 
   let tradingData = $derived(tradingStore.tradingState);
   let advisor = $derived(tradingStore.advisorState);
-  let insight = $derived(tradingStore.latestInsight) as EnhancedAdvisorNote | null;
+  let insight = $derived(tradingStore.latestInsight);
   let candleList = $derived(tradingStore.candles);
   let loadingInsight = $derived(tradingStore.isLoadingInsight);
   let viewMode: 'dashboard' | 'wizard' = $state('dashboard');

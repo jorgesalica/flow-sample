@@ -29,3 +29,24 @@ export class AnalysisError extends TradingError {
     this.name = 'AnalysisError';
   }
 }
+
+export class MarketDataUnavailableError extends TradingError {
+  constructor(message: string = 'Market data is unavailable') {
+    super(message);
+    this.name = 'MarketDataUnavailableError';
+  }
+}
+
+export class InsightProviderError extends TradingError {
+  constructor(message: string = 'Insight provider is unavailable') {
+    super(message);
+    this.name = 'InsightProviderError';
+  }
+}
+
+export class InvalidInsightResponseError extends TradingError {
+  constructor(message: string = 'Insight provider returned an invalid response') {
+    super(message);
+    this.name = 'InvalidInsightResponseError';
+  }
+}

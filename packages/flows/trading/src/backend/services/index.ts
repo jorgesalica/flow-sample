@@ -3,3 +3,5 @@ export * from './trading.service';
 export * from './analyst.service';
 export * from './mentor.service';
 export * from './synthesizer.service';
+export * from './market.service';
+export * from './wizard.service';

@@ -18,8 +18,6 @@ export default defineConfig({
                 'src/**/server.ts',
                 // HTTP route shells — thin Elysia wiring; logic lives in the
                 // tested services. Covered by integration tests, not units.
-                'src/**/routes.ts',
-                'src/**/*.routes.ts',
                 // Pure constants / config, no logic to exercise.
                 'src/**/config.ts',
                 // External IO edge (Binance REST + WebSocket live clients),

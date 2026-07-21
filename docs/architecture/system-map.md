@@ -178,11 +178,9 @@ Completed design-system, loader/invalidation, environment ownership, music persi
 and architecture-contract work lives in project history and merged PRs. The active lanes
 are deliberately narrower:
 
-1. **Trading (#72)**: extract wizard/provider orchestration and type the full route
-   contract.
-2. **Quality gate (#73)**: ratchet coverage, complete package participation, consolidate
+1. **Quality gate (#73)**: ratchet coverage, complete package participation, consolidate
    exact tooling duplication, and enforce the repaired boundaries.
-3. **Board persistence (#44)**: add named server-backed boards and migrate the local v1
+2. **Board persistence (#44)**: add named server-backed boards and migrate the local v1
    layout only after the boundary work is stable.
 
 Relationships/edges remain a later product decision. They are not implied technical debt

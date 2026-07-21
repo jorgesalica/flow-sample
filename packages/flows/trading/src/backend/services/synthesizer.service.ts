@@ -1,4 +1,5 @@
 import { type MarketState } from '../../domain/types';
+import type { TradingWizardAnalysis } from '@flows/shared';
 import type { LLMMessage } from '@flows/core';
 import { MENTOR_SYSTEM_PROMPT } from '../config';
 
@@ -30,7 +31,7 @@ export class SynthesizerService {
    * Enrich raw market state with derived metrics for the LLM.
    * Exposed public for debugging if needed.
    */
-  public enrichMarketState(state: MarketState): Record<string, unknown> {
+  public enrichMarketState(state: MarketState): TradingWizardAnalysis {
     const currentPrice = state.price.current;
 
     // Calculate distances to levels

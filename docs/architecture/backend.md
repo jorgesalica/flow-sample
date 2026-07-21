@@ -33,9 +33,9 @@ packages/
 
 All five flows now follow the same high-level package shape: a `domain/` layer
 for pure concepts, ports, and typed errors, plus a `backend/` layer for Elysia
-routes, repositories, services, databases, and adapters. Spotify, Lyrics, Chat,
-and Canvas place orchestration behind injectable application services. The remaining
-refactor work is about tightening Trading and shared quality gates.
+routes, repositories, services, databases, and adapters. Every flow places material
+orchestration behind injectable application services. The remaining architectural work
+is shared quality-gate hardening rather than another flow-boundary migration.
 
 ```text
 flow-package/
@@ -142,6 +142,20 @@ stable `503` event while retaining raw details in server logs.
 Both flows publish TypeBox response schemas backed by DTOs in `@flows/shared`. Their
 route and service suites exercise success, absence, provider failure, cache, batch, and
 SSE behavior through real Elysia `.handle()` requests.
+
+### Trading HTTP And SSE Boundary
+
+`TradingMarketService` owns local market reads and wraps the Binance historical-data
+port. `TradingWizardService` owns timeframe defaults, market analysis, cascade prompt
+construction, LLM invocation, and validated `AdvisorNote` parsing. Routes receive those
+applications plus stream and mentor ports through `TradingRoutesDependencies`.
+
+Trading DTOs and TypeBox schemas define numeric query inputs, supported kline intervals,
+previous-insight context, enriched analysis, and success/error responses. Insufficient
+analysis data maps to `422`, market/provider failures map to sanitized `502`/`503`, and
+unexpected internal failures map to `500`. The SSE response removes service listeners
+on stream cancellation or request abort; route tests exercise that teardown through a
+real `.handle()` response.
 
 ### Chat HTTP And SSE Boundary
 

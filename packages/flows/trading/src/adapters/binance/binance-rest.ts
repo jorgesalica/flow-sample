@@ -6,13 +6,14 @@
  */
 
 import type { Candle } from './types';
+import type { TradingKlineInterval } from '@flows/shared';
 import { logger } from '@flows/core';
 
 const log = logger.child({ module: 'BinanceRestAdapter' });
 
 const BINANCE_REST_BASE = 'https://api.binance.com/api/v3';
 
-export type KlineInterval = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w';
+export type KlineInterval = TradingKlineInterval;
 
 interface BinanceKline {
   0: number; // Open time

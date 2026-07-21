@@ -1,420 +1,461 @@
-import { Elysia, t } from 'elysia';
-import { getTradingService, getMentorService, getSynthesizerService, AnalystService } from './services';
-import { fetchKlines, type KlineInterval } from '../adapters/binance';
 import { createLLMClient, logger } from '@flows/core';
-import { createTradingConfigFromEnv, TRADING_CONFIG, type TradingRuntimeConfig } from './config';
+import type {
+  AdvisorNote,
+  AdvisorState,
+  TradingState as TradingStateDto,
+} from '@flows/shared';
+import { Elysia } from 'elysia';
+import { fetchKlines } from '../adapters/binance';
+import {
+  InsightProviderError,
+  InsufficientDataError,
+  InvalidInsightResponseError,
+  MarketDataUnavailableError,
+} from '../domain/errors';
+import { createTradingConfigFromEnv, type TradingRuntimeConfig } from './config';
+import { SqliteTradingReadRepository } from './repository';
+import {
+  AnalystService,
+  getMentorService,
+  getSynthesizerService,
+  getTradingService,
+  TradingMarketService,
+  TradingWizardService,
+  type MentorServiceState,
+  type TradingMarketApplication,
+  type TradingServiceState,
+  type TradingWizardApplication,
+} from './services';
+import {
+  tradingAdvisorStatusResponseSchema,
+  tradingAdvisorToggleResponseSchema,
+  tradingCandlesResponseSchema,
+  tradingErrorResponseSchema,
+  tradingFractalQuerySchema,
+  tradingFractalsResponseSchema,
+  tradingGeneratedInsightResponseSchema,
+  tradingHistoricalQuerySchema,
+  tradingInsightResponseSchema,
+  tradingKlinesResponseSchema,
+  tradingLiveCandleResponseSchema,
+  tradingMarketQuerySchema,
+  tradingStateResponseSchema,
+  tradingStatusResponseSchema,
+  tradingSymbolQuerySchema,
+  tradingWizardInsightRequestSchema,
+  tradingWizardInsightResponseSchema,
+} from './schemas';
 
 const log = logger.child({ module: 'TradingRoutes' });
-import {
-  getLastNCandles,
-  getLastNFractalNodes,
-  getLatestAdvisorLog,
-  type CandleRow,
-  type FractalNodeRow,
-  type AdvisorLogRow,
-} from './database';
+const INTERNAL_ERROR = 'Trading request failed';
+const MARKET_DATA_UNAVAILABLE = 'Market data is temporarily unavailable';
+const INSIGHT_UNAVAILABLE = 'AI insight is temporarily unavailable';
 
-/**
- * Trading Flow API Routes
- *
- * Endpoints for the Trading Bot Flow (N1-N6)
- */
-export function createTradingRoutes(config: TradingRuntimeConfig = createTradingConfigFromEnv()) {
-  const tradingService = getTradingService({ symbol: config.symbol, interval: config.interval });
-  const mentorService = getMentorService(config.symbol, config.advisorAutoStart);
+export interface TradingStreamApplication {
+  start(): void;
+  stop(): void;
+  getState(): TradingServiceState;
+  on(event: string, callback: (data: unknown) => void): void;
+  off(event: string, callback: (data: unknown) => void): void;
+}
 
-  return (
-    new Elysia({ prefix: '/api/trading' })
+export interface TradingMentorApplication {
+  toggle(): boolean;
+  getState(): MentorServiceState;
+  generateInsight(): Promise<AdvisorNote | null>;
+}
 
-      // ============================================
-      // Service Control
-      // ============================================
+export interface TradingRoutesDependencies {
+  trading: TradingStreamApplication;
+  mentor: TradingMentorApplication;
+  market: TradingMarketApplication;
+  wizard: TradingWizardApplication;
+}
 
-      /** Start the data ingestion pipeline */
-      .post('/start', () => {
-        tradingService.start();
-        return {
-          success: true,
-          message: 'Trading service started',
-          state: tradingService.getState(),
-        };
-      })
+export function createTradingRouteDependencies(
+  config: TradingRuntimeConfig,
+): TradingRoutesDependencies {
+  const market = new TradingMarketService(
+    new SqliteTradingReadRepository(),
+    { fetchKlines },
+  );
+  const synthesizer = getSynthesizerService();
 
-      /** Stop the data ingestion pipeline */
-      .post('/stop', () => {
-        tradingService.stop();
-        return {
-          success: true,
-          message: 'Trading service stopped',
-          state: tradingService.getState(),
-        };
-      })
+  return {
+    trading: getTradingService({ symbol: config.symbol, interval: config.interval }),
+    mentor: getMentorService(config.symbol, config.advisorAutoStart),
+    market,
+    wizard: new TradingWizardService(config.symbol, {
+      market,
+      analyzer: {
+        analyzeCandles: (candles, symbol) =>
+          AnalystService.analyzeCandles(candles, symbol),
+      },
+      synthesizer,
+      createLlmClient: createLLMClient,
+    }),
+  };
+}
 
-      /** Get current service state */
-      .get('/status', () => {
-        return {
-          success: true,
-          trading: tradingService.getState(),
-          advisor: mentorService.getState(),
-        };
-      })
-
-      // ============================================
-      // Market Data
-      // ============================================
-
-      /** Get recent candles */
-      .get(
-        '/candles',
-        ({ query }) => {
-          const limit = query.limit ? parseInt(query.limit, 10) : 100;
-          const symbol = query.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
-          const interval = query.interval || TRADING_CONFIG.DEFAULTS.INTERVAL;
-
-          const candleRows = getLastNCandles.all(symbol, interval, limit) as CandleRow[];
-
-          const candles = candleRows.map((row) => ({
-            id: row.id,
-            symbol: row.symbol,
-            interval: row.interval,
-            openTime: row.open_time,
-            open: row.open,
-            high: row.high,
-            low: row.low,
-            close: row.close,
-            volume: row.volume,
-            closeTime: row.close_time,
-            isClosed: true,
-          }));
-
+export function createTradingRoutes(
+  config: TradingRuntimeConfig = createTradingConfigFromEnv(),
+  dependencies: TradingRoutesDependencies = createTradingRouteDependencies(config),
+) {
+  return new Elysia({ prefix: '/api/trading' })
+    .post(
+      '/start',
+      ({ set }) => {
+        try {
+          dependencies.trading.start();
           return {
-            success: true,
-            count: candles.length,
-            candles: candles.reverse(),
+            success: true as const,
+            message: 'Trading service started',
+            state: serializeTradingState(dependencies.trading.getState()),
           };
+        } catch (error) {
+          logFailure(error, 'Trading service start failed');
+          set.status = 503;
+          return { success: false as const, error: MARKET_DATA_UNAVAILABLE };
+        }
+      },
+      {
+        response: {
+          200: tradingStateResponseSchema,
+          503: tradingErrorResponseSchema,
         },
-        {
-          query: t.Object({
-            limit: t.Optional(t.String()),
-            symbol: t.Optional(t.String()),
-            interval: t.Optional(t.String()),
-          }),
+      },
+    )
+    .post(
+      '/stop',
+      ({ set }) => {
+        try {
+          dependencies.trading.stop();
+          return {
+            success: true as const,
+            message: 'Trading service stopped',
+            state: serializeTradingState(dependencies.trading.getState()),
+          };
+        } catch (error) {
+          logFailure(error, 'Trading service stop failed');
+          set.status = 500;
+          return { success: false as const, error: INTERNAL_ERROR };
+        }
+      },
+      {
+        response: {
+          200: tradingStateResponseSchema,
+          500: tradingErrorResponseSchema,
         },
-      )
-
-      /** Get live candle (from in-memory state) */
-      .get('/candles/live', () => {
-        const state = tradingService.getState();
+      },
+    )
+    .get(
+      '/status',
+      () => ({
+        success: true as const,
+        trading: serializeTradingState(dependencies.trading.getState()),
+        advisor: serializeAdvisorState(dependencies.mentor.getState()),
+      }),
+      { response: { 200: tradingStatusResponseSchema } },
+    )
+    .get(
+      '/candles',
+      ({ query, set }) => {
+        try {
+          const candles = dependencies.market.getCandles(
+            query.symbol ?? config.symbol,
+            query.interval ?? config.interval,
+            query.limit ?? 100,
+          );
+          return { success: true as const, count: candles.length, candles };
+        } catch (error) {
+          logFailure(error, 'Trading candle query failed');
+          set.status = 500;
+          return { success: false as const, error: INTERNAL_ERROR };
+        }
+      },
+      {
+        query: tradingMarketQuerySchema,
+        response: {
+          200: tradingCandlesResponseSchema,
+          500: tradingErrorResponseSchema,
+        },
+      },
+    )
+    .get(
+      '/candles/live',
+      () => {
+        const state = dependencies.trading.getState();
         return {
-          success: true,
+          success: true as const,
           candle: state.lastCandle,
           isRunning: state.isRunning,
         };
-      })
-
-      /** Fetch historical klines from Binance for multi-timeframe analysis */
-      .get(
-        '/klines',
-        async ({ query }) => {
-          const symbol = query.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
-          const interval = (query.interval || '1d') as KlineInterval;
-          const limit = query.limit ? parseInt(query.limit, 10) : 100;
-
-          try {
-            const candles = await fetchKlines(symbol, interval, limit);
-            return {
-              success: true,
-              count: candles.length,
-              symbol,
-              interval,
-              candles,
-            };
-          } catch (error) {
-            return {
-              success: false,
-              error: error instanceof Error ? error.message : 'Failed to fetch klines',
-            };
+      },
+      { response: { 200: tradingLiveCandleResponseSchema } },
+    )
+    .get(
+      '/klines',
+      async ({ query, set }) => {
+        const symbol = query.symbol ?? config.symbol;
+        const interval = query.interval ?? '1d';
+        try {
+          const candles = await dependencies.market.getHistoricalKlines(
+            symbol,
+            interval,
+            query.limit ?? 100,
+          );
+          return {
+            success: true as const,
+            count: candles.length,
+            symbol,
+            interval,
+            candles,
+          };
+        } catch (error) {
+          logFailure(error, 'Historical kline request failed');
+          if (error instanceof MarketDataUnavailableError) {
+            set.status = 502;
+            return { success: false as const, error: MARKET_DATA_UNAVAILABLE };
           }
-        },
-        {
-          query: t.Object({
-            symbol: t.Optional(t.String()),
-            interval: t.Optional(t.String()),
-            limit: t.Optional(t.String()),
-          }),
-        },
-      )
-
-      // ============================================
-      // Fractal Analysis (Phase 2)
-      // ============================================
-
-      /** Get recent fractal nodes */
-      .get(
-        '/fractals',
-        ({ query }) => {
-          const limit = query.limit ? parseInt(query.limit, 10) : 50;
-          const symbol = query.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
-
-          const nodes = getLastNFractalNodes.all(symbol, limit) as FractalNodeRow[];
-
-          return {
-            success: true,
-            count: nodes.length,
-            nodes,
-          };
-        },
-        {
-          query: t.Object({
-            limit: t.Optional(t.String()),
-            symbol: t.Optional(t.String()),
-          }),
-        },
-      )
-
-      // ============================================
-      // Advisor (Phase 3)
-      // ============================================
-
-      /** Toggle advisor on/off */
-      .post('/advisor/toggle', () => {
-        const isEnabled = mentorService.toggle();
-        return {
-          success: true,
-          active: isEnabled,
-          message: isEnabled ? 'Advisor enabled' : 'Advisor disabled',
-        };
-      })
-
-      /** Get advisor status */
-      .get('/advisor/status', () => {
-        return {
-          success: true,
-          ...mentorService.getState(),
-        };
-      })
-
-      /** Get latest advisor insight */
-      .get(
-        '/insight',
-        ({ query }) => {
-          const symbol = query.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
-          const advisorLog = getLatestAdvisorLog.get(symbol) as AdvisorLogRow | null;
-
-          if (!advisorLog) {
-            return {
-              success: true,
-              insight: null,
-              message: 'No insights available yet. Enable advisor or generate one manually.',
-            };
-          }
-
-          return {
-            success: true,
-            insight: JSON.parse(advisorLog.insight_json),
-            debugContext: advisorLog.market_state_json ? JSON.parse(advisorLog.market_state_json) : null,
-            timestamp: advisorLog.timestamp,
-            regime: advisorLog.regime,
-            tokensUsed: advisorLog.tokens_used,
-            latencyMs: advisorLog.latency_ms,
-          };
-        },
-        {
-          query: t.Object({
-            symbol: t.Optional(t.String()),
-          }),
-        },
-      )
-
-      /** Generate insight on-demand (manual trigger) */
-      .post('/insight/generate', async () => {
-        const insight = await mentorService.generateInsight();
-
-        if (!insight) {
-          return {
-            success: false,
-            error: 'Failed to generate insight. Check LLM configuration and market data.',
-          };
+          set.status = 500;
+          return { success: false as const, error: INTERNAL_ERROR };
         }
-
+      },
+      {
+        query: tradingHistoricalQuerySchema,
+        response: {
+          200: tradingKlinesResponseSchema,
+          500: tradingErrorResponseSchema,
+          502: tradingErrorResponseSchema,
+        },
+      },
+    )
+    .get(
+      '/fractals',
+      ({ query, set }) => {
+        try {
+          const nodes = dependencies.market.getFractals(
+            query.symbol ?? config.symbol,
+            query.limit ?? 50,
+          );
+          return { success: true as const, count: nodes.length, nodes };
+        } catch (error) {
+          logFailure(error, 'Trading fractal query failed');
+          set.status = 500;
+          return { success: false as const, error: INTERNAL_ERROR };
+        }
+      },
+      {
+        query: tradingFractalQuerySchema,
+        response: {
+          200: tradingFractalsResponseSchema,
+          500: tradingErrorResponseSchema,
+        },
+      },
+    )
+    .post(
+      '/advisor/toggle',
+      () => {
+        const active = dependencies.mentor.toggle();
         return {
-          success: true,
-          insight,
-          message: 'Insight generated successfully',
+          success: true as const,
+          active,
+          message: active ? 'Advisor enabled' : 'Advisor disabled',
         };
-      })
-
-      // ============================================
-      // Wizard Insight (Cascade Wizard)
-      // ============================================
-
-      /** Generate insight using wizard-specific klines (not stream data) */
-      .post(
-        '/wizard/insight',
-        async ({ body }) => {
-          const symbol = body.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
-          const interval = (body.interval || '1d') as KlineInterval;
-          const limit = body.limit || 100;
-          const stepLabel = body.stepLabel || interval;
-          const promptContext = body.promptContext || '';
-          const previousInsightsRaw = body.previousInsights || [];
-
-          try {
-            log.info({ symbol, interval, limit }, 'WizardInsight: fetching klines');
-            const candles = await fetchKlines(symbol, interval, limit);
-
-            if (!candles.length) {
-              return { success: false, error: 'No candles returned from Binance' };
-            }
-
-            const marketState = AnalystService.analyzeCandles(
-              candles.map((c) => ({
-                openTime: c.openTime,
-                open: c.open,
-                high: c.high,
-                low: c.low,
-                close: c.close,
-                volume: c.volume,
-              })),
-              symbol,
-            );
-
-            if (!marketState) {
-              return { success: false, error: 'Insufficient candle data for analysis' };
-            }
-
-            const synthesizer = getSynthesizerService();
-            const enrichedAnalysis = synthesizer.enrichMarketState(marketState);
-
-            let userContent = promptContext
-              ? `## Wizard Step: ${stepLabel}\n${promptContext}\n\n`
-              : '';
-
-            if (previousInsightsRaw.length > 0) {
-              userContent += `## Context from previous timeframes:\n`;
-              for (const prev of previousInsightsRaw) {
-                userContent += `\n### ${prev.label} Analysis:\n`;
-                userContent += `- **Bias**: ${prev.insight?.sentiment_bias || 'NEUTRAL'}\n`;
-                userContent += `- **Insight**: ${prev.insight?.mentor_tip || 'N/A'}\n`;
-              }
-              userContent += `\n`;
-            }
-
-            userContent += `## Current Market State (${interval} candles, ${candles.length} total):\n\n`;
-            userContent += JSON.stringify(enrichedAnalysis, null, 2);
-
-            const { messages } = synthesizer.buildMessages(marketState);
-            messages[messages.length - 1] = { role: 'user', content: userContent };
-
-            const llm = createLLMClient();
-
-            log.info({ stepLabel }, 'WizardInsight: calling LLM');
-            const response = await llm.generate({
-              messages,
-              temperature: 0.7,
-              maxTokens: 8192,
-            });
-
-            let clean = response.content
-              .replace(/```json/g, '')
-              .replace(/```/g, '')
-              .trim();
-            const jsonMatch = clean.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-              return { success: false, error: 'Failed to parse LLM response as JSON' };
-            }
-
-            const insight = JSON.parse(jsonMatch[0]);
-
-            log.info({ stepLabel, latencyMs: response.latencyMs }, 'WizardInsight: insight generated');
-
+      },
+      { response: { 200: tradingAdvisorToggleResponseSchema } },
+    )
+    .get(
+      '/advisor/status',
+      () => ({
+        success: true as const,
+        ...serializeAdvisorState(dependencies.mentor.getState()),
+      }),
+      { response: { 200: tradingAdvisorStatusResponseSchema } },
+    )
+    .get(
+      '/insight',
+      ({ query, set }) => {
+        try {
+          const stored = dependencies.market.getLatestInsight(
+            query.symbol ?? config.symbol,
+          );
+          if (!stored) {
             return {
-              success: true,
-              insight,
-              analysis: enrichedAnalysis,
-              meta: {
-                interval,
-                candleCount: candles.length,
-                tokensUsed: response.usage.totalTokens,
-                latencyMs: response.latencyMs,
-              },
-            };
-          } catch (error) {
-            log.error({ error: error instanceof Error ? error.message : String(error) }, 'WizardInsight: failed');
-            return {
-              success: false,
-              error: error instanceof Error ? error.message : 'Wizard insight generation failed',
+              success: true as const,
+              insight: null,
+              debugContext: null,
+              timestamp: null,
+              regime: null,
+              tokensUsed: null,
+              latencyMs: null,
+              message:
+                'No insights available yet. Enable advisor or generate one manually.',
             };
           }
+          return { success: true as const, ...stored };
+        } catch (error) {
+          logFailure(error, 'Stored insight query failed');
+          set.status = 500;
+          return { success: false as const, error: INTERNAL_ERROR };
+        }
+      },
+      {
+        query: tradingSymbolQuerySchema,
+        response: {
+          200: tradingInsightResponseSchema,
+          500: tradingErrorResponseSchema,
         },
-        {
-          body: t.Object({
-            symbol: t.Optional(t.String()),
-            interval: t.Optional(t.String()),
-            limit: t.Optional(t.Number()),
-            stepLabel: t.Optional(t.String()),
-            promptContext: t.Optional(t.String()),
-            previousInsights: t.Optional(t.Array(t.Any())),
-          }),
+      },
+    )
+    .post(
+      '/insight/generate',
+      async ({ set }) => {
+        try {
+          const insight = await dependencies.mentor.generateInsight();
+          if (!insight) {
+            set.status = 503;
+            return { success: false as const, error: INSIGHT_UNAVAILABLE };
+          }
+          return {
+            success: true as const,
+            insight,
+            message: 'Insight generated successfully',
+          };
+        } catch (error) {
+          logFailure(error, 'Advisor insight generation failed');
+          set.status = 503;
+          return { success: false as const, error: INSIGHT_UNAVAILABLE };
+        }
+      },
+      {
+        response: {
+          200: tradingGeneratedInsightResponseSchema,
+          503: tradingErrorResponseSchema,
         },
-      )
-
-      // ============================================
-      // SSE Stream (Real-time updates)
-      // ============================================
-
-      /** Server-Sent Events stream for real-time candle updates */
-      .get('/stream', ({ set }) => {
-        set.headers['Content-Type'] = 'text/event-stream';
-        set.headers['Cache-Control'] = 'no-cache';
-        set.headers['Connection'] = 'keep-alive';
-
-        const encoder = new TextEncoder();
-        let isOpen = true;
-
-        const stream = new ReadableStream({
-          start(controller) {
-            const state = tradingService.getState();
-            controller.enqueue(encoder.encode(`event: state\ndata: ${JSON.stringify(state)}\n\n`));
-
-            const onCandle = (candle: unknown) => {
-              if (isOpen) {
-                controller.enqueue(
-                  encoder.encode(`event: candle\ndata: ${JSON.stringify(candle)}\n\n`),
-                );
-              }
+      },
+    )
+    .post(
+      '/wizard/insight',
+      async ({ body, set }) => {
+        try {
+          return await dependencies.wizard.generate(body);
+        } catch (error) {
+          logFailure(error, 'Wizard insight generation failed');
+          if (error instanceof InsufficientDataError) {
+            set.status = 422;
+            return {
+              success: false as const,
+              error: 'Insufficient market data for analysis',
             };
+          }
+          if (error instanceof MarketDataUnavailableError) {
+            set.status = 502;
+            return { success: false as const, error: MARKET_DATA_UNAVAILABLE };
+          }
+          if (error instanceof InvalidInsightResponseError) {
+            set.status = 502;
+            return { success: false as const, error: INSIGHT_UNAVAILABLE };
+          }
+          if (error instanceof InsightProviderError) {
+            set.status = 503;
+            return { success: false as const, error: INSIGHT_UNAVAILABLE };
+          }
+          set.status = 500;
+          return { success: false as const, error: INTERNAL_ERROR };
+        }
+      },
+      {
+        body: tradingWizardInsightRequestSchema,
+        response: {
+          200: tradingWizardInsightResponseSchema,
+          422: tradingErrorResponseSchema,
+          500: tradingErrorResponseSchema,
+          502: tradingErrorResponseSchema,
+          503: tradingErrorResponseSchema,
+        },
+      },
+    )
+    .get('/stream', ({ request }) => {
+      const encoder = new TextEncoder();
+      let isOpen = true;
+      let unsubscribe = (): void => {};
 
-            const onCandleClosed = (candle: unknown) => {
-              if (isOpen) {
-                controller.enqueue(
-                  encoder.encode(`event: candleClosed\ndata: ${JSON.stringify(candle)}\n\n`),
-                );
-              }
-            };
+      const close = (): void => {
+        if (!isOpen) return;
+        isOpen = false;
+        unsubscribe();
+      };
 
-            tradingService.on('candle', onCandle);
-            tradingService.on('candleClosed', onCandleClosed);
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          const state = serializeTradingState(dependencies.trading.getState());
+          controller.enqueue(
+            encoder.encode(`event: state\ndata: ${JSON.stringify(state)}\n\n`),
+          );
 
-            return () => {
-              isOpen = false;
-              tradingService.off('candle', onCandle);
-              tradingService.off('candleClosed', onCandleClosed);
-            };
-          },
-          cancel() {
-            isOpen = false;
-          },
-        });
+          const onCandle = (candle: unknown): void => {
+            if (isOpen) {
+              controller.enqueue(
+                encoder.encode(`event: candle\ndata: ${JSON.stringify(candle)}\n\n`),
+              );
+            }
+          };
+          const onCandleClosed = (candle: unknown): void => {
+            if (isOpen) {
+              controller.enqueue(
+                encoder.encode(
+                  `event: candleClosed\ndata: ${JSON.stringify(candle)}\n\n`,
+                ),
+              );
+            }
+          };
+          const onAbort = (): void => close();
 
-        return new Response(stream, {
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            Connection: 'keep-alive',
-          },
-        });
-      })
+          dependencies.trading.on('candle', onCandle);
+          dependencies.trading.on('candleClosed', onCandleClosed);
+          request.signal.addEventListener('abort', onAbort, { once: true });
+          unsubscribe = () => {
+            dependencies.trading.off('candle', onCandle);
+            dependencies.trading.off('candleClosed', onCandleClosed);
+            request.signal.removeEventListener('abort', onAbort);
+          };
+
+          if (request.signal.aborted) close();
+        },
+        cancel() {
+          close();
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+        },
+      });
+    });
+}
+
+function serializeTradingState(state: TradingServiceState): TradingStateDto {
+  return {
+    ...state,
+    connectedAt: state.connectedAt?.toISOString() ?? null,
+  };
+}
+
+function serializeAdvisorState(state: MentorServiceState): AdvisorState {
+  return {
+    ...state,
+    lastInsightAt: state.lastInsightAt?.toISOString() ?? null,
+  };
+}
+
+function logFailure(error: unknown, message: string): void {
+  log.error(
+    { error: error instanceof Error ? error.message : String(error) },
+    message,
   );
 }
 

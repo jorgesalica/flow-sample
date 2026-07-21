@@ -29,12 +29,17 @@ test('rejects browser runtime imports from the CommonJS shared package', () => {
   assert.equal(violations[0]?.rule, 'ui-shared-types-only');
 });
 
-test('rejects unsafe API casts in Spotify and Lyrics UI code', () => {
-  const violations = checkSource(
+test('rejects unsafe API casts in typed music and trading UI code', () => {
+  const lyricsViolations = checkSource(
     'packages/ui/src/lib/flows/lyrics/api.ts',
     'const result = data as unknown as LyricsStats;',
   );
-  assert.equal(violations[0]?.rule, 'no-unsafe-api-casts');
+  const tradingViolations = checkSource(
+    'packages/ui/src/lib/flows/trading/api.ts',
+    'const result = data as unknown as TradingStatus;',
+  );
+  assert.equal(lyricsViolations[0]?.rule, 'no-unsafe-api-casts');
+  assert.equal(tradingViolations[0]?.rule, 'no-unsafe-api-casts');
 });
 
 test('rejects SQL calls outside persistence modules', () => {

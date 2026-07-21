@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import type { Candle, AdvisorNote } from '@flows/shared';
+import type {
+  Candle,
+  AdvisorNote,
+  TradingKlineInterval,
+  TradingWizardAnalysis,
+} from '@flows/shared';
 
 // CandleChart wraps lightweight-charts (needs a real canvas/WebGL). Stub it so
 // StepWizard renders under jsdom; we only assert StepWizard's own logic.
@@ -38,6 +43,34 @@ function makeNote(overrides: Partial<AdvisorNote> = {}): AdvisorNote {
     reasoning_key_factors: ['Higher highs'],
     confidence_score: 80,
     ...overrides,
+  };
+}
+
+function makeAnalysis(): TradingWizardAnalysis {
+  return {
+    market_context: {
+      symbol: 'BTCUSDT',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      price: 110,
+      price_change_24h_percent: '10.00%',
+    },
+    regime_analysis: {
+      classification: 'TRENDING',
+      hurst_exponent: '0.650',
+      fractal_dimension: '1.350',
+      interpretation: 'Trending',
+    },
+    fractal_structure: {
+      nearest_resistance: 120,
+      distance_to_resistance: '+9.09%',
+      resistance_touch_count: 2,
+      nearest_support: 90,
+      distance_to_support: '-18.18%',
+      support_touch_count: 3,
+      active_nodes_count: 5,
+    },
+    candle_patterns: [],
+    indicators: { rsi: '55.0', macd: 'N/A' },
   };
 }
 
@@ -171,7 +204,7 @@ describe('StepWizard — insight generation', () => {
     const onFetchKlines = defaultFetch();
     const onGenerateInsightForTimeframe = vi.fn(async () => ({
       insight: makeNote({ title: 'Daily Macro Bias', mentor_tip: 'Respect the daily trend' }),
-      analysis: {},
+      analysis: makeAnalysis(),
     }));
 
     render(StepWizard, { props: { onFetchKlines, onGenerateInsightForTimeframe } });
@@ -202,11 +235,11 @@ describe('StepWizard — insight generation', () => {
         label: string,
         _promptContext: string,
         _previousInsights: { label: string; insight: AdvisorNote }[],
-        _interval: string,
+        _interval: TradingKlineInterval,
         _limit: number
       ) => ({
         insight: makeNote({ title: `${label} insight` }),
-        analysis: {},
+        analysis: makeAnalysis(),
       })
     );
 
