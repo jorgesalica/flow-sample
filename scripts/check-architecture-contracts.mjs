@@ -53,6 +53,7 @@ export function checkSource(file, source) {
   const uiGradient = /(?:linear|radial|conic)-gradient\s*\(/g;
   const accessibilitySuppression = /svelte-ignore\s+a11y_/g;
   const uiSharedRuntimeImport = /^\s*import\s+(?!type\b)[^;]+from\s+['"]@flows\/shared['"];?/gm;
+  const unsafeDoubleCast = /\bas\s+unknown\s+as\b/g;
 
   for (const match of source.matchAll(explicitAny)) {
     violations.push(violation(file, source, match, 'no-explicit-any', 'Replace `any` with a concrete type or safe narrowing.'));
@@ -103,6 +104,13 @@ export function checkSource(file, source) {
     }
     for (const match of source.matchAll(accessibilitySuppression)) {
       violations.push(violation(file, source, match, 'no-a11y-suppression', 'Fix the control semantics instead of suppressing the Svelte accessibility warning.'));
+    }
+
+    const isSpotifyOrLyricsUi = /\/(?:spotify|lyrics)\//.test(file);
+    if (isSpotifyOrLyricsUi) {
+      for (const match of source.matchAll(unsafeDoubleCast)) {
+        violations.push(violation(file, source, match, 'no-unsafe-api-casts', 'Use Eden inference or a validated runtime mapper.'));
+      }
     }
   }
 

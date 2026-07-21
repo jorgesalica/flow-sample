@@ -10,14 +10,26 @@ export type {
     Track,
     GenreCount,
     YearCount,
+    SpotifyTopStats,
+    SpotifyAuthStatus,
+    SpotifySyncResponse,
+    SpotifyErrorResponse,
     TrackRepository,
 } from './spotify.types';
 
 // Lyrics types
+export {
+    LYRICS_STATUSES,
+    LYRICS_INTERPRETATION_EVENT_TYPES,
+} from './lyrics.types';
 export type {
     LyricsStatus,
     Lyrics,
     LyricsStats,
+    LyricsLibraryTrack,
+    LyricsBatchResponse,
+    LyricsErrorResponse,
+    LyricsInterpretationEvent,
 } from './lyrics.types';
 
 // Trading types

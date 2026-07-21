@@ -1,97 +1,60 @@
-import type { Lyrics, LyricsStats, LyricsStatus } from '@flows/shared';
+import type {
+  Lyrics,
+  LyricsBatchResponse,
+  LyricsInterpretationEvent,
+  LyricsLibraryTrack,
+  LyricsStats,
+  LyricsStatus,
+} from '@flows/shared';
 import { api, type ApiClient } from '@lib/client';
 
-/**
- * Fetch lyrics for a specific track
- * Uses plain fetch because Eden can't type dynamic route params ([trackId])
- */
-export async function getLyrics(trackId: string, options?: { force?: boolean }): Promise<Lyrics> {
-  const params = new URLSearchParams();
-  if (options?.force) params.append('force', 'true');
-  const queryString = params.toString() ? `?${params.toString()}` : '';
-
-  const response = await fetch(`/api/lyrics/${trackId}${queryString}`);
-  if (!response.ok) throw new Error('Failed to fetch lyrics');
-  return response.json() as Promise<Lyrics>;
-}
-
-/**
- * Batch fetch all pending lyrics
- * Uses plain fetch because 'fetch-all' contains a hyphen which Eden can't resolve
- */
-export async function fetchAllLyrics(retryFailed = false): Promise<{
-  processed: number;
-  found: number;
-  notFound: number;
-  errors: number;
-}> {
-  const response = await fetch('/api/lyrics/fetch-all', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ retryFailed }),
+export async function getLyrics(
+  trackId: string,
+  options?: { force?: boolean },
+  client: ApiClient = api
+): Promise<Lyrics> {
+  const { data, error } = await client.api.lyrics({ trackId }).get({
+    query: { force: options?.force ? 'true' : undefined },
   });
-
-  if (!response.ok) throw new Error('Failed to fetch all lyrics');
-  return response.json();
+  if (error || !data) throw new Error('Failed to fetch lyrics');
+  return data;
 }
 
-/**
- * Get lyrics statistics
- */
+export async function fetchAllLyrics(
+  retryFailed = false,
+  client: ApiClient = api
+): Promise<LyricsBatchResponse> {
+  const { data, error } = await client.api.lyrics['fetch-all'].post({ retryFailed });
+  if (error || !data) throw new Error('Failed to fetch all lyrics');
+  return data;
+}
+
 export async function getLyricsStats(client: ApiClient = api): Promise<LyricsStats> {
   const { data, error } = await client.api.lyrics.stats.get();
-
-  if (error) throw new Error('Failed to fetch lyrics stats');
-  return data as unknown as LyricsStats;
+  if (error || !data) throw new Error('Failed to fetch lyrics stats');
+  return data;
 }
 
-/**
- * Get library tracks with lyrics status
- */
 export async function getLyricsLibrary(
   page = 1,
   limit = 50,
   status?: LyricsStatus,
   client: ApiClient = api
-): Promise<
-  Array<{
-    id: string;
-    title: string;
-    artist: string;
-    imageUrl: string | null;
-    status: LyricsStatus;
-  }>
-> {
+): Promise<LyricsLibraryTrack[]> {
   const offset = (page - 1) * limit;
   const { data, error } = await client.api.lyrics.tracks.get({
     query: {
-      limit: limit.toString(),
-      offset: offset.toString(),
+      limit,
+      offset,
       ...(status ? { status } : {}),
     },
   });
-
-  if (error) throw new Error('Failed to fetch lyrics library');
-  return data as unknown as Array<{
-    id: string;
-    title: string;
-    artist: string;
-    imageUrl: string | null;
-    status: LyricsStatus;
-  }>;
+  if (error || !data) throw new Error('Failed to fetch lyrics library');
+  return data;
 }
 
-/** SSE event types from the interpret endpoint. */
-export type InterpretEvent =
-  | { type: 'cached'; interpretation: string }
-  | { type: 'delta'; delta: string }
-  | { type: 'done' }
-  | { type: 'error'; error: string };
+export type InterpretEvent = LyricsInterpretationEvent;
 
-/**
- * Stream an AI interpretation for a track's lyrics.
- * Calls a callback for each SSE event as it arrives.
- */
 export async function interpretLyrics(
   trackId: string,
   onEvent: (event: InterpretEvent) => void
@@ -104,8 +67,9 @@ export async function interpretLyrics(
     const text = await response.text();
     throw new Error(`Interpret error ${response.status}: ${text}`);
   }
+  if (!response.body) throw new Error('Interpretation stream is unavailable');
 
-  const reader = response.body!.getReader();
+  const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
 
@@ -115,18 +79,38 @@ export async function interpretLyrics(
 
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split('\n\n');
-    buffer = lines.pop()!;
+    buffer = lines.pop() ?? '';
 
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed.startsWith('data: ')) continue;
 
       try {
-        const event = JSON.parse(trimmed.slice(6)) as InterpretEvent;
-        onEvent(event);
+        const event: unknown = JSON.parse(trimmed.slice(6));
+        if (isInterpretEvent(event)) onEvent(event);
       } catch {
-        // skip malformed SSE
+        // Ignore malformed provider events.
       }
     }
   }
+}
+
+function isInterpretEvent(value: unknown): value is InterpretEvent {
+  if (!isRecord(value) || typeof value.type !== 'string') return false;
+  switch (value.type) {
+    case 'cached':
+      return typeof value.interpretation === 'string';
+    case 'delta':
+      return typeof value.delta === 'string';
+    case 'done':
+      return true;
+    case 'error':
+      return typeof value.error === 'string';
+    default:
+      return false;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

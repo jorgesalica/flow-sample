@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { SourcePort } from '../../domain/ports';
+import type { SpotifyGateway, SpotifyTokenRepository } from '../../domain/ports';
 import type { Track } from '@flows/shared';
 import { SpotifyAuthError, SpotifyRateLimitError } from '../../domain/errors';
 import type {
@@ -14,8 +14,6 @@ import { ArtistCacheRepository } from '../artist-cache.repository';
 
 const log = logger.child({ module: 'SpotifyApiAdapter' });
 
-import type { SQLiteTokenRepository } from '../token.repository';
-
 export interface SpotifyConfig {
   clientId: string;
   clientSecret: string;
@@ -23,15 +21,15 @@ export interface SpotifyConfig {
   refreshToken?: string;
 }
 
-export class SpotifyApiAdapter implements SourcePort {
+export class SpotifyApiAdapter implements SpotifyGateway {
   private client: AxiosInstance;
   private accessToken: string | null = null;
-  private tokenRepository?: SQLiteTokenRepository;
+  private tokenRepository?: SpotifyTokenRepository;
   private artistCache: ArtistCacheRepository;
 
   constructor(
     private config: SpotifyConfig,
-    tokenRepository?: SQLiteTokenRepository,
+    tokenRepository?: SpotifyTokenRepository,
   ) {
     this.tokenRepository = tokenRepository;
     this.artistCache = new ArtistCacheRepository();

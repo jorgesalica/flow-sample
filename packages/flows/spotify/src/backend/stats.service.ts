@@ -1,18 +1,12 @@
-import type { GenreCount, YearRange } from '@flows/shared';
+import type { SpotifyTopStats } from '@flows/shared';
 import type { TrackRepository } from '@flows/shared';
 
-export interface TopStats {
-  totalTracks: number;
-  totalGenres: number;
-  topGenres: GenreCount[];
-  decadeDistribution: Record<string, number>;
-  yearRange: YearRange | null;
-}
+export type TopStats = SpotifyTopStats;
 
 /**
  * Calculates aggregated statistics from track repository data
  */
-export async function calculateStats(repository: TrackRepository): Promise<TopStats> {
+export async function calculateStats(repository: TrackRepository): Promise<SpotifyTopStats> {
   const [count, genres, years] = await Promise.all([
     repository.count(),
     repository.getGenres(),

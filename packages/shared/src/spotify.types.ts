@@ -39,6 +39,32 @@ export interface YearCount {
     count: number;
 }
 
+export interface SpotifyTopStats {
+    totalTracks: number;
+    totalGenres: number;
+    topGenres: GenreCount[];
+    decadeDistribution: Record<string, number>;
+    yearRange: {
+        oldest: number;
+        newest: number;
+    } | null;
+}
+
+export interface SpotifyAuthStatus {
+    connected: boolean;
+}
+
+export interface SpotifySyncResponse {
+    success: true;
+    message: string;
+    count: number;
+}
+
+export interface SpotifyErrorResponse {
+    error: string;
+    retryAfterSeconds?: number;
+}
+
 // Repository interface (shared contract between Spotify and Lyrics flows)
 export interface TrackRepository {
     save(tracks: Track[]): Promise<void>;
