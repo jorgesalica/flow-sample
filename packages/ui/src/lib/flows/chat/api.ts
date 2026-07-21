@@ -1,5 +1,12 @@
 import { api, type ApiClient } from '@lib/client';
-import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
+import type {
+  ChatConversation,
+  ChatMessage,
+  ChatProviderGroup,
+  ChatMode,
+  ChatSendResponse,
+  ChatStreamEvent,
+} from '@flows/shared';
 
 // Typed Eden client for the chat routes (mounted under /api/chat, like every flow)
 const chatApi = api.api.chat;
@@ -36,19 +43,19 @@ function extractError(error: unknown): Error {
 export async function fetchModelCatalog(client: ApiClient = api): Promise<ChatProviderGroup[]> {
   const { data, error } = await client.api.chat.models.get();
   if (error) throw extractError(error);
-  return data as ChatProviderGroup[];
+  return data;
 }
 
 export async function fetchConversations(client: ApiClient = api): Promise<ChatConversation[]> {
   const { data, error } = await client.api.chat.conversations.get();
   if (error) throw extractError(error);
-  return data as ChatConversation[];
+  return data;
 }
 
 export async function fetchMessages(conversationId: string): Promise<ChatMessage[]> {
   const { data, error } = await chatApi.conversations({ id: conversationId }).get();
   if (error) throw extractError(error);
-  return data as ChatMessage[];
+  return data;
 }
 
 export async function deleteConversation(conversationId: string): Promise<void> {
@@ -62,7 +69,7 @@ export async function sendMessage(
   message: string,
   mode: ChatMode,
   model?: string
-): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
+): Promise<ChatSendResponse> {
   const { data, error } = await chatApi.message.post({
     conversationId,
     message,
@@ -70,15 +77,10 @@ export async function sendMessage(
     model,
   });
   if (error) throw extractError(error);
-  return data as { userMessage: ChatMessage; assistantMessage: ChatMessage };
+  return data;
 }
 
-/** SSE event types from the backend. */
-export type StreamEvent =
-  | { type: 'user_message'; message: ChatMessage }
-  | { type: 'delta'; delta: string }
-  | { type: 'done'; message: ChatMessage }
-  | { type: 'error'; error: string };
+export type StreamEvent = ChatStreamEvent;
 
 /** True when an error is the abort triggered by the caller's signal. */
 function isAbortError(err: unknown): boolean {
@@ -136,8 +138,10 @@ export async function sendMessageStream(
         if (!trimmed.startsWith('data: ')) continue;
 
         try {
-          const event = JSON.parse(trimmed.slice(6)) as StreamEvent;
-          onEvent(event);
+          const event: unknown = JSON.parse(trimmed.slice(6));
+          if (isChatStreamEvent(event)) {
+            onEvent(event);
+          }
         } catch {
           // skip malformed SSE
         }
@@ -148,4 +152,37 @@ export async function sendMessageStream(
     if (isAbortError(err) || signal?.aborted) return;
     throw err;
   }
+}
+
+function isChatStreamEvent(value: unknown): value is ChatStreamEvent {
+  if (!isRecord(value) || typeof value.type !== 'string') return false;
+
+  switch (value.type) {
+    case 'user_message':
+    case 'done':
+      return isChatMessage(value.message);
+    case 'delta':
+      return typeof value.delta === 'string';
+    case 'error':
+      return typeof value.error === 'string';
+    default:
+      return false;
+  }
+}
+
+function isChatMessage(value: unknown): value is ChatMessage {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.conversationId === 'string' &&
+    (value.role === 'user' || value.role === 'assistant' || value.role === 'system') &&
+    typeof value.content === 'string' &&
+    typeof value.modelUsed === 'string' &&
+    (value.providerUsed === undefined || typeof value.providerUsed === 'string') &&
+    typeof value.createdAt === 'number'
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

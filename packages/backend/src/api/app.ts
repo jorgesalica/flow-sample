@@ -13,7 +13,7 @@ import * as fs from 'fs';
 import { createSpotifyRoutes } from '@flows/spotify';
 import { createLyricsRoutes } from '@flows/lyrics';
 import { createTradingConfigFromEnv, createTradingRoutes } from '@flows/trading';
-import { chatRoutes } from '@flows/chat';
+import { createChatRoutes } from '@flows/chat';
 import { createCanvasFlowRoutes } from '@flows/canvas';
 import { logger } from '@flows/core';
 import type { BackendConfig } from './config';
@@ -64,7 +64,7 @@ export function createApp(config: BackendConfig) {
     .use(createSpotifyRoutes(config))
     .use(createLyricsRoutes())
     .use(createTradingRoutes(createTradingConfigFromEnv()))
-    .use(chatRoutes)
+    .use(createChatRoutes())
     .use(createCanvasFlowRoutes())
 
     // Error handler

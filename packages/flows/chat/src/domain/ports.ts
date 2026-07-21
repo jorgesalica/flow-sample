@@ -11,6 +11,7 @@ export interface ChatRepository {
     createConversation(conversation: ChatConversation): void;
     updateConversationTitle(id: string, title: string): void;
     updateConversationTimestamp(id: string): void;
+    getConversation(id: string): ChatConversation | null;
     getConversations(): ChatConversation[];
     deleteConversation(id: string): void;
 

@@ -1,18 +1,45 @@
 import { randomUUID } from 'crypto';
 import { LLMClient, logger } from '@flows/core';
-import type { ChatConversation, ChatMessage, ChatProviderGroup, ChatMode } from '@flows/shared';
+import {
+    CHAT_MODES,
+    CHAT_STREAM_EVENT_TYPES,
+    type ChatConversation,
+    type ChatMessage,
+    type ChatMode,
+    type ChatProviderGroup,
+    type ChatSendResponse,
+    type ChatStreamEvent,
+} from '@flows/shared';
 import type { ChatRepository } from '../../domain/ports';
 import { deriveConversationTitle } from '../../domain/conversation';
-import { ChatError } from '../../domain/errors';
+import { ChatError, ConversationNotFoundError } from '../../domain/errors';
 import { CHAT_SYSTEM_PROMPT, DEFAULT_CHAT_MODE } from '../config';
-import { chatDb } from '../database';
 
 const log = logger.child({ module: 'ChatService' });
 
-export class ChatService {
+export interface ChatApplication {
+    getModelCatalog(): ChatProviderGroup[];
+    getConversations(): ChatConversation[];
+    deleteConversation(id: string): void;
+    getMessages(conversationId: string): ChatMessage[];
+    sendMessage(
+        conversationId: string,
+        content: string,
+        mode?: ChatMode,
+        model?: string,
+    ): Promise<ChatSendResponse>;
+    sendMessageStream(
+        conversationId: string,
+        content: string,
+        mode?: ChatMode,
+        model?: string,
+    ): AsyncGenerator<ChatStreamEvent>;
+}
+
+export class ChatService implements ChatApplication {
     private rotationClient: LLMClient | null = null;
 
-    constructor(private readonly repo: ChatRepository = chatDb) {}
+    constructor(private readonly repo: ChatRepository) {}
 
     /**
      * Get model catalog grouped by provider (for the provider/model selector).
@@ -42,6 +69,7 @@ export class ChatService {
      * Delete a conversation.
      */
     deleteConversation(id: string): void {
+        this.assertConversationExists(id);
         this.repo.deleteConversation(id);
     }
 
@@ -49,6 +77,7 @@ export class ChatService {
      * Fetch messages for a conversation.
      */
     getMessages(conversationId: string): ChatMessage[] {
+        this.assertConversationExists(conversationId);
         return this.repo.getMessages(conversationId);
     }
 
@@ -60,12 +89,11 @@ export class ChatService {
         content: string,
         mode: ChatMode = DEFAULT_CHAT_MODE,
         model?: string,
-    ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
+    ): Promise<ChatSendResponse> {
         log.info({ mode, model: model || 'auto', conversationId }, 'sendMessage');
 
         this.assertModelForMode(mode, model);
         this.ensureConversation(conversationId, content);
-
         // Save user message
         const userMsg = this.createUserMessage(conversationId, content);
         this.repo.addMessage(userMsg);
@@ -74,7 +102,7 @@ export class ChatService {
         const llmMessages = this.buildLLMMessages(conversationId);
 
         const response =
-            mode === 'rotation'
+            mode === CHAT_MODES.ROTATION
                 ? await this.getRotationClient().generate({ messages: llmMessages })
                 : await LLMClient.generateForProvider(model!, { messages: llmMessages });
 
@@ -98,26 +126,33 @@ export class ChatService {
      * Streaming version of sendMessage.
      * Yields SSE `data: {...}\n\n` lines which the route writes to the response stream.
      */
-    async *sendMessageStream(
+    sendMessageStream(
         conversationId: string,
         content: string,
         mode: ChatMode = DEFAULT_CHAT_MODE,
         model?: string,
-    ): AsyncGenerator<string> {
-        log.info({ mode, model: model || 'auto', conversationId }, 'sendMessageStream: start');
-
+    ): AsyncGenerator<ChatStreamEvent> {
         this.assertModelForMode(mode, model);
-        this.ensureConversation(conversationId, content);
+        return this.generateMessageStream(conversationId, content, mode, model);
+    }
 
+    private async *generateMessageStream(
+        conversationId: string,
+        content: string,
+        mode: ChatMode,
+        model?: string,
+    ): AsyncGenerator<ChatStreamEvent> {
+        log.info({ mode, model: model || 'auto', conversationId }, 'sendMessageStream: start');
+        this.ensureConversation(conversationId, content);
         // Save user message
         const userMsg = this.createUserMessage(conversationId, content);
         this.repo.addMessage(userMsg);
-        yield `data: ${JSON.stringify({ type: 'user_message', message: userMsg })}\n\n`;
+        yield { type: CHAT_STREAM_EVENT_TYPES.USER_MESSAGE, message: userMsg };
 
         // Build context and stream
         const llmMessages = this.buildLLMMessages(conversationId);
         const stream =
-            mode === 'rotation'
+            mode === CHAT_MODES.ROTATION
                 ? this.getRotationClient().generateStream({ messages: llmMessages })
                 : LLMClient.generateStreamForProvider(model!, { messages: llmMessages });
 
@@ -131,7 +166,7 @@ export class ChatService {
                 modelUsed = event.response.model;
             } else if (event.delta) {
                 fullContent += event.delta;
-                yield `data: ${JSON.stringify({ type: 'delta', delta: event.delta })}\n\n`;
+                yield { type: CHAT_STREAM_EVENT_TYPES.DELTA, delta: event.delta };
             }
         }
 
@@ -148,7 +183,7 @@ export class ChatService {
         this.repo.addMessage(assistantMsg);
 
         log.info({ provider: providerUsed, model: modelUsed, chars: fullContent.length }, 'sendMessageStream: done');
-        yield `data: ${JSON.stringify({ type: 'done', message: assistantMsg })}\n\n`;
+        yield { type: CHAT_STREAM_EVENT_TYPES.DONE, message: assistantMsg };
     }
 
     // ── Private helpers ──────────────────────────────────────────────
@@ -158,13 +193,13 @@ export class ChatService {
      * Rotation mode picks providers internally, so no model is required there.
      */
     private assertModelForMode(mode: ChatMode, model?: string): void {
-        if (mode === 'specific' && !model) {
+        if (mode === CHAT_MODES.SPECIFIC && !model) {
             throw new ChatError('A model must be selected in "specific" mode.');
         }
     }
 
     private ensureConversation(conversationId: string, content: string): void {
-        const existing = this.repo.getConversations().find((c) => c.id === conversationId);
+        const existing = this.repo.getConversation(conversationId);
         if (!existing) {
             this.repo.createConversation({
                 id: conversationId,
@@ -172,6 +207,12 @@ export class ChatService {
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
             });
+        }
+    }
+
+    private assertConversationExists(conversationId: string): void {
+        if (!this.repo.getConversation(conversationId)) {
+            throw new ConversationNotFoundError(conversationId);
         }
     }
 

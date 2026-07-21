@@ -7,14 +7,16 @@ import type { ChatRepository } from '../domain/ports';
  * Chat Database Schema & Queries
  */
 export class ChatDatabase implements ChatRepository {
-    private db: Database.Database;
+    private readonly db: Database.Database;
 
     constructor(sharedDb: Database.Database) {
         this.db = sharedDb;
         this.init();
     }
 
-    private init() {
+    private init(): void {
+        this.db.pragma('foreign_keys = ON');
+
         // Create tables locally for the chat flow
         this.db.exec(`
             CREATE TABLE IF NOT EXISTS chat_conversations (
@@ -62,6 +64,15 @@ export class ChatDatabase implements ChatRepository {
             UPDATE chat_conversations SET updated_at = ? WHERE id = ?
         `);
         stmt.run(Date.now(), id);
+    }
+
+    getConversation(id: string): ChatConversation | null {
+        const stmt = this.db.prepare(`
+            SELECT id, title, created_at as createdAt, updated_at as updatedAt
+            FROM chat_conversations
+            WHERE id = ?
+        `);
+        return (stmt.get(id) as ChatConversation | undefined) ?? null;
     }
 
     getConversations(): ChatConversation[] {
@@ -117,5 +128,6 @@ export class ChatDatabase implements ChatRepository {
     }
 }
 
-// Export a singleton instance using the core database
-export const chatDb = new ChatDatabase(createDatabase('chat.db'));
+export function createChatDatabase(filename = 'chat.db'): ChatDatabase {
+    return new ChatDatabase(createDatabase(filename));
+}

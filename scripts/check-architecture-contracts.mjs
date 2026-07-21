@@ -52,6 +52,7 @@ export function checkSource(file, source) {
   const legacyUiVariable = /var\(--(?:surface|primary|secondary)-\d+\)/g;
   const uiGradient = /(?:linear|radial|conic)-gradient\s*\(/g;
   const accessibilitySuppression = /svelte-ignore\s+a11y_/g;
+  const uiSharedRuntimeImport = /^\s*import\s+(?!type\b)[^;]+from\s+['"]@flows\/shared['"];?/gm;
 
   for (const match of source.matchAll(explicitAny)) {
     violations.push(violation(file, source, match, 'no-explicit-any', 'Replace `any` with a concrete type or safe narrowing.'));
@@ -88,6 +89,9 @@ export function checkSource(file, source) {
   }
 
   if (file.startsWith('packages/ui/src/')) {
+    for (const match of source.matchAll(uiSharedRuntimeImport)) {
+      violations.push(violation(file, source, match, 'ui-shared-types-only', 'Use `import type` because @flows/shared is not a browser runtime package.'));
+    }
     for (const match of source.matchAll(legacyUiUtility)) {
       violations.push(violation(file, source, match, 'no-legacy-ui-styles', 'Use shared primitives and semantic `--ui-*` tokens.'));
     }

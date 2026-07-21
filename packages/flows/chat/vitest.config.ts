@@ -14,7 +14,6 @@ export default defineConfig({
                 'src/**/index.ts',
                 'src/**/*.types.ts',
                 'src/**/types/**',
-                'src/**/database.ts',
                 'src/**/server.ts',
                 // HTTP route shells — thin Elysia wiring; logic lives in the
                 // tested services. Covered by integration tests, not units.

@@ -178,15 +178,13 @@ Completed design-system, loader/invalidation, environment ownership, music persi
 and architecture-contract work lives in project history and merged PRs. The active lanes
 are deliberately narrower:
 
-1. **Chat (#70)**: remove eager runtime construction, stabilize HTTP/SSE errors, and add
-   database/route coverage.
-2. **Spotify and Lyrics (#71)**: move orchestration out of routes, make response contracts
+1. **Spotify and Lyrics (#71)**: move orchestration out of routes, make response contracts
    deliberate, and remove unsafe UI boundary casts.
-3. **Trading (#72)**: extract wizard/provider orchestration and type the full route
+2. **Trading (#72)**: extract wizard/provider orchestration and type the full route
    contract.
-4. **Quality gate (#73)**: ratchet coverage, complete package participation, consolidate
+3. **Quality gate (#73)**: ratchet coverage, complete package participation, consolidate
    exact tooling duplication, and enforce the repaired boundaries.
-5. **Board persistence (#44)**: add named server-backed boards and migrate the local v1
+4. **Board persistence (#44)**: add named server-backed boards and migrate the local v1
    layout only after the boundary work is stable.
 
 Relationships/edges remain a later product decision. They are not implied technical debt
