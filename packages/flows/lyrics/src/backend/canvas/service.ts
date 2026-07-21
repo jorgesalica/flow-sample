@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { findAnalysisBySourceId, saveAnalysis, tokenize } from '@flows/core';
 import { MUSIC_LAYERS, type CanvasAnalysis } from '@flows/shared';
 import type { LyricsRepository } from '../../domain/ports';
+import { classifyLyricsSections } from '../../domain/section-classifier';
 import { analyzeLyrics } from './music-analyzer';
 import type { LyricsCanvasRepository, LyricsCanvasTrack } from './repository';
 
@@ -64,7 +65,7 @@ export class LyricsCanvasService {
     }
 
     const interpretation = await this.lyricsRepository.getInterpretation(trackId);
-    const tokenAst = tokenize(track.plainLyrics);
+    const tokenAst = classifyLyricsSections(tokenize(track.plainLyrics));
     const analysisResult = await analyzeLyrics(tokenAst, track.title, track.artist, interpretation);
     const now = new Date().toISOString();
 

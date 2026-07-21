@@ -41,9 +41,11 @@ export { MistralProvider } from './llm/providers';
 export { createDatabase } from './db';
 
 // Canvas
-export { 
-    tokenize, 
-    saveAnalysis, 
+export {
+    tokenize,
+    filterAnnotationsForAst,
+    formatTokenAstForPrompt,
+    saveAnalysis,
     findAnalysisBySourceId, 
     deleteAnalysisBySourceId,
     getAllAnalysesBySourceType,

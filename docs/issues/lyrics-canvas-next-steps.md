@@ -1,31 +1,23 @@
-# Issue: Lyrics Canvas - Next Steps & Polish
+# Lyrics Canvas Follow-up Decisions
 
-This issue tracks the pending refinements for the Lyrics Canvas flow.
+This historical tracker records the disposition of the original Canvas follow-ups.
+Current execution work is owned by `docs/ROADMAP.md` and GitHub issues.
 
-## ~~1. Routing Bug (F5 Refresh)~~ ✅ FIXED
-Stripped query params from hash before matching in `App.svelte`.
+## Resolved
 
-## ~~2. Contextual "Line" Highlights (Hover)~~ ✅ FIXED
-- Meaning annotations are now **hover-only** (no floating badge). The text shows a dashed underline, and hovering any word in a phrase highlights ALL words that share the same meaning annotation (group-level highlight).
-- Meaning label/detail moved entirely into the tooltip.
+- Refresh routing, contextual phrase highlights, and annotation overlap were fixed in
+  the original Lyrics Canvas delivery.
+- Tokenizer domain coupling was resolved by #69: Core emits generic numbered sections
+  and Lyrics owns music-section classification.
+- Prompt structural-ID ambiguity was resolved by #69: both analyzers use the shared Core
+  formatter and filter generated token references against the source AST.
 
-## ~~3. Persistent Overlap (Chords vs Vocals)~~ ✅ FIXED
-- Replaced `position: absolute` with **flex column layout**. Each token is now a vertical flex container: `[top badges] → [text] → [bottom badges]`. Multiple chords or production tags stack cleanly without overlap.
+## Deferred Deliberately
 
----
+- **Analysis versioning:** overwrites remain the current contract. Add history only with
+  a product requirement for comparison, rollback, or provenance views.
+- **Annotation indexing:** the persisted flat array remains adequate. Introduce an index
+  only after profiling demonstrates a rendering or query bottleneck.
 
-## Open: Future Architecture Improvements
-
-### A. Tokenizer Domain Coupling
-The generic tokenizer (`packages/core/src/canvas/tokenizer.ts`) has music-specific `inferSectionType()` logic (Verse, Chorus, Bridge). This should be:
-- **Tokenizer**: only outputs "Section 1", "Section 2"
-- **Lyrics Flow post-processor**: applies domain-specific section type inference
-
-### B. Prompt Optimization
-`formatAstForPrompt()` sends structural tags like `[Verse]` along with token IDs. This sometimes confuses the LLM into trying to annotate non-existent tokens from the structural markers.
-
-### C. Analysis Versioning
-Currently, regenerating an analysis overwrites the previous one. A versioned approach would allow comparison between different model outputs.
-
-### D. Annotation Index
-Annotations are stored as a flat JSON array. For tracks with 100+ annotations, an indexed structure (e.g. `Record<tokenId, Annotation[]>`) in the DB would be more efficient.
+See [Canvas and Lyrics Architecture](../flows/lyrics-canvas/architecture.md) for the
+current boundaries and runtime contract.

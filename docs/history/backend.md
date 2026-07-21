@@ -4,6 +4,21 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2026-07-21 - Canvas domain boundary and annotation integrity
+
+Issue #69 closed the remaining generic Canvas boundary leaks:
+
+- Core tokenization now produces numbered generic sections; Lyrics owns music-section
+  classification while preserving token IDs and legacy section behavior.
+- Generic Canvas and Lyrics share prompt-safe AST formatting that omits structural IDs.
+- Both analyzers discard generated annotation references absent from the source AST.
+- Generic Canvas orchestration moved from eager routes into an injectable service and
+  repository port; routes are factory-created and map provider failures to sanitized
+  `503` responses.
+- Added Core, Lyrics-domain, analyzer, service, and `.handle()` route coverage.
+
+---
+
 ## 2026-07-16 - Lyrics Canvas QA and LLM rotation repair
 
 Issue #66 repaired Canvas generation and made the provider boundary auditable:

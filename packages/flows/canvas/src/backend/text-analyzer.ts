@@ -1,22 +1,15 @@
-import { LLMClient, logger } from '@flows/core';
+import {
+    filterAnnotationsForAst,
+    formatTokenAstForPrompt,
+    LLMClient,
+    logger,
+} from '@flows/core';
 import type { TokenAST, Annotation } from '@flows/shared';
 import { textAnalysisSchema, type TextAnalysisResult } from './schemas';
 import { expandAnnotations } from '../domain/annotations';
 import { CanvasAnalysisError } from '../domain/errors';
 
 const log = logger.child({ module: 'CanvasTextAnalyzer' });
-
-function formatAstForPrompt(ast: TokenAST): string {
-    let output = '';
-    for (const section of ast.sections) {
-        output += `\n[${section.type}] (ID: ${section.id})\n`;
-        for (const line of section.lines) {
-            const lineTokens = line.map(t => `${t.text}[${t.id}]`).join(' ');
-            output += `${lineTokens}\n`;
-        }
-    }
-    return output.trim();
-}
 
 export async function analyzeText(ast: TokenAST, title?: string, author?: string): Promise<{
     annotations: Annotation[];
@@ -25,7 +18,7 @@ export async function analyzeText(ast: TokenAST, title?: string, author?: string
     providerUsed: string;
 }> {
     const client = LLMClient.createRotation();
-    const tokenizedText = formatAstForPrompt(ast);
+    const tokenizedText = formatTokenAstForPrompt(ast);
     
     const identity = author ? `"${title}" by ${author}` : 'the following text';
 
@@ -67,15 +60,17 @@ IMPORTANT DENSITY RULE: Provide a dense, rich analysis identifying key moments i
         );
         
         const expandedAnnotations = expandAnnotations(result.annotations);
+        const annotations = filterAnnotationsForAst(ast, expandedAnnotations);
 
         log.info({
             latencyMs: Date.now() - startTime,
-            annotationsCount: expandedAnnotations.length
+            annotationsCount: annotations.length,
+            invalidAnnotationsCount: expandedAnnotations.length - annotations.length,
         }, 'LLM analysis completed successfully');
 
         return {
             ...result,
-            annotations: expandedAnnotations,
+            annotations,
             modelUsed: response.model,
             providerUsed: response.provider,
         };

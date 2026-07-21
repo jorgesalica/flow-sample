@@ -14,7 +14,7 @@ import { createSpotifyRoutes } from '@flows/spotify';
 import { createLyricsRoutes } from '@flows/lyrics';
 import { createTradingConfigFromEnv, createTradingRoutes } from '@flows/trading';
 import { chatRoutes } from '@flows/chat';
-import { canvasFlowRoutes } from '@flows/canvas';
+import { createCanvasFlowRoutes } from '@flows/canvas';
 import { logger } from '@flows/core';
 import type { BackendConfig } from './config';
 
@@ -65,7 +65,7 @@ export function createApp(config: BackendConfig) {
     .use(createLyricsRoutes())
     .use(createTradingRoutes(createTradingConfigFromEnv()))
     .use(chatRoutes)
-    .use(canvasFlowRoutes)
+    .use(createCanvasFlowRoutes())
 
     // Error handler
     .onError(({ error, code, set }) => {
