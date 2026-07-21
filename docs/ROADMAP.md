@@ -43,15 +43,17 @@ follow-up polish.
 
 Shared music database ownership is neutral in `@flows/music`; Spotify and Lyrics no
 longer import each other's internals.
+Generic tokenization and analysis persistence are neutral in `@flows/analysis`; Canvas
+and Lyrics own only their flow-specific orchestration.
 
 ## Execution Queue
 
 The post-Board architecture audit produced this ordered closure queue. Each item has its
 own acceptance criteria and ships through a separate PR:
 
-1. [#82 compiled runtime packaging](https://github.com/jorgesalica/flow-sample/issues/82)
-2. [#83 dependency security and manifest hygiene](https://github.com/jorgesalica/flow-sample/issues/83)
-3. [#84 neutral analysis package](https://github.com/jorgesalica/flow-sample/issues/84)
+1. [#82 compiled runtime packaging](https://github.com/jorgesalica/flow-sample/issues/82) - complete
+2. [#83 dependency security and manifest hygiene](https://github.com/jorgesalica/flow-sample/issues/83) - complete
+3. [#84 neutral analysis package](https://github.com/jorgesalica/flow-sample/issues/84) - complete
 4. [#85 import-safe persistence composition](https://github.com/jorgesalica/flow-sample/issues/85)
 5. [#86 typed Lyrics Canvas transport](https://github.com/jorgesalica/flow-sample/issues/86)
 6. [#87 documentation and CI reconciliation](https://github.com/jorgesalica/flow-sample/issues/87)

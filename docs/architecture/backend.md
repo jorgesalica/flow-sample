@@ -13,6 +13,11 @@ The central `packages/backend` workspace now acts strictly as an **Application H
 Lyrics. It owns `music.db`, the track/artist/genre schema, FTS, and the track repository;
 it is not a flow or separately deployed service.
 
+`packages/analysis` is a neutral in-process analysis package shared by Canvas and
+Lyrics. It owns deterministic tokenization, prompt-safe AST preparation, annotation-ID
+filtering, and generic `canvas.db` persistence. Flow-specific prompts and orchestration
+remain in their flow packages.
+
 `packages/board` is an application-composition package for named boards. It owns
 `boards.db`, default/active-board invariants, repository-backed mutations, and the
 `/api/boards` route factory. It is mounted by the host but is not a sixth registered
@@ -20,12 +25,14 @@ flow or a separately deployed service.
 
 ## Bounded Contexts (Flows)
 
-Each flow encapsulates its own Domain, Infrastructure, and API layers. They are isolated from one another and share only core infrastructure and types.
+Each flow encapsulates its own Domain, Infrastructure, and API layers. They are isolated
+from one another and consume only declared neutral packages and shared contracts.
 
 ```text
 packages/
 ├── shared/             # @flows/shared — shared types & DTOs (Track, Artist, …)
 ├── core/               # @flows/core — logger, SimpleCache, LLMClient, createDatabase()
+├── analysis/           # @flows/analysis — neutral text-analysis capabilities
 ├── music/              # @flows/music — neutral music persistence
 ├── board/              # @flows/board — named-board persistence and API
 └── flows/
@@ -74,6 +81,10 @@ one protected default board, repairs missing/deleted active selection to that de
 and validates names, layout versions, item sizes, and duplicate flow IDs before the
 repository writes. SQL and row hydration remain in `backend/repository.ts`; Elysia routes
 only validate and map HTTP errors.
+
+The separate `canvas.db` connection is consumed by `@flows/analysis`. Canvas and Lyrics
+use that package's public tokenization, prompt preparation, integrity filtering, and
+persistence APIs while retaining their own prompts, schemas, and application services.
 
 ## LLM Provider Architecture
 

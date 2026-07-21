@@ -9,16 +9,16 @@ single backend host; neither package is a separately deployed application.
 | Concern | Owner | Notes |
 | --- | --- | --- |
 | Token and analysis DTOs | `@flows/shared` | Cross-wire types used by backend and UI |
-| Generic tokenization | `@flows/core/canvas` | Blank-line sections and deterministic token IDs only |
-| Prompt-safe AST formatting | `@flows/core/canvas` | Preserves lines/sections; exposes only token IDs |
-| Annotation ID filtering | `@flows/core/canvas` | Rejects references absent from the source AST |
-| Analysis persistence | `@flows/core/canvas` | Generic `canvas.db` repository |
+| Generic tokenization | `@flows/analysis` | Blank-line sections and deterministic token IDs only |
+| Prompt-safe AST formatting | `@flows/analysis` | Preserves lines/sections; exposes only token IDs |
+| Annotation ID filtering | `@flows/analysis` | Rejects references absent from the source AST |
+| Analysis persistence | `@flows/analysis` | Generic `canvas.db` repository |
 | Generic text orchestration | `@flows/canvas` | Service, analyzer, repository adapter, HTTP mapping |
 | Music section classification | `@flows/lyrics` | Verse, Chorus, Bridge, Pre-Chorus, Intro, and Outro |
 | Musical analysis | `@flows/lyrics` | Chord, vocal, meaning prompts and schemas |
 | Rendering | `@flows/ui` | Shared token renderer plus Canvas/Lyrics screens |
 
-Core never infers music concepts. Lyrics classifies the generic AST after tokenization
+Analysis and Core never infer music concepts. Lyrics classifies the generic AST after tokenization
 without changing section IDs, token IDs, or persisted-analysis compatibility.
 
 ## Runtime Flow
@@ -27,20 +27,20 @@ without changing section IDs, token IDs, or persisted-analysis compatibility.
 flowchart LR
     UI["SvelteKit UI"] --> Route["Elysia route factory"]
     Route --> Service["Canvas application service"]
-    Service --> Tokenizer["Core tokenizer"]
+    Service --> Tokenizer["Analysis tokenizer"]
     Tokenizer --> Classifier["Lyrics classifier (lyrics only)"]
     Service --> Analyzer["Generic or musical analyzer"]
     Classifier --> Analyzer
-    Analyzer --> Formatter["Core prompt formatter"]
+    Analyzer --> Formatter["Analysis prompt formatter"]
     Analyzer --> LLM["Rotating LLM client"]
-    Analyzer --> Filter["Core annotation ID filter"]
+    Analyzer --> Filter["Analysis annotation ID filter"]
     Filter --> Service
     Service --> Repository["Canvas repository port"]
     Repository --> Database["canvas.db"]
 ```
 
 The generic Canvas route is created by `createCanvasFlowRoutes()`. Its default
-composition uses `CanvasService`, `CoreCanvasRepository`, and `analyzeText`; tests inject
+composition uses `CanvasService`, `AnalysisCanvasRepository`, and `analyzeText`; tests inject
 an application-service fake and exercise the Elysia app through `.handle()`.
 
 Lyrics owns a separate `LyricsCanvasService`. It reads track/lyrics data through Lyrics
@@ -85,7 +85,8 @@ before music classification moved into Lyrics; existing rows are read unchanged.
 
 ## Tests
 
-- Core unit tests cover deterministic tokenization, prompt formatting, and ID filtering.
+- Analysis package tests cover deterministic tokenization, prompt formatting, ID
+  filtering, and persistence.
 - Lyrics domain tests cover English/Spanish section markers and legacy defaults.
 - Analyzer tests cover prompt shape, expansion, invalid IDs, metadata, and failures.
 - Service tests cover orchestration and persistence contracts.

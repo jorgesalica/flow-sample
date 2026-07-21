@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { tokenize } from '@flows/core';
+import { tokenize } from '@flows/analysis';
 import type { Annotation, CanvasAnalysis, TokenAST } from '@flows/shared';
 import type { CanvasRepository } from '../domain/ports';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { tokenize } from '../../src/canvas/tokenizer';
+import { tokenize } from '../src/tokenizer';
 
 describe('tokenize', () => {
     describe('empty / whitespace input', () => {

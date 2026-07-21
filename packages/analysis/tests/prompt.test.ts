@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Annotation, TokenAST } from '@flows/shared';
-import { filterAnnotationsForAst, formatTokenAstForPrompt } from '../../src/canvas/prompt';
+import { filterAnnotationsForAst, formatTokenAstForPrompt } from '../src/prompt';
 
 const ast: TokenAST = {
     totalTokens: 4,

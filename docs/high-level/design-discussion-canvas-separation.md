@@ -2,6 +2,7 @@
 
 > Conversation date: 2026-04-23
 > Context: Lyrics Canvas spike — defining where code lives and why
+> Current outcome: generic analysis capabilities moved to `@flows/analysis` in #84.
 
 ---
 
@@ -22,8 +23,8 @@ If no → it's infrastructure and belongs in core or shared.
 
 | Component | Used for lyrics only? | Where it goes |
 | --------- | -------------------- | ------------- |
-| Tokenizer (text → token AST) | No — works on any text | `@flows/core/canvas` |
-| Canvas repository (DB CRUD) | No — stores any analysis | `@flows/core/canvas` |
+| Tokenizer (text → token AST) | No — works on any text | `@flows/analysis` |
+| Canvas repository (DB CRUD) | No — stores any analysis | `@flows/analysis` |
 | Token, Section, CanvasSource types | No — generic | `@flows/shared` |
 | TokenRenderer, LayerToggle, Tooltip | No — renders any tokens | `ui/components/canvas` (shared) |
 | Musical Zod schemas (chords, vocal) | **Yes** — music-specific | `@flows/lyrics/canvas` |
@@ -34,11 +35,12 @@ If no → it's infrastructure and belongs in core or shared.
 ## The Principle
 
 **Infrastructure vs. Feature:**
-- Infrastructure (tokenizer, renderer, DB) goes in `core` or `shared` — like `llm`, `db`, `cache`
+- Reusable analysis capabilities (tokenizer and analysis DB) go in `@flows/analysis`.
+- Runtime infrastructure stays in `@flows/core`; cross-wire contracts stay in `@flows/shared`.
 - Features (musical analysis, lyrics adapter) go in the flow package
 
 This means adding a "Writing Canvas" or "Poetry Canvas" in the future requires:
-- **Zero changes** to core, shared, or UI components
+- **Zero changes** to core, analysis, shared, or UI components
 - **One new analyzer** with its own prompts and schemas
 - **One new page** that consumes the shared components
 

@@ -20,6 +20,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "@flows/analysis": "workspace:*",
         "@flows/core": "workspace:*",
         "@flows/music": "workspace:*",
         "@flows/shared": "workspace:*",

@@ -5,6 +5,33 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGES = path.join(ROOT, 'packages');
 const SOURCE_EXTENSIONS = new Set(['.css', '.ts', '.svelte']);
+const DEPENDENCY_FIELDS = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'];
+const WORKSPACE_DEPENDENCY_RULES = new Map([
+  ['@flows/shared', []],
+  ['@flows/core', ['@flows/shared']],
+  ['@flows/analysis', ['@flows/core', '@flows/shared']],
+  ['@flows/music', ['@flows/core', '@flows/shared']],
+  ['@flows/board', ['@flows/core', '@flows/shared']],
+  ['@flows/spotify', ['@flows/core', '@flows/music', '@flows/shared']],
+  ['@flows/lyrics', ['@flows/analysis', '@flows/core', '@flows/music', '@flows/shared']],
+  ['@flows/trading', ['@flows/core', '@flows/shared']],
+  ['@flows/chat', ['@flows/core', '@flows/shared']],
+  ['@flows/canvas', ['@flows/analysis', '@flows/core', '@flows/shared']],
+  [
+    '@flows/backend',
+    [
+      '@flows/board',
+      '@flows/canvas',
+      '@flows/chat',
+      '@flows/core',
+      '@flows/lyrics',
+      '@flows/shared',
+      '@flows/spotify',
+      '@flows/trading',
+    ],
+  ],
+  ['@flows/ui', ['@flows/backend', '@flows/shared']],
+]);
 const IGNORED_PARTS = new Set([
   '.svelte-kit',
   'dist',
@@ -28,6 +55,20 @@ async function sourceFiles(directory) {
     const target = path.join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await sourceFiles(target));
     else if (SOURCE_EXTENSIONS.has(path.extname(entry.name))) files.push(target);
+  }
+
+  return files;
+}
+
+async function packageManifestFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    if (IGNORED_PARTS.has(entry.name)) continue;
+    const target = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await packageManifestFiles(target));
+    else if (entry.name === 'package.json') files.push(target);
   }
 
   return files;
@@ -77,7 +118,7 @@ export function checkSource(file, source) {
   if (flowMatch) {
     for (const match of source.matchAll(flowImport)) {
       if (match[1] !== flowMatch[1]) {
-        violations.push(violation(file, source, match, 'no-sibling-flow-imports', 'Depend on @flows/shared, @flows/core, @flows/music, or an injected port instead.'));
+        violations.push(violation(file, source, match, 'no-sibling-flow-imports', 'Depend on @flows/shared, @flows/core, @flows/analysis, @flows/music, or an injected port instead.'));
       }
     }
   }
@@ -119,13 +160,56 @@ export function checkSource(file, source) {
   return violations;
 }
 
+export function checkPackageDependencies(file, manifest, source = JSON.stringify(manifest, null, 2)) {
+  const packageName = typeof manifest.name === 'string' ? manifest.name : null;
+  if (!packageName?.startsWith('@flows/')) return [];
+
+  const allowedDependencies = WORKSPACE_DEPENDENCY_RULES.get(packageName);
+  if (!allowedDependencies) {
+    return [{
+      file,
+      line: 1,
+      rule: 'workspace-package-policy',
+      message: `Add ${packageName} to the workspace dependency policy.`,
+    }];
+  }
+
+  const declaredDependencies = new Set();
+  for (const field of DEPENDENCY_FIELDS) {
+    const dependencies = manifest[field];
+    if (!dependencies || typeof dependencies !== 'object' || Array.isArray(dependencies)) continue;
+    for (const dependency of Object.keys(dependencies)) {
+      if (dependency.startsWith('@flows/')) declaredDependencies.add(dependency);
+    }
+  }
+
+  const allowed = new Set(allowedDependencies);
+  return [...declaredDependencies]
+    .filter((dependency) => !allowed.has(dependency))
+    .sort()
+    .map((dependency) => ({
+      file,
+      line: lineNumber(source, Math.max(0, source.indexOf(`"${dependency}"`))),
+      rule: 'workspace-dependency-boundary',
+      message: `${packageName} cannot depend on ${dependency}. Allowed workspace dependencies: ${allowedDependencies.join(', ') || 'none'}.`,
+    }));
+}
+
 export async function checkArchitecture() {
-  const files = await sourceFiles(PACKAGES);
+  const [files, manifests] = await Promise.all([
+    sourceFiles(PACKAGES),
+    packageManifestFiles(PACKAGES),
+  ]);
   const violations = [];
   for (const absoluteFile of files) {
     const file = normalize(absoluteFile);
     const source = await readFile(absoluteFile, 'utf8');
     violations.push(...checkSource(file, source));
+  }
+  for (const absoluteFile of manifests) {
+    const file = normalize(absoluteFile);
+    const source = await readFile(absoluteFile, 'utf8');
+    violations.push(...checkPackageDependencies(file, JSON.parse(source), source));
   }
   return violations;
 }

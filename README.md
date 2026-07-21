@@ -27,6 +27,7 @@ fire, and organic themes and responsive desktop/mobile workspaces.
 ```text
 packages/
   core/             cross-cutting runtime infrastructure (@flows/core)
+  analysis/         neutral tokenization and analysis persistence (@flows/analysis)
   board/            named board application and SQLite persistence (@flows/board)
   music/            neutral shared music persistence (@flows/music)
   shared/           client/server DTOs and constants (@flows/shared)
@@ -37,7 +38,7 @@ packages/
     lyrics/         lyrics adapter, services, and persistence
     trading/        market stream, domain analysis, and advisor
     chat/           LLM chat and SSE routes
-    canvas/         tokenizer and annotation canvas
+    canvas/         free-text analysis orchestration and API
 data/               local SQLite databases
 docs/               current guidance, history, and proposals
 ```

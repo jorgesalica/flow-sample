@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { findAnalysisBySourceId, saveAnalysis, tokenize } from '@flows/core';
+import { findAnalysisBySourceId, saveAnalysis, tokenize } from '@flows/analysis';
 import { MUSIC_LAYERS, type CanvasAnalysis } from '@flows/shared';
 import type { LyricsRepository } from '../../domain/ports';
 import { classifyLyricsSections } from '../../domain/section-classifier';

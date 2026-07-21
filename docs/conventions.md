@@ -199,14 +199,16 @@ heavy static-analysis framework. It checks production sources for explicit `any`
 hardcoded localhost origins in UI API modules, unsafe double casts at UI API/loader
 boundaries, SQL calls outside persistence modules, environment reads outside named
 config factories, direct imports between sibling flow packages, and retired UI styles or
-accessibility suppressions. The command is part of `pnpm verify`, and its own behavior is
+accessibility suppressions. It also validates each workspace manifest against the allowed
+package dependency graph. The command is part of `pnpm verify`, and its own behavior is
 covered by `pnpm test:architecture`.
 
 `pnpm check:docs` validates local Markdown links. Both contract checks are part of
 `pnpm verify` and run in CI.
 
 There are no sibling-flow import exceptions. Shared music persistence belongs to
-`@flows/music`; cross-wire DTOs remain in `@flows/shared`, and generic runtime concerns
+`@flows/music`; generic tokenization and analysis persistence belong to
+`@flows/analysis`; cross-wire DTOs remain in `@flows/shared`; generic runtime concerns
 remain in `@flows/core`.
 
 ### Dependency and security policy

@@ -30,11 +30,6 @@
             "types": "./dist/db/index.d.ts",
             "require": "./dist/db/index.js",
             "default": "./dist/db/index.js"
-        },
-        "./canvas": {
-            "types": "./dist/canvas/index.d.ts",
-            "require": "./dist/canvas/index.js",
-            "default": "./dist/canvas/index.js"
         }
     },
     "scripts": {

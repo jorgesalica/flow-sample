@@ -21,6 +21,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@flows/analysis': path.resolve(__dirname, '../analysis/src/index.ts'),
       '@flows/board': path.resolve(__dirname, '../board/src/index.ts'),
       '@flows/canvas': path.resolve(__dirname, '../flows/canvas/src/index.ts'),
       '@flows/chat': path.resolve(__dirname, '../flows/chat/src/index.ts'),

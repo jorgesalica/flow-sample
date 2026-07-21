@@ -24,7 +24,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@flows/core', () => ({
+vi.mock('@flows/analysis', () => ({
   findAnalysisBySourceId: mocks.findAnalysisBySourceId,
   saveAnalysis: mocks.saveAnalysis,
   tokenize: mocks.tokenize,
