@@ -1,3 +1,5 @@
+import { CHAT_MODES } from '@flows/shared';
+
 /**
  * Chat flow configuration & constants.
  *
@@ -16,4 +18,4 @@ export const CHAT_SYSTEM_PROMPT =
     'Never start your reply with a heading (# or ## or ###). Begin with normal text.';
 
 /** Mode used when the caller does not specify one. */
-export const DEFAULT_CHAT_MODE = 'specific' as const;
+export const DEFAULT_CHAT_MODE = CHAT_MODES.SPECIFIC;

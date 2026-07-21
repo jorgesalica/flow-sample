@@ -21,6 +21,14 @@ test('rejects hardcoded localhost origins in UI API modules', () => {
   assert.equal(violations[0]?.rule, 'no-hardcoded-ui-origin');
 });
 
+test('rejects browser runtime imports from the CommonJS shared package', () => {
+  const violations = checkSource(
+    'packages/ui/src/lib/flows/chat/api.ts',
+    "import { type ChatMessage } from '@flows/shared';",
+  );
+  assert.equal(violations[0]?.rule, 'ui-shared-types-only');
+});
+
 test('rejects SQL calls outside persistence modules', () => {
   const violations = checkSource('packages/flows/trading/src/backend/services/example.ts', "db.prepare('SELECT 1')");
   assert.equal(violations[0]?.rule, 'sql-in-persistence-only');

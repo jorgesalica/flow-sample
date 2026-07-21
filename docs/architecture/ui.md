@@ -135,6 +135,10 @@ components receive loader data as props and hydrate their runes state reactively
 the flow's `api.ts` and be covered by a contract test. Client-side history updates use
 `pushState`/`replaceState` from `$app/navigation`, never `window.history` directly.
 
+Chat uses Eden for request/response endpoints and same-origin `fetch` only for SSE. Stream
+payloads use the `ChatStreamEvent` discriminated union from `@flows/shared`; the API
+facade validates parsed JSON before passing an event to the store.
+
 ## Styling
 
 Tailwind v4, CSS-first: `app.css` does `@import 'tailwindcss'` and owns semantic `--ui-*`

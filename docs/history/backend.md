@@ -4,6 +4,23 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2026-07-21 - Chat runtime boundaries and stable stream errors
+
+Issue #70 made Chat import-safe and explicit at every runtime boundary:
+
+- Replaced eager database/service/router singletons with `createChatDatabase()` and
+  `createChatRoutes()` factories plus an injectable `ChatApplication` contract.
+- Added stable `404` conversation absence, `400` domain validation, sanitized `503`
+  provider failures, and sanitized in-band SSE error events.
+- Moved SSE serialization into the route; the service now yields shared discriminated
+  event DTOs.
+- Added response schemas so Eden consumers no longer cast Chat payloads, plus runtime SSE
+  validation in the UI facade.
+- Added import-safety, in-memory SQLite, route/SSE, service, and UI API coverage; Chat now
+  participates in root `test:coverage`.
+
+---
+
 ## 2026-07-21 - Canvas domain boundary and annotation integrity
 
 Issue #69 closed the remaining generic Canvas boundary leaks:

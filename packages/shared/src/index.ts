@@ -53,7 +53,12 @@ export type {
     ChatProviderGroup,
     ChatMode,
     ChatRequest,
+    ChatSendResponse,
+    ChatDeleteResponse,
+    ChatErrorResponse,
+    ChatStreamEvent,
 } from './chat.types';
+export { CHAT_MODES, CHAT_STREAM_EVENT_TYPES } from './chat.types';
 
 // Canvas types (Generic)
 export type {

@@ -122,6 +122,23 @@ sequenceDiagram
 
 Each flow defines its own domain errors extending the standard JS `Error` class, which are then caught and transformed by Elysia's error handlers in the `api/` layer.
 
+### Chat HTTP And SSE Boundary
+
+`@flows/chat` is import-safe: importing the package exports factories and classes but does
+not open `chat.db` or construct a provider client. `createChatRoutes()` is the composition
+root that creates `ChatDatabase` and `ChatService`; tests inject a `ChatApplication` fake
+and exercise the Elysia route through `.handle()`.
+
+Conversation absence maps to a stable `404`. Invalid domain requests map to `400`, and
+provider failures map to a sanitized `503`. Once an SSE response has started, failures
+are sent as a typed `error` event with the same sanitized message. Detailed provider
+errors remain in server logs.
+
+Chat response DTOs and stream-event discriminants live in `@flows/shared`. The service
+yields typed stream events; only the route serializes them as SSE frames. This keeps HTTP
+formatting out of application orchestration and lets the UI consume Eden responses
+without boundary casts.
+
 ## CLI Usage
 
 The backend application host provides a CLI for local development:

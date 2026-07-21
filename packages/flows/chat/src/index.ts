@@ -1,9 +1,10 @@
 // @flows/chat — Chat Flow Package
 
 // Backend exports
-export { chatRoutes } from './backend/routes';
-export { ChatService } from './backend/services/chat.service';
-export { ChatDatabase, chatDb } from './backend/database';
+export { createChatRoutes } from './backend/routes';
+export { ChatService, type ChatApplication } from './backend/services/chat.service';
+export { ChatDatabase, createChatDatabase } from './backend/database';
+export * from './backend/schemas';
 
 // Domain exports
 export type { ChatRepository } from './domain/ports';

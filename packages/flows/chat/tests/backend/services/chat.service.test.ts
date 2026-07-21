@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import Database from 'better-sqlite3';
-import type { LLMRequest, LLMResponse, LLMStreamEvent } from '@flows/core';
-import type { ChatMessage, ChatMode } from '@flows/shared';
+import type { LLMResponse, LLMStreamEvent } from '@flows/core';
+import type { ChatStreamEvent } from '@flows/shared';
 import { ChatDatabase } from '../../../src/backend/database';
-import { ChatError } from '../../../src/domain/errors';
+import { ChatError, ConversationNotFoundError } from '../../../src/domain/errors';
 
 // ── Spies live in a hoisted block (vi.mock factories run before imports) ──
 const spies = vi.hoisted(() => ({
@@ -29,13 +29,8 @@ const {
 vi.mock('@flows/core', () => {
     const noop = () => {};
     const childLogger = { info: noop, warn: noop, error: noop, debug: noop };
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const DatabaseCtor = require('better-sqlite3') as typeof import('better-sqlite3');
     return {
         logger: { child: () => childLogger },
-        // The real database.ts module calls createDatabase() at import time;
-        // hand it an in-memory DB so no real file is ever opened.
-        createDatabase: () => new DatabaseCtor(':memory:'),
         LLMClient: {
             generateForProvider: spies.generateForProvider,
             generateStreamForProvider: spies.generateStreamForProvider,
@@ -45,23 +40,9 @@ vi.mock('@flows/core', () => {
     };
 });
 
-// Mock the service's database module: build a REAL ChatDatabase over an
-// in-memory better-sqlite3 DB (mock the edge, run the real persistence).
-vi.mock('../../../src/backend/database', async (importOriginal) => {
-    const original = await importOriginal<typeof import('../../../src/backend/database')>();
-    const memDb = new Database(':memory:');
-    const realChatDb = new original.ChatDatabase(memDb);
-    return { ...original, chatDb: realChatDb, __testDb: memDb };
-});
-
-// Import after mocks are registered, then grab the in-memory handles.
 const { ChatService } = await import('../../../src/backend/services/chat.service');
-const dbModule = (await import('../../../src/backend/database')) as unknown as {
-    chatDb: ChatDatabase;
-    __testDb: Database.Database;
-};
-const realChatDb = dbModule.chatDb;
-const testDb = dbModule.__testDb;
+const testDb = new Database(':memory:');
+const realChatDb = new ChatDatabase(testDb);
 
 // ── Fixtures ──────────────────────────────────────────────────────────
 
@@ -87,17 +68,20 @@ function streamEvents(parts: string[], response: LLMResponse): LLMStreamEvent[] 
     ];
 }
 
-async function collect(gen: AsyncGenerator<string>): Promise<string[]> {
-    const out: string[] = [];
-    for await (const chunk of gen) out.push(chunk);
+async function collect(gen: AsyncGenerator<ChatStreamEvent>): Promise<ChatStreamEvent[]> {
+    const out: ChatStreamEvent[] = [];
+    for await (const event of gen) out.push(event);
     return out;
 }
 
-/** Parse the JSON payload out of an SSE `data: {...}\n\n` line. */
-function parseSse(line: string): Record<string, unknown> {
-    expect(line.startsWith('data: ')).toBe(true);
-    expect(line.endsWith('\n\n')).toBe(true);
-    return JSON.parse(line.slice('data: '.length, -2));
+function lastDoneEvent(
+    events: ChatStreamEvent[],
+): Extract<ChatStreamEvent, { type: 'done' }> {
+    const event = events.at(-1);
+    if (!event || event.type !== 'done') {
+        throw new Error('Expected a final done event');
+    }
+    return event;
 }
 
 const CONV_ID = 'conv-1';
@@ -113,7 +97,11 @@ describe('ChatService', () => {
             generate: rotationGenerate,
             generateStream: rotationGenerateStream,
         });
-        service = new ChatService();
+        service = new ChatService(realChatDb);
+    });
+
+    afterAll(() => {
+        testDb.close();
     });
 
     // ── getModelCatalog ───────────────────────────────────────────────
@@ -193,10 +181,20 @@ describe('ChatService', () => {
             expect(msgs.map((m) => m.content)).toEqual(['first', 'second']);
         });
 
+        it('getMessages rejects an unknown conversation', () => {
+            expect(() => service.getMessages('missing')).toThrow(ConversationNotFoundError);
+        });
+
         it('deleteConversation removes the conversation', () => {
             realChatDb.createConversation({ id: CONV_ID, title: 't', createdAt: 1, updatedAt: 1 });
             service.deleteConversation(CONV_ID);
             expect(service.getConversations()).toEqual([]);
+        });
+
+        it('deleteConversation rejects an unknown conversation', () => {
+            expect(() => service.deleteConversation('missing')).toThrow(
+                ConversationNotFoundError,
+            );
         });
     });
 
@@ -332,7 +330,7 @@ describe('ChatService', () => {
         it('defaults to specific mode when mode is omitted', async () => {
             generateForProvider.mockResolvedValue(okResponse());
 
-            await service.sendMessage(CONV_ID, 'Hi', undefined as unknown as ChatMode, 'groq:llama');
+            await service.sendMessage(CONV_ID, 'Hi', undefined, 'groq:llama');
 
             expect(generateForProvider).toHaveBeenCalledOnce();
             expect(rotationGenerate).not.toHaveBeenCalled();
@@ -382,13 +380,11 @@ describe('ChatService', () => {
         it('sendMessage persists nothing when the model is missing', async () => {
             await expect(service.sendMessage(CONV_ID, 'Hi', 'specific')).rejects.toThrow();
             expect(service.getConversations()).toEqual([]);
-            expect(service.getMessages(CONV_ID)).toEqual([]);
+            expect(realChatDb.getMessages(CONV_ID)).toEqual([]);
         });
 
-        it('sendMessageStream throws ChatError when no model is given in specific mode', async () => {
-            await expect(
-                collect(service.sendMessageStream(CONV_ID, 'Hi', 'specific')),
-            ).rejects.toBeInstanceOf(ChatError);
+        it('sendMessageStream throws ChatError when no model is given in specific mode', () => {
+            expect(() => service.sendMessageStream(CONV_ID, 'Hi', 'specific')).toThrow(ChatError);
             expect(generateStreamForProvider).not.toHaveBeenCalled();
         });
 
@@ -406,16 +402,18 @@ describe('ChatService', () => {
                 toAsyncGen(streamEvents(['Hel', 'lo!'], resp)),
             );
 
-            const chunks = await collect(
+            const events = await collect(
                 service.sendMessageStream(CONV_ID, 'Hi', 'specific', 'groq:llama-3.3-70b'),
             );
 
-            const payloads = chunks.map(parseSse);
-            expect(payloads.map((p) => p.type)).toEqual(['user_message', 'delta', 'delta', 'done']);
-            expect(payloads[1].delta).toBe('Hel');
-            expect(payloads[2].delta).toBe('lo!');
+            expect(events).toMatchObject([
+                { type: 'user_message' },
+                { type: 'delta', delta: 'Hel' },
+                { type: 'delta', delta: 'lo!' },
+                { type: 'done' },
+            ]);
 
-            const done = payloads[3].message as ChatMessage;
+            const done = lastDoneEvent(events).message;
             expect(done.role).toBe('assistant');
             expect(done.content).toBe('Hello!');
             expect(done.providerUsed).toBe('groq');
@@ -439,8 +437,8 @@ describe('ChatService', () => {
                 toAsyncGen(streamEvents(['ok'], okResponse({ provider: 'mistral' }))),
             );
 
-            const chunks = await collect(service.sendMessageStream(CONV_ID, 'Hi', 'rotation'));
-            const done = parseSse(chunks[chunks.length - 1]).message as ChatMessage;
+            const events = await collect(service.sendMessageStream(CONV_ID, 'Hi', 'rotation'));
+            const done = lastDoneEvent(events).message;
 
             expect(rotationGenerateStream).toHaveBeenCalledOnce();
             expect(generateStreamForProvider).not.toHaveBeenCalled();
@@ -455,9 +453,8 @@ describe('ChatService', () => {
             const gen = service.sendMessageStream(CONV_ID, 'Hi', 'specific', 'groq:llama');
             const first = await gen.next();
 
-            // The very first yielded chunk carries the persisted user message.
-            const payload = parseSse(first.value as string);
-            expect(payload.type).toBe('user_message');
+            // The very first event carries the persisted user message.
+            expect(first.value).toMatchObject({ type: 'user_message' });
             const stored = service.getMessages(CONV_ID);
             expect(stored.some((m) => m.role === 'user' && m.content === 'Hi')).toBe(true);
 
@@ -470,10 +467,10 @@ describe('ChatService', () => {
                 toAsyncGen([{ delta: '', done: true, response: okResponse() }]),
             );
 
-            const chunks = await collect(
+            const events = await collect(
                 service.sendMessageStream(CONV_ID, 'Hi', 'specific', 'groq:llama'),
             );
-            const done = parseSse(chunks[chunks.length - 1]).message as ChatMessage;
+            const done = lastDoneEvent(events).message;
             expect(done.content).toBe('');
 
             const assistant = service.getMessages(CONV_ID).find((m) => m.role === 'assistant');
@@ -500,10 +497,10 @@ describe('ChatService', () => {
                 ]),
             );
 
-            const chunks = await collect(
+            const events = await collect(
                 service.sendMessageStream(CONV_ID, 'Hi', 'specific', 'groq:llama'),
             );
-            const done = parseSse(chunks[chunks.length - 1]).message as ChatMessage;
+            const done = lastDoneEvent(events).message;
             expect(done.content).toBe('partial');
             expect(done.providerUsed).toBe('');
             expect(done.modelUsed).toBe('');
