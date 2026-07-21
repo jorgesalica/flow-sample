@@ -138,8 +138,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@google/genai':
-        specifier: ^1.52.0
-        version: 1.52.0
+        specifier: ^2.13.0
+        version: 2.13.0
       better-sqlite3:
         specifier: ^12.11.1
         version: 12.11.1
@@ -774,8 +774,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@google/genai@1.52.0':
-    resolution: {integrity: sha512-gwSvbpiN/17O9TbsqSsE/OzZcpv5Fo4RQjdngGgogtuB9RsyJ8ZHhX5KjHj1bp5N9snN2eK8LDGXSaWW2hof8Q==}
+  '@google/genai@2.13.0':
+    resolution: {integrity: sha512-GM7C8Kaomvjz05x5JEO6+l3d/pciL9LxAG9dUjJLD7nTPZ9X0Cfsf2Z7eET6UjgWyUmxXCHtYnQoQ77F9+ZIOQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.25.2
@@ -3219,7 +3219,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@google/genai@1.52.0':
+  '@google/genai@2.13.0':
     dependencies:
       google-auth-library: 10.9.0
       p-retry: 4.6.2
