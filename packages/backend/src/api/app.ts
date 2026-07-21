@@ -15,6 +15,7 @@ import { createLyricsRoutes } from '@flows/lyrics';
 import { createTradingConfigFromEnv, createTradingRoutes } from '@flows/trading';
 import { createChatRoutes } from '@flows/chat';
 import { createCanvasFlowRoutes } from '@flows/canvas';
+import { createBoardRoutes, type BoardApplication } from '@flows/board';
 import { logger } from '@flows/core';
 import type { BackendConfig } from './config';
 
@@ -25,6 +26,7 @@ const defaultUiBuildPath = path.resolve(__dirname, '../../../ui/build');
 
 export interface BackendHostOptions {
   uiBuildPath?: string;
+  boardApplication?: BoardApplication;
 }
 
 export function createApp(config: BackendConfig, options: BackendHostOptions = {}) {
@@ -37,7 +39,7 @@ export function createApp(config: BackendConfig, options: BackendHostOptions = {
       .use(
         cors({
           origin: true,
-          methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+          methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         }),
       )
 
@@ -73,6 +75,7 @@ export function createApp(config: BackendConfig, options: BackendHostOptions = {
       .use(createTradingRoutes(createTradingConfigFromEnv()))
       .use(createChatRoutes())
       .use(createCanvasFlowRoutes())
+      .use(createBoardRoutes(options.boardApplication))
 
       // Browser navigation falls back to the SPA, while unknown API paths stay JSON 404s.
       .get('/*', ({ path: requestPath, set }) => {

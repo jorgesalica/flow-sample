@@ -33,6 +33,7 @@ flowchart LR
     mounted --> trading["@flows/trading"]
     mounted --> chat["@flows/chat"]
     mounted --> canvas["@flows/canvas"]
+    host --> boardPkg["@flows/board"]
 
     spotify --> music["@flows/music"]
     lyrics --> music
@@ -42,18 +43,21 @@ flowchart LR
     trading --> core
     chat --> core
     canvas --> core
+    boardPkg --> core
 
     spotify --> shared["@flows/shared"]
     lyrics --> shared
     trading --> shared
     chat --> shared
     canvas --> shared
+    boardPkg --> shared
     ui --> shared
 
     spotify --> sqlite[("SQLite")]
     lyrics --> sqlite
     trading --> sqlite
     chat --> sqlite
+    boardPkg --> sqlite
 
     spotify --> spotifyApi["Spotify API"]
     lyrics --> lrcLib["LrcLib API"]
@@ -71,6 +75,7 @@ flowchart LR
 | `packages/core` | Shared infrastructure | logger, cache, database factory, LLM client/providers | flow-specific business rules, DTOs, route handlers |
 | `packages/shared` | Cross-boundary contract | DTOs, constants, public unions crossing UI/server | implementation details, persistence rows, SDK types |
 | `packages/music` | Shared music persistence | `music.db`, track/artist/genre schema, FTS, neutral track repository | Spotify API/OAuth, LrcLib, flow orchestration, UI DTO ownership |
+| `packages/board` | Application composition | `boards.db`, default/active invariants, board repository/service/routes | flow registration, flow internals, deployment or user/account concerns |
 | `packages/flows/*` | Backend bounded contexts | domain, ports, adapters, repositories, services, Elysia route factory | global app startup, unrelated flow logic, UI components |
 
 ## Opinion on Flow Packages
@@ -110,11 +115,16 @@ A flow is "extractable enough" when these are true:
 Shared track persistence is owned by `@flows/music`. Spotify and Lyrics may depend on its
 public exports; they must not import each other's internals.
 
+Named-board persistence is owned by `@flows/board`. Flow packages must not depend on it;
+the backend host mounts it and the UI consumes only its contracts from `@flows/shared`.
+
 ## Frontend Component Map
 
 ```mermaid
 flowchart TD
     shell["App shell\n+layout.svelte"] --> home["Home board\npages/Landing.svelte"]
+    home --> boardLoader["Board loader\nroutes/+page.ts"]
+    boardLoader --> boardApi["Board API facade\nlib/boards/api.ts"]
     shell --> flowRoutes["Flow routes\nroutes/<flow>/+page.svelte"]
     flowRoutes --> loaders["+page.ts loaders"]
     loaders --> apiClient["Typed API client\nlib/client.ts"]
@@ -124,11 +134,14 @@ flowchart TD
     flowUi --> flowComponents["Flow components\ncomponents/*"]
     flowUi --> sharedUi["Shared UI primitives\nlib/components/ui"]
     home --> registry["Flow registry\nlib/flows/registry.ts"]
+    home --> toolbar["BoardToolbar\npages/components"]
     home --> board["FlowBoard + BoardItem\npages/components"]
+    toolbar --> boardApi
+    board --> boardApi
     registry --> cardContract["Board card contract\nflows/board-card.ts"]
     cardContract --> board
     board --> layout["Versioned layout contract\npages/board-layout.ts"]
-    layout --> localStorage[("localStorage")]
+    layout --> localStorage[("localStorage v1\nmigration only")]
     board --> sharedUi
 ```
 
@@ -175,11 +188,11 @@ Target shape:
 ## Current Refactor Queue
 
 Completed design-system, loader/invalidation, environment ownership, music persistence,
-architecture-contract, and quality-gate work lives in project history and merged PRs.
-The active lane is deliberately narrow:
+architecture-contract, quality-gate, and named-board work lives in project history and
+merged PRs. The active lane is deliberately narrow:
 
-1. **Board persistence (#44)**: add named server-backed boards and migrate the local v1
-   layout now that the package and quality boundaries are stable.
+1. **Board umbrella reconciliation (#18)**: run one final architecture/browser audit,
+   close satisfied scope, and create precise follow-ups only for demonstrated gaps.
 
 Relationships/edges remain a later product decision. They are not implied technical debt
 and require a separate issue after named boards are proven.

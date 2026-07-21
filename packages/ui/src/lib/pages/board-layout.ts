@@ -1,13 +1,21 @@
+import type {
+  Board,
+  BoardItem,
+  BoardItemSize as PersistedBoardItemSize,
+  BoardLayoutVersion,
+} from '@flows/shared';
+
 export const BOARD_LAYOUT_STORAGE_KEY = 'flow-sample:board-layout';
-export const BOARD_LAYOUT_VERSION = 1 as const;
+export const BOARD_LAYOUT_MIGRATION_KEY = 'flow-sample:board-layout-migrated-v1';
+export const BOARD_LAYOUT_VERSION = 1 as const satisfies BoardLayoutVersion;
 
 export const BoardItemSize = {
   COMPACT: 'compact',
   STANDARD: 'standard',
   WIDE: 'wide',
-} as const;
+} as const satisfies Record<string, PersistedBoardItemSize>;
 
-export type BoardItemSize = (typeof BoardItemSize)[keyof typeof BoardItemSize];
+export type BoardItemSize = PersistedBoardItemSize;
 
 export interface BoardItemLayout {
   id: string;
@@ -20,8 +28,12 @@ export interface BoardLayout {
   items: BoardItemLayout[];
 }
 
-type ReadableStorage = Pick<Storage, 'getItem'>;
-type WritableStorage = Pick<Storage, 'setItem'>;
+type MigrationStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+
+export interface BoardLayoutMigration {
+  found: boolean;
+  layout: BoardLayout | null;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -46,13 +58,11 @@ export function createDefaultBoardLayout(flowIds: readonly string[]): BoardLayou
   };
 }
 
-export function reconcileBoardLayout(value: unknown, flowIds: readonly string[]): BoardLayout {
-  const fallback = createDefaultBoardLayout(flowIds);
+function parseBoardLayout(value: unknown): BoardLayout | null {
   if (!isRecord(value) || value.version !== BOARD_LAYOUT_VERSION || !Array.isArray(value.items)) {
-    return fallback;
+    return null;
   }
 
-  const knownIds = new Set(fallback.items.map((item) => item.id));
   const seenIds = new Set<string>();
   const items: BoardItemLayout[] = [];
 
@@ -64,18 +74,32 @@ export function reconcileBoardLayout(value: unknown, flowIds: readonly string[])
       !isBoardItemSize(candidate.size) ||
       seenIds.has(candidate.id)
     ) {
-      return fallback;
+      return null;
     }
 
     seenIds.add(candidate.id);
-    if (knownIds.has(candidate.id)) {
-      items.push({
-        id: candidate.id,
-        collapsed: candidate.collapsed,
-        size: candidate.size,
-      });
-    }
+    items.push({
+      id: candidate.id,
+      collapsed: candidate.collapsed,
+      size: candidate.size,
+    });
   }
+
+  return { version: BOARD_LAYOUT_VERSION, items };
+}
+
+export function reconcileBoardLayout(value: unknown, flowIds: readonly string[]): BoardLayout {
+  const fallback = createDefaultBoardLayout(flowIds);
+  const parsed = parseBoardLayout(value);
+  if (!parsed) return fallback;
+
+  const knownIds = new Set(fallback.items.map((item) => item.id));
+  const seenIds = new Set<string>();
+  const items = parsed.items.filter((item) => {
+    if (!knownIds.has(item.id)) return false;
+    seenIds.add(item.id);
+    return true;
+  });
 
   for (const defaultItem of fallback.items) {
     if (!seenIds.has(defaultItem.id)) items.push(defaultItem);
@@ -84,20 +108,68 @@ export function reconcileBoardLayout(value: unknown, flowIds: readonly string[])
   return { version: BOARD_LAYOUT_VERSION, items };
 }
 
-export function loadBoardLayout(storage: ReadableStorage, flowIds: readonly string[]): BoardLayout {
+export function boardToLayout(board: Board, flowIds: readonly string[]): BoardLayout {
+  return reconcileBoardLayout(
+    {
+      version: board.layoutVersion,
+      items: board.items.map((item) => ({
+        id: item.flowId,
+        collapsed: item.collapsed,
+        size: item.size,
+      })),
+    },
+    flowIds
+  );
+}
+
+export function layoutToBoardItems(layout: BoardLayout): BoardItem[] {
+  return layout.items.map((item) => ({
+    flowId: item.id,
+    collapsed: item.collapsed,
+    size: item.size,
+  }));
+}
+
+export function boardMatchesLayout(board: Board, layout: BoardLayout): boolean {
+  if (board.layoutVersion !== layout.version || board.items.length !== layout.items.length) {
+    return false;
+  }
+
+  return board.items.every((item, index) => {
+    const layoutItem = layout.items[index];
+    return (
+      layoutItem !== undefined &&
+      item.flowId === layoutItem.id &&
+      item.collapsed === layoutItem.collapsed &&
+      item.size === layoutItem.size
+    );
+  });
+}
+
+export function readBoardLayoutMigration(
+  storage: Pick<MigrationStorage, 'getItem'>,
+  flowIds: readonly string[]
+): BoardLayoutMigration {
   try {
+    if (storage.getItem(BOARD_LAYOUT_MIGRATION_KEY) === String(BOARD_LAYOUT_VERSION)) {
+      return { found: false, layout: null };
+    }
     const serialized = storage.getItem(BOARD_LAYOUT_STORAGE_KEY);
-    return serialized === null
-      ? createDefaultBoardLayout(flowIds)
-      : reconcileBoardLayout(JSON.parse(serialized), flowIds);
+    if (serialized === null) return { found: false, layout: null };
+    const parsed = parseBoardLayout(JSON.parse(serialized));
+    return {
+      found: true,
+      layout: parsed ? reconcileBoardLayout(parsed, flowIds) : null,
+    };
   } catch {
-    return createDefaultBoardLayout(flowIds);
+    return { found: true, layout: null };
   }
 }
 
-export function persistBoardLayout(storage: WritableStorage, layout: BoardLayout): boolean {
+export function completeBoardLayoutMigration(storage: MigrationStorage): boolean {
   try {
-    storage.setItem(BOARD_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+    storage.setItem(BOARD_LAYOUT_MIGRATION_KEY, String(BOARD_LAYOUT_VERSION));
+    storage.removeItem(BOARD_LAYOUT_STORAGE_KEY);
     return true;
   } catch {
     return false;

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
+import type { BoardsSnapshot } from '@flows/shared';
 import {
   BoardCardState,
   BoardCardTone,
@@ -41,25 +42,46 @@ const readyCard: BoardCardSnapshot = {
 
 const { default: Landing } = await import('./Landing.svelte');
 
+function snapshotFor(flows: FlowDefinition[]): BoardsSnapshot {
+  const activeBoard = {
+    id: 'default',
+    name: 'My Board',
+    isDefault: true,
+    layoutVersion: 1 as const,
+    items: flows.map((flow) => ({
+      flowId: flow.id,
+      collapsed: false,
+      size: 'compact' as const,
+    })),
+    createdAt: '2026-07-21T00:00:00.000Z',
+    updatedAt: '2026-07-21T00:00:00.000Z',
+  };
+  return { boards: [activeBoard], activeBoard };
+}
+
+function renderLanding(flows: FlowDefinition[]) {
+  getFlows.mockReturnValue(flows);
+  return render(Landing, { props: { data: { snapshot: snapshotFor(flows) } } });
+}
+
 describe('Landing board', () => {
   beforeEach(() => {
     window.localStorage.clear();
   });
 
   it('sets the branded page title', () => {
-    getFlows.mockReturnValue([]);
-    render(Landing);
+    renderLanding([]);
     expect(document.title).toBe('Cosmic Flow - Data Exploration Hub');
   });
 
   it('renders registered items immediately while their summaries load independently', async () => {
-    getFlows.mockReturnValue([
+    const flows = [
       makeFlow('spotify', () => new Promise<BoardCardSnapshot>(() => {}), {
         name: 'Spotify Flow',
       }),
-    ]);
+    ];
 
-    render(Landing);
+    renderLanding(flows);
 
     expect(await screen.findByText('Spotify Flow')).toBeInTheDocument();
     expect(screen.getByText('Loading summary')).toBeInTheDocument();
@@ -67,9 +89,9 @@ describe('Landing board', () => {
   });
 
   it('preserves route navigation supplied by a successful card contract', async () => {
-    getFlows.mockReturnValue([makeFlow('spotify', readyCard, { name: 'Spotify Flow' })]);
+    const flows = [makeFlow('spotify', readyCard, { name: 'Spotify Flow' })];
 
-    render(Landing);
+    renderLanding(flows);
 
     expect(await screen.findByRole('link', { name: 'Open Spotify Flow' })).toHaveAttribute(
       'href',
@@ -79,7 +101,7 @@ describe('Landing board', () => {
   });
 
   it('isolates a failed summary contract to its board item', async () => {
-    getFlows.mockReturnValue([
+    const flows = [
       makeFlow('broken', {
         state: BoardCardState.ERROR,
         canOpen: false,
@@ -88,9 +110,9 @@ describe('Landing board', () => {
         message: 'Try refreshing the board.',
       }),
       makeFlow('spotify', readyCard, { name: 'Spotify Flow' }),
-    ]);
+    ];
 
-    render(Landing);
+    renderLanding(flows);
 
     expect(await screen.findByRole('link', { name: 'Open Spotify Flow' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open broken Flow' })).not.toBeInTheDocument();

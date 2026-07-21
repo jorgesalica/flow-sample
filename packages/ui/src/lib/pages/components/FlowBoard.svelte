@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
+  import type { Board } from '@flows/shared';
   import { AsyncState, Badge, Button, IconButton } from '@lib/components';
   import {
     BoardCardState,
@@ -11,10 +12,12 @@
     type FlowDefinition,
   } from '@lib/flows';
   import {
+    boardMatchesLayout,
+    boardToLayout,
+    completeBoardLayoutMigration,
     createDefaultBoardLayout,
     isDefaultBoardLayout,
-    loadBoardLayout,
-    persistBoardLayout,
+    readBoardLayoutMigration,
     reconcileBoardLayout,
     reorderBoardItem,
     updateBoardItem,
@@ -25,6 +28,8 @@
 
   interface Props {
     flows: FlowDefinition[];
+    board: Board;
+    onlayoutchange: (layout: BoardLayout) => Promise<void>;
   }
 
   interface OrderedBoardItem {
@@ -32,10 +37,17 @@
     layout: BoardLayout['items'][number];
   }
 
-  let { flows }: Props = $props();
+  let { flows, board, onlayoutchange }: Props = $props();
   const flowIds = $derived(flows.map((flow) => flow.id));
-  let layout = $state<BoardLayout>(createDefaultBoardLayout([]));
-  let isLayoutReady = $state(false);
+  let layout = $state<BoardLayout>(
+    untrack(() =>
+      boardToLayout(
+        board,
+        flows.map((flow) => flow.id)
+      )
+    )
+  );
+  let isSavingLayout = $state(false);
   let cardStates = $state<Record<string, BoardCardViewState>>({});
   let isRefreshing = $state(false);
   let draggingId = $state<string | null>(null);
@@ -49,17 +61,48 @@
       return flow ? [{ flow, layout: item }] : [];
     });
   });
-  const isDefaultLayout = $derived(!isLayoutReady || isDefaultBoardLayout(layout, flowIds));
+  const isDefaultLayout = $derived(isDefaultBoardLayout(layout, flowIds));
   const loadingCount = $derived(
     flows.filter((flow) => cardStates[flow.id]?.state === BoardCardState.LOADING).length
   );
   const readyFlowCount = $derived(flows.filter((flow) => cardStates[flow.id]?.canOpen).length);
 
   onMount(() => {
-    layout = loadBoardLayout(window.localStorage, flowIds);
-    isLayoutReady = true;
+    void initializeLayout();
     void refreshSummaries(false);
   });
+
+  async function initializeLayout(): Promise<void> {
+    const migration = readBoardLayoutMigration(window.localStorage, flowIds);
+    if (migration.found) {
+      if (migration.layout) {
+        layout = migration.layout;
+        isSavingLayout = true;
+        try {
+          await onlayoutchange(layout);
+          completeBoardLayoutMigration(window.localStorage);
+          announcement = 'Local board layout migrated.';
+        } catch {
+          announcement = 'Local layout is active, but migration could not be saved.';
+        } finally {
+          isSavingLayout = false;
+        }
+        return;
+      }
+      completeBoardLayoutMigration(window.localStorage);
+    }
+
+    if (!boardMatchesLayout(board, layout)) {
+      isSavingLayout = true;
+      try {
+        await onlayoutchange(layout);
+      } catch {
+        announcement = 'Board layout could not be synchronized.';
+      } finally {
+        isSavingLayout = false;
+      }
+    }
+  }
 
   function cardFor(flowId: string): BoardCardViewState {
     return cardStates[flowId] ?? { state: BoardCardState.LOADING, canOpen: false };
@@ -109,39 +152,53 @@
     return flows.find((flow) => flow.id === itemId)?.name ?? itemId;
   }
 
-  function applyLayout(nextLayout: BoardLayout, message: string): void {
+  async function applyLayout(nextLayout: BoardLayout, message: string): Promise<void> {
+    if (isSavingLayout) return;
+    const previous = layout;
     layout = reconcileBoardLayout(nextLayout, flowIds);
-    const persisted = persistBoardLayout(window.localStorage, layout);
-    announcement = persisted ? message : `${message} Changes could not be saved.`;
+    isSavingLayout = true;
+    try {
+      await onlayoutchange(layout);
+      announcement = message;
+    } catch {
+      layout = previous;
+      announcement = 'Board changes could not be saved.';
+    } finally {
+      isSavingLayout = false;
+    }
   }
 
   function moveItem(itemId: string, targetIndex: number): void {
     const nextLayout = reorderBoardItem(layout, itemId, targetIndex);
     if (nextLayout === layout) return;
-    applyLayout(nextLayout, `${flowName(itemId)} moved to position ${targetIndex + 1}.`);
+    void applyLayout(nextLayout, `${flowName(itemId)} moved to position ${targetIndex + 1}.`);
   }
 
   function toggleItem(itemId: string): void {
     const item = layout.items.find((candidate) => candidate.id === itemId);
     if (!item) return;
-    applyLayout(
+    void applyLayout(
       updateBoardItem(layout, itemId, { collapsed: !item.collapsed }),
       `${flowName(itemId)} ${item.collapsed ? 'expanded' : 'collapsed'}.`
     );
   }
 
   function resizeItem(itemId: string, size: BoardItemSize): void {
-    applyLayout(
+    void applyLayout(
       updateBoardItem(layout, itemId, { size }),
       `${flowName(itemId)} size changed to ${size}.`
     );
   }
 
   function resetLayout(): void {
-    applyLayout(createDefaultBoardLayout(flowIds), 'Board layout reset.');
+    void applyLayout(createDefaultBoardLayout(flowIds), 'Board layout reset.');
   }
 
   function startDragging(event: DragEvent, itemId: string): void {
+    if (isSavingLayout) {
+      event.preventDefault();
+      return;
+    }
     draggingId = itemId;
     dropTargetId = null;
     event.dataTransfer?.setData('text/plain', itemId);
@@ -172,6 +229,7 @@
   <div class="flow-board__toolbar">
     <div class="flow-board__summary" aria-label="Flow availability">
       {#if loadingCount > 0}<Badge tone="info">{loadingCount} loading</Badge>{/if}
+      {#if isSavingLayout}<Badge tone="info">Saving</Badge>{/if}
       <Badge tone="success">{readyFlowCount} ready</Badge>
       <Badge tone="neutral">{flows.length} total</Badge>
     </div>
@@ -185,16 +243,19 @@
       >
         <span aria-hidden="true">&#8635;</span>
       </IconButton>
-      <Button variant="secondary" size="sm" disabled={isDefaultLayout} onclick={resetLayout}>
+      <Button
+        variant="secondary"
+        size="sm"
+        disabled={isDefaultLayout || isSavingLayout}
+        onclick={resetLayout}
+      >
         <span aria-hidden="true">&#8634;</span>
         Reset layout
       </Button>
     </div>
   </div>
 
-  {#if !isLayoutReady}
-    <AsyncState state="loading" title="Loading board layout" />
-  {:else if orderedItems.length === 0}
+  {#if orderedItems.length === 0}
     <AsyncState state="empty" title="No flows registered" />
   {:else}
     <div class="flow-board__grid" aria-label="Flow board">
@@ -207,6 +268,7 @@
           itemCount={orderedItems.length}
           isDragging={draggingId === item.flow.id}
           isDropTarget={dropTargetId === item.flow.id}
+          disabled={isSavingLayout}
           onMoveTo={(targetIndex) => moveItem(item.flow.id, targetIndex)}
           onToggleCollapsed={() => toggleItem(item.flow.id)}
           onSizeChange={(size) => resizeItem(item.flow.id, size)}

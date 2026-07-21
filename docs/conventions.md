@@ -121,6 +121,9 @@ from `lib/flows/<flow>/`. See [architecture/ui.md](architecture/ui.md).
 - **Browser preferences are contracts**: version and validate persisted `localStorage`
   data, reconcile it against current identifiers, and provide a safe default/reset path.
   Do not mix presentation preferences with backend or cross-boundary DTOs.
+- **Boards are server state**: named boards, active selection, and layout items persist
+  through `@flows/board` and typed Eden APIs. `localStorage` is allowed only for the
+  versioned one-time migration of the retired v1 layout.
 - **Board flows publish presentation contracts**: register immutable definitions through
   `createFlowRegistry()`, keep card DTOs generic, and render discriminated async states.
   The board must not import flow internals or select renderers by flow ID.

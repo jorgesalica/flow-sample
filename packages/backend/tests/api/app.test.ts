@@ -2,10 +2,48 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import type { BoardApplication } from '@flows/board';
+import { BOARD_LAYOUT_VERSION, type BoardsSnapshot } from '@flows/shared';
 import { createApp } from '../../src/api/app';
 import type { BackendConfig } from '../../src/api/config';
 
 const temporaryDirectories: string[] = [];
+
+const boardSnapshot: BoardsSnapshot = {
+  boards: [
+    {
+      id: 'default',
+      name: 'My Board',
+      isDefault: true,
+      layoutVersion: BOARD_LAYOUT_VERSION,
+      items: [],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ],
+  activeBoard: {
+    id: 'default',
+    name: 'My Board',
+    isDefault: true,
+    layoutVersion: BOARD_LAYOUT_VERSION,
+    items: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+};
+
+const boardApplication: BoardApplication = {
+  snapshot: () => boardSnapshot,
+  create: () => boardSnapshot,
+  rename: () => boardSnapshot,
+  updateLayout: () => boardSnapshot,
+  select: () => boardSnapshot,
+  delete: () => boardSnapshot,
+};
+
+function hostOptions(uiBuildPath: string) {
+  return { uiBuildPath, boardApplication };
+}
 
 function makeConfig(overrides: Partial<BackendConfig> = {}): BackendConfig {
   return {
@@ -30,7 +68,7 @@ describe('backend app', () => {
   });
 
   it('serves the health route without binding a port', async () => {
-    const app = createApp(makeConfig(), { uiBuildPath: path.join(tmpdir(), 'missing-ui-build') });
+    const app = createApp(makeConfig(), hostOptions(path.join(tmpdir(), 'missing-ui-build')));
     const response = await app.handle(new Request('http://localhost/api/health'));
 
     expect(response.status).toBe(200);
@@ -43,7 +81,7 @@ describe('backend app', () => {
   });
 
   it('applies CORS to API preflight requests', async () => {
-    const app = createApp(makeConfig(), { uiBuildPath: path.join(tmpdir(), 'missing-ui-build') });
+    const app = createApp(makeConfig(), hostOptions(path.join(tmpdir(), 'missing-ui-build')));
     const response = await app.handle(
       new Request('http://localhost/api/health', {
         method: 'OPTIONS',
@@ -53,10 +91,11 @@ describe('backend app', () => {
 
     expect(response.status).toBe(204);
     expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    expect(response.headers.get('access-control-allow-methods')).toContain('PATCH');
   });
 
   it('returns a sanitized 404 when no UI build is available', async () => {
-    const app = createApp(makeConfig(), { uiBuildPath: path.join(tmpdir(), 'missing-ui-build') });
+    const app = createApp(makeConfig(), hostOptions(path.join(tmpdir(), 'missing-ui-build')));
     const response = await app.handle(new Request('http://localhost/not-found'));
 
     expect(response.status).toBe(404);
@@ -67,7 +106,7 @@ describe('backend app', () => {
     const uiBuildPath = mkdtempSync(path.join(tmpdir(), 'flow-sample-ui-'));
     temporaryDirectories.push(uiBuildPath);
     writeFileSync(path.join(uiBuildPath, 'index.html'), '<main>Flow Sample</main>');
-    const app = createApp(makeConfig(), { uiBuildPath });
+    const app = createApp(makeConfig(), hostOptions(uiBuildPath));
 
     const response = await app.handle(new Request('http://localhost/board/example'));
 
@@ -83,6 +122,7 @@ describe('backend app', () => {
   it('sanitizes unexpected route failures', async () => {
     const app = createApp(makeConfig(), {
       uiBuildPath: path.join(tmpdir(), 'missing-ui-build'),
+      boardApplication,
     }).get('/api/failure', () => {
       throw new Error('provider credentials leaked');
     });

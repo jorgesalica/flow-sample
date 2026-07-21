@@ -112,3 +112,16 @@ export type {
 } from './canvas-music.types';
 export { MUSIC_LAYERS } from './canvas-music.types';
 
+// Board persistence contracts
+export { BOARD_ITEM_SIZES, BOARD_LAYOUT_VERSION } from './board.types';
+export type {
+    Board,
+    BoardItem,
+    BoardItemSize,
+    BoardLayoutVersion,
+    BoardsSnapshot,
+    BoardCreateRequest,
+    BoardRenameRequest,
+    BoardLayoutUpdateRequest,
+    BoardErrorResponse,
+} from './board.types';

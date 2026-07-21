@@ -2,6 +2,20 @@
 
 Changelog for the frontend (Svelte) application.
 
+## 2026-07-21 - Named boards
+
+Issue #44 completed server-backed Board composition:
+
+- Added a root SvelteKit loader and typed Eden facade for board snapshots and mutations.
+- Added accessible create/select/rename/delete controls with default-board protection,
+  optimistic layout saves, disabled duplicate interactions, and rollback on failure.
+- Reconciled saved items against the live flow registry and migrated the retired
+  `flow-sample:board-layout` v1 payload exactly once after a successful server save.
+- Replaced local persistence tests with loader, API, component, migration, CRUD,
+  desktop, drag/keyboard, reload, and mobile Playwright coverage.
+
+---
+
 ## 2026-07-21 - Canvas response validation
 
 Issue #73 removed the remaining unsafe Canvas UI boundary casts:

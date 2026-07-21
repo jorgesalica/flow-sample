@@ -77,8 +77,11 @@ row. Every size falls back to one column on mobile.
 Reordering always exposes named earlier/later `IconButton` controls. Drag-and-drop is an
 optional pointer enhancement, not the only interaction. Collapse uses a disclosure
 button with `aria-expanded`; size uses a native select; reset is an explicit text command.
-Actions update a polite live region and persist only layout preferences. Board items are
-single cards with internal controls, never cards nested inside decorative cards.
+Actions update a polite live region and persist layout preferences to the active named
+board. `BoardToolbar` uses a native select for board choice, a text command for creation,
+and named icon actions for rename/delete; destructive deletion requires confirmation and
+is disabled for the protected default board. Board items are single cards with internal
+controls, never cards nested inside decorative cards.
 
 Each registered flow supplies a `BoardCardContract`; the board owns loading and refresh
 orchestration while `BoardCardContent` renders the discriminated state. Collapsed cards

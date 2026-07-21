@@ -12,8 +12,9 @@ independently testable bounded module hosted by one Elysia API and one SvelteKit
 - **Chat** exposes multi-provider LLM chat with rotation fallback and SSE streaming.
 - **Canvas** tokenizes text and renders typed LLM annotations.
 
-The home experience is an accessible board where flows can be reordered, collapsed, and
-resized with a versioned local layout while their dedicated routes remain available.
+The home experience is an accessible named board where flows can be reordered,
+collapsed, and resized while their dedicated routes remain available. Boards and their
+active layout persist in local SQLite; an older browser-only v1 layout is migrated once.
 Every registered flow publishes a typed card contract for its live summary, optional
 expanded metrics, and loading/empty/error/stale states; the board renders that contract
 without importing flow internals.
@@ -26,6 +27,7 @@ fire, and organic themes and responsive desktop/mobile workspaces.
 ```text
 packages/
   core/             cross-cutting runtime infrastructure (@flows/core)
+  board/            named board application and SQLite persistence (@flows/board)
   music/            neutral shared music persistence (@flows/music)
   shared/           client/server DTOs and constants (@flows/shared)
   backend/          Elysia application host (@flows/backend)

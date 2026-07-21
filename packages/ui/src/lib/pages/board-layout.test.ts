@@ -1,18 +1,39 @@
 import { describe, expect, it, vi } from 'vitest';
+import { BOARD_LAYOUT_VERSION as PERSISTED_LAYOUT_VERSION, type Board } from '@flows/shared';
 import {
+  BOARD_LAYOUT_MIGRATION_KEY,
   BOARD_LAYOUT_STORAGE_KEY,
   BOARD_LAYOUT_VERSION,
   BoardItemSize,
+  boardMatchesLayout,
+  boardToLayout,
+  completeBoardLayoutMigration,
   createDefaultBoardLayout,
   isDefaultBoardLayout,
-  loadBoardLayout,
-  persistBoardLayout,
+  layoutToBoardItems,
+  readBoardLayoutMigration,
   reconcileBoardLayout,
   reorderBoardItem,
   updateBoardItem,
 } from './board-layout';
 
 const flowIds = ['spotify', 'lyrics', 'trading'];
+
+function makeBoard(overrides: Partial<Board> = {}): Board {
+  return {
+    id: 'default',
+    name: 'My Board',
+    isDefault: true,
+    layoutVersion: PERSISTED_LAYOUT_VERSION,
+    items: [
+      { flowId: 'lyrics', collapsed: true, size: 'wide' },
+      { flowId: 'spotify', collapsed: false, size: 'standard' },
+    ],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
 
 describe('board layout contract', () => {
   it('creates a compact expanded item for every unique registered flow', () => {
@@ -77,35 +98,72 @@ describe('board layout contract', () => {
     expect(reconcileBoardLayout(value, flowIds)).toEqual(createDefaultBoardLayout(flowIds));
   });
 
-  it('loads valid JSON and falls back when storage cannot be read', () => {
-    const getItem = vi.fn().mockReturnValue(
-      JSON.stringify({
-        version: BOARD_LAYOUT_VERSION,
-        items: [{ id: 'lyrics', collapsed: true, size: BoardItemSize.WIDE }],
-      })
-    );
-    expect(loadBoardLayout({ getItem }, flowIds).items[0]?.id).toBe('lyrics');
-    expect(getItem).toHaveBeenCalledWith(BOARD_LAYOUT_STORAGE_KEY);
+  it('maps persisted board DTOs to reconciled UI layouts and back', () => {
+    const board = makeBoard();
+    const layout = boardToLayout(board, flowIds);
 
-    const unavailableStorage = { getItem: () => JSON.parse('{') };
-    expect(loadBoardLayout(unavailableStorage, flowIds)).toEqual(createDefaultBoardLayout(flowIds));
+    expect(layout.items.map((item) => item.id)).toEqual(['lyrics', 'spotify', 'trading']);
+    expect(layoutToBoardItems(layout)[0]).toEqual({
+      flowId: 'lyrics',
+      collapsed: true,
+      size: 'wide',
+    });
+    expect(boardMatchesLayout(board, layout)).toBe(false);
+    expect(boardMatchesLayout({ ...board, items: layoutToBoardItems(layout) }, layout)).toBe(true);
   });
 
-  it('persists the versioned layout and tolerates write failures', () => {
+  it('reads a valid legacy layout once and reconciles current flow IDs', () => {
+    const values = new Map([
+      [
+        BOARD_LAYOUT_STORAGE_KEY,
+        JSON.stringify({
+          version: BOARD_LAYOUT_VERSION,
+          items: [{ id: 'lyrics', collapsed: true, size: BoardItemSize.WIDE }],
+        }),
+      ],
+    ]);
+    const getItem = vi.fn((key: string) => values.get(key) ?? null);
+
+    expect(readBoardLayoutMigration({ getItem }, flowIds)).toEqual({
+      found: true,
+      layout: {
+        version: BOARD_LAYOUT_VERSION,
+        items: [
+          { id: 'lyrics', collapsed: true, size: BoardItemSize.WIDE },
+          { id: 'spotify', collapsed: false, size: BoardItemSize.COMPACT },
+          { id: 'trading', collapsed: false, size: BoardItemSize.COMPACT },
+        ],
+      },
+    });
+  });
+
+  it('does not remigrate completed state and flags malformed legacy data for cleanup', () => {
+    const completed = {
+      getItem: (key: string) => (key === BOARD_LAYOUT_MIGRATION_KEY ? '1' : '{invalid'),
+    };
+    expect(readBoardLayoutMigration(completed, flowIds)).toEqual({ found: false, layout: null });
+
+    const malformed = {
+      getItem: (key: string) => (key === BOARD_LAYOUT_STORAGE_KEY ? '{invalid' : null),
+    };
+    expect(readBoardLayoutMigration(malformed, flowIds)).toEqual({ found: true, layout: null });
+  });
+
+  it('marks migration complete, removes legacy state, and tolerates storage failure', () => {
     const setItem = vi.fn();
-    const layout = createDefaultBoardLayout(flowIds);
-    expect(persistBoardLayout({ setItem }, layout)).toBe(true);
-    expect(setItem).toHaveBeenCalledWith(BOARD_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+    const removeItem = vi.fn();
+    expect(completeBoardLayoutMigration({ getItem: vi.fn(), setItem, removeItem })).toBe(true);
+    expect(setItem).toHaveBeenCalledWith(BOARD_LAYOUT_MIGRATION_KEY, '1');
+    expect(removeItem).toHaveBeenCalledWith(BOARD_LAYOUT_STORAGE_KEY);
 
     expect(
-      persistBoardLayout(
-        {
-          setItem: () => {
-            throw new Error('quota exceeded');
-          },
+      completeBoardLayoutMigration({
+        getItem: vi.fn(),
+        setItem: () => {
+          throw new Error('quota exceeded');
         },
-        layout
-      )
+        removeItem: vi.fn(),
+      })
     ).toBe(false);
   });
 

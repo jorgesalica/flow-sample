@@ -5,9 +5,9 @@ Guidance for AI agents and humans working in this repository.
 ## Project
 
 `flow-sample` is a pnpm workspace of vertical flows (Spotify, Lyrics, Trading, Chat, and
-Canvas) on an ElysiaJS + better-sqlite3 backend and a SvelteKit + Svelte 5 frontend. Eden
-Treaty provides typed client/server RPC. Flow packages are bounded modules, not separate
-deployable applications.
+Canvas) plus named board composition on an ElysiaJS + better-sqlite3 backend and a
+SvelteKit + Svelte 5 frontend. Eden Treaty provides typed client/server RPC. Flow
+packages are bounded modules, not separate deployable applications.
 
 ## Read First
 
