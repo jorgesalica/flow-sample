@@ -139,6 +139,12 @@ Chat uses Eden for request/response endpoints and same-origin `fetch` only for S
 payloads use the `ChatStreamEvent` discriminated union from `@flows/shared`; the API
 facade validates parsed JSON before passing an event to the store.
 
+Spotify and Lyrics request/response endpoints also use direct Eden inference from
+TypeBox response schemas; their production loaders and API facades do not cast wire
+payloads. Lyrics keeps same-origin `fetch` only for interpretation SSE and validates
+each parsed `LyricsInterpretationEvent` before exposing it to components. Architecture
+checks reject unsafe double casts in both flow surfaces.
+
 ## Styling
 
 Tailwind v4, CSS-first: `app.css` does `@import 'tailwindcss'` and owns semantic `--ui-*`

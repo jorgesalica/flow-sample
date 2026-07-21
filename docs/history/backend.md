@@ -4,6 +4,24 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2026-07-21 - Spotify and Lyrics application boundaries
+
+Issue #71 made both music integrations explicit at the HTTP/application boundary:
+
+- Added injectable Spotify orchestration for OAuth, sync, cache invalidation, search,
+  lookup, and aggregate reads; missing tracks now return `404`, with deliberate auth,
+  rate-limit, and provider statuses.
+- Extracted Lyrics individual/batch fetching and interpretation streaming into services;
+  the existing `retryFailed` UI request is now honored by backend orchestration.
+- Added shared DTOs and TypeBox response schemas so Spotify/Lyrics Eden consumers no
+  longer use unsafe double casts.
+- Sanitized Lyrics interpretation setup and in-band SSE failures while preserving raw
+  provider details in server logs, and added runtime stream-event validation in the UI.
+- Added service, route, SSE, and UI API tests and included the HTTP routers in package
+  coverage.
+
+---
+
 ## 2026-07-21 - Chat runtime boundaries and stable stream errors
 
 Issue #70 made Chat import-safe and explicit at every runtime boundary:

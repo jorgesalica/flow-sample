@@ -1,4 +1,8 @@
-import type { LyricsStatus } from '@flows/shared';
+import type {
+  LyricsLibraryTrack,
+  LyricsStats,
+  LyricsStatus,
+} from '@flows/shared';
 
 /**
  * Lyrics payload to persist for a track.
@@ -57,20 +61,12 @@ export interface LyricsRepository {
   save(trackId: string, lyrics: LyricsData): Promise<void>;
   markNotFound(trackId: string): Promise<void>;
   getPendingTrackIds(includeFailed?: boolean): Promise<string[]>;
-  getStats(): Promise<{ total: number; found: number; notFound: number; pending: number }>;
+  getStats(): Promise<LyricsStats>;
   getLibraryWithStatus(
     limit?: number,
     offset?: number,
     statusFilter?: LyricsStatus,
-  ): Promise<
-    Array<{
-      id: string;
-      title: string;
-      artist: string;
-      imageUrl: string | null;
-      status: LyricsStatus;
-    }>
-  >;
+  ): Promise<LyricsLibraryTrack[]>;
   getInterpretation(trackId: string): Promise<string | null>;
   saveInterpretation(trackId: string, interpretation: string): Promise<void>;
 }

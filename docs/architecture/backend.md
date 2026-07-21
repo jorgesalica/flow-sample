@@ -33,8 +33,9 @@ packages/
 
 All five flows now follow the same high-level package shape: a `domain/` layer
 for pure concepts, ports, and typed errors, plus a `backend/` layer for Elysia
-routes, repositories, services, databases, and adapters. The remaining refactor
-work is about tightening boundaries inside that shape, not introducing it.
+routes, repositories, services, databases, and adapters. Spotify, Lyrics, Chat,
+and Canvas place orchestration behind injectable application services. The remaining
+refactor work is about tightening Trading and shared quality gates.
 
 ```text
 flow-package/
@@ -106,21 +107,41 @@ because model identifiers are not portable across providers.
 sequenceDiagram
     participant API as Backend (Elysia)
     participant Route as Flow Route
+    participant Service as SpotifyService
     participant Adapter as Flow Infrastructure
-    participant SQLite as Core DB
+    participant Music as @flows/music
 
-    API->>Route: POST /api/spotify/sync
-    Route->>Adapter: fetchTracks(50)
+    API->>Route: POST /api/spotify/run
+    Route->>Service: sync(limit)
+    Service->>Adapter: fetchTracks(limit)
     Adapter->>Adapter: OAuth + pagination
-    Adapter-->>Route: Track[]
-    Route->>SQLite: INSERT INTO tracks...
-    SQLite-->>Route: void
-    Route-->>API: { count: 1247 }
+    Adapter-->>Service: Track[]
+    Service->>Music: save + rebuild FTS
+    Music-->>Service: void
+    Service-->>Route: SpotifySyncResponse
+    Route-->>API: 200 typed response
 ```
 
 ## Error Handling
 
 Each flow defines its own domain errors extending the standard JS `Error` class, which are then caught and transformed by Elysia's error handlers in the `api/` layer.
+
+### Spotify And Lyrics HTTP Boundaries
+
+`SpotifyService` owns OAuth URL/state, synchronization, cache invalidation, library
+queries, and aggregates. Its gateway, repositories, sync use case, and cache are
+injectable; `createSpotifyRoutes()` only validates HTTP input, redirects OAuth, and maps
+authentication, rate-limit, provider, and missing-track outcomes to stable statuses.
+
+`LyricsService` owns cache-first fetch and batch orchestration, including the
+`retryFailed` contract. `LyricsInterpretationService` validates source data before
+opening SSE, yields shared discriminated events, and persists a completed
+interpretation. The route serializes those events and replaces provider details with a
+stable `503` event while retaining raw details in server logs.
+
+Both flows publish TypeBox response schemas backed by DTOs in `@flows/shared`. Their
+route and service suites exercise success, absence, provider failure, cache, batch, and
+SSE behavior through real Elysia `.handle()` requests.
 
 ### Chat HTTP And SSE Boundary
 

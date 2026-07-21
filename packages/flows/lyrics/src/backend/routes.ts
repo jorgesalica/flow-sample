@@ -1,264 +1,190 @@
-import { Elysia, t } from 'elysia';
-import { LrcLibAdapter } from './adapter';
-import { SQLiteLyricsRepository } from './repository';
+import { logger } from '@flows/core';
 import { SQLiteTrackRepository } from '@flows/music';
-import { logger, LLMClient } from '@flows/core';
-import type { LyricsStatus, TrackRepository } from '@flows/shared';
+import {
+  LYRICS_INTERPRETATION_EVENT_TYPES,
+  type LyricsErrorResponse,
+  type LyricsInterpretationEvent,
+} from '@flows/shared';
+import { Elysia, t } from 'elysia';
+import { LyricsFetchError, LyricsNotFoundError } from '../domain/errors';
+import type { LyricsRepository } from '../domain/ports';
+import { LrcLibAdapter } from './adapter';
 import { createCanvasRoutes } from './canvas/canvas.routes';
-import type { LyricsRepository, LyricsSource } from '../domain/ports';
-import { LyricsNotFoundError, LyricsFetchError } from '../domain/errors';
+import {
+  LyricsInterpretationService,
+  type LyricsInterpretationApplication,
+} from './interpretation.service';
+import { LyricsService, type LyricsApplication } from './lyrics.service';
+import { SQLiteLyricsRepository } from './repository';
+import {
+  lyricsBatchResponseSchema,
+  lyricsErrorResponseSchema,
+  lyricsLibraryTrackSchema,
+  lyricsSchema,
+  lyricsStatsSchema,
+  lyricsStatusSchema,
+} from './schemas';
 
 const log = logger.child({ module: 'LyricsRoutes' });
+const LYRICS_PROVIDER_UNAVAILABLE = 'Lyrics provider is temporarily unavailable';
+const INTERPRETATION_UNAVAILABLE = 'Lyrics interpretation is temporarily unavailable';
 
-const LYRICS_INTERPRETATION_PROMPT =
-  'You are a music analyst. Analyze the following song lyrics. ' +
-  'Explain what the song is about, its themes, emotions, and any notable metaphors or references. ' +
-  'Write in the same language as the lyrics. Be concise but insightful. ' +
-  'Use Markdown formatting for structure.';
+export interface LyricsRoutesDependencies {
+  application: LyricsApplication;
+  interpretation: LyricsInterpretationApplication;
+  lyricsRepository: LyricsRepository;
+}
 
-export function createLyricsRoutes() {
-  const lyricsRepository: LyricsRepository = new SQLiteLyricsRepository();
-  const trackRepository: TrackRepository = new SQLiteTrackRepository();
-  const lrcLibAdapter: LyricsSource = new LrcLibAdapter();
+export function createLyricsRouteDependencies(): LyricsRoutesDependencies {
+  const lyricsRepository = new SQLiteLyricsRepository();
+  const trackRepository = new SQLiteTrackRepository();
+  return {
+    application: new LyricsService(
+      lyricsRepository,
+      trackRepository,
+      new LrcLibAdapter(),
+    ),
+    interpretation: new LyricsInterpretationService(
+      lyricsRepository,
+      trackRepository,
+    ),
+    lyricsRepository,
+  };
+}
 
-  return (
-    new Elysia({ prefix: '/api/lyrics' })
-      .decorate('lyricsRepository', lyricsRepository)
-      .decorate('trackRepository', trackRepository)
-      .decorate('lrcLibAdapter', lrcLibAdapter)
-      .use(createCanvasRoutes(lyricsRepository))
+export function createLyricsRoutes(
+  dependencies: LyricsRoutesDependencies = createLyricsRouteDependencies(),
+) {
+  const { application, interpretation, lyricsRepository } = dependencies;
 
-      .get(
-        '/:trackId',
-        async ({ params, query, lyricsRepository, trackRepository, lrcLibAdapter, set }) => {
-          const { trackId } = params;
-          const force = query.force === 'true';
-
-          const existing = await lyricsRepository.findByTrackId(trackId);
-
-          if (existing && existing.status !== 'pending' && !force) {
-            log.debug({ trackId, status: existing.status }, 'Returning cached lyrics');
-            return existing;
-          }
-
-          const track = await trackRepository.findById(trackId);
-          if (!track) {
+  return new Elysia({ prefix: '/api/lyrics' })
+    .use(createCanvasRoutes(lyricsRepository))
+    .get(
+      '/:trackId',
+      async ({ params, query, set }) => {
+        try {
+          return await application.getLyrics(params.trackId, query.force === 'true');
+        } catch (error) {
+          if (error instanceof LyricsNotFoundError) {
             set.status = 404;
-            return { error: new LyricsNotFoundError(trackId, 'Track not found').message };
+            return { error: error.message };
           }
-
-          log.info({ trackId, title: track.title, force }, 'Fetching lyrics from LrcLib');
-
-          try {
-            const result = await lrcLibAdapter.fetchLyrics({
-              trackName: track.title,
-              artistName: track.artists[0]?.name || '',
-              albumName: track.album.name,
-              durationSeconds: Math.round(track.durationMs / 1000),
-            });
-
-            if (result && (result.plainLyrics || result.syncedLyrics)) {
-              await lyricsRepository.save(trackId, {
-                plainLyrics: result.plainLyrics,
-                syncedLyrics: result.syncedLyrics,
-              });
-
-              return {
-                trackId,
-                plainLyrics: result.plainLyrics,
-                syncedLyrics: result.syncedLyrics,
-                status: 'found' as const,
-                fetchedAt: new Date().toISOString(),
-              };
-            } else {
-              await lyricsRepository.markNotFound(trackId);
-              return {
-                trackId,
-                plainLyrics: null,
-                syncedLyrics: null,
-                status: 'not_found' as const,
-                fetchedAt: new Date().toISOString(),
-              };
-            }
-          } catch (error) {
-            log.error({ trackId, error }, 'Failed to fetch lyrics');
-            const fetchError = new LyricsFetchError('Failed to fetch lyrics', trackId);
-            set.status = 500;
-            return { error: fetchError.message };
+          if (error instanceof LyricsFetchError) {
+            set.status = 502;
+            return { error: LYRICS_PROVIDER_UNAVAILABLE };
           }
+          throw error;
+        }
+      },
+      {
+        params: t.Object({ trackId: t.String() }),
+        query: t.Object({
+          force: t.Optional(t.Union([t.Literal('true'), t.Literal('false')])),
+        }),
+        response: {
+          200: lyricsSchema,
+          404: lyricsErrorResponseSchema,
+          502: lyricsErrorResponseSchema,
         },
-        {
-          params: t.Object({
-            trackId: t.String(),
-          }),
-          query: t.Object({
-            force: t.Optional(t.String()),
-          }),
+      },
+    )
+    .post(
+      '/fetch-all',
+      async ({ body, set }) => {
+        try {
+          return await application.fetchAll(body?.retryFailed ?? false);
+        } catch (error) {
+          if (error instanceof LyricsFetchError) {
+            set.status = 502;
+            return { error: LYRICS_PROVIDER_UNAVAILABLE };
+          }
+          throw error;
+        }
+      },
+      {
+        body: t.Optional(
+          t.Object({ retryFailed: t.Optional(t.Boolean()) }),
+        ),
+        response: {
+          200: lyricsBatchResponseSchema,
+          502: lyricsErrorResponseSchema,
         },
-      )
-
-      .post('/fetch-all', async ({ lyricsRepository, trackRepository, lrcLibAdapter }) => {
-        const pendingIds = await lyricsRepository.getPendingTrackIds();
-        log.info({ count: pendingIds.length }, 'Starting batch lyrics fetch');
-
-        // Resolve all track data upfront
-        const batchParams = [];
-        for (const trackId of pendingIds) {
-          const track = await trackRepository.findById(trackId);
-          if (!track) continue;
-
-          batchParams.push({
-            trackId,
-            trackName: track.title,
-            artistName: track.artists[0]?.name || '',
-            albumName: track.album.name,
-            durationSeconds: Math.round(track.durationMs / 1000),
-          });
+      },
+    )
+    .get(
+      '/tracks',
+      ({ query }) => application.getLibrary(query.limit, query.offset, query.status),
+      {
+        query: t.Object({
+          limit: t.Optional(t.Numeric({ default: 50 })),
+          offset: t.Optional(t.Numeric({ default: 0 })),
+          status: t.Optional(lyricsStatusSchema),
+        }),
+        response: { 200: t.Array(lyricsLibraryTrackSchema) },
+      },
+    )
+    .get('/stats', () => application.getStats(), {
+      response: { 200: lyricsStatsSchema },
+    })
+    .post(
+      '/:trackId/interpret',
+      async ({ params, set }) => {
+        let stream: AsyncIterable<LyricsInterpretationEvent>;
+        try {
+          stream = await interpretation.prepareStream(params.trackId);
+        } catch (error) {
+          if (error instanceof LyricsNotFoundError) {
+            set.status = 404;
+            return { error: error.message } satisfies LyricsErrorResponse;
+          }
+          logProviderFailure(error, params.trackId, 'Interpretation setup failed');
+          set.status = 503;
+          return { error: INTERPRETATION_UNAVAILABLE } satisfies LyricsErrorResponse;
         }
 
-        // Fetch concurrently (10 parallel by default)
-        const results = await lrcLibAdapter.fetchLyricsBatch(batchParams);
-
-        let found = 0;
-        let notFound = 0;
-        let errors = 0;
-
-        for (const { trackId, result, error } of results) {
-          if (error) {
-            errors++;
-            continue;
-          }
-
-          if (result && (result.plainLyrics || result.syncedLyrics)) {
-            await lyricsRepository.save(trackId, {
-              plainLyrics: result.plainLyrics,
-              syncedLyrics: result.syncedLyrics,
-            });
-            found++;
-          } else {
-            await lyricsRepository.markNotFound(trackId);
-            notFound++;
-          }
-        }
-
-        log.info({ found, notFound, errors, total: pendingIds.length }, 'Batch lyrics fetch complete');
-
-        return {
-          processed: pendingIds.length,
-          found,
-          notFound,
-          errors,
-        };
-      })
-
-      .get(
-        '/tracks',
-        async ({ lyricsRepository, query }) => {
-          const limit = query.limit ? parseInt(query.limit) : 50;
-          const offset = query.offset ? parseInt(query.offset) : 0;
-          const status =
-            query.status && ['found', 'not_found', 'pending'].includes(query.status)
-              ? (query.status as LyricsStatus)
-              : undefined;
-
-          return lyricsRepository.getLibraryWithStatus(limit, offset, status);
-        },
-        {
-          query: t.Object({
-            limit: t.Optional(t.String()),
-            offset: t.Optional(t.String()),
-            status: t.Optional(t.String()),
-          }),
-        },
-      )
-
-      .get('/stats', async ({ lyricsRepository }) => {
-        return lyricsRepository.getStats();
-      })
-
-      // ── AI Interpretation (SSE) ────────────────────────────────────
-      .post(
-        '/:trackId/interpret',
-        async ({ params, lyricsRepository, trackRepository }) => {
-          const { trackId } = params;
-
-          // Check if we already have a cached interpretation
-          const cached = await lyricsRepository.getInterpretation(trackId);
-          if (cached) {
-            log.debug({ trackId }, 'Returning cached interpretation');
-            const encoder = new TextEncoder();
-            return new Response(
-              new ReadableStream({
-                start(controller) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'cached', interpretation: cached })}\n\n`));
-                  controller.close();
-                },
-              }),
-              { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' } },
-            );
-          }
-
-          // Need lyrics + track info
-          const lyrics = await lyricsRepository.findByTrackId(trackId);
-          if (!lyrics || lyrics.status !== 'found' || !lyrics.plainLyrics) {
-            const notFound = new LyricsNotFoundError(trackId, 'Lyrics not found for this track');
-            return new Response(JSON.stringify({ error: notFound.message }), { status: 404 });
-          }
-
-          const track = await trackRepository.findById(trackId);
-          const artist = track?.artists?.[0]?.name || 'Unknown Artist';
-          const title = track?.title || 'Unknown Song';
-
-          log.info({ trackId, artist, title }, 'Generating AI interpretation');
-
-          const client = LLMClient.createRotation();
-          const stream = client.generateStream({
-            messages: [
-              {
-                role: 'system',
-                content: LYRICS_INTERPRETATION_PROMPT,
-              },
-              {
-                role: 'user',
-                content: `Song: "${title}" by ${artist}\n\nLyrics:\n${lyrics.plainLyrics}`,
-              },
-            ],
-          });
-
-          const readable = new ReadableStream({
-            async start(controller) {
-              const encoder = new TextEncoder();
-              let fullText = '';
-              try {
-                for await (const event of stream) {
-                  if (event.done && event.response) {
-                    // Save to DB
-                    await lyricsRepository.saveInterpretation(trackId, fullText);
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
-                  } else if (event.delta) {
-                    fullText += event.delta;
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', delta: event.delta })}\n\n`));
-                  }
-                }
-              } catch (error) {
-                const errMsg = error instanceof Error ? error.message : String(error);
-                log.error({ trackId, error: errMsg }, 'Interpretation stream error');
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: errMsg })}\n\n`));
-              } finally {
-                controller.close();
+        const encoder = new TextEncoder();
+        const readable = new ReadableStream({
+          async start(controller) {
+            try {
+              for await (const event of stream) {
+                controller.enqueue(encodeSseEvent(encoder, event));
               }
-            },
-          });
+            } catch (error) {
+              logProviderFailure(error, params.trackId, 'Interpretation stream failed');
+              controller.enqueue(
+                encodeSseEvent(encoder, {
+                  type: LYRICS_INTERPRETATION_EVENT_TYPES.ERROR,
+                  error: INTERPRETATION_UNAVAILABLE,
+                }),
+              );
+            } finally {
+              controller.close();
+            }
+          },
+        });
 
-          return new Response(readable, {
-            headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
-          });
-        },
-        {
-          params: t.Object({
-            trackId: t.String(),
-          }),
-        },
-      )
+        return new Response(readable, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+          },
+        });
+      },
+      { params: t.Object({ trackId: t.String() }) },
+    );
+}
+
+function encodeSseEvent(
+  encoder: TextEncoder,
+  event: LyricsInterpretationEvent,
+): Uint8Array {
+  return encoder.encode(`data: ${JSON.stringify(event)}\n\n`);
+}
+
+function logProviderFailure(error: unknown, trackId: string, message: string): void {
+  log.error(
+    { trackId, error: error instanceof Error ? error.message : String(error) },
+    message,
   );
 }

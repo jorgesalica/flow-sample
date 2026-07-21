@@ -2,30 +2,15 @@ import type { Track } from '@flows/shared';
 import type { TrackRepository } from '@flows/shared';
 import { logger } from '@flows/core';
 import { rebuildFtsIndex } from '@flows/music';
+import type { ArtistDetails, SpotifySourcePort } from '../domain/ports';
+
+export type { ArtistDetails, SpotifySourcePort } from '../domain/ports';
 
 const log = logger.child({ module: 'SpotifyUseCase' });
 
 export interface SpotifyUseCaseOptions {
   limit?: number;
   enrichGenres?: boolean;
-}
-
-/**
- * Artist details returned from Spotify API enrichment
- */
-export interface ArtistDetails {
-  genres: string[];
-  imageUrl?: string;
-}
-
-/**
- * Interface for Spotify source that can fetch tracks and artist details
- */
-export interface SpotifySourcePort {
-  fetchTracks(limit?: number): Promise<Track[]>;
-  fetchArtistDetails(artistIds: string[]): Promise<Map<string, ArtistDetails>>;
-  // Legacy method for backwards compatibility
-  fetchArtistGenres?(artistIds: string[]): Promise<Map<string, string[]>>;
 }
 
 export class SpotifyUseCase {
