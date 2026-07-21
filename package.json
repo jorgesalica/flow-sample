@@ -6,28 +6,37 @@
   "author": "concienc.ia (jrsystems)",
   "scripts": {
     "dev": "pnpm -r --parallel run dev",
-    "build": "pnpm -r run build",
+    "build": "pnpm clean:build && pnpm -r run build && pnpm check:runtime",
     "build:shared": "pnpm --filter @flows/shared run build",
     "test": "pnpm run test:tooling && pnpm -r run --if-present test",
-    "test:tooling": "pnpm run test:architecture && pnpm run test:coverage-tooling",
+    "test:tooling": "pnpm run test:architecture && pnpm run test:coverage-tooling && pnpm run test:runtime-tooling",
     "test:architecture": "node --test scripts/check-architecture-contracts.test.mjs",
     "test:coverage-tooling": "node --test scripts/run-coverage.test.mjs",
+    "test:runtime-tooling": "node --test scripts/check-runtime-contracts.test.mjs",
     "test:coverage": "node scripts/run-coverage.mjs",
     "lint": "pnpm -r run --if-present lint",
     "check": "pnpm -r run --if-present check",
     "typecheck": "pnpm -r run --if-present typecheck",
     "check:architecture": "node scripts/check-architecture-contracts.mjs",
     "check:docs": "node scripts/check-doc-links.mjs",
-    "verify": "pnpm check:docs && pnpm check:architecture && pnpm lint && pnpm typecheck && pnpm check && pnpm test",
+    "check:runtime": "node scripts/check-runtime-contracts.mjs",
+    "check:runtime:manifests": "node scripts/check-runtime-contracts.mjs --manifests-only",
+    "verify": "pnpm check:docs && pnpm check:architecture && pnpm check:runtime:manifests && pnpm lint && pnpm typecheck && pnpm check && pnpm test",
     "format": "pnpm -r run --if-present format",
     "format:check": "pnpm -r run --if-present format:check",
-    "clean": "rimraf packages/*/node_modules packages/*/dist node_modules",
+    "clean:build": "rimraf --glob \"packages/*/dist\" \"packages/flows/*/dist\" \"packages/ui/build\" \"packages/ui/.svelte-kit\"",
+    "clean:artifacts": "pnpm clean:build && rimraf --glob \"packages/*/coverage\" \"packages/flows/*/coverage\" \"packages/ui/playwright-report\" \"packages/ui/test-results\"",
+    "clean": "pnpm clean:artifacts && rimraf --glob \"packages/*/node_modules\" \"packages/flows/*/node_modules\" \"node_modules\"",
+    "bootstrap": "pnpm install --frozen-lockfile && pnpm build",
     "prepare": "husky"
   },
   "engines": {
-    "node": ">=20.19"
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.24.0",
+  "volta": {
+    "node": "22.19.0"
+  },
   "devDependencies": {
     "husky": "^9.1.7",
     "rimraf": "^6.0.1"

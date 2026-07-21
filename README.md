@@ -49,13 +49,17 @@ extraction rules.
 
 ## Quick Start
 
-Requirements: Node.js 20.19 or newer and pnpm 10.24.
+Requirements: Node.js 22 or newer and pnpm 10.24. The repository pins the CI and local
+toolchain baseline in `.node-version`.
 
 ```bash
-pnpm install
+pnpm run bootstrap
 cp .env.example .env
 pnpm dev
 ```
+
+`bootstrap` performs a frozen install and builds the workspace entrypoints required by
+the backend and development watchers.
 
 The backend runs on `http://localhost:4173`; the Vite UI runs on
 `http://localhost:5173` and proxies `/api` and `/outputs` to the backend.
@@ -64,8 +68,9 @@ The backend runs on `http://localhost:4173`; the Vite UI runs on
 
 | Command | Purpose |
 | --- | --- |
+| `pnpm run bootstrap` | Install from the lockfile and build generated workspace entrypoints |
 | `pnpm dev` | Run every flow, backend, and UI with hot reload |
-| `pnpm build` | Build all workspace packages |
+| `pnpm build` | Clean stale build output, build all packages, and import-smoke the compiled backend |
 | `pnpm verify` | Run docs/architecture checks, lint, types, Svelte check, and tests |
 | `pnpm test:coverage` | Run every coverage-bearing package and print a deterministic aggregate |
 | `pnpm --filter @flows/ui test:e2e` | Run Playwright journeys |
@@ -116,9 +121,10 @@ pnpm verify
 pnpm build
 ```
 
-CI performs a clean install, full build, static/tooling checks, and ratcheted package
-coverage on every PR and push to `main`. UI behavior changes also require focused
-Playwright coverage or a documented manual desktop/mobile verification.
+CI performs a clean install, full build with a compiled-runtime smoke check,
+static/tooling checks, and ratcheted package coverage on every PR and push to `main`.
+UI behavior changes also require focused Playwright coverage or a documented manual
+desktop/mobile verification.
 
 ## License
 

@@ -46,14 +46,20 @@ longer import each other's internals.
 
 ## Execution Queue
 
-The audited architecture, refactor, documentation, and testing queue is complete. The
-final Board reconciliation
-([#18](https://github.com/jorgesalica/flow-sample/issues/18)) confirmed the assembled
-package boundaries and closed the umbrella after its executable children (#42, #43, and
-#44) shipped. No residual engineering task is active without its own issue.
+The post-Board architecture audit produced this ordered closure queue. Each item has its
+own acceptance criteria and ships through a separate PR:
 
-New work must enter through a scoped GitHub issue and be ordered here before execution.
-The deferred epics below remain ideas, not an implicit queue.
+1. [#82 compiled runtime packaging](https://github.com/jorgesalica/flow-sample/issues/82)
+2. [#83 dependency security and manifest hygiene](https://github.com/jorgesalica/flow-sample/issues/83)
+3. [#84 neutral analysis package](https://github.com/jorgesalica/flow-sample/issues/84)
+4. [#85 import-safe persistence composition](https://github.com/jorgesalica/flow-sample/issues/85)
+5. [#86 typed Lyrics Canvas transport](https://github.com/jorgesalica/flow-sample/issues/86)
+6. [#87 documentation and CI reconciliation](https://github.com/jorgesalica/flow-sample/issues/87)
+
+The order fixes executable artifacts and security first, then package boundaries and
+typed transport, and finally reconciles repository-wide guidance and gates. New work
+must enter through a scoped GitHub issue and be ordered here before execution. The
+deferred epics below remain ideas, not an implicit queue.
 
 Relationships and graph edges get a separate issue only after the named-board foundation
 is proven and an interaction requirement is agreed.

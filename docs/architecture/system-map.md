@@ -189,10 +189,15 @@ Target shape:
 
 Completed design-system, loader/invalidation, environment ownership, music persistence,
 architecture-contract, quality-gate, and named-board work lives in project history and
-merged PRs. The Board umbrella reconciliation (#18) found no remaining architectural or
-testing gap after #42, #43, and #44, so there is no active refactor task.
+merged PRs. The post-Board audit is tracked, in order, by #82 through #87 in the
+[roadmap](../ROADMAP.md): compiled runtime, dependency security, neutral analysis,
+import-safe persistence, typed Lyrics Canvas transport, and documentation/CI
+reconciliation.
 
-Future findings must become scoped issues with acceptance criteria before they enter the
+The queue intentionally keeps `@flows/music` separate from `@flows/core`: music owns a
+domain persistence model, while core remains generic runtime infrastructure. #84 removes
+the inverse problem by extracting Canvas-oriented analysis concerns from core. Future
+findings must become scoped issues with acceptance criteria before they enter the
 roadmap; this document does not maintain a parallel backlog.
 
 Relationships/edges remain a later product decision. They are not implied technical debt
