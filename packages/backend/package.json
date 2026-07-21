@@ -15,9 +15,9 @@
         "test:coverage": "vitest run --coverage --passWithNoTests"
     },
     "dependencies": {
-        "@elysiajs/cors": "^1.4.0",
-        "@elysiajs/node": "^1.4.2",
-        "@elysiajs/static": "^1.4.7",
+        "@elysiajs/cors": "^1.4.2",
+        "@elysiajs/node": "^1.4.5",
+        "@elysiajs/static": "^1.4.10",
         "@flows/board": "workspace:*",
         "@flows/canvas": "workspace:*",
         "@flows/chat": "workspace:*",
@@ -26,25 +26,21 @@
         "@flows/shared": "workspace:*",
         "@flows/spotify": "workspace:*",
         "@flows/trading": "workspace:*",
-        "dotenv": "^17.2.3",
-        "elysia": "^1.4.18"
+        "dotenv": "^17.4.2",
+        "elysia": "^1.4.29"
     },
     "devDependencies": {
-        "@eslint/js": "^9.39.1",
+        "@eslint/js": "^9.39.5",
         "@types/better-sqlite3": "^7.6.13",
-        "@types/node": "^22.19.1",
-        "@types/ws": "^8.18.1",
-        "@typescript-eslint/eslint-plugin": "^8.48.1",
-        "@typescript-eslint/parser": "^8.48.1",
-        "eslint": "^9.39.1",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-prettier": "^5.2.1",
-        "globals": "^15.9.0",
-        "prettier": "^3.3.3",
-        "tsc-alias": "^1.8.16",
-        "tsx": "^4.19.2",
-        "@vitest/coverage-v8": "^4.1.9",
-        "typescript": "^5.6.3",
-        "vitest": "^4.1.9"
+        "@types/node": "^22.20.1",
+        "@typescript-eslint/eslint-plugin": "^8.65.0",
+        "@typescript-eslint/parser": "^8.65.0",
+        "@vitest/coverage-v8": "^4.1.10",
+        "eslint": "^9.39.5",
+        "globals": "^15.15.0",
+        "tsc-alias": "^1.9.1",
+        "tsx": "^4.23.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.10"
     }
 }

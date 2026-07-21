@@ -30,6 +30,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm security:audit
+
       # Build first: typecheck/check resolve workspace deps against compiled dist.
       - run: pnpm build
 

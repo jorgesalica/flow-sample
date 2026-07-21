@@ -209,6 +209,19 @@ There are no sibling-flow import exceptions. Shared music persistence belongs to
 `@flows/music`; cross-wire DTOs remain in `@flows/shared`, and generic runtime concerns
 remain in `@flows/core`.
 
+### Dependency and security policy
+
+- Keep `pnpm-lock.yaml` committed and use frozen installs in bootstrap and CI.
+- Run `pnpm security:audit` after dependency changes; CI rejects known high or critical
+  production advisories.
+- Run `pnpm outdated -r --compatible` to close minor/patch drift within declared ranges.
+- Dependabot checks pnpm workspaces and GitHub Actions weekly against `main`.
+- Major upgrades require a scoped issue and focused migration verification. Do not mix
+  them into an unrelated security patch.
+- A root override is allowed only for a transitive advisory when the direct owner still
+  exposes a compatible vulnerable range. Declare the safe package at the workspace root,
+  document why, and remove the override after the upstream graph resolves safely.
+
 ---
 
 ## Do / Don't (the short version)

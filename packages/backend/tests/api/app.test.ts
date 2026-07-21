@@ -85,7 +85,10 @@ describe('backend app', () => {
     const response = await app.handle(
       new Request('http://localhost/api/health', {
         method: 'OPTIONS',
-        headers: { Origin: 'http://localhost:5173' },
+        headers: {
+          Origin: 'http://localhost:5173',
+          'Access-Control-Request-Method': 'PATCH',
+        },
       }),
     );
 
