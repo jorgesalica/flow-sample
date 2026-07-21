@@ -35,6 +35,7 @@ import { getTradingStats, tradingFlow } from './trading';
 
 function statusFixture(overrides: Partial<StatusResponse['trading']> = {}): StatusResponse {
   return {
+    success: true,
     trading: {
       isRunning: false,
       symbol: 'BTCUSDT',

@@ -1,8 +1,28 @@
 // @flows/trading — Trading Flow Package
 
 // Backend exports
-export { createTradingRoutes } from './backend/routes';
-export { getTradingService, getMentorService, getSynthesizerService, AnalystService } from './backend/services';
+export {
+    createTradingRoutes,
+    createTradingRouteDependencies,
+    type TradingRoutesDependencies,
+    type TradingStreamApplication,
+    type TradingMentorApplication,
+} from './backend/routes';
+export {
+    getTradingService,
+    getMentorService,
+    getSynthesizerService,
+    AnalystService,
+    TradingMarketService,
+    TradingWizardService,
+    type TradingMarketApplication,
+    type TradingWizardApplication,
+} from './backend/services';
+export {
+    SqliteTradingReadRepository,
+    type TradingReadRepository,
+    type StoredAdvisorInsight,
+} from './backend/repository';
 export {
   createTradingConfigFromEnv,
   TRADING_CONFIG,
@@ -41,7 +61,15 @@ export type {
 } from './domain/types';
 
 // Domain errors
-export { TradingError, InsufficientDataError, LLMQuotaError, AnalysisError } from './domain/errors';
+export {
+    TradingError,
+    InsufficientDataError,
+    LLMQuotaError,
+    AnalysisError,
+    MarketDataUnavailableError,
+    InsightProviderError,
+    InvalidInsightResponseError,
+} from './domain/errors';
 
 // Adapter exports
 export { BinanceStream, fetchKlines, type KlineInterval } from './adapters/binance';

@@ -9,6 +9,8 @@
 // `appendClosedCandle`.
 import type { Candle, FractalNode, AdvisorNote, TradingState, AdvisorState } from '@flows/shared';
 
+export type TradingAdvisorInsight = AdvisorNote & { _debugContext?: unknown };
+
 function initialTradingState(): TradingState {
   return {
     isRunning: false,
@@ -33,7 +35,7 @@ class TradingStore {
   #advisorState = $state<AdvisorState>(initialAdvisorState());
   #candles = $state<Candle[]>([]);
   #fractals = $state<FractalNode[]>([]);
-  #latestInsight = $state<AdvisorNote | null>(null);
+  #latestInsight = $state<TradingAdvisorInsight | null>(null);
   #isLoadingInsight = $state(false);
 
   // ── reads ──────────────────────────────────────────────────────────
@@ -53,7 +55,7 @@ class TradingStore {
     return this.#fractals;
   }
 
-  get latestInsight(): AdvisorNote | null {
+  get latestInsight(): TradingAdvisorInsight | null {
     return this.#latestInsight;
   }
 
@@ -98,7 +100,7 @@ class TradingStore {
   }
 
   // ── latest insight ─────────────────────────────────────────────────
-  setLatestInsight(insight: AdvisorNote | null): void {
+  setLatestInsight(insight: TradingAdvisorInsight | null): void {
     this.#latestInsight = insight;
   }
 

@@ -1,9 +1,9 @@
-import type { Candle } from '@flows/shared';
+import type { Candle, TradingKlineInterval } from '@flows/shared';
 
 export interface TimeframeStep {
   id: number;
   label: string;
-  interval: string;
+  interval: TradingKlineInterval;
   focus: string;
   icon: string;
   candleLimit: number;

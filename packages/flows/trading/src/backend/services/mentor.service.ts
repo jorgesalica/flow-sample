@@ -9,6 +9,7 @@ import {
 } from '../database';
 import { TRADING_CONFIG } from '../config';
 import { LLMQuotaError } from '../../domain/errors';
+import { parseAdvisorNote } from '../../domain/advisor-note';
 
 const log = logger.child({ module: 'MentorService' });
 
@@ -147,7 +148,7 @@ export class MentorService {
         'LLM response received',
       );
 
-      const insight = this.parseInsight(response.content);
+      const insight = parseAdvisorNote(response.content);
 
       if (!insight) {
         log.error('Failed to parse insight from LLM response');
@@ -204,67 +205,6 @@ export class MentorService {
     }
   }
 
-  /**
-   * Parse LLM response into AdvisorNote structure.
-   */
-  private parseInsight(content: string): AdvisorNote | null {
-    try {
-      let clean = content
-        .replace(/```json/g, '')
-        .replace(/```/g, '')
-        .trim();
-      const jsonMatch = clean.match(/\{[\s\S]*\}/);
-
-      if (!jsonMatch) {
-        log.error({ contentPreview: content.slice(0, 200) }, 'No JSON found in LLM response');
-        return null;
-      }
-
-      clean = jsonMatch[0];
-      const parsed = JSON.parse(clean) as Record<string, unknown>;
-
-      if (!parsed.title || !parsed.mentor_tip) {
-        log.error(
-          { hasTitle: !!parsed.title, hasMentorTip: !!parsed.mentor_tip },
-          'LLM response missing required fields',
-        );
-        return null;
-      }
-
-      log.debug({ title: parsed.title }, 'Insight parsed successfully');
-      return {
-        title: parsed.title as string,
-        sentiment_bias: ['LONG', 'SHORT', 'NEUTRAL'].includes(parsed.sentiment_bias as string)
-          ? (parsed.sentiment_bias as 'LONG' | 'SHORT' | 'NEUTRAL')
-          : undefined,
-        regime_context: (parsed.regime_context as string) || '',
-        scenario_bullish: (parsed.scenario_bullish as string) || '',
-        scenario_bearish: (parsed.scenario_bearish as string) || '',
-        risk_management:
-          parsed.risk_management &&
-          typeof parsed.risk_management === 'object' &&
-          (parsed.risk_management as Record<string, unknown>).recommended_sl
-            ? {
-                recommended_sl: Number(
-                  (parsed.risk_management as Record<string, unknown>).recommended_sl,
-                ),
-                invalidation_reason:
-                  ((parsed.risk_management as Record<string, unknown>)
-                    .invalidation_reason as string) || 'Structural level',
-              }
-            : undefined,
-        mentor_tip: parsed.mentor_tip as string,
-        reasoning_key_factors: Array.isArray(parsed.reasoning_key_factors)
-          ? (parsed.reasoning_key_factors as string[])
-          : [],
-        confidence_score:
-          typeof parsed.confidence_score === 'number' ? parsed.confidence_score : 50,
-      };
-    } catch (error) {
-      log.error({ error, contentPreview: content.slice(0, 500) }, 'Failed to parse insight JSON');
-      return null;
-    }
-  }
 }
 
 // Singleton

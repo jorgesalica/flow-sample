@@ -139,11 +139,13 @@ Chat uses Eden for request/response endpoints and same-origin `fetch` only for S
 payloads use the `ChatStreamEvent` discriminated union from `@flows/shared`; the API
 facade validates parsed JSON before passing an event to the store.
 
-Spotify and Lyrics request/response endpoints also use direct Eden inference from
+Spotify, Lyrics, and Trading request/response endpoints use direct Eden inference from
 TypeBox response schemas; their production loaders and API facades do not cast wire
 payloads. Lyrics keeps same-origin `fetch` only for interpretation SSE and validates
-each parsed `LyricsInterpretationEvent` before exposing it to components. Architecture
-checks reject unsafe double casts in both flow surfaces.
+each parsed `LyricsInterpretationEvent` before exposing it to components. Trading uses
+`EventSource` for live state/candles and validates every parsed payload before mutating
+its runes store. Architecture checks reject unsafe double casts in all three flow
+surfaces.
 
 ## Styling
 

@@ -43,6 +43,7 @@ const event = { fetch: requestFetch } as unknown as Parameters<typeof load>[0];
 // --- Fixtures (fixed, deterministic) ---------------------------------------
 function statusFixture(): StatusResponse {
   return {
+    success: true,
     trading: {
       isRunning: true,
       symbol: 'BTCUSDT',
@@ -124,7 +125,7 @@ describe('trading loader — happy path', () => {
 
     await load(event);
 
-    expect(candlesGet).toHaveBeenCalledWith({ query: { limit: '100' } });
+    expect(candlesGet).toHaveBeenCalledWith({ query: { limit: 100 } });
   });
 
   it('attaches debugContext onto the insight when present', async () => {

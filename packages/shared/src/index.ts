@@ -33,6 +33,7 @@ export type {
 } from './lyrics.types';
 
 // Trading types
+export { TRADING_KLINE_INTERVALS } from './trading.types';
 export type {
     Candle,
     FractalNode,
@@ -44,6 +45,23 @@ export type {
     AdvisorNote,
     TradingState,
     AdvisorState,
+    TradingKlineInterval,
+    TradingPreviousInsight,
+    TradingWizardInsightRequest,
+    TradingWizardAnalysis,
+    TradingWizardInsightMeta,
+    TradingStatusResponse,
+    TradingStateResponse,
+    TradingCandlesResponse,
+    TradingKlinesResponse,
+    TradingLiveCandleResponse,
+    TradingFractalsResponse,
+    TradingAdvisorToggleResponse,
+    TradingAdvisorStatusResponse,
+    TradingInsightResponse,
+    TradingGeneratedInsightResponse,
+    TradingWizardInsightResponse,
+    TradingErrorResponse,
 } from './trading.types';
 
 // Common types

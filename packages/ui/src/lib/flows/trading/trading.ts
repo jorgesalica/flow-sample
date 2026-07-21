@@ -8,7 +8,6 @@
 import { createStatsBoardCard, FlowStatus, type FlowStats } from '../board-card';
 import type { FlowDefinition } from '../registry';
 import { api } from '@lib/client';
-import type { StatusResponse } from './types';
 
 // Re-export everything consumers need
 export type { Candle, FractalNode, AdvisorNote, TradingState, AdvisorState } from '@flows/shared';
@@ -37,12 +36,11 @@ export {
 async function getTradingStats(): Promise<FlowStats> {
   try {
     const { data, error } = await api.api.trading.status.get();
-    if (error) throw new Error('Failed to fetch status');
-    const result = data as unknown as StatusResponse;
+    if (error || !data) throw new Error('Failed to fetch status');
     return {
-      count: result.trading?.candleCount || 0,
-      status: result.trading?.isRunning ? FlowStatus.ACTIVE : FlowStatus.CONFIGURED,
-      statusMessage: result.trading?.isRunning ? 'Streaming' : 'Stopped',
+      count: data.trading?.candleCount || 0,
+      status: data.trading?.isRunning ? FlowStatus.ACTIVE : FlowStatus.CONFIGURED,
+      statusMessage: data.trading?.isRunning ? 'Streaming' : 'Stopped',
     };
   } catch {
     return {

@@ -106,8 +106,8 @@ export function checkSource(file, source) {
       violations.push(violation(file, source, match, 'no-a11y-suppression', 'Fix the control semantics instead of suppressing the Svelte accessibility warning.'));
     }
 
-    const isSpotifyOrLyricsUi = /\/(?:spotify|lyrics)\//.test(file);
-    if (isSpotifyOrLyricsUi) {
+    const isTypedFlowUi = /\/(?:spotify|lyrics|trading)\//.test(file);
+    if (isTypedFlowUi) {
       for (const match of source.matchAll(unsafeDoubleCast)) {
         violations.push(violation(file, source, match, 'no-unsafe-api-casts', 'Use Eden inference or a validated runtime mapper.'));
       }

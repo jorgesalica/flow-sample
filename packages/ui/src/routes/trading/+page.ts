@@ -6,12 +6,7 @@
 // EventSource stream and all interactive mutations stay in the component /
 // flow api.ts.
 import { createApiClient, type ApiClient } from '@lib/client';
-import type {
-  StatusResponse,
-  CandlesResponse,
-  InsightResponse,
-  TradingPageData,
-} from '@lib/flows/trading/types';
+import type { TradingPageData } from '@lib/flows/trading/types';
 import type { PageLoad } from './$types';
 import { clientLogger } from '@lib/client-logger';
 
@@ -21,11 +16,10 @@ export const ssr = false;
 async function loadStatus(api: ApiClient): Promise<Pick<TradingPageData, 'trading' | 'advisor'>> {
   try {
     const { data, error } = await api.api.trading.status.get();
-    if (error) throw new Error('Failed to fetch status');
-    const result = data as unknown as StatusResponse;
+    if (error || !data) throw new Error('Failed to fetch status');
     return {
-      trading: result.trading ?? null,
-      advisor: result.advisor ?? null,
+      trading: data.trading ?? null,
+      advisor: data.advisor ?? null,
     };
   } catch (err) {
     clientLogger.error('Trading status loader failed', { error: err });
@@ -36,11 +30,10 @@ async function loadStatus(api: ApiClient): Promise<Pick<TradingPageData, 'tradin
 async function loadCandles(api: ApiClient, limit: number): Promise<TradingPageData['candles']> {
   try {
     const { data, error } = await api.api.trading.candles.get({
-      query: { limit: limit.toString() },
+      query: { limit },
     });
-    if (error) throw new Error('Failed to fetch candles');
-    const result = data as unknown as CandlesResponse;
-    return result.candles ?? [];
+    if (error || !data) throw new Error('Failed to fetch candles');
+    return data.candles ?? [];
   } catch (err) {
     clientLogger.error('Trading candles loader failed', { error: err });
     return [];
@@ -50,12 +43,11 @@ async function loadCandles(api: ApiClient, limit: number): Promise<TradingPageDa
 async function loadInsight(api: ApiClient): Promise<TradingPageData['insight']> {
   try {
     const { data, error } = await api.api.trading.insight.get();
-    if (error) throw new Error('Failed to fetch insight');
-    const result = data as unknown as InsightResponse;
-    if (!result.insight) return null;
-    const insight = result.insight;
-    if (result.debugContext) insight._debugContext = result.debugContext;
-    return insight;
+    if (error || !data) throw new Error('Failed to fetch insight');
+    if (!data.insight) return null;
+    return data.debugContext == null
+      ? data.insight
+      : { ...data.insight, _debugContext: data.debugContext };
   } catch (err) {
     clientLogger.error('Trading insight loader failed', { error: err });
     return null;

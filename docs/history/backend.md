@@ -4,6 +4,23 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2026-07-21 - Trading application and HTTP boundaries
+
+Issue #72 removed provider and wizard orchestration from the Trading router:
+
+- Added shared request/response DTOs and TypeBox schemas for market state, historical
+  klines, persisted insights, and cascade wizard context/results.
+- Added injected read-repository, historical-market, analyzer, synthesizer, and LLM
+  ports; route handlers now validate input and map HTTP only.
+- Reused a validated `AdvisorNote` parser for mentor and wizard responses, with stable
+  `422`, `502`, `503`, and `500` error bodies that do not expose provider details.
+- Fixed SSE teardown so cancellation and request abort remove stream listeners, and
+  added runtime validation before Trading UI store updates.
+- Added repository, service, route/SSE, and UI API tests and included Trading routes in
+  package coverage.
+
+---
+
 ## 2026-07-21 - Spotify and Lyrics application boundaries
 
 Issue #71 made both music integrations explicit at the HTTP/application boundary:

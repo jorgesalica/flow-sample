@@ -1,6 +1,7 @@
 <script lang="ts">
   import CandleChart from './CandleChart.svelte';
   import type { Candle, AdvisorNote } from '../trading';
+  import type { TradingKlineInterval } from '@flows/shared';
   import type { WizardAnalysis, WizardInsightViewModel } from '../types';
   import { calculateWizardMetrics, formatCompactVolume, TRADING_WIZARD_STEPS } from '../wizard';
   import { clientLogger } from '@lib/client-logger';
@@ -9,12 +10,12 @@
   type BadgeTone = 'danger' | 'neutral' | 'success';
 
   interface Props {
-    onFetchKlines: (interval: string, limit: number) => Promise<Candle[]>;
+    onFetchKlines: (interval: TradingKlineInterval, limit: number) => Promise<Candle[]>;
     onGenerateInsightForTimeframe?: (
       stepLabel: string,
       promptContext: string,
       previousInsights: { label: string; insight: AdvisorNote }[],
-      interval: string,
+      interval: TradingKlineInterval,
       limit: number
     ) => Promise<WizardInsightViewModel | null>;
   }
@@ -326,7 +327,7 @@
                 </span>
               </div>
             {/if}
-            {#if analysis.indicators.macd}
+            {#if analysis.indicators.macd !== 'N/A'}
               <div>
                 <span class="text-muted">MACD:</span>
                 <span
