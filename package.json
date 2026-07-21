@@ -2,7 +2,7 @@
   "name": "flow-sample",
   "version": "0.3.0",
   "private": true,
-  "description": "Data flow playground - Spotify liked songs explorer with Elysia + SQLite backend",
+  "description": "Local-first analysis board for music, text, chat, canvas, and trading flows",
   "author": "concienc.ia (jrsystems)",
   "scripts": {
     "dev": "pnpm -r --parallel run dev",

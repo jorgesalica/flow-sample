@@ -1,45 +1,40 @@
 ---
-description: Run and maintain tests, ensure coverage
+description: Select, run, and maintain the repository test layers
 ---
 
 # Tests Workflow
 
-Keep tests passing and up-to-date.
+The canonical policy is [docs/testing/README.md](../../docs/testing/README.md).
 
-## Running Tests
+## Commands
 
 ```bash
-# Backend unit + integration
-pnpm test
-
-# UI E2E (requires app running)
+pnpm verify
+pnpm build
+pnpm test:coverage
 pnpm --filter @flows/ui test:e2e
-
-# With UI (interactive)
-pnpm --filter @flows/ui test:e2e:ui
 ```
 
-## Test Locations
+Use package filters for rapid feedback, but finish non-trivial work with the root gate.
 
-| Type | Location |
-|------|----------|
-| Backend Unit | `packages/backend/tests/unit/spotify/` |
-| Backend Integration | `packages/backend/tests/integration/spotify/` |
-| E2E | `packages/ui/e2e/` |
+## Locations
 
-## After Interface Changes
+| Layer | Location |
+| --- | --- |
+| Architecture/docs | `scripts/*.test.mjs`, `scripts/check-*.mjs` |
+| Core/shared infrastructure | `packages/core/tests`, package-local tests |
+| Flow domain/repository/service/route | `packages/flows/<flow>/tests` |
+| Neutral music persistence | `packages/music/tests` |
+| Backend composition | `packages/backend/tests` |
+| UI loaders/components/contracts | `packages/ui/src/**/*.test.ts` |
+| Browser journeys | `packages/ui/e2e` |
 
-1. Update mock objects in test files
-2. Check import paths
-3. Run tests to verify
+## Rules
 
-## Adding New Tests
-
-- Use `.todo()` for planned tests
-- Group by domain (spotify, lyrics, etc.)
-- Follow existing patterns
-
-## When to Use
-- After code changes
-- User says "corre tests" or "verifica"
-- Before commits (Husky does this automatically)
+- Test observable contracts, including boundary, absence/error, and negative space.
+- Mock external providers, not domain behavior.
+- Use in-memory or temporary SQLite databases for repository tests.
+- Do not add `.todo()` placeholders as a substitute for executable scope; create an issue
+  when work is intentionally deferred.
+- A flaky test is a defect. Fix isolation or determinism instead of adding waits.
+- Husky is a guard, not the complete gate; run the required commands explicitly.

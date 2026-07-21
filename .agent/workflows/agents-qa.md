@@ -1,43 +1,27 @@
 ---
-description: Manual testing and verification
+description: Verify real browser behavior, responsive layout, and runtime contracts
 ---
 
 # QA Workflow
 
-Run the app and verify functionality manually.
-
-## Starting the App
+## Automated Browser Gate
 
 ```bash
-pnpm dev
-# Backend: http://localhost:4173
-# UI: http://localhost:5173
+pnpm --filter @flows/ui test:e2e
 ```
 
-## Basic Checks
+Playwright starts/reuses the backend and UI configured in
+`packages/ui/playwright.config.ts`. Add a focused spec for critical behavior changes.
 
-1. **Landing page loads** - See flow cards
-2. **Navigate to Spotify Flow** - Click card
-3. **Tracks display** - Grid shows tracks (if synced)
-4. **Search works** - Type in search bar
-5. **Filters work** - Open filter panel, apply filters
-6. **OAuth flow** - Click Connect Spotify (if not connected)
+## Manual Browser Audit
 
-## After Changes
+1. Exercise the affected user journey, not only the route shell.
+2. Check desktop and a narrow mobile viewport.
+3. Verify loading, empty, error, success, retry, and disabled states where applicable.
+4. Inspect console and network failures; expected absence must not appear as noisy 4xx/5xx.
+5. Check keyboard names/focus, responsive containment, and horizontal overflow.
+6. For OAuth, SSE, provider, chart, drag/drop, or local persistence changes, test the real
+runtime behavior that jsdom cannot model.
 
-| Change Type | Verify |
-|-------------|--------|
-| UI component | Visual appearance, interactions |
-| API endpoint | Response in browser devtools |
-| Auth flow | Full login/redirect cycle |
-| Filters | Apply and clear filters |
-
-## Reporting Issues
-- Note exact steps to reproduce
-- Capture console errors
-- Note browser/viewport
-
-## When to Use
-- After UI changes
-- User says "proba" or "verifica en la app"
-- Before releasing features
+Record exact commands, scenarios, viewport coverage, and any check that could not run in
+the PR description.

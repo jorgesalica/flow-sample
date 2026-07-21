@@ -1,58 +1,34 @@
-# Agent Workflows - Entry Point
+# Agent Workflows
 
-Reference hub for agent workflows. Each sub-workflow has its own doc for details.
+This directory provides task-specific checklists. [AGENTS.md](../../AGENTS.md) and
+[conventions](../../docs/conventions.md) remain authoritative when guidance overlaps.
 
----
+## Start Every Task
 
-## Available Workflows
+1. Read `AGENTS.md`, `docs/ROADMAP.md`, and the relevant architecture/flow docs.
+2. Confirm `git status --short --branch` is clean and inspect open GitHub issues/PRs.
+3. Update local `main` with `git pull --ff-only`.
+4. Confirm an issue exists for non-trivial work.
+5. Create `codex/<issue>-<short-description>` from `main`.
 
-| Workflow | Purpose | Doc |
-|----------|---------|-----|
-| **checkpoint** | Verify, commit, ensure app stable | `agents-checkpoint.md` |
-| **doc-refresh** | Update README, history, docs/ | `agents-doc-refresh.md` |
-| **debug** | Troubleshooting steps when stuck | `agents-debug.md` |
-| **tests** | Run tests, verify coverage, best practices | `agents-tests.md` |
-| **qa** | Manual testing, run app, verify UI | `agents-qa.md` |
-| **digest** | Context sync for new chats | `agents-digest.md` |
-| **report-status** | Generate project status summary | `agents-report-status.md` |
+## Build And Deliver
 
----
+1. Read existing tests and add focused behavior coverage before or with the change.
+2. Keep implementation, tests, and owner docs in the same coherent scope.
+3. Run `pnpm verify`, `pnpm build`, and applicable focused/Playwright checks.
+4. Review the diff, commit with a Conventional Commit, and push the task branch.
+5. Open a PR to `main` with why, impact, areas touched, verification, and `Closes #N`.
+6. Wait for green CI, merge through GitHub, synchronize local `main`, and prune when
+   practical.
 
-## Quick Reference
+## Workflow Index
 
-### Checkpoint (most common)
-```bash
-pnpm check && pnpm test
-git add . && git commit -m "..."
-# Verify app runs if major changes
-```
-
-### Doc Refresh
-Update after features: `README.md`, `docs/history/`, `docs/flows/`, `bucket.md`
-
-### Digest (new chat)
-Read: `docs/bucket.md`, `docs/architecture/`, recent `docs/history/`
-
----
-
-## Commit Prefixes
-- `feat:` New features
-- `fix:` Bug fixes
-- `docs:` Documentation
-- `test:` Tests
-- `chore:` Config, cleanup
-- `refactor:` Code restructure
-
----
-
-## Common Issues
-
-| Issue | Fix |
-|-------|-----|
-| Port in use | `taskkill /PID <pid> /F` |
-| Lint fails on commit | Husky pre-commit, fix errors first |
-| Tests fail | Check mocks match interfaces |
-
----
-
-*Sub-workflows will be created as we refine them.*
+| Workflow | Purpose |
+| --- | --- |
+| `agents-checkpoint.md` | Verify and publish a coherent checkpoint |
+| `agents-tests.md` | Select and run the correct test layers |
+| `agents-qa.md` | Browser and responsive QA |
+| `agents-debug.md` | Diagnose failures without hiding symptoms |
+| `agents-doc-refresh.md` | Keep owner documentation current |
+| `agents-report-status.md` | Reconstruct Git/GitHub/project status |
+| `agents-digest.md` | Resume work from canonical context |

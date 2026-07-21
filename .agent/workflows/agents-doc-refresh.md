@@ -1,31 +1,24 @@
 ---
-description: Update project documentation after changes
+description: Update the owner documentation affected by a change
 ---
 
-# Doc Refresh Workflow
+# Documentation Refresh Workflow
 
-Keep documentation in sync with code changes.
+Start from [the documentation index](../../docs/README.md). Update facts at their owner:
 
-## What to Update
+| Change | Owner documentation |
+| --- | --- |
+| Product direction/execution | `docs/ROADMAP.md` and GitHub issues |
+| Package/layer ownership | `docs/architecture/` |
+| Flow behavior/API/config | `docs/flows/` and package README |
+| UI primitives/tokens | `docs/design-system.md` |
+| Testing policy/gates | `docs/testing/README.md` |
+| Delivery/agent workflow | `AGENTS.md`, `docs/conventions.md`, `.agent/workflows/` |
+| Environment variables | `.env.example` and relevant setup docs |
+| Completed migration context | `docs/history/` |
 
-| Doc | When |
-|-----|------|
-| `README.md` | Major features, commands change |
-| `docs/bucket.md` | Task completed, new ideas |
-| `docs/history/backend.md` | Backend changes |
-| `docs/history/ui.md` | UI/Frontend changes |
-| `docs/flows/*.md` | Flow-specific features |
-| `.env.example` | New env vars |
+Documentation changes ship in the same PR as the implementation. Do not maintain a second
+completed-work checklist in `docs/bucket.md`; move completed implementation details to
+history when they remain useful.
 
-## Steps
-
-1. **Identify what changed** - Feature, fix, config?
-2. **Update bucket.md** - Mark task done, add new items
-3. **Update history** - Add entry with date
-4. **Update README** - If user-facing changes
-5. **Commit docs separately** - `docs: update ...`
-
-## When to Use
-- After completing features
-- User says "actualiza docs" or "doc refresh"
-- Before ending session
+Run `pnpm check:docs`, then the broader gate required by the change.
