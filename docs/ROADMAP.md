@@ -46,15 +46,17 @@ longer import each other's internals.
 
 ## Execution Queue
 
-The current queue closes architectural and testing debt before new product features:
+The audited architecture, refactor, documentation, and testing queue is complete. The
+final Board reconciliation
+([#18](https://github.com/jorgesalica/flow-sample/issues/18)) confirmed the assembled
+package boundaries and closed the umbrella after its executable children (#42, #43, and
+#44) shipped. No residual engineering task is active without its own issue.
 
-1. **Final Board reconciliation
-   ([#18](https://github.com/jorgesalica/flow-sample/issues/18))**: audit the assembled
-   architecture and browser behavior, close satisfied umbrella scope, and turn any real
-   residual work into a precise follow-up issue.
+New work must enter through a scoped GitHub issue and be ordered here before execution.
+The deferred epics below remain ideas, not an implicit queue.
 
 Relationships and graph edges get a separate issue only after the named-board foundation
-is proven.
+is proven and an interaction requirement is agreed.
 A DOM/CSS board is the default; an HTML canvas or graph library
 requires an interaction-driven spike first.
 

@@ -189,10 +189,11 @@ Target shape:
 
 Completed design-system, loader/invalidation, environment ownership, music persistence,
 architecture-contract, quality-gate, and named-board work lives in project history and
-merged PRs. The active lane is deliberately narrow:
+merged PRs. The Board umbrella reconciliation (#18) found no remaining architectural or
+testing gap after #42, #43, and #44, so there is no active refactor task.
 
-1. **Board umbrella reconciliation (#18)**: run one final architecture/browser audit,
-   close satisfied scope, and create precise follow-ups only for demonstrated gaps.
+Future findings must become scoped issues with acceptance criteria before they enter the
+roadmap; this document does not maintain a parallel backlog.
 
 Relationships/edges remain a later product decision. They are not implied technical debt
-and require a separate issue after named boards are proven.
+and require a separate issue after an interaction requirement is agreed.
