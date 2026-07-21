@@ -40,19 +40,16 @@ longer import each other's internals.
 
 The current queue closes architectural and testing debt before new product features:
 
-1. **Canvas boundaries ([#69](https://github.com/jorgesalica/flow-sample/issues/69))**:
-   neutral tokenization, annotation integrity, injectable service/routes, and prompt
-   formatting ownership.
-2. **Chat boundaries ([#70](https://github.com/jorgesalica/flow-sample/issues/70))**:
+1. **Chat boundaries ([#70](https://github.com/jorgesalica/flow-sample/issues/70))**:
    route factory/DI, stable provider errors, typed contracts, and integration coverage.
-3. **Spotify and Lyrics boundaries
+2. **Spotify and Lyrics boundaries
    ([#71](https://github.com/jorgesalica/flow-sample/issues/71))**: thin services,
    deliberate HTTP contracts, typed Eden consumers, and route coverage.
-4. **Trading boundaries ([#72](https://github.com/jorgesalica/flow-sample/issues/72))**:
+3. **Trading boundaries ([#72](https://github.com/jorgesalica/flow-sample/issues/72))**:
    extract wizard orchestration, type requests/responses, and cover HTTP failures.
-5. **Quality gate ([#73](https://github.com/jorgesalica/flow-sample/issues/73))**:
+4. **Quality gate ([#73](https://github.com/jorgesalica/flow-sample/issues/73))**:
    coverage ratchets, complete package participation, shared tooling, and regression QA.
-6. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
+5. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
    repository-backed persistence, API, loader integration, and local migration.
 
 After this queue, run a final architecture/browser audit and reconcile the Board umbrella

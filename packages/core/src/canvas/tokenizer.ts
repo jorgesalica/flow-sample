@@ -46,7 +46,7 @@ export function tokenize(text: string): TokenAST {
         if (lines.length > 0) {
             sections.push({
                 id: sectionId,
-                type: inferSectionType(rawSection, sectionCounter),
+                type: `Section ${sectionCounter}`,
                 lines,
             });
         }
@@ -56,23 +56,4 @@ export function tokenize(text: string): TokenAST {
         sections,
         totalTokens: tokenCounter,
     };
-}
-
-/**
- * Simple heuristic to infer section type.
- * Can be overridden by LLM annotations later.
- */
-function inferSectionType(sectionText: string, index: number): string {
-    const lower = sectionText.toLowerCase().trim();
-
-    // Check for explicit section markers
-    if (/^\[?(verse|estrofa)/i.test(lower)) return 'Verse';
-    if (/^\[?(chorus|coro|estribillo)/i.test(lower)) return 'Chorus';
-    if (/^\[?(bridge|puente)/i.test(lower)) return 'Bridge';
-    if (/^\[?(pre[- ]?chorus)/i.test(lower)) return 'Pre-Chorus';
-    if (/^\[?(outro|final)/i.test(lower)) return 'Outro';
-    if (/^\[?(intro)/i.test(lower)) return 'Intro';
-
-    // Default: first section is usually a verse
-    return index === 1 ? 'Verse' : 'Section';
 }

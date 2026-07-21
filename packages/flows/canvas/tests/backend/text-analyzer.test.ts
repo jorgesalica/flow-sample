@@ -21,7 +21,8 @@ const generateObjectWithMetadata = vi.fn(async (request: unknown, schema: unknow
 }));
 const createRotation = vi.fn(() => ({ generateObjectWithMetadata }));
 
-vi.mock('@flows/core', () => {
+vi.mock('@flows/core', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@flows/core')>();
     const noopLog = {
         info: vi.fn(),
         error: vi.fn(),
@@ -30,6 +31,7 @@ vi.mock('@flows/core', () => {
         child: vi.fn(() => noopLog),
     };
     return {
+        ...actual,
         LLMClient: { createRotation },
         logger: { child: vi.fn(() => noopLog) },
     };
@@ -99,7 +101,7 @@ describe('analyzeText — LLM wiring', () => {
         expect(schema).toBeDefined();
     });
 
-    it('embeds the tokenized text (word[id]) and section type in the prompt', async () => {
+    it('embeds tokenized text without exposing structural labels or IDs', async () => {
         generateObject.mockResolvedValue(makeResult());
 
         await analyzeText(makeAst());
@@ -107,7 +109,8 @@ describe('analyzeText — LLM wiring', () => {
         const prompt = generateObject.mock.calls[0][0].messages[0].content as string;
         expect(prompt).toContain('el[t_001]');
         expect(prompt).toContain('río[t_002]');
-        expect(prompt).toContain('[Verse]');
+        expect(prompt).not.toContain('[Verse]');
+        expect(prompt).not.toContain('s_001');
     });
 
     it('uses the title/author identity in the prompt when both are provided', async () => {
@@ -255,6 +258,26 @@ describe('analyzeText — meaning annotation expansion', () => {
             .map(a => a.tokenId);
         expect(meaningTokens).toEqual(['t_001', 't_002']);
         expect(annotations.some(a => a.layerId === 'chords' && a.tokenId === 't_003')).toBe(true);
+    });
+
+    it('drops generated annotations that reference tokens outside the source AST', async () => {
+        generateObject.mockResolvedValue(
+            makeResult({
+                annotations: [
+                    {
+                        tokenIds: ['t_001', 't_999'],
+                        layerId: 'meaning',
+                        label: 'Theme',
+                        detail: 'Mixed valid and invalid tokens.',
+                        context: 'Integrity',
+                    },
+                ],
+            }),
+        );
+
+        const { annotations } = await analyzeText(makeAst());
+
+        expect(annotations.map((annotation) => annotation.tokenId)).toEqual(['t_001']);
     });
 
     it('preserves the meta block from the LLM result', async () => {

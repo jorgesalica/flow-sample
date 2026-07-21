@@ -17,10 +17,12 @@ const generateObjectWithMetadata = vi.fn(async (request: unknown, schema: unknow
     },
 }));
 
-vi.mock('@flows/core', () => {
+vi.mock('@flows/core', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@flows/core')>();
     const noop = () => {};
     const childLogger = { info: noop, error: noop, warn: noop, debug: noop };
     return {
+        ...actual,
         LLMClient: {
             createRotation: vi.fn(() => ({ generateObjectWithMetadata })),
         },
@@ -172,6 +174,20 @@ describe('analyzeLyrics', () => {
         expect(result.annotations.filter((a) => a.layerId === 'chords')).toHaveLength(1);
     });
 
+    it('drops generated annotations that reference unknown token IDs', async () => {
+        generateObject.mockResolvedValue({
+            annotations: [
+                { tokenId: 't_001', layerId: 'chords', label: 'Am', detail: 'Valid', symbol: 'Am' },
+                { tokenId: 't_999', layerId: 'vocal', label: 'Belt', detail: 'Invalid', technique: 'Belt' },
+            ],
+            meta: { key: null, bpm: null, mood: null },
+        } satisfies MusicalAnalysisResult);
+
+        const result = await analyzeLyrics(makeAst(), TRACK_TITLE, ARTIST_NAME);
+
+        expect(result.annotations.map((annotation) => annotation.tokenId)).toEqual(['t_001']);
+    });
+
     it('forwards the interpretation context and prompt to the LLM client', async () => {
         generateObject.mockResolvedValue({
             annotations: [],
@@ -190,6 +206,8 @@ describe('analyzeLyrics', () => {
         const prompt = request.messages[0].content as string;
         // Tokenized lyrics are embedded with their token IDs.
         expect(prompt).toContain('dark[t_001]');
+        expect(prompt).not.toContain('[Verse]');
+        expect(prompt).not.toContain('s_001');
         expect(prompt).toContain(TRACK_TITLE);
         expect(prompt).toContain(ARTIST_NAME);
         // Interpretation is woven into the prompt.

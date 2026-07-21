@@ -1,73 +1,102 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TokenAST } from '@flows/shared';
+import type { CanvasAnalysis } from '@flows/shared';
+import { CanvasAnalysisError } from '../../src/domain/errors';
+import { createCanvasFlowRoutes } from '../../src/backend/routes';
+import type { CanvasApplication } from '../../src/backend/service';
 
-const mocks = vi.hoisted(() => ({
-    tokenize: vi.fn(),
-    saveAnalysis: vi.fn(),
-    findAnalysisBySourceId: vi.fn(),
-    getAllAnalysesBySourceType: vi.fn(),
-    deleteAnalysis: vi.fn(),
-    analyzeText: vi.fn(),
-}));
+function makeAnalysis(): CanvasAnalysis {
+  return {
+    id: 'ca_1',
+    sourceId: 'usr_1',
+    sourceType: 'user_text',
+    sourceTextHash: 'hash',
+    tokenAst: { totalTokens: 1, sections: [] },
+    annotations: [],
+    layers: [],
+    modelUsed: 'gpt-oss-120b',
+    providerUsed: 'cerebras',
+    createdAt: '2026-07-21T00:00:00.000Z',
+    updatedAt: '2026-07-21T00:00:00.000Z',
+  };
+}
 
-vi.mock('@flows/core', () => ({
-    tokenize: mocks.tokenize,
-    saveAnalysis: mocks.saveAnalysis,
-    findAnalysisBySourceId: mocks.findAnalysisBySourceId,
-    getAllAnalysesBySourceType: mocks.getAllAnalysesBySourceType,
-    deleteAnalysis: mocks.deleteAnalysis,
-}));
-
-vi.mock('../../src/backend/text-analyzer', () => ({
-    analyzeText: mocks.analyzeText,
-}));
-
-const { canvasFlowRoutes } = await import('../../src/backend/routes');
-
-const tokenAst: TokenAST = {
-    totalTokens: 1,
-    sections: [
-        {
-            id: 'section-1',
-            type: 'Paragraph',
-            lines: [[{ id: 'token-1', text: 'Hello' }]],
-        },
-    ],
+const service = {
+  list: vi.fn<CanvasApplication['list']>(),
+  get: vi.fn<CanvasApplication['get']>(),
+  create: vi.fn<CanvasApplication['create']>(),
+  delete: vi.fn<CanvasApplication['delete']>(),
 };
 
+function request(path: string, init?: RequestInit): Promise<Response> {
+  return createCanvasFlowRoutes(service).handle(new Request(`http://localhost${path}`, init));
+}
+
 describe('Canvas routes', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mocks.tokenize.mockReturnValue(tokenAst);
-        mocks.analyzeText.mockResolvedValue({
-            annotations: [],
-            meta: { theme: 'Greeting', tone: 'Warm', summary: 'A greeting.' },
-            modelUsed: 'gpt-oss-120b',
-            providerUsed: 'cerebras',
-        });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    service.list.mockReturnValue([]);
+    service.get.mockReturnValue(null);
+    service.delete.mockReturnValue(false);
+  });
+
+  it('lists user canvases through the application service', async () => {
+    const analysis = makeAnalysis();
+    service.list.mockReturnValue([analysis]);
+
+    const response = await request('/api/canvas');
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual([analysis]);
+  });
+
+  it('maps a missing canvas to 404', async () => {
+    const response = await request('/api/canvas/missing');
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({ error: 'Canvas not found' });
+  });
+
+  it('returns the created analysis from the application service', async () => {
+    const analysis = makeAnalysis();
+    service.create.mockResolvedValue(analysis);
+
+    const response = await request('/api/canvas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'Hello', title: 'Test' }),
     });
 
-    it('persists the provider metadata returned by the analyzer', async () => {
-        const response = await canvasFlowRoutes.handle(
-            new Request('http://localhost/api/canvas', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: 'Hello', title: 'Test' }),
-            }),
-        );
+    expect(response.status).toBe(200);
+    expect(service.create).toHaveBeenCalledWith({ text: 'Hello', title: 'Test' });
+    await expect(response.json()).resolves.toEqual(analysis);
+  });
 
-        expect(response.status).toBe(200);
-        expect(mocks.saveAnalysis).toHaveBeenCalledWith(
-            expect.objectContaining({
-                modelUsed: 'gpt-oss-120b',
-                providerUsed: 'cerebras',
-            }),
-        );
-        await expect(response.json()).resolves.toEqual(
-            expect.objectContaining({
-                modelUsed: 'gpt-oss-120b',
-                providerUsed: 'cerebras',
-            }),
-        );
+  it('maps analysis failures to a sanitized 503 response', async () => {
+    service.create.mockRejectedValue(
+      new CanvasAnalysisError('[mistral] secret provider response'),
+    );
+
+    const response = await request('/api/canvas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'Hello' }),
     });
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      error: 'AI analysis is temporarily unavailable',
+    });
+  });
+
+  it('deletes by source ID and reports absent canvases', async () => {
+    service.delete.mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+    const deleted = await request('/api/canvas/usr_1', { method: 'DELETE' });
+    const missing = await request('/api/canvas/usr_1', { method: 'DELETE' });
+
+    expect(deleted.status).toBe(200);
+    await expect(deleted.json()).resolves.toEqual({ success: true });
+    expect(missing.status).toBe(404);
+    await expect(missing.json()).resolves.toEqual({ error: 'Canvas not found' });
+  });
 });

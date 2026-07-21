@@ -1,28 +1,14 @@
-import { LLMClient, logger } from '@flows/core';
+import {
+    filterAnnotationsForAst,
+    formatTokenAstForPrompt,
+    LLMClient,
+    logger,
+} from '@flows/core';
 import type { TokenAST, Annotation } from '@flows/shared';
 import { musicalAnalysisSchema, type MusicalAnalysisResult } from './schemas';
 import { expandMeaningAnnotations } from '../../domain/annotations';
 
 const log = logger.child({ module: 'CanvasMusicAnalyzer' });
-
-/**
- * Formats the TokenAST into a flat, readable string with token IDs.
- * This teaches the LLM which exact ID corresponds to which word.
- */
-function formatAstForPrompt(ast: TokenAST): string {
-    let output = '';
-    
-    for (const section of ast.sections) {
-        output += `\n[${section.type}] (ID: ${section.id})\n`;
-        
-        for (const line of section.lines) {
-            const lineTokens = line.map(t => `${t.text}[${t.id}]`).join(' ');
-            output += `${lineTokens}\n`;
-        }
-    }
-    
-    return output.trim();
-}
 
 /**
  * Analyzes the lyrics using the LLM to generate musical annotations.
@@ -40,7 +26,7 @@ export async function analyzeLyrics(
 }> {
     const client = LLMClient.createRotation();
     
-    const tokenizedLyrics = formatAstForPrompt(ast);
+    const tokenizedLyrics = formatTokenAstForPrompt(ast);
     
     const interpretationContext = interpretation 
         ? `\nOVERARCHING SONG MEANING:\n${interpretation}\n\n`
@@ -121,15 +107,17 @@ EXAMPLE JSON OUTPUT:
         
         // Expand meaning tokenIds arrays back into individual annotations
         const expandedAnnotations = expandMeaningAnnotations(result.annotations);
+        const annotations = filterAnnotationsForAst(ast, expandedAnnotations);
 
         log.info({ 
             latencyMs: Date.now() - startTime,
-            annotationsCount: expandedAnnotations.length
+            annotationsCount: annotations.length,
+            invalidAnnotationsCount: expandedAnnotations.length - annotations.length,
         }, 'LLM analysis completed successfully');
         
         return {
             ...result,
-            annotations: expandedAnnotations,
+            annotations,
             modelUsed: response.model,
             providerUsed: response.provider,
         };

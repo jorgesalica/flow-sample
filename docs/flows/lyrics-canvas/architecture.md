@@ -1,209 +1,96 @@
-# Lyrics Canvas: Technical Architecture
+# Canvas And Lyrics Architecture
 
-> Nodos técnicos, flujo de datos, y estructura de implementación.
-> Updated: reflects three-pillar separation with Canvas as core infrastructure.
+Canvas provides generic tokenized-text analysis. Lyrics adds the music-specific source,
+section classification, prompt, and annotation layers. Both run in-process inside the
+single backend host; neither package is a separately deployed application.
 
----
+## Ownership
 
-## Three Pillars
+| Concern | Owner | Notes |
+| --- | --- | --- |
+| Token and analysis DTOs | `@flows/shared` | Cross-wire types used by backend and UI |
+| Generic tokenization | `@flows/core/canvas` | Blank-line sections and deterministic token IDs only |
+| Prompt-safe AST formatting | `@flows/core/canvas` | Preserves lines/sections; exposes only token IDs |
+| Annotation ID filtering | `@flows/core/canvas` | Rejects references absent from the source AST |
+| Analysis persistence | `@flows/core/canvas` | Generic `canvas.db` repository |
+| Generic text orchestration | `@flows/canvas` | Service, analyzer, repository adapter, HTTP mapping |
+| Music section classification | `@flows/lyrics` | Verse, Chorus, Bridge, Pre-Chorus, Intro, and Outro |
+| Musical analysis | `@flows/lyrics` | Chord, vocal, meaning prompts and schemas |
+| Rendering | `@flows/ui` | Shared token renderer plus Canvas/Lyrics screens |
 
-```mermaid
-flowchart TD
-    subgraph PILLAR_1 ["Pillar 1: Structured Intelligence"]
-        direction TB
-        P1A["generateObject&lt;T&gt;()"]
-        P1B["Zod → JSON Schema"]
-        P1C["Provider-agnostic"]
-    end
+Core never infers music concepts. Lyrics classifies the generic AST after tokenization
+without changing section IDs, token IDs, or persisted-analysis compatibility.
 
-    subgraph PILLAR_2 ["Pillar 2: Canvas Core"]
-        direction TB
-        P2A["Tokenizer<br/>(text → token AST)"]
-        P2B["Canvas Repository<br/>(canvas.db CRUD)"]
-        P2C["Generic types<br/>(Token, Section, Annotation)"]
-    end
-
-    subgraph PILLAR_3 ["Pillar 3: Canvas Renderer"]
-        direction TB
-        P3A["TokenRenderer"]
-        P3B["LayerToggle"]
-        P3C["TokenTooltip"]
-    end
-
-    subgraph DOMAIN ["Domain: Musical Analysis"]
-        direction TB
-        D1["Music analyzer<br/>(prompts + schemas)"]
-        D2["Lyrics adapter<br/>(Track → CanvasSource)"]
-    end
-
-    PILLAR_1 --- DOMAIN
-    PILLAR_2 --- DOMAIN
-    DOMAIN --- PILLAR_3
-
-    style PILLAR_1 fill:#1a1a2e,stroke:#e94560,color:#fff
-    style PILLAR_2 fill:#1a1a2e,stroke:#0f3460,color:#fff
-    style PILLAR_3 fill:#1a1a2e,stroke:#16213e,color:#fff
-    style DOMAIN fill:#2d1b69,stroke:#a855f7,color:#fff
-```
-
-### Where each lives
-
-| Pillar | Package | Reusable for |
-| ------ | ------- | ------------ |
-| **Structured Intelligence** | `@flows/core/llm` | Any flow needing typed JSON from LLM |
-| **Canvas Core** | `@flows/core/canvas` | Any tokenized text analysis |
-| **Canvas Renderer** | `@flows/ui/components/canvas` | Any annotated text UI |
-| **Musical Domain** | `@flows/lyrics/canvas` | Lyrics-specific musical analysis |
-
----
-
-## System Nodes
+## Runtime Flow
 
 ```mermaid
-flowchart TD
-    subgraph UI_SHARED ["Shared UI Components"]
-        TOKEN_RENDERER["TokenRenderer.svelte"]
-        LAYER_TOGGLE["LayerToggle.svelte"]
-        TOOLTIP["TokenTooltip.svelte"]
-    end
-
-    subgraph UI_LYRICS ["Lyrics Flow UI"]
-        CANVAS_PAGE["LyricsCanvas.svelte<br/>Full-page view"]
-        API_CLIENT["canvas-api.ts"]
-    end
-
-    subgraph LYRICS_BACKEND ["Lyrics Flow Backend"]
-        CANVAS_ROUTES["canvas.routes.ts"]
-        MUSIC_ANALYZER["music-analyzer.ts<br/>Prompts + Zod schemas"]
-    end
-
-    subgraph CORE_CANVAS ["@flows/core/canvas"]
-        TOKENIZER["tokenizer.ts"]
-        CANVAS_REPO["canvas.repository.ts"]
-    end
-
-    subgraph CORE_LLM ["@flows/core/llm"]
-        LLM_CLIENT["generateObject&lt;T&gt;()"]
-    end
-
-    subgraph DATA ["Persistence"]
-        MUSIC_DB["music.db (existing)"]
-        CANVAS_DB["canvas.db (new)"]
-    end
-
-    CANVAS_PAGE --> TOKEN_RENDERER
-    CANVAS_PAGE --> LAYER_TOGGLE
-    TOKEN_RENDERER --> TOOLTIP
-    CANVAS_PAGE --> API_CLIENT
-
-    API_CLIENT --> CANVAS_ROUTES
-    CANVAS_ROUTES --> MUSIC_ANALYZER
-    CANVAS_ROUTES --> TOKENIZER
-    MUSIC_ANALYZER --> LLM_CLIENT
-    CANVAS_ROUTES --> CANVAS_REPO
-
-    CANVAS_ROUTES -->|"read lyrics"| MUSIC_DB
-    CANVAS_REPO -->|"read/write"| CANVAS_DB
+flowchart LR
+    UI["SvelteKit UI"] --> Route["Elysia route factory"]
+    Route --> Service["Canvas application service"]
+    Service --> Tokenizer["Core tokenizer"]
+    Tokenizer --> Classifier["Lyrics classifier (lyrics only)"]
+    Service --> Analyzer["Generic or musical analyzer"]
+    Classifier --> Analyzer
+    Analyzer --> Formatter["Core prompt formatter"]
+    Analyzer --> LLM["Rotating LLM client"]
+    Analyzer --> Filter["Core annotation ID filter"]
+    Filter --> Service
+    Service --> Repository["Canvas repository port"]
+    Repository --> Database["canvas.db"]
 ```
 
----
+The generic Canvas route is created by `createCanvasFlowRoutes()`. Its default
+composition uses `CanvasService`, `CoreCanvasRepository`, and `analyzeText`; tests inject
+an application-service fake and exercise the Elysia app through `.handle()`.
 
-## Runtime API Contract
+Lyrics owns a separate `LyricsCanvasService`. It reads track/lyrics data through Lyrics
+and Music ports, then uses the same tokenizer, formatter, integrity filter, and Canvas
+persistence infrastructure.
 
-| Endpoint | Success | Domain absence | Provider failure |
+## Prompt And Annotation Integrity
+
+`formatTokenAstForPrompt()` emits only source words and token IDs:
+
+```text
+first[t_001] line[t_002]
+second[t_003]
+
+next[t_004] section[t_005]
+```
+
+Section labels and `s_NNN` IDs are not included, so the model cannot mistake structural
+metadata for annotatable text. After phrase annotations are expanded, both analyzers run
+`filterAnnotationsForAst()`. Any generated `tokenId` not present in the source AST is
+logged as a dropped annotation and never reaches persistence.
+
+## HTTP Contract
+
+| Endpoint | Success | Missing source | Provider failure |
 | --- | --- | --- | --- |
-| `GET /api/lyrics/:trackId/canvas` | `200` analysis | `200 { needsAnalysis: true, source }`; missing track/lyrics remain `404` | n/a |
-| `POST /api/lyrics/:trackId/canvas/analyze` | `200` persisted analysis | `400` when track or lyrics are unavailable | sanitized `503` |
+| `GET /api/canvas` | `200` user canvases | n/a | n/a |
+| `GET /api/canvas/:sourceId` | `200` analysis | `404` | n/a |
+| `POST /api/canvas` | `200` persisted analysis | validation `422` | sanitized `503` |
+| `DELETE /api/canvas/:sourceId` | `200 { success: true }` | `404` | n/a |
+| `GET /api/lyrics/:trackId/canvas` | `200` analysis or `needsAnalysis` state | `404` track/lyrics | n/a |
+| `POST /api/lyrics/:trackId/canvas/analyze` | `200` persisted analysis | `400` unavailable source | sanitized `503` |
 
-The analyzer persists the actual `providerUsed` and `modelUsed` returned by the rotation
-client. Provider response bodies remain server-side and are never forwarded to the UI.
+Provider/model metadata from successful rotation is persisted. Provider response bodies
+and internal errors remain in server logs and are never returned to clients.
 
----
+## Persistence
 
-## Database
+`canvas.db` stores generic serialized ASTs, annotations, layers, metadata, and actual
+provider/model identifiers. The schema remains backward compatible with analyses created
+before music classification moved into Lyrics; existing rows are read unchanged.
 
-Two databases, two concerns:
+## Tests
 
-```sql
--- canvas.db — Independent, owned by @flows/core/canvas
-CREATE TABLE IF NOT EXISTS canvas_analyses (
-    id TEXT PRIMARY KEY,
-    source_id TEXT NOT NULL UNIQUE,
-    source_type TEXT NOT NULL DEFAULT 'track',
-    source_text_hash TEXT NOT NULL,
-    token_ast TEXT NOT NULL,
-    annotations TEXT NOT NULL,
-    meta TEXT,
-    model_used TEXT NOT NULL,
-    provider_used TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-);
+- Core unit tests cover deterministic tokenization, prompt formatting, and ID filtering.
+- Lyrics domain tests cover English/Spanish section markers and legacy defaults.
+- Analyzer tests cover prompt shape, expansion, invalid IDs, metadata, and failures.
+- Service tests cover orchestration and persistence contracts.
+- Route tests use Elysia `.handle()` and assert status/error mapping.
+- Focused Playwright checks cover generic Canvas and Lyrics Canvas user paths.
 
-CREATE INDEX IF NOT EXISTS idx_canvas_source ON canvas_analyses(source_id);
-```
-
----
-
-## File Structure
-
-```
-packages/
-├── core/src/
-│   ├── llm/                              ──── PILLAR 1 (MODIFY)
-│   │   ├── llm-client.ts                 ← add generateObject<T>()
-│   │   └── providers/
-│   │       ├── types.ts                  ← add StructuredOutputRequest
-│   │       └── gemini/gemini-provider.ts ← implement responseJsonSchema
-│   │
-│   ├── canvas/                           ──── PILLAR 2 (NEW)
-│   │   ├── tokenizer.ts                  ← text → token AST (generic)
-│   │   ├── canvas.repository.ts          ← canvas.db CRUD (generic)
-│   │   └── index.ts
-│   │
-│   └── index.ts                          ← export canvas module
-│
-├── shared/src/
-│   ├── canvas.types.ts                   ← NEW: Token, Section, CanvasSource
-│   ├── canvas-music.types.ts             ← NEW: ChordAnnotation, SongMeta
-│   └── index.ts                          ← export canvas types
-│
-├── flows/lyrics/src/
-│   └── backend/
-│       ├── routes.ts                     ← mount canvas routes via .use()
-│       └── canvas/                       ──── DOMAIN (NEW)
-│           ├── canvas.routes.ts          ← Elysia routes
-│           ├── music-analyzer.ts         ← prompts + Zod schema
-│           └── index.ts
-│
-├── ui/src/lib/
-│   ├── components/
-│   │   └── canvas/                       ──── PILLAR 3 (NEW, SHARED)
-│   │       ├── TokenRenderer.svelte
-│   │       ├── LayerToggle.svelte
-│   │       ├── TokenTooltip.svelte
-│   │       └── index.ts
-│   │
-│   └── flows/lyrics/
-│       ├── LyricsCanvas.svelte           ← NEW: page (uses shared components)
-│       ├── canvas-api.ts                 ← NEW: API client
-│       ├── LyricsFlow.svelte             ← MODIFY: add "Open Canvas" link
-│       └── components/
-│           └── LyricsModal.svelte        ← UNTOUCHED
-│
-└── docs/
-    ├── flows/lyrics-canvas/              ← flow documentation
-    └── high-level/                       ← design discussions
-```
-
----
-
-## Testing Strategy
-
-| Pillar | What | How |
-| ------ | ---- | --- |
-| **Core: LLM** | `generateObject<T>()` returns typed, validated object | Unit test with mocked Gemini response |
-| **Core: Canvas** | Tokenizer produces deterministic AST | Unit tests (Vitest) |
-| **Core: Canvas** | Repository CRUD on canvas.db | Integration test |
-| **Domain** | Music analyzer schemas validate correctly | Unit tests with fixtures |
-| **UI** | TokenRenderer renders spans with data attributes | Component test |
+Analysis version history and annotation indexing remain deferred product/performance
+decisions. They are not required by the current architecture.

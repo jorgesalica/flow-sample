@@ -81,47 +81,23 @@ describe('tokenize', () => {
         });
     });
 
-    describe('inferSectionType (via tokenize)', () => {
-        it('defaults the first unmarked section to Verse', () => {
-            expect(tokenize('just some words').sections[0].type).toBe('Verse');
+    describe('generic section types', () => {
+        it('numbers sections without inferring a content domain', () => {
+            const ast = tokenize('just some words\n\nsecond block');
+
+            expect(ast.sections.map((section) => section.type)).toEqual([
+                'Section 1',
+                'Section 2',
+            ]);
         });
 
-        it('defaults later unmarked sections to Section', () => {
-            const ast = tokenize('first block\n\nsecond block');
-            expect(ast.sections[1].type).toBe('Section');
-        });
+        it('treats musical markers as ordinary text', () => {
+            const ast = tokenize('Verse 1\nsome words\n\n[Chorus]\nsing it');
 
-        it('detects an English verse marker', () => {
-            expect(tokenize('Verse 1\nsome words').sections[0].type).toBe('Verse');
-        });
-
-        it('detects a Spanish chorus marker (estribillo)', () => {
-            expect(tokenize('Estribillo\nla la la').sections[0].type).toBe('Chorus');
-        });
-
-        it('detects a chorus marker even when it is not the first section', () => {
-            const ast = tokenize('intro words\n\nCoro\nla la la');
-            expect(ast.sections[1].type).toBe('Chorus');
-        });
-
-        it('detects a bridge marker', () => {
-            expect(tokenize('Bridge\nwords here').sections[0].type).toBe('Bridge');
-        });
-
-        it('detects a pre-chorus marker', () => {
-            expect(tokenize('Pre-Chorus\nbuild it up').sections[0].type).toBe('Pre-Chorus');
-        });
-
-        it('detects an outro marker', () => {
-            expect(tokenize('Outro\nfade out').sections[0].type).toBe('Outro');
-        });
-
-        it('detects an intro marker', () => {
-            expect(tokenize('Intro\nhere we go').sections[0].type).toBe('Intro');
-        });
-
-        it('detects bracketed section markers', () => {
-            expect(tokenize('[Chorus]\nsing it').sections[0].type).toBe('Chorus');
+            expect(ast.sections.map((section) => section.type)).toEqual([
+                'Section 1',
+                'Section 2',
+            ]);
         });
     });
 
