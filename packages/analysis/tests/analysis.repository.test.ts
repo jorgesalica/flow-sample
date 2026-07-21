@@ -7,7 +7,7 @@ const testDb = new Database(':memory:');
 
 // Mock the db factory so the repository's getDb() receives an in-memory DB
 // instead of opening a real data/canvas.db file.
-vi.mock('../../src/db', () => ({
+vi.mock('@flows/core', () => ({
     createDatabase: () => testDb,
 }));
 
@@ -18,7 +18,7 @@ const {
     deleteAnalysisBySourceId,
     deleteAnalysis,
     getAllAnalysesBySourceType,
-} = await import('../../src/canvas/canvas.repository');
+} = await import('../src/analysis.repository');
 
 // ── Fixtures ──────────────────────────────────────────────────────────
 

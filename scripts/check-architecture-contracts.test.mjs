@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { checkSource } from './check-architecture-contracts.mjs';
+import { checkPackageDependencies, checkSource } from './check-architecture-contracts.mjs';
 
 test('accepts code that follows the architecture boundaries', () => {
   const violations = checkSource(
@@ -112,4 +112,31 @@ test('rejects Svelte accessibility suppressions', () => {
     '<!-- svelte-ignore a11y_no_static_element_interactions -->',
   );
   assert.equal(violations[0]?.rule, 'no-a11y-suppression');
+});
+
+test('allows the neutral analysis dependency graph', () => {
+  const violations = checkPackageDependencies('packages/analysis/package.json', {
+    name: '@flows/analysis',
+    dependencies: {
+      '@flows/core': 'workspace:*',
+      '@flows/shared': 'workspace:*',
+    },
+  });
+  assert.deepEqual(violations, []);
+});
+
+test('rejects analysis capabilities leaking back into core', () => {
+  const violations = checkPackageDependencies('packages/core/package.json', {
+    name: '@flows/core',
+    dependencies: { '@flows/analysis': 'workspace:*' },
+  });
+  assert.equal(violations[0]?.rule, 'workspace-dependency-boundary');
+});
+
+test('rejects analysis depending on flow orchestration', () => {
+  const violations = checkPackageDependencies('packages/analysis/package.json', {
+    name: '@flows/analysis',
+    devDependencies: { '@flows/lyrics': 'workspace:*' },
+  });
+  assert.equal(violations[0]?.rule, 'workspace-dependency-boundary');
 });

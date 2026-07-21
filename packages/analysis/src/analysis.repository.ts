@@ -5,7 +5,7 @@
  * Generic — stores any tokenized + annotated content, not specific to lyrics or music.
  */
 
-import { createDatabase } from '../db';
+import { createDatabase } from '@flows/core';
 import type { CanvasAnalysis, CanvasSourceType } from '@flows/shared';
 import type Database from 'better-sqlite3';
 

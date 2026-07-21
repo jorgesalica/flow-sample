@@ -36,8 +36,8 @@ Use Node.js 22 or newer; `.node-version` is the shared local/CI baseline. Before
 non-trivial work, run `pnpm verify` and `pnpm build`. UI behavior changes require focused
 Playwright coverage or documented desktop/mobile verification.
 
-After changing `@flows/shared` or `@flows/core`, rebuild it before checking downstream
-packages (`pnpm build:shared` or `pnpm --filter @flows/core build`).
+After changing `@flows/shared`, `@flows/core`, or `@flows/analysis`, rebuild it before
+checking downstream packages (`pnpm build:shared` or `pnpm --filter <package> build`).
 
 Dependency changes also run `pnpm security:audit` and `pnpm outdated -r --compatible`.
 Keep major upgrades in scoped issues instead of mixing them into security patches.

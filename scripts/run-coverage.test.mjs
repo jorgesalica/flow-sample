@@ -18,6 +18,7 @@ test('discovers every package that owns a coverage command', async () => {
   const packages = await discoverCoveragePackages(path.join(ROOT, 'packages'));
 
   assert.deepEqual(packages.map(({ name }) => name), [
+    '@flows/analysis',
     '@flows/backend',
     '@flows/board',
     '@flows/canvas',

@@ -29,6 +29,7 @@ export default defineConfig({
     },
     resolve: {
         alias: {
+            '@flows/analysis': path.resolve(__dirname, '../../analysis/src/index.ts'),
             '@flows/core': path.resolve(__dirname, '../../core/src/index.ts'),
             '@flows/music': path.resolve(__dirname, '../../music/src/index.ts'),
             '@flows/shared': path.resolve(__dirname, '../../shared/src/index.ts'),

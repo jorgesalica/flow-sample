@@ -8,6 +8,8 @@ const ignores = [
   'node_modules/',
   'outputs/',
   'coverage/',
+  '../analysis/dist/',
+  '../analysis/coverage/',
   '../core/dist/',
   '../core/coverage/',
   '../shared/dist/',

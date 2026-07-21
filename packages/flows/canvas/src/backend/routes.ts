@@ -1,14 +1,14 @@
 import { logger } from '@flows/core';
 import { Elysia, t } from 'elysia';
 import { CanvasAnalysisError } from '../domain/errors';
-import { CoreCanvasRepository } from './repository';
+import { AnalysisCanvasRepository } from './repository';
 import { CanvasService, type CanvasApplication } from './service';
 import { analyzeText } from './text-analyzer';
 
 const log = logger.child({ module: 'CanvasRoutes' });
 
 export function createCanvasFlowRoutes(
-  service: CanvasApplication = new CanvasService(new CoreCanvasRepository(), analyzeText),
+  service: CanvasApplication = new CanvasService(new AnalysisCanvasRepository(), analyzeText),
 ) {
   return new Elysia({ prefix: '/api/canvas' })
     .get('/', () => service.list())

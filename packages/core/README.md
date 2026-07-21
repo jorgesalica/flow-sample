@@ -11,6 +11,10 @@ Shared infrastructure for the Flow monorepo.
 | Database | `@flows/core/db` | SQLite via `better-sqlite3` |
 | LLM | `@flows/core/llm` | Multi-provider LLM client |
 
+Text tokenization, prompt-safe AST preparation, annotation filtering, and analysis
+persistence belong to `@flows/analysis`. Core stays independent of product and analysis
+orchestration concerns.
+
 ## LLM Module
 
 Unified interface for 5 LLM providers with a model catalog, tier system, and free-provider rotation.

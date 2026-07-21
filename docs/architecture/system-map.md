@@ -38,7 +38,12 @@ flowchart LR
     spotify --> music["@flows/music"]
     lyrics --> music
 
-    spotify --> core["@flows/core"]
+    lyrics --> analysis["@flows/analysis"]
+    canvas --> analysis
+    analysis --> core["@flows/core"]
+    analysis --> shared["@flows/shared"]
+
+    spotify --> core
     lyrics --> core
     trading --> core
     chat --> core
@@ -73,6 +78,7 @@ flowchart LR
 | `packages/backend` | Application host | app config, CORS/static setup, route mounting, process startup split | business rules, SQL, provider SDK calls |
 | `packages/ui` | Browser app | routes, loaders, flow surfaces, registry, UI state, design primitives | backend domain internals, raw API URLs, persistent server state |
 | `packages/core` | Shared infrastructure | logger, cache, database factory, LLM client/providers | flow-specific business rules, DTOs, route handlers |
+| `packages/analysis` | Shared analysis capability | tokenization, prompt-safe AST preparation, annotation filtering, `canvas.db` persistence | flow prompts, schemas, orchestration, UI contracts |
 | `packages/shared` | Cross-boundary contract | DTOs, constants, public unions crossing UI/server | implementation details, persistence rows, SDK types |
 | `packages/music` | Shared music persistence | `music.db`, track/artist/genre schema, FTS, neutral track repository | Spotify API/OAuth, LrcLib, flow orchestration, UI DTO ownership |
 | `packages/board` | Application composition | `boards.db`, default/active invariants, board repository/service/routes | flow registration, flow internals, deployment or user/account concerns |
@@ -114,6 +120,10 @@ A flow is "extractable enough" when these are true:
 
 Shared track persistence is owned by `@flows/music`. Spotify and Lyrics may depend on its
 public exports; they must not import each other's internals.
+
+Generic text-analysis capabilities are owned by `@flows/analysis`. Canvas and Lyrics may
+depend on its public exports; analysis depends only on `@flows/core` and `@flows/shared`.
+The manifest dependency graph is enforced by `pnpm check:architecture`.
 
 Named-board persistence is owned by `@flows/board`. Flow packages must not depend on it;
 the backend host mounts it and the UI consumes only its contracts from `@flows/shared`.
@@ -194,11 +204,11 @@ merged PRs. The post-Board audit is tracked, in order, by #82 through #87 in the
 import-safe persistence, typed Lyrics Canvas transport, and documentation/CI
 reconciliation.
 
-The queue intentionally keeps `@flows/music` separate from `@flows/core`: music owns a
-domain persistence model, while core remains generic runtime infrastructure. #84 removes
-the inverse problem by extracting Canvas-oriented analysis concerns from core. Future
-findings must become scoped issues with acceptance criteria before they enter the
-roadmap; this document does not maintain a parallel backlog.
+The queue intentionally keeps both `@flows/music` and `@flows/analysis` separate from
+`@flows/core`: the neutral packages own domain capabilities, while core remains generic
+runtime infrastructure. #84 established and automated that dependency direction. Future
+findings must become scoped issues with acceptance criteria before they enter the roadmap;
+this document does not maintain a parallel backlog.
 
 Relationships/edges remain a later product decision. They are not implied technical debt
 and require a separate issue after an interaction requirement is agreed.

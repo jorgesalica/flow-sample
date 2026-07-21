@@ -9,8 +9,8 @@
         "start": "node dist/api/server.js",
         "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
         "typecheck": "tsc --noEmit",
-        "lint": "eslint --no-error-on-unmatched-pattern \"src/**/*.ts\" \"tests/**/*.ts\" \"../board/src/**/*.ts\" \"../board/tests/**/*.ts\" \"../core/src/**/*.ts\" \"../core/tests/**/*.ts\" \"../music/src/**/*.ts\" \"../music/tests/**/*.ts\" \"../shared/src/**/*.ts\" \"../flows/*/src/**/*.ts\" \"../flows/*/tests/**/*.ts\"",
-        "lint:fix": "eslint --fix --no-error-on-unmatched-pattern \"src/**/*.ts\" \"tests/**/*.ts\" \"../board/src/**/*.ts\" \"../board/tests/**/*.ts\" \"../core/src/**/*.ts\" \"../core/tests/**/*.ts\" \"../music/src/**/*.ts\" \"../music/tests/**/*.ts\" \"../shared/src/**/*.ts\" \"../flows/*/src/**/*.ts\" \"../flows/*/tests/**/*.ts\"",
+        "lint": "eslint --no-error-on-unmatched-pattern \"src/**/*.ts\" \"tests/**/*.ts\" \"../analysis/src/**/*.ts\" \"../analysis/tests/**/*.ts\" \"../board/src/**/*.ts\" \"../board/tests/**/*.ts\" \"../core/src/**/*.ts\" \"../core/tests/**/*.ts\" \"../music/src/**/*.ts\" \"../music/tests/**/*.ts\" \"../shared/src/**/*.ts\" \"../flows/*/src/**/*.ts\" \"../flows/*/tests/**/*.ts\"",
+        "lint:fix": "eslint --fix --no-error-on-unmatched-pattern \"src/**/*.ts\" \"tests/**/*.ts\" \"../analysis/src/**/*.ts\" \"../analysis/tests/**/*.ts\" \"../board/src/**/*.ts\" \"../board/tests/**/*.ts\" \"../core/src/**/*.ts\" \"../core/tests/**/*.ts\" \"../music/src/**/*.ts\" \"../music/tests/**/*.ts\" \"../shared/src/**/*.ts\" \"../flows/*/src/**/*.ts\" \"../flows/*/tests/**/*.ts\"",
         "test": "vitest run --passWithNoTests",
         "test:coverage": "vitest run --coverage --passWithNoTests"
     },
