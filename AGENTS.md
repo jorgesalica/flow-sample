@@ -23,15 +23,17 @@ If a rule is wrong, update its owner document before or with the implementation.
 ## Commands
 
 ```bash
+pnpm run bootstrap # frozen install + initial compiled workspace entrypoints
 pnpm dev          # all flows, backend, and UI with hot reload
-pnpm build        # build every workspace package
+pnpm build        # clean, build every package, and smoke-test compiled backend import
 pnpm verify       # docs + architecture + lint + types + Svelte check + tests
 pnpm test:coverage
 pnpm --filter @flows/ui test:e2e
 ```
 
-Before pushing non-trivial work, run `pnpm verify` and `pnpm build`. UI behavior changes
-require focused Playwright coverage or documented desktop/mobile verification.
+Use Node.js 22 or newer; `.node-version` is the shared local/CI baseline. Before pushing
+non-trivial work, run `pnpm verify` and `pnpm build`. UI behavior changes require focused
+Playwright coverage or documented desktop/mobile verification.
 
 After changing `@flows/shared` or `@flows/core`, rebuild it before checking downstream
 packages (`pnpm build:shared` or `pnpm --filter @flows/core build`).
