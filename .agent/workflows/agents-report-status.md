@@ -1,55 +1,27 @@
 ---
-description: Generate project status summary
+description: Reconstruct current project status from Git, GitHub, and owner docs
 ---
 
 # Report Status Workflow
 
-Generate a comprehensive project status report.
+1. Inspect the local branch, worktree, and recent commits:
 
-## Steps
-
-1. **Check recent commits**
 ```bash
-git log --oneline -10
+git status --short --branch
+git log --oneline --decorate -10
 ```
 
-2. **Review bucket.md**
-- What's in Done?
-- What's pending in High/Medium?
+2. Inspect open GitHub issues and PRs. Distinguish executable work, umbrella issues,
+deferred epics, and stale tracking.
+3. Read `docs/ROADMAP.md`; use `docs/bucket.md` only for untriaged ideas.
+4. Check the latest CI result and run `pnpm verify` when a fresh local baseline matters.
+5. Report:
+   - current branch and synchronization state
+   - open PR/WIP state
+   - recently merged work
+   - executable queue in dependency order
+   - deferred product work
+   - verification evidence and any unrun checks
 
-3. **Check test status**
-```bash
-pnpm test
-```
-
-4. **Summarize for user**
-- Branch and commits
-- Completed items
-- Pending items
-- Test status
-- Suggested next step
-
-## Report Format
-
-```
-**Estado del Proyecto - [DATE]**
-
-**Branch:** [name] (commits ahead/behind)
-
-**Done (today):**
-- item 1
-- item 2
-
-**Pending:**
-- High: [items]
-- Medium: [items]
-
-**Tests:** X passing, Y todo
-
-**Next:** [suggestion]
-```
-
-## When to Use
-- User says "reportemos estado" or "status"
-- End of session
-- Before major decisions
+Do not infer completion from unchecked historical Markdown. Reconcile claims against code,
+tests, commits, PRs, and current issues.

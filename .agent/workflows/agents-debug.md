@@ -1,43 +1,20 @@
 ---
-description: Troubleshooting steps when things are difficult
+description: Diagnose failures methodically without hiding symptoms
 ---
 
 # Debug Workflow
 
-When something is taking too long or failing repeatedly.
+1. Capture the complete error, request/response, and reproduction steps.
+2. Inspect `git status`, the relevant diff, logs, and existing behavior tests.
+3. Search with `rg`; identify the smallest layer that owns the failure.
+4. Reproduce with the narrowest deterministic test or request.
+5. Add or strengthen a failing test when the behavior can be isolated.
+6. Fix the owning layer, then run focused checks followed by `pnpm verify` and `pnpm build`.
 
-## General Approach
+Do not clear databases, delete build trees, kill unrelated processes, weaken assertions,
+or bypass hooks to make a symptom disappear. Verify an absolute target before any
+destructive filesystem action. External-provider failures should be logged server-side
+and mapped to stable client contracts.
 
-1. **Read the error carefully** - Full stack trace
-2. **Check recent changes** - `git diff HEAD~1`
-3. **Isolate the issue** - Minimal reproduction
-4. **Search codebase** - `grep_search` for related code
-5. **Check dependencies** - Version conflicts?
-
-## Common Issues
-
-### Port in use
-```bash
-netstat -ano | findstr :4173
-taskkill /PID <pid> /F
-```
-
-### Build fails
-```bash
-pnpm clean
-pnpm install
-pnpm build
-```
-
-### Tests fail after interface change
-- Update mocks to match new interfaces
-- Check test file imports
-
-### Type errors
-- Run `pnpm check` for full output
-- Check tsconfig includes
-
-## When to Escalate
-- After 3 failed attempts
-- Ask user for more context
-- Suggest alternative approaches
+Escalate only after the same blocking condition has been reproduced and local evidence
+cannot resolve it; report what was tried and what information is missing.

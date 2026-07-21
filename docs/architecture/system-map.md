@@ -1,6 +1,6 @@
 # System Map and Refactor Boundaries
 
-Status: 2026-07-13.
+Status: 2026-07-21.
 
 This document is the working map for future cleanup. It describes the current
 package/component boundaries, which boundaries are worth keeping, and which
@@ -172,38 +172,24 @@ Target shape:
 - Repositories own SQL and row hydration.
 - Domain code is pure TypeScript.
 
-## Refactor Lanes
+## Current Refactor Queue
 
-1. **Issue cleanup and governance**
-   Close resolved issues, split stale umbrella issues, and keep roadmap/workflow
-   docs aligned with the PR process.
+Completed design-system, loader/invalidation, environment ownership, music persistence,
+and architecture-contract work lives in project history and merged PRs. The active lanes
+are deliberately narrower:
 
-2. **Package boundary hardening**
-   Define the flow extraction contract in docs, remove sibling-flow leaks, and
-   move shared database ownership to neutral infrastructure.
+1. **Canvas (#69)**: restore the generic/domain boundary, validate generated annotation
+   references, and expose an injectable service/route factory.
+2. **Chat (#70)**: remove eager runtime construction, stabilize HTTP/SSE errors, and add
+   database/route coverage.
+3. **Spotify and Lyrics (#71)**: move orchestration out of routes, make response contracts
+   deliberate, and remove unsafe UI boundary casts.
+4. **Trading (#72)**: extract wizard/provider orchestration and type the full route
+   contract.
+5. **Quality gate (#73)**: ratchet coverage, complete package participation, consolidate
+   exact tooling duplication, and enforce the repaired boundaries.
+6. **Board persistence (#44)**: add named server-backed boards and migrate the local v1
+   layout only after the boundary work is stable.
 
-3. **UI design system (#24)**
-   Add shared primitives first (`Button`, `IconButton`, `Field`, `Badge`,
-   `AsyncState`, `ModalShell`), then migrate one flow at a time.
-
-4. **UI data-access alignment (#34)**
-   Move server data into loaders where practical, centralize invalidation keys,
-   and keep raw `fetch` only for SSE or browser-only exceptions.
-
-5. **Trading polish (#26)**
-   Replace raw logs, extract wizard constants/formatting, type market-state view
-   models, and document Trading routes/API.
-
-6. **Config and env ownership (#33)**
-   Keep env reads in composition roots or explicitly named env factories. Pass
-   config into routes/services when behavior changes by environment.
-
-7. **Testing and contract checks (#35)**
-   Consider a root Vitest workspace plus contract checks for no production
-   `any`, no raw SQL outside repositories, and no hardcoded API origins.
-
-8. **Board/Canvas vision (#18)**
-   Board v1 (#42) now renders the `FlowDefinition` registry with local layout
-   persistence and accessible reorder controls. Typed card contracts (#43) now provide
-   validated summaries, expansion, and async/stale states. Continue with named
-   server-persisted boards (#44) before cross-flow relationships.
+Relationships/edges remain a later product decision. They are not implied technical debt
+and require a separate issue after named boards are proven.
