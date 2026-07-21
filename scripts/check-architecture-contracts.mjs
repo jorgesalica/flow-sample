@@ -46,7 +46,7 @@ export function checkSource(file, source) {
   const explicitAny = /\bas\s+any\b|:\s*any\b|<any>/g;
   const hardcodedOrigin = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?/g;
   const sqlCall = /\.(?:prepare|exec)\s*\(/g;
-  const flowImport = /from\s+['"]@flows\/(spotify|lyrics|trading|chat|canvas)(?:\/[^'"]*)?['"]/g;
+  const flowImport = /from\s+['"]@flows\/(spotify|lyrics|trading|chat|canvas|board)(?:\/[^'"]*)?['"]/g;
   const processEnv = /process\.env/g;
   const legacyUiUtility = /\b(?:glass|(?:text|bg|border|shadow)-(?:cosmic|aurora|pulsar|nebula|stardust|void)(?:-[\w/]+)?)\b/g;
   const legacyUiVariable = /var\(--(?:surface|primary|secondary)-\d+\)/g;

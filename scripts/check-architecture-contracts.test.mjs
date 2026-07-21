@@ -62,6 +62,14 @@ test('rejects the former lyrics to spotify persistence dependency', () => {
   assert.equal(violations[0]?.rule, 'no-sibling-flow-imports');
 });
 
+test('rejects flow dependencies on board application composition', () => {
+  const violations = checkSource(
+    'packages/flows/chat/src/backend/routes.ts',
+    "import { createBoardRoutes } from '@flows/board';",
+  );
+  assert.equal(violations[0]?.rule, 'no-sibling-flow-imports');
+});
+
 test('rejects environment reads outside config factories', () => {
   const violations = checkSource(
     'packages/flows/trading/src/backend/services/example.ts',

@@ -13,6 +13,11 @@ The central `packages/backend` workspace now acts strictly as an **Application H
 Lyrics. It owns `music.db`, the track/artist/genre schema, FTS, and the track repository;
 it is not a flow or separately deployed service.
 
+`packages/board` is an application-composition package for named boards. It owns
+`boards.db`, default/active-board invariants, repository-backed mutations, and the
+`/api/boards` route factory. It is mounted by the host but is not a sixth registered
+flow or a separately deployed service.
+
 ## Bounded Contexts (Flows)
 
 Each flow encapsulates its own Domain, Infrastructure, and API layers. They are isolated from one another and share only core infrastructure and types.
@@ -21,6 +26,8 @@ Each flow encapsulates its own Domain, Infrastructure, and API layers. They are 
 packages/
 ├── shared/             # @flows/shared — shared types & DTOs (Track, Artist, …)
 ├── core/               # @flows/core — logger, SimpleCache, LLMClient, createDatabase()
+├── music/              # @flows/music — neutral music persistence
+├── board/              # @flows/board — named-board persistence and API
 └── flows/
     ├── spotify/        # Spotify Sync & Search Flow
     ├── lyrics/         # LrcLib Lyrics Fetcher Flow
@@ -61,6 +68,12 @@ export function createDatabase(filename: string) {
 The shared `music.db` connection is created by `@flows/music`. Spotify owns its token and
 provider artist-cache repositories; Lyrics owns lyrics and interpretation repositories.
 All use the same compatible SQLite file without importing sibling flow internals.
+
+The separate `boards.db` connection is created by `@flows/board`. Its service guarantees
+one protected default board, repairs missing/deleted active selection to that default,
+and validates names, layout versions, item sizes, and duplicate flow IDs before the
+repository writes. SQL and row hydration remain in `backend/repository.ts`; Elysia routes
+only validate and map HTTP errors.
 
 ## LLM Provider Architecture
 

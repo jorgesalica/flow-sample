@@ -17,8 +17,9 @@ access, or the flow model.
 
 The package split is intentional: `packages/backend` hosts the app,
 `packages/ui` renders it, `packages/core` owns shared infrastructure,
-`packages/shared` owns cross-boundary contracts, and `packages/flows/*` own
-backend bounded contexts.
+`packages/shared` owns cross-boundary contracts, `packages/music` owns neutral music
+persistence, `packages/board` owns named-board application composition, and
+`packages/flows/*` own backend bounded contexts.
 
 Keep the separation, but do not treat each flow as a separately deployable app
 until its contracts are explicit and tested.

@@ -38,6 +38,7 @@ ui/
 │   ├── routes/
 │   │   ├── +layout.svelte        # Global shell: <Toaster/> + {@render children()}
 │   │   ├── +layout.ts            # ssr = false; prerender = false
+│   │   ├── +page.ts              # named-board loader + invalidation dependency
 │   │   ├── +page.svelte          # The board (renders pages/Landing.svelte)
 │   │   ├── spotify/+page.svelte  # → flows/spotify/SpotifyFlow.svelte
 │   │   ├── lyrics/+page.svelte
@@ -48,11 +49,13 @@ ui/
 │       ├── client.ts             # Eden Treaty client (typed against the backend App)
 │       ├── toast.ts              # svelte-5-french-toast wrapper (Toaster, showError…)
 │       ├── types.ts              # local UI types (domain types come from @flows/shared)
+│       ├── boards/api.ts         # named-board Eden mutations + invalidation
 │       ├── pages/
-│       │   ├── Landing.svelte    # validated flow-manifest handoff
-│       │   ├── board-layout.ts   # versioned local layout contract + operations
+│       │   ├── Landing.svelte    # board selection and flow-manifest composition
+│       │   ├── board-layout.ts   # layout mapping, operations, and v1 migration
 │       │   └── components/
-│       │       ├── FlowBoard.svelte # state, persistence, reset, drag/drop
+│       │       ├── BoardToolbar.svelte # select/create/rename/delete controls
+│       │       ├── FlowBoard.svelte # state, server save, reset, drag/drop
 │       │       ├── BoardItem.svelte # flow presentation + accessible controls
 │       │       └── BoardCardContent.svelte # generic async/summary/expansion renderer
 │       ├── components/
@@ -96,24 +99,32 @@ Spotify and Lyrics own representative rich contracts. Trading, Chat, and Canvas 
 their existing status/count response through `createStatsBoardCard()`. `BoardCardContent`
 renders every flow from the discriminated contract and never branches on a flow ID.
 
-Board DTOs are UI presentation types because they never cross the backend boundary.
-Provider/domain DTOs continue to live in `@flows/shared`; each flow's `api.ts` wraps its
-typed Eden calls, and `stores.ts` holds reusable flow state where needed.
+Board persistence DTOs live in `@flows/shared` because they cross the Eden boundary.
+Board card contracts remain UI-only presentation types because they never cross the
+backend boundary. Provider/domain DTOs continue to live in `@flows/shared`; each flow's
+`api.ts` wraps its typed Eden calls, and `stores.ts` holds reusable flow state where
+needed.
 
 ## Board layout
 
-`pages/board-layout.ts` owns the browser-only presentation contract. Version 1 stores an
-ordered list of `{ id, collapsed, size }` items under `flow-sample:board-layout`.
-`FlowBoard` reconciles that data against current registry IDs: removed flows are dropped,
-new flows are appended in manifest order, and malformed or mismatched-version data falls
-back to the default layout. Layout data never contains flow DTOs, stats, or server state.
+`@flows/board` owns named-board persistence and the active-board invariant. The root
+loader reads a `BoardsSnapshot`; `Landing` composes selection and mutations;
+`BoardToolbar` exposes create/select/rename/delete; and `FlowBoard` owns optimistic layout
+interaction with rollback on failed saves. The protected default board recovers missing
+or deleted active selection.
+
+`pages/board-layout.ts` maps shared `Board` items to the UI's ordered
+`{ id, collapsed, size }` contract and reconciles it against current registry IDs:
+removed flows are dropped, new flows are appended in manifest order, and malformed or
+mismatched-version data falls back to the default layout. The retired
+`flow-sample:board-layout` key is read only once for v1 migration; a successful server
+save records `flow-sample:board-layout-migrated-v1` and removes the old payload.
 
 Explicit earlier/later buttons are the accessible reorder baseline. Native drag-and-drop
 uses the same immutable reorder operation as a progressive enhancement. Collapse, size,
-and reset changes persist immediately and announce their result through a polite live
-region. CSS grid maps compact, standard, and wide preferences to desktop columns and
-falls back to one column on mobile. Named or server-persisted boards remain separate
-work owned by issue #44.
+and reset changes persist immediately through typed Eden calls and announce their result
+through a polite live region. CSS grid maps compact, standard, and wide preferences to
+desktop columns and falls back to one column on mobile.
 
 ## Data access
 
@@ -128,6 +139,8 @@ bypasses SvelteKit request tracking and emits runtime warnings.
 Loaders register stable dependency keys from `lib/invalidation.ts`; successful mutations
 call the `lib/invalidate.ts` adapter so SvelteKit reruns only the affected loader. Flow
 components receive loader data as props and hydrate their runes state reactively.
+The home loader and `lib/boards/api.ts` follow this contract for named-board snapshots;
+normal layout state is never reconstructed from `localStorage`.
 
 `onMount` remains appropriate for browser-only behavior such as chart construction,
 `IntersectionObserver`, URL cleanup after OAuth redirects, and SSE subscriptions. Raw
@@ -166,8 +179,8 @@ as `*.svelte.test.ts` / `*.test.ts`. Mock the Eden client (`@lib/client`) — ne
 network. Pure chart-theme, board-layout, registry, and card-contract mapping are
 unit-tested. The generic renderer covers every async state and negative space. Chart
 canvas rendering, live summary/expansion, stale refresh, keyboard reorder, native
-drag-and-drop, persistence reloads, and responsive behavior are verified in a real
-browser. E2E lives in `e2e/` (Playwright).
+drag-and-drop, named-board CRUD, one-time migration, persistence reloads, and responsive
+behavior are verified in a real browser. E2E lives in `e2e/` (Playwright).
 
 Vitest uses the plain Svelte plugin, so `src/test/app-navigation.ts` supplies the unit-test
 adapter for SvelteKit's virtual navigation module. Tests may mock that adapter to assert

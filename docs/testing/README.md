@@ -53,13 +53,15 @@ SSE, browser-only charting, drag-and-drop, keyboard reordering, persistence migr
 multi-step flows deserve Playwright or explicit manual verification because jsdom cannot
 fully model their runtime behavior.
 
-Board changes pair pure layout and card-contract tests with registry validation and
-component role/callback tests. Flow contract producers cover success, empty/malformed
-data, and provider failure. The generic renderer covers loading, ready, empty, error,
-stale, collapsed negative space, and expanded content without flow-specific branches.
-Playwright must prove representative live summary/expansion, stale refresh preservation,
-explicit keyboard reorder, native drag-and-drop, reload persistence, reset behavior, and
-a no-overflow mobile fallback when those behaviors change.
+Board changes pair repository/service/route tests with loader/API facade tests, pure
+layout and card-contract tests, registry validation, and component role/callback tests.
+Flow contract producers cover success, empty/malformed data, and provider failure. The
+generic renderer covers loading, ready, empty, error, stale, collapsed negative space,
+and expanded content without flow-specific branches. Playwright uses an isolated
+in-memory board API fixture and must prove CRUD, default-board protection, representative
+live summary/expansion, stale refresh preservation, explicit keyboard reorder, native
+drag-and-drop, reload persistence, one-time local migration, reset behavior, and a
+no-overflow mobile fallback when those behaviors change.
 
 ## Commands And CI
 

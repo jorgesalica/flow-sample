@@ -12,6 +12,7 @@
     itemCount: number;
     isDragging: boolean;
     isDropTarget: boolean;
+    disabled: boolean;
     onMoveTo: (targetIndex: number) => void;
     onToggleCollapsed: () => void;
     onSizeChange: (size: BoardItemSize) => void;
@@ -30,6 +31,7 @@
     itemCount,
     isDragging,
     isDropTarget,
+    disabled,
     onMoveTo,
     onToggleCollapsed,
     onSizeChange,
@@ -62,7 +64,7 @@
   data-collapsed={layout.collapsed}
   data-state={card.state}
   data-openable={isClickable}
-  draggable="true"
+  draggable={!disabled}
   ondragstart={onDragStart}
   ondragend={onDragEnd}
   ondragenter={onDragEnter}
@@ -93,6 +95,7 @@
         value={layout.size}
         aria-label={`Size for ${flow.name}`}
         title={`Size for ${flow.name}`}
+        {disabled}
         onchange={handleSizeChange}
       >
         <option value={BoardItemSize.COMPACT}>Compact</option>
@@ -102,7 +105,7 @@
       <IconButton
         label={`Move ${flow.name} earlier`}
         size="sm"
-        disabled={position === 0}
+        disabled={disabled || position === 0}
         onclick={() => onMoveTo(position - 1)}
       >
         <span aria-hidden="true">&uarr;</span>
@@ -110,7 +113,7 @@
       <IconButton
         label={`Move ${flow.name} later`}
         size="sm"
-        disabled={position === itemCount - 1}
+        disabled={disabled || position === itemCount - 1}
         onclick={() => onMoveTo(position + 1)}
       >
         <span aria-hidden="true">&darr;</span>
@@ -120,6 +123,7 @@
         size="sm"
         aria-expanded={!layout.collapsed}
         aria-controls={contentId}
+        {disabled}
         onclick={onToggleCollapsed}
       >
         <span aria-hidden="true"

@@ -4,6 +4,22 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2026-07-21 - Named board persistence
+
+Issue #44 moved Board layout state from browser-only storage to an owned application
+boundary:
+
+- Added `@flows/board` with shared DTOs, a SQLite repository in `boards.db`, application
+  service invariants, TypeBox schemas, and thin Elysia routes under `/api/boards`.
+- Added create/list/rename/layout/select/delete operations, case-insensitive names, one
+  protected default board, and automatic active-board recovery.
+- Mounted the package through the backend host, added `PATCH` to CORS, and kept flow
+  packages independent from Board composition.
+- Added in-memory repository, service, route, and host tests plus conservative package
+  coverage thresholds and root coverage discovery.
+
+---
+
 ## 2026-07-21 - Deterministic quality gate and host coverage
 
 Issue #73 converted coverage and tooling conventions into executable regression gates:

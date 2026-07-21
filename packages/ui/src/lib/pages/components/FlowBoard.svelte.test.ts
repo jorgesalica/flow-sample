@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import type { Board } from '@flows/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BoardCardState,
@@ -7,6 +8,7 @@ import {
   type FlowDefinition,
 } from '@lib/flows';
 import {
+  BOARD_LAYOUT_MIGRATION_KEY,
   BOARD_LAYOUT_STORAGE_KEY,
   BOARD_LAYOUT_VERSION,
   BoardItemSize,
@@ -49,16 +51,48 @@ function makeFlow(
   };
 }
 
+function makeBoard(
+  flows: FlowDefinition[],
+  items: Board['items'] = flows.map((flow) => ({
+    flowId: flow.id,
+    collapsed: false,
+    size: BoardItemSize.COMPACT,
+  }))
+): Board {
+  return {
+    id: 'board-1',
+    name: 'My Board',
+    isDefault: true,
+    layoutVersion: BOARD_LAYOUT_VERSION,
+    items,
+    createdAt: '2026-07-21T00:00:00.000Z',
+    updatedAt: '2026-07-21T00:00:00.000Z',
+  };
+}
+
+function renderBoard(
+  flows: FlowDefinition[],
+  options: {
+    board?: Board;
+    onlayoutchange?: (layout: BoardLayout) => Promise<void>;
+  } = {}
+) {
+  const onlayoutchange =
+    options.onlayoutchange ?? vi.fn<(layout: BoardLayout) => Promise<void>>().mockResolvedValue();
+  render(FlowBoard, {
+    props: {
+      flows,
+      board: options.board ?? makeBoard(flows),
+      onlayoutchange,
+    },
+  });
+  return { onlayoutchange };
+}
+
 function boardOrder(): string[] {
   return [...document.querySelectorAll<HTMLElement>('[data-board-id]')].map(
     (element) => element.dataset.boardId ?? ''
   );
-}
-
-function savedLayout(): BoardLayout {
-  const serialized = window.localStorage.getItem(BOARD_LAYOUT_STORAGE_KEY);
-  if (!serialized) throw new Error('Expected board layout to be persisted');
-  return JSON.parse(serialized) as BoardLayout;
 }
 
 function deferred<T>() {
@@ -78,7 +112,7 @@ describe('FlowBoard', () => {
     const spotify = deferred<BoardCardSnapshot>();
     const flows = [makeFlow('spotify', () => spotify.promise), makeFlow('lyrics')];
 
-    render(FlowBoard, { props: { flows } });
+    renderBoard(flows);
 
     expect(await screen.findByRole('link', { name: 'Open Lyrics Flow' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open Spotify Flow' })).not.toBeInTheDocument();
@@ -92,23 +126,17 @@ describe('FlowBoard', () => {
     expect(screen.getByText('2 ready')).toBeInTheDocument();
   });
 
-  it('restores saved order, collapsed state, and size', async () => {
+  it('restores server-backed order, collapsed state, and size', async () => {
     const flows = [makeFlow('spotify'), makeFlow('lyrics'), makeFlow('trading')];
-    window.localStorage.setItem(
-      BOARD_LAYOUT_STORAGE_KEY,
-      JSON.stringify({
-        version: BOARD_LAYOUT_VERSION,
-        items: [
-          { id: 'lyrics', collapsed: true, size: BoardItemSize.WIDE },
-          { id: 'spotify', collapsed: false, size: BoardItemSize.STANDARD },
-          { id: 'trading', collapsed: false, size: BoardItemSize.COMPACT },
-        ],
-      })
-    );
+    const board = makeBoard(flows, [
+      { flowId: 'lyrics', collapsed: true, size: BoardItemSize.WIDE },
+      { flowId: 'spotify', collapsed: false, size: BoardItemSize.STANDARD },
+      { flowId: 'trading', collapsed: false, size: BoardItemSize.COMPACT },
+    ]);
 
-    render(FlowBoard, { props: { flows } });
+    renderBoard(flows, { board });
 
-    await screen.findByRole('link', { name: 'Open Lyrics Flow' });
+    await screen.findByText('Lyrics Flow');
     expect(boardOrder()).toEqual(['lyrics', 'spotify', 'trading']);
     expect(screen.getByRole('button', { name: 'Expand Lyrics Flow' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Size for Lyrics Flow' })).toHaveValue(
@@ -116,56 +144,115 @@ describe('FlowBoard', () => {
     );
   });
 
-  it('reorders with explicit controls, persists, announces, and resets', async () => {
+  it('migrates the legacy local layout once through the server callback', async () => {
+    const flows = [makeFlow('spotify'), makeFlow('lyrics')];
+    window.localStorage.setItem(
+      BOARD_LAYOUT_STORAGE_KEY,
+      JSON.stringify({
+        version: BOARD_LAYOUT_VERSION,
+        items: [
+          { id: 'lyrics', collapsed: true, size: BoardItemSize.WIDE },
+          { id: 'spotify', collapsed: false, size: BoardItemSize.COMPACT },
+        ],
+      })
+    );
+    const onlayoutchange = vi.fn<(layout: BoardLayout) => Promise<void>>().mockResolvedValue();
+
+    renderBoard(flows, { onlayoutchange });
+
+    await waitFor(() => expect(onlayoutchange).toHaveBeenCalledOnce());
+    expect(onlayoutchange.mock.calls[0]?.[0].items).toEqual([
+      { id: 'lyrics', collapsed: true, size: BoardItemSize.WIDE },
+      { id: 'spotify', collapsed: false, size: BoardItemSize.COMPACT },
+    ]);
+    expect(window.localStorage.getItem(BOARD_LAYOUT_STORAGE_KEY)).toBeNull();
+    expect(window.localStorage.getItem(BOARD_LAYOUT_MIGRATION_KEY)).toBe(
+      String(BOARD_LAYOUT_VERSION)
+    );
+  });
+
+  it('saves reorder operations and resets through the server callback', async () => {
     const flows = [makeFlow('spotify'), makeFlow('lyrics'), makeFlow('trading')];
-    render(FlowBoard, { props: { flows } });
+    const onlayoutchange = vi.fn<(layout: BoardLayout) => Promise<void>>().mockResolvedValue();
+    renderBoard(flows, { onlayoutchange });
     await screen.findByRole('link', { name: 'Open Spotify Flow' });
 
     const resetButton = screen.getByRole('button', { name: 'Reset layout' });
     expect(resetButton).toBeDisabled();
     await fireEvent.click(screen.getByRole('button', { name: 'Move Spotify Flow later' }));
 
+    await waitFor(() => expect(onlayoutchange).toHaveBeenCalledOnce());
     expect(boardOrder()).toEqual(['lyrics', 'spotify', 'trading']);
-    expect(savedLayout().items.map((item) => item.id)).toEqual(['lyrics', 'spotify', 'trading']);
+    expect(onlayoutchange.mock.calls[0]?.[0].items.map((item) => item.id)).toEqual([
+      'lyrics',
+      'spotify',
+      'trading',
+    ]);
     expect(screen.getByText('Spotify Flow moved to position 2.')).toBeInTheDocument();
-    expect(resetButton).toBeEnabled();
+    await waitFor(() => expect(resetButton).toBeEnabled());
 
     await fireEvent.click(resetButton);
+    await waitFor(() => expect(onlayoutchange).toHaveBeenCalledTimes(2));
     expect(boardOrder()).toEqual(['spotify', 'lyrics', 'trading']);
-    expect(savedLayout().items.every((item) => item.size === BoardItemSize.COMPACT)).toBe(true);
+    expect(
+      onlayoutchange.mock.calls[1]?.[0].items.every((item) => item.size === BoardItemSize.COMPACT)
+    ).toBe(true);
   });
 
-  it('persists collapse and size preferences', async () => {
+  it('saves collapse and size preferences', async () => {
     const flows = [makeFlow('spotify'), makeFlow('lyrics'), makeFlow('trading')];
-    render(FlowBoard, { props: { flows } });
+    const onlayoutchange = vi.fn<(layout: BoardLayout) => Promise<void>>().mockResolvedValue();
+    renderBoard(flows, { onlayoutchange });
     await screen.findByRole('link', { name: 'Open Lyrics Flow' });
 
     await fireEvent.click(screen.getByRole('button', { name: 'Collapse Lyrics Flow' }));
+    await waitFor(() => expect(onlayoutchange).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Expand Lyrics Flow' })).toBeEnabled()
+    );
     await fireEvent.change(screen.getByRole('combobox', { name: 'Size for Lyrics Flow' }), {
       target: { value: BoardItemSize.WIDE },
     });
 
-    const lyrics = savedLayout().items.find((item) => item.id === 'lyrics');
+    await waitFor(() => expect(onlayoutchange).toHaveBeenCalledTimes(2));
+    const lyrics = onlayoutchange.mock.calls[1]?.[0].items.find((item) => item.id === 'lyrics');
     expect(lyrics).toMatchObject({ collapsed: true, size: BoardItemSize.WIDE });
   });
 
-  it('falls back safely from persisted layout data with an old version', async () => {
+  it('reconciles newly registered flows with persisted server state', async () => {
     const flows = [makeFlow('spotify'), makeFlow('lyrics')];
-    window.localStorage.setItem(
-      BOARD_LAYOUT_STORAGE_KEY,
-      JSON.stringify({ version: 0, items: [] })
-    );
+    const board = makeBoard(flows, [
+      { flowId: 'spotify', collapsed: false, size: BoardItemSize.COMPACT },
+    ]);
+    const onlayoutchange = vi.fn<(layout: BoardLayout) => Promise<void>>().mockResolvedValue();
 
-    render(FlowBoard, { props: { flows } });
+    renderBoard(flows, { board, onlayoutchange });
+
+    await waitFor(() => expect(onlayoutchange).toHaveBeenCalledOnce());
+    expect(onlayoutchange.mock.calls[0]?.[0].items.map((item) => item.id)).toEqual([
+      'spotify',
+      'lyrics',
+    ]);
+  });
+
+  it('rolls back optimistic layout changes when persistence fails', async () => {
+    const flows = [makeFlow('spotify'), makeFlow('lyrics')];
+    const onlayoutchange = vi
+      .fn<(layout: BoardLayout) => Promise<void>>()
+      .mockRejectedValue(new Error('offline'));
+    renderBoard(flows, { onlayoutchange });
+    await screen.findByRole('link', { name: 'Open Spotify Flow' });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Move Spotify Flow later' }));
 
     await waitFor(() => expect(boardOrder()).toEqual(['spotify', 'lyrics']));
-    expect(screen.getByRole('button', { name: 'Reset layout' })).toBeDisabled();
+    expect(screen.getByText('Board changes could not be saved.')).toBeInTheDocument();
   });
 
   it('retains the last ready summary as stale when a refresh fails', async () => {
     const load = vi.fn<() => Promise<BoardCardSnapshot>>();
     load.mockResolvedValueOnce(readyCard('42')).mockResolvedValueOnce(errorCard());
-    render(FlowBoard, { props: { flows: [makeFlow('spotify', load)] } });
+    renderBoard([makeFlow('spotify', load)]);
 
     expect(await screen.findByText('42')).toBeInTheDocument();
     await fireEvent.click(screen.getByRole('button', { name: 'Refresh summaries' }));

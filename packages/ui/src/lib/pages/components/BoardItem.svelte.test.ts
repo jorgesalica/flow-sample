@@ -46,6 +46,7 @@ function makeProps(overrides: Partial<BoardItemProps> = {}): BoardItemProps {
     itemCount: 2,
     isDragging: false,
     isDropTarget: false,
+    disabled: false,
     onMoveTo: vi.fn(),
     onToggleCollapsed: vi.fn(),
     onSizeChange: vi.fn(),

@@ -8,12 +8,13 @@
 | **@elysiajs/node** | Node.js adapter |
 | **@elysiajs/static** | Static UI serving in production |
 | **Eden Treaty** | Type-safe client contract for the SvelteKit UI |
-| **better-sqlite3** | Local SQLite persistence inside flow repositories |
+| **better-sqlite3** | Local SQLite persistence inside owned repositories |
 
 ## Host Shape
 
 The backend package is a thin host. Flow packages own their domain logic,
-repositories, adapters, and routes; `@flows/backend` only composes them.
+repositories, adapters, and routes; `@flows/board` owns named-board application state;
+`@flows/backend` only composes them.
 
 ```text
 packages/backend/src/api/
@@ -35,6 +36,7 @@ Only `server.ts` may bind a port.
 | `/api/trading` | `@flows/trading` |
 | `/api/chat` | `@flows/chat` |
 | `/api/canvas` | `@flows/canvas` |
+| `/api/boards` | `@flows/board` |
 
 In production-style builds, the host also serves the SvelteKit static output from
 `packages/ui/build` when it exists, with `index.html` fallback for SPA routing.
@@ -47,7 +49,8 @@ const app = createApp(config)
   .use(createLyricsRoutes())
   .use(createTradingRoutes())
   .use(chatRoutes)
-  .use(canvasFlowRoutes);
+  .use(canvasFlowRoutes)
+  .use(createBoardRoutes());
 ```
 
 ## Running

@@ -27,8 +27,9 @@ follow-up polish.
 - Architecture contracts enforce key package and layering rules.
 - Shared UI primitives and the galaxy/fire/organic theme system cover every production
   flow, including browser-rendered charts and responsive workspaces.
-- Board v1 renders the flow registry as reorderable, collapsible, resizable items with
-  versioned local persistence, keyboard controls, drag-and-drop, and a reset command.
+- Named boards render the flow registry as reorderable, collapsible, resizable items with
+  SQLite persistence, active-board recovery, keyboard controls, drag-and-drop, and a
+  one-time migration from the browser-only v1 layout.
 - Registered flows publish typed board summaries and optional expanded content. Spotify
   and Lyrics provide richer live contracts; the remaining flows use the generic stats
   adapter. Loading, empty, error, and stale data share one renderer.
@@ -47,14 +48,13 @@ longer import each other's internals.
 
 The current queue closes architectural and testing debt before new product features:
 
-1. **Named boards ([#44](https://github.com/jorgesalica/flow-sample/issues/44))**:
-   repository-backed persistence, API, loader integration, and local migration.
+1. **Final Board reconciliation
+   ([#18](https://github.com/jorgesalica/flow-sample/issues/18))**: audit the assembled
+   architecture and browser behavior, close satisfied umbrella scope, and turn any real
+   residual work into a precise follow-up issue.
 
-After this queue, run a final architecture/browser audit and reconcile the Board umbrella
-issue [#18](https://github.com/jorgesalica/flow-sample/issues/18) before promoting a
-deferred epic or starting a redesign.
-
-Relationships and graph edges get a separate issue only after named boards are proven.
+Relationships and graph edges get a separate issue only after the named-board foundation
+is proven.
 A DOM/CSS board is the default; an HTML canvas or graph library
 requires an interaction-driven spike first.
 
