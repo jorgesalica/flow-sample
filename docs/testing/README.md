@@ -31,7 +31,10 @@ journeys. Do not pursue coverage by duplicating implementation details in tests.
 - Component tests query by role/name when possible and assert behavior, not CSS internals.
 - Playwright locators use roles, labels, or stable product semantics rather than DOM shape.
 - A flaky test is a defect. Fix determinism or isolation instead of adding arbitrary waits.
-- Coverage is a signal, not the definition of quality.
+- Coverage is a signal, not the definition of quality. Each package owns conservative
+  statement, branch, function, and line ratchets based on measured behavior.
+- Root coverage discovers every workspace with a `test:coverage` script, rejects Vitest
+  packages missing that script, and prints a count-weighted summary in stable name order.
 
 ## Change Requirements
 
@@ -63,16 +66,17 @@ a no-overflow mobile fallback when those behaviors change.
 ```bash
 pnpm verify                              # canonical local static/unit gate
 pnpm build                               # all package and UI builds
-pnpm test:coverage                       # package coverage, used by CI
+pnpm test:tooling                        # architecture and coverage-runner contract tests
+pnpm test:coverage                       # all package ratchets + deterministic aggregate
 pnpm --filter @flows/ui test:e2e         # Playwright journeys
 pnpm check:docs                          # local Markdown links
 pnpm check:architecture                  # package/layer contracts
 ```
 
-CI runs a clean frozen install, builds first, then runs lint, TypeScript, Svelte checks,
-and package coverage. Playwright remains targeted until its runtime fixtures are fully
-deterministic; PRs with interaction changes must state which Playwright or manual
-desktop/mobile checks were run.
+CI runs a clean frozen install, builds first, then runs documentation/architecture and
+tooling tests, lint, TypeScript, Svelte checks, and every package coverage ratchet.
+Playwright remains targeted until its runtime fixtures are fully deterministic; PRs with
+interaction changes must state which Playwright or manual desktop/mobile checks were run.
 
 ## Red, Green, Refactor
 

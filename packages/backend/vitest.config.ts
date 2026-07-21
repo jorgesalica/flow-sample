@@ -7,8 +7,16 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['dist/**', 'coverage/**'],
+      reporter: ['text', 'json-summary', 'html'],
+      include: ['src/**/*.ts'],
+      // The process entrypoint binds a real port; app/config own the testable host behavior.
+      exclude: ['src/api/server.ts'],
+      thresholds: {
+        statements: 82,
+        branches: 80,
+        functions: 95,
+        lines: 82,
+      },
     },
   },
   resolve: {

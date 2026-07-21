@@ -24,6 +24,12 @@ export default defineConfig({
                 // same rationale as database.ts/server.ts.
                 'src/adapters/**',
             ],
+            thresholds: {
+                statements: 94,
+                branches: 88,
+                functions: 93,
+                lines: 95,
+            },
         },
     },
     resolve: {

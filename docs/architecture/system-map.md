@@ -175,13 +175,11 @@ Target shape:
 ## Current Refactor Queue
 
 Completed design-system, loader/invalidation, environment ownership, music persistence,
-and architecture-contract work lives in project history and merged PRs. The active lanes
-are deliberately narrower:
+architecture-contract, and quality-gate work lives in project history and merged PRs.
+The active lane is deliberately narrow:
 
-1. **Quality gate (#73)**: ratchet coverage, complete package participation, consolidate
-   exact tooling duplication, and enforce the repaired boundaries.
-2. **Board persistence (#44)**: add named server-backed boards and migrate the local v1
-   layout only after the boundary work is stable.
+1. **Board persistence (#44)**: add named server-backed boards and migrate the local v1
+   layout now that the package and quality boundaries are stable.
 
 Relationships/edges remain a later product decision. They are not implied technical debt
 and require a separate issue after named boards are proven.

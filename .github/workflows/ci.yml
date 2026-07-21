@@ -1,7 +1,7 @@
 name: CI
 
 # Light gate for a personal project: build, repository contracts, static checks, and
-# coverage on pushes to main and PRs. No deploy / CD.
+# ratcheted package coverage on pushes to main and PRs. No deploy / CD.
 on:
   push:
     branches: [main]
@@ -35,6 +35,7 @@ jobs:
 
       - run: pnpm check:docs
       - run: pnpm check:architecture
+      - run: pnpm test:tooling
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm check

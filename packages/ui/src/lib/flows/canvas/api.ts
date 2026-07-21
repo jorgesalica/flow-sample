@@ -1,16 +1,22 @@
 import type { CanvasAnalysis } from '@flows/shared';
 import { api } from '@lib/client';
+import { parseCanvasAnalysis, parseCanvasAnalysisList } from './contract';
+
+function readBackendError(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null || !('error' in value)) return undefined;
+  return typeof value.error === 'string' ? value.error : undefined;
+}
 
 export async function fetchCanvasList(): Promise<CanvasAnalysis[]> {
   const { data, error } = await api.api.canvas.get();
   if (error) throw new Error('Failed to fetch canvases');
-  return (data ?? []) as unknown as CanvasAnalysis[];
+  return parseCanvasAnalysisList(data ?? []);
 }
 
 export async function fetchCanvas(id: string): Promise<CanvasAnalysis> {
   const { data, error } = await api.api.canvas({ id }).get();
   if (error || !data || 'error' in data) throw new Error('Failed to fetch canvas');
-  return data as unknown as CanvasAnalysis;
+  return parseCanvasAnalysis(data);
 }
 
 export async function deleteCanvas(id: string): Promise<void> {
@@ -25,9 +31,8 @@ export async function createAndAnalyzeCanvas(
 ): Promise<CanvasAnalysis> {
   const { data, error } = await api.api.canvas.post({ text, title, author });
   if (error) {
-    const value = error.value as { error?: string } | undefined;
-    throw new Error(value?.error || 'Failed to create canvas');
+    throw new Error(readBackendError(error.value) ?? 'Failed to create canvas');
   }
   if (!data) throw new Error('Failed to create canvas');
-  return data as unknown as CanvasAnalysis;
+  return parseCanvasAnalysis(data);
 }

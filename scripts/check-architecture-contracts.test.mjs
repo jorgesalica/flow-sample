@@ -29,7 +29,7 @@ test('rejects browser runtime imports from the CommonJS shared package', () => {
   assert.equal(violations[0]?.rule, 'ui-shared-types-only');
 });
 
-test('rejects unsafe API casts in typed music and trading UI code', () => {
+test('rejects unsafe double casts at production UI API and loader boundaries', () => {
   const lyricsViolations = checkSource(
     'packages/ui/src/lib/flows/lyrics/api.ts',
     'const result = data as unknown as LyricsStats;',
@@ -38,8 +38,13 @@ test('rejects unsafe API casts in typed music and trading UI code', () => {
     'packages/ui/src/lib/flows/trading/api.ts',
     'const result = data as unknown as TradingStatus;',
   );
+  const canvasLoaderViolations = checkSource(
+    'packages/ui/src/routes/canvas/+page.ts',
+    'return data as unknown as CanvasAnalysis[];',
+  );
   assert.equal(lyricsViolations[0]?.rule, 'no-unsafe-api-casts');
   assert.equal(tradingViolations[0]?.rule, 'no-unsafe-api-casts');
+  assert.equal(canvasLoaderViolations[0]?.rule, 'no-unsafe-api-casts');
 });
 
 test('rejects SQL calls outside persistence modules', () => {

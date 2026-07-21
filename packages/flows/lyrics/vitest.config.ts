@@ -19,6 +19,12 @@ export default defineConfig({
                 // Pure constants / config, no logic to exercise.
                 'src/**/config.ts',
             ],
+            thresholds: {
+                statements: 89,
+                branches: 76,
+                functions: 90,
+                lines: 89,
+            },
         },
     },
     resolve: {

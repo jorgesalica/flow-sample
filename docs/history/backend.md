@@ -4,6 +4,23 @@ Changelog for the backend (API, persistence, domain logic).
 
 ---
 
+## 2026-07-21 - Deterministic quality gate and host coverage
+
+Issue #73 converted coverage and tooling conventions into executable regression gates:
+
+- Added conservative statement, branch, function, and line ratchets to all nine
+  coverage-bearing packages, including previously excluded Canvas and Chat routes.
+- Added a root runner that discovers Vitest coverage participation, executes packages in
+  stable order, rejects missing summaries, and publishes count-weighted totals.
+- Raised backend host coverage with config, CORS, error, API 404, and SPA fallback tests;
+  direct browser navigation now returns `200` while unknown API paths remain JSON `404`s.
+- Consolidated backend compiler defaults in `tsconfig.backend.json` and added tooling
+  contract tests to CI.
+- Replaced Canvas UI boundary casts with structural response validation and extended the
+  architecture gate to every production UI API and loader boundary.
+
+---
+
 ## 2026-07-21 - Trading application and HTTP boundaries
 
 Issue #72 removed provider and wizard orchestration from the Trading router:

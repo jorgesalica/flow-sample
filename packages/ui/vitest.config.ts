@@ -39,6 +39,12 @@ export default defineConfig({
         'vitest-setup.ts',
         '.svelte-kit/**',
       ],
+      thresholds: {
+        statements: 87,
+        branches: 70,
+        functions: 89,
+        lines: 87,
+      },
     },
   },
 });
