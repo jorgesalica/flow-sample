@@ -42,11 +42,11 @@
   },
   "pnpm": {
     "overrides": {
-      "file-type": "21.3.2"
+      "file-type": "21.3.4"
     }
   },
   "dependencies": {
-    "file-type": "21.3.2"
+    "file-type": "21.3.4"
   },
   "devDependencies": {
     "husky": "^9.1.7",
