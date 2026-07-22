@@ -22,15 +22,15 @@ routes                     → HTTP/SSE mapping (/api/lyrics/*)
 
 ## API Routes
 
-| Method | Path | Description |
-| :----- | :--- | :---------- |
-| GET | `/api/lyrics/:trackId` | Get lyrics for a track |
-| POST | `/api/lyrics/fetch-all` | Batch fetch pending lyrics |
-| GET | `/api/lyrics/tracks` | Track list with lyrics status |
-| GET | `/api/lyrics/stats` | Lyrics coverage stats |
-| POST | `/api/lyrics/:trackId/interpret` | Cached or streamed AI interpretation |
-| GET | `/api/lyrics/:trackId/canvas` | Lyrics Canvas state |
-| POST | `/api/lyrics/:trackId/canvas/analyze` | Generate Lyrics Canvas analysis |
+| Method | Path                                  | Description                          |
+| :----- | :------------------------------------ | :----------------------------------- |
+| GET    | `/api/lyrics/:trackId`                | Get lyrics for a track               |
+| POST   | `/api/lyrics/fetch-all`               | Batch fetch pending lyrics           |
+| GET    | `/api/lyrics/tracks`                  | Track list with lyrics status        |
+| GET    | `/api/lyrics/stats`                   | Lyrics coverage stats                |
+| POST   | `/api/lyrics/:trackId/interpret`      | Cached or streamed AI interpretation |
+| GET    | `/api/lyrics/:trackId/canvas`         | Lyrics Canvas state                  |
+| POST   | `/api/lyrics/:trackId/canvas/analyze` | Generate Lyrics Canvas analysis      |
 
 `POST /fetch-all` accepts `{ "retryFailed": true }` to include prior
 `not_found` records. HTTP responses are schema-backed for Eden; interpretation SSE uses

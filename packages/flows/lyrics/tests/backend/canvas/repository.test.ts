@@ -32,7 +32,9 @@ describe('SQLiteLyricsCanvasRepository', () => {
   const repository = new SQLiteLyricsCanvasRepository(db);
 
   beforeEach(() => {
-    db.exec('DELETE FROM lyrics; DELETE FROM track_artists; DELETE FROM artists; DELETE FROM tracks;');
+    db.exec(
+      'DELETE FROM lyrics; DELETE FROM track_artists; DELETE FROM artists; DELETE FROM tracks;',
+    );
   });
 
   it('returns null when the track is missing', () => {
@@ -47,9 +49,18 @@ describe('SQLiteLyricsCanvasRepository', () => {
     );
     db.prepare('INSERT INTO artists (id, name) VALUES (?, ?)').run('artist-1', 'First Artist');
     db.prepare('INSERT INTO artists (id, name) VALUES (?, ?)').run('artist-2', 'Second Artist');
-    db.prepare('INSERT INTO track_artists (track_id, artist_id) VALUES (?, ?)').run('track-1', 'artist-1');
-    db.prepare('INSERT INTO track_artists (track_id, artist_id) VALUES (?, ?)').run('track-1', 'artist-2');
-    db.prepare('INSERT INTO lyrics (track_id, plain_lyrics) VALUES (?, ?)').run('track-1', 'Line one');
+    db.prepare('INSERT INTO track_artists (track_id, artist_id) VALUES (?, ?)').run(
+      'track-1',
+      'artist-1',
+    );
+    db.prepare('INSERT INTO track_artists (track_id, artist_id) VALUES (?, ?)').run(
+      'track-1',
+      'artist-2',
+    );
+    db.prepare('INSERT INTO lyrics (track_id, plain_lyrics) VALUES (?, ?)').run(
+      'track-1',
+      'Line one',
+    );
 
     expect(repository.findTrackDetails('track-1')).toEqual({
       id: 'track-1',

@@ -8,38 +8,38 @@
 import type { LLMRequest, LLMResponse, LLMStreamEvent, ModelInfo } from '../types';
 
 export abstract class BaseLLMProvider {
-    protected apiKey: string;
+  protected apiKey: string;
 
-    constructor(apiKey: string) {
-        this.apiKey = apiKey;
-    }
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
 
-    /** Generate a completion from the LLM. */
-    abstract generate(request: LLMRequest): Promise<LLMResponse>;
+  /** Generate a completion from the LLM. */
+  abstract generate(request: LLMRequest): Promise<LLMResponse>;
 
-    /**
-     * Generate a streaming completion from the LLM.
-     * Yields text deltas, then a final event with the complete response.
-     *
-     * Default implementation: falls back to `generate()` and yields the full content at once.
-     */
-    async *generateStream(request: LLMRequest): AsyncGenerator<LLMStreamEvent> {
-        const response = await this.generate(request);
-        yield { delta: response.content, done: false };
-        yield { delta: '', done: true, response };
-    }
+  /**
+   * Generate a streaming completion from the LLM.
+   * Yields text deltas, then a final event with the complete response.
+   *
+   * Default implementation: falls back to `generate()` and yields the full content at once.
+   */
+  async *generateStream(request: LLMRequest): AsyncGenerator<LLMStreamEvent> {
+    const response = await this.generate(request);
+    yield { delta: response.content, done: false };
+    yield { delta: '', done: true, response };
+  }
 
-    /** Get the default model for this provider. */
-    abstract get defaultModel(): string;
+  /** Get the default model for this provider. */
+  abstract get defaultModel(): string;
 
-    /** Get the provider name. */
-    abstract get providerName(): string;
+  /** Get the provider name. */
+  abstract get providerName(): string;
 
-    /** List dynamically fetchable models from this provider, if supported. */
-    abstract listModels(): Promise<string[]>;
+  /** List dynamically fetchable models from this provider, if supported. */
+  abstract listModels(): Promise<string[]>;
 
-    /** Get the static model catalog with tier/pricing metadata. */
-    abstract listModelCatalog(): ModelInfo[];
+  /** Get the static model catalog with tier/pricing metadata. */
+  abstract listModelCatalog(): ModelInfo[];
 }
 
 export default BaseLLMProvider;

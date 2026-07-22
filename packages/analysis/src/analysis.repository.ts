@@ -59,7 +59,8 @@ export class SQLiteAnalysisRepository implements AnalysisRepository {
 
   save(analysis: CanvasAnalysis): void {
     this.db
-      .prepare(`
+      .prepare(
+        `
         INSERT INTO canvas_analyses
           (id, source_id, source_type, source_text_hash, token_ast, annotations, layers, meta, model_used, provider_used, created_at, updated_at)
         VALUES
@@ -73,7 +74,8 @@ export class SQLiteAnalysisRepository implements AnalysisRepository {
           model_used = excluded.model_used,
           provider_used = excluded.provider_used,
           updated_at = excluded.updated_at
-      `)
+      `,
+      )
       .run(
         analysis.id,
         analysis.sourceId,
@@ -104,9 +106,7 @@ export class SQLiteAnalysisRepository implements AnalysisRepository {
 
   listBySourceType(sourceType: CanvasSourceType): CanvasAnalysis[] {
     const rows = this.db
-      .prepare(
-        'SELECT * FROM canvas_analyses WHERE source_type = ? ORDER BY created_at DESC',
-      )
+      .prepare('SELECT * FROM canvas_analyses WHERE source_type = ? ORDER BY created_at DESC')
       .all(sourceType) as AnalysisRow[];
 
     return rows.map(hydrateAnalysis);

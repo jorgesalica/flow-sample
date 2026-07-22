@@ -72,11 +72,11 @@ export class SynthesizerService {
         rsi: state.indicators.rsi?.toFixed(1) || 'N/A',
         macd: state.indicators.macd
           ? {
-            value: state.indicators.macd.value.toFixed(4),
-            signal: state.indicators.macd.signal.toFixed(4),
-            histogram: state.indicators.macd.histogram.toFixed(4),
-            bias: state.indicators.macd.histogram > 0 ? 'Bullish' : 'Bearish',
-          }
+              value: state.indicators.macd.value.toFixed(4),
+              signal: state.indicators.macd.signal.toFixed(4),
+              histogram: state.indicators.macd.histogram.toFixed(4),
+              bias: state.indicators.macd.histogram > 0 ? 'Bullish' : 'Bearish',
+            }
           : 'N/A',
       },
     };

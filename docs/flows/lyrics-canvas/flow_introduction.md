@@ -5,9 +5,9 @@
 
 ## The Problem
 
-Lyrics exist in music apps as **dead text**. A wall of words disconnected from the music they serve. You read them, but you can't *see* the chord that shifts the emotion on "soñarla", the belt technique that makes "música" hit differently, or the production choice that strips the instruments before "No, enciendan la radio."
+Lyrics exist in music apps as **dead text**. A wall of words disconnected from the music they serve. You read them, but you can't _see_ the chord that shifts the emotion on "soñarla", the belt technique that makes "música" hit differently, or the production choice that strips the instruments before "No, enciendan la radio."
 
-The existing Lyrics Flow fetches and displays lyrics. The AI Interpretation feature explains *what* a song means. But neither lets you **interact with the text as a musical object**.
+The existing Lyrics Flow fetches and displays lyrics. The AI Interpretation feature explains _what_ a song means. But neither lets you **interact with the text as a musical object**.
 
 ## The Solution
 
@@ -15,11 +15,11 @@ A **Canvas** — a workspace where lyrics become a system of interactive tokens.
 
 The core insight: **separation of concerns, visually**. Instead of one AI-generated essay about the song, the Canvas provides three independent lenses:
 
-| Layer | What it reveals | Visual |
-| ----- | --------------- | ------ |
-| 🎸 **Harmony** | Where chords change, tonal shifts, key relationships | Chord symbols above tokens |
-| 🎤 **Vocal** | Technique, dynamics, phrasing decisions | Badges below tokens |
-| 🎛️ **Production** | Sound design, arrangement, mix changes | Margin annotations per section |
+| Layer             | What it reveals                                      | Visual                         |
+| ----------------- | ---------------------------------------------------- | ------------------------------ |
+| 🎸 **Harmony**    | Where chords change, tonal shifts, key relationships | Chord symbols above tokens     |
+| 🎤 **Vocal**      | Technique, dynamics, phrasing decisions              | Badges below tokens            |
+| 🎛️ **Production** | Sound design, arrangement, mix changes               | Margin annotations per section |
 
 Each layer can be toggled independently. Combined, they paint a complete picture of a song's construction.
 
@@ -47,11 +47,11 @@ flowchart TD
 
 The system is built around three independent centers of gravity. Each evolves separately, can be reused across different contexts, and is tested in isolation.
 
-| Pillar | Responsibility | Location | Reusable for |
-| ------ | -------------- | -------- | ------------ |
-| **Structured Intelligence** | `generateObject<T>()`, Zod validation, provider-agnostic | `@flows/core/llm` | Any flow needing structured JSON from an LLM |
-| **Musical Domain** | Tokenizer, musical schemas, prompts, domain types | `@flows/lyrics` (backend) | Different analyses, song sources, contextual meaning |
-| **Canvas Renderer** | Token rendering, layer toggles, tooltips, interactions | `@flows/ui` (components) | User-written text, poetry, any tokenized content |
+| Pillar                      | Responsibility                                           | Location                  | Reusable for                                         |
+| --------------------------- | -------------------------------------------------------- | ------------------------- | ---------------------------------------------------- |
+| **Structured Intelligence** | `generateObject<T>()`, Zod validation, provider-agnostic | `@flows/core/llm`         | Any flow needing structured JSON from an LLM         |
+| **Musical Domain**          | Tokenizer, musical schemas, prompts, domain types        | `@flows/lyrics` (backend) | Different analyses, song sources, contextual meaning |
+| **Canvas Renderer**         | Token rendering, layer toggles, tooltips, interactions   | `@flows/ui` (components)  | User-written text, poetry, any tokenized content     |
 
 > The Canvas Renderer doesn't know about music. It knows about **tokens with typed annotations and toggleable layers**. This is what enables extending to user-written text in the future.
 
@@ -69,10 +69,10 @@ flowchart LR
 
 **Separated databases** — canvas concerns don't pollute music data:
 
-| Database | Stores | Owned by |
-| -------- | ------ | -------- |
-| `music.db` | Tracks, artists, lyrics, interpretation | Spotify + Lyrics Flow (existing) |
-| `canvas.db` | Token ASTs, annotations, analysis metadata | Canvas (new, independent) |
+| Database    | Stores                                     | Owned by                         |
+| ----------- | ------------------------------------------ | -------------------------------- |
+| `music.db`  | Tracks, artists, lyrics, interpretation    | Spotify + Lyrics Flow (existing) |
+| `canvas.db` | Token ASTs, annotations, analysis metadata | Canvas (new, independent)        |
 
 Both inputs (token AST) and outputs (annotations) are persisted. This creates a **trail** — the analysis becomes a baseline that evolves with use. The canvas DB can be reset independently without affecting lyrics data.
 
@@ -95,14 +95,14 @@ For a concrete example with a real song, see [use-case.md](./use-case.md).
 
 ## Tech Stack
 
-| Layer | Technology | Why |
-| ----- | ---------- | --- |
-| **Tokenizer** | TypeScript (server-side) | Deterministic text splitting — no AI needed |
-| **AI Analysis** | `@flows/core/llm` + Structured Outputs | JSON schema enforcement, multi-provider |
-| **Validation** | Zod | Schema validation for LLM responses |
-| **Rendering** | Svelte 5 + CSS | HTML-first. Each token is a `<span>` with data attributes |
-| **Persistence** | SQLite (existing) | New table, same database |
-| **Visual Layers** | CSS custom properties + data attributes | Layers toggle via CSS class, no re-render |
+| Layer             | Technology                              | Why                                                       |
+| ----------------- | --------------------------------------- | --------------------------------------------------------- |
+| **Tokenizer**     | TypeScript (server-side)                | Deterministic text splitting — no AI needed               |
+| **AI Analysis**   | `@flows/core/llm` + Structured Outputs  | JSON schema enforcement, multi-provider                   |
+| **Validation**    | Zod                                     | Schema validation for LLM responses                       |
+| **Rendering**     | Svelte 5 + CSS                          | HTML-first. Each token is a `<span>` with data attributes |
+| **Persistence**   | SQLite (existing)                       | New table, same database                                  |
+| **Visual Layers** | CSS custom properties + data attributes | Layers toggle via CSS class, no re-render                 |
 
 ### Rendering Approach (v1)
 
@@ -111,12 +111,7 @@ Pure HTML/CSS. No canvas element, no WebGL, no p5.js.
 Each token is a `<span>` with data attributes:
 
 ```html
-<span
-  class="token"
-  data-id="t_012"
-  data-chord="B"
-  data-vocal="sustained note"
->soñarla</span>
+<span class="token" data-id="t_012" data-chord="B" data-vocal="sustained note">soñarla</span>
 ```
 
 Layers toggle visibility via CSS:

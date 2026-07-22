@@ -3,10 +3,7 @@ import test from 'node:test';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {
-  assertSideEffectFreeImport,
-  checkRuntimeManifest,
-} from './check-runtime-contracts.mjs';
+import { assertSideEffectFreeImport, checkRuntimeManifest } from './check-runtime-contracts.mjs';
 
 const validPackage = {
   name: '@flows/example',
@@ -79,10 +76,7 @@ test('accepts an import that leaves its working directory untouched', async () =
 test('rejects an import that writes to its working directory', async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'runtime-contract-test-'));
   const entrypoint = path.join(directory, 'unsafe.cjs');
-  await writeFile(
-    entrypoint,
-    "require('node:fs').writeFileSync('created.db', 'side effect');",
-  );
+  await writeFile(entrypoint, "require('node:fs').writeFileSync('created.db', 'side effect');");
 
   try {
     await assert.rejects(

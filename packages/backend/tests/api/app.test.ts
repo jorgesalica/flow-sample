@@ -3,10 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { BoardApplication } from '@flows/board';
-import {
-  initializeAnalysisDatabase,
-  SQLiteAnalysisRepository,
-} from '@flows/analysis';
+import { initializeAnalysisDatabase, SQLiteAnalysisRepository } from '@flows/analysis';
 import { initializeMusicDatabase } from '@flows/music';
 import { BOARD_LAYOUT_VERSION, type BoardsSnapshot } from '@flows/shared';
 import Database from 'better-sqlite3';
@@ -144,12 +141,12 @@ describe('backend app', () => {
   });
 
   it('sanitizes unexpected route failures', async () => {
-    const app = createApp(
-      makeConfig(),
-      hostOptions(path.join(tmpdir(), 'missing-ui-build')),
-    ).get('/api/failure', () => {
-      throw new Error('provider credentials leaked');
-    });
+    const app = createApp(makeConfig(), hostOptions(path.join(tmpdir(), 'missing-ui-build'))).get(
+      '/api/failure',
+      () => {
+        throw new Error('provider credentials leaked');
+      },
+    );
 
     const response = await app.handle(new Request('http://localhost/api/failure'));
 

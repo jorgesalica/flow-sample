@@ -72,9 +72,7 @@ describe('Canvas routes', () => {
   });
 
   it('maps analysis failures to a sanitized 503 response', async () => {
-    service.create.mockRejectedValue(
-      new CanvasAnalysisError('[mistral] secret provider response'),
-    );
+    service.create.mockRejectedValue(new CanvasAnalysisError('[mistral] secret provider response'));
 
     const response = await request('/api/canvas', {
       method: 'POST',

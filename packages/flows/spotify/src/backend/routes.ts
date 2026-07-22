@@ -14,10 +14,7 @@ import {
   spotifyTrackSchema,
   spotifyYearCountSchema,
 } from './schemas';
-import {
-  createSpotifyService,
-  type SpotifyApplication,
-} from './spotify.service';
+import { createSpotifyService, type SpotifyApplication } from './spotify.service';
 
 export type { SpotifyRoutesConfig } from './config';
 
@@ -91,14 +88,10 @@ export function createSpotifyRoutes(
     .get('/tracks', () => service.getTracks(), {
       response: { 200: t.Array(spotifyTrackSchema) },
     })
-    .get(
-      '/tracks/search',
-      ({ query }) => service.searchTracks(query),
-      {
-        query: spotifySearchQuerySchema,
-        response: { 200: spotifyPaginatedTracksSchema },
-      },
-    )
+    .get('/tracks/search', ({ query }) => service.searchTracks(query), {
+      query: spotifySearchQuerySchema,
+      response: { 200: spotifyPaginatedTracksSchema },
+    })
     .get(
       '/tracks/:id',
       async ({ params, set }) => {
@@ -150,8 +143,5 @@ function classifySpotifyFailure(error: unknown): {
 }
 
 function logExternalFailure(error: unknown, message: string): void {
-  log.error(
-    { error: error instanceof Error ? error.message : String(error) },
-    message,
-  );
+  log.error({ error: error instanceof Error ? error.message : String(error) }, message);
 }

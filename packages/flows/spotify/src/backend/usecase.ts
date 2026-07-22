@@ -17,7 +17,7 @@ export class SpotifyUseCase {
     private source: SpotifySourcePort,
     private repository: TrackRepository,
     private readonly rebuildSearchIndex: () => void = () => undefined,
-  ) { }
+  ) {}
 
   async fetchAndSave(options: SpotifyUseCaseOptions = {}): Promise<{ count: number }> {
     const limit = options.limit ?? 20;
@@ -50,10 +50,13 @@ export class SpotifyUseCase {
 
     // Fetch details from Spotify (genres + images)
     const detailsMap = await this.source.fetchArtistDetails(artistIds);
-    log.info({
-      requested: artistIds.length,
-      received: detailsMap.size
-    }, 'Batch enrichment summary');
+    log.info(
+      {
+        requested: artistIds.length,
+        received: detailsMap.size,
+      },
+      'Batch enrichment summary',
+    );
 
     // Map details back to tracks
     return tracks.map((track) => ({
@@ -62,14 +65,18 @@ export class SpotifyUseCase {
         const details = detailsMap.get(artist.id);
 
         if (!details) {
-          log.warn({ artistId: artist.id, artistName: artist.name }, 'No enrichment data for artist');
+          log.warn(
+            { artistId: artist.id, artistName: artist.name },
+            'No enrichment data for artist',
+          );
           return artist; // Keep original if no details found
         }
 
         // Merge original with enriched details, but don't wipe name or id
         return {
           ...artist,
-          genres: details.genres && details.genres.length > 0 ? details.genres : (artist.genres || []),
+          genres:
+            details.genres && details.genres.length > 0 ? details.genres : artist.genres || [],
           imageUrl: details.imageUrl || artist.imageUrl,
         };
       }),

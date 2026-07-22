@@ -24,25 +24,25 @@
 
 ### 2. El Análisis Estructurado (Interpretación del Sistema)
 
-* **Contexto 4H**:
-  * Tendencia Bajista clara.
-  * Precio lejos de la EMA 20 y chocando con resistencia previa.
-  * **Contradicción**: MACD marcaba fuerza alcista (cruce lejano de 0), pero el trader priorizó la Acción de Precio (velas) sobre el indicador.
+- **Contexto 4H**:
+  - Tendencia Bajista clara.
+  - Precio lejos de la EMA 20 y chocando con resistencia previa.
+  - **Contradicción**: MACD marcaba fuerza alcista (cruce lejano de 0), pero el trader priorizó la Acción de Precio (velas) sobre el indicador.
 
-* **Contexto 1H**:
-  * Patrón: **Doble Techo** en la resistencia.
-  * MACD: Perdiendo fuerza (histograma decreciente).
+- **Contexto 1H**:
+  - Patrón: **Doble Techo** en la resistencia.
+  - MACD: Perdiendo fuerza (histograma decreciente).
 
-* **Contexto 15m**:
-  * La resistencia coincide con la EMA 200 (Confluencia fuerte).
-  * MACD "chato" (lateralización).
+- **Contexto 15m**:
+  - La resistencia coincide con la EMA 200 (Confluencia fuerte).
+  - MACD "chato" (lateralización).
 
 ### 3. El Plan vs Ejecución (El Error Humano)
 
-* **Plan**: Esperar ruptura confirmada por patrón de vela + histograma MACD.
-* **Acción Real**: Entró ANTES de la confirmación (Ansiedad).
-* **Gestión de Riesgo**: Colocó un Stop Loss fijo del 10% (no estructurado).
-* **Desenlace**: El mercado activó el SL corto (-10%) y luego bajó un 28% a favor.
+- **Plan**: Esperar ruptura confirmada por patrón de vela + histograma MACD.
+- **Acción Real**: Entró ANTES de la confirmación (Ansiedad).
+- **Gestión de Riesgo**: Colocó un Stop Loss fijo del 10% (no estructurado).
+- **Desenlace**: El mercado activó el SL corto (-10%) y luego bajó un 28% a favor.
 
 ---
 
@@ -51,14 +51,14 @@
 De este caso extraemos reglas críticas para mejorar el `Cascade Wizard`:
 
 1. **Jerarquía de Señales**:
-    * *Regla*: Acción de Precio (Velas/Estructura) > Indicadores (MACD).
-    * *Ajuste*: Si las velas muestran rechazo (mechas) en resistencia, ignorar divergencia alcista débil del MACD.
+   - _Regla_: Acción de Precio (Velas/Estructura) > Indicadores (MACD).
+   - _Ajuste_: Si las velas muestran rechazo (mechas) en resistencia, ignorar divergencia alcista débil del MACD.
 
 2. **Gestión de Stop Loss**:
-    * *Fallo*: Usar un % fijo (10%) ignoró la volatilidad del momento.
-    * *Solución*: El Agente debe calcular el SL basado en **Estructura** (arriba del último máximo) o **ATR**, nunca un porcentaje arbitrario. Si el SL técnico es muy caro (>10%), se reduce el tamaño de la posición, no se acerca el SL.
+   - _Fallo_: Usar un % fijo (10%) ignoró la volatilidad del momento.
+   - _Solución_: El Agente debe calcular el SL basado en **Estructura** (arriba del último máximo) o **ATR**, nunca un porcentaje arbitrario. Si el SL técnico es muy caro (>10%), se reduce el tamaño de la posición, no se acerca el SL.
 
 3. **El Factor "Gatillo"**:
-    * *Ajuste*: El paso de 15m debe buscar explícitamente "Cierre de vela por debajo del soporte" (Confirmación) antes de sugerir entrar. Evitar "Entradas por toque".
+   - _Ajuste_: El paso de 15m debe buscar explícitamente "Cierre de vela por debajo del soporte" (Confirmación) antes de sugerir entrar. Evitar "Entradas por toque".
 
 ---

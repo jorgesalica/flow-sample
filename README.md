@@ -67,16 +67,17 @@ The backend runs on `http://localhost:4173`; the Vite UI runs on
 
 ## Commands
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm run bootstrap` | Install from the lockfile and build generated workspace entrypoints |
-| `pnpm dev` | Run every flow, backend, and UI with hot reload |
-| `pnpm build` | Clean stale build output, build all packages, and import-smoke the compiled backend |
-| `pnpm verify` | Run docs/architecture checks, lint, types, Svelte check, and tests |
-| `pnpm test:coverage` | Run every coverage-bearing package and print a deterministic aggregate |
-| `pnpm security:audit` | Fail on known high or critical production advisories |
-| `pnpm --filter @flows/ui test:e2e` | Run Playwright journeys |
-| `pnpm format` | Format packages that provide a formatter |
+| Command                            | Purpose                                                                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------- |
+| `pnpm run bootstrap`               | Install from the lockfile and build generated workspace entrypoints                 |
+| `pnpm dev`                         | Run every flow, backend, and UI with hot reload                                     |
+| `pnpm build`                       | Clean stale build output, build all packages, and import-smoke the compiled backend |
+| `pnpm verify`                      | Run repository contracts, secret scan, format, lint, types, Svelte check, and tests |
+| `pnpm test:coverage`               | Run every coverage-bearing package and print a deterministic aggregate              |
+| `pnpm security:audit`              | Fail on known high or critical production advisories                                |
+| `pnpm --filter @flows/ui test:e2e` | Run Playwright journeys                                                             |
+| `pnpm format`                      | Format every supported file in the workspace                                        |
+| `pnpm clean:artifacts`             | Remove generated build, coverage, and Playwright output                             |
 
 ## Configuration
 
@@ -93,14 +94,14 @@ runtime composition. Never commit `.env` or credentials.
 
 ## Stack
 
-| Layer | Technology |
-| --- | --- |
-| UI | SvelteKit, Svelte 5 runes, Vite 7, Tailwind CSS 4, Chart.js |
-| API | ElysiaJS on Node.js, TypeBox validation |
-| Data | better-sqlite3 |
-| Typed RPC | Eden Treaty |
-| Tests | Vitest, Testing Library, Playwright, Node test runner |
-| Logging | Pino |
+| Layer     | Technology                                                  |
+| --------- | ----------------------------------------------------------- |
+| UI        | SvelteKit, Svelte 5 runes, Vite 7, Tailwind CSS 4, Chart.js |
+| API       | ElysiaJS on Node.js, TypeBox validation                     |
+| Data      | better-sqlite3                                              |
+| Typed RPC | Eden Treaty                                                 |
+| Tests     | Vitest, Testing Library, Playwright, Node test runner       |
+| Logging   | Pino                                                        |
 
 ## Documentation
 
@@ -119,15 +120,17 @@ Work happens on short-lived branches through PRs to `main`; there is no `develop
 branch or deployment pipeline. Before pushing non-trivial work, run:
 
 ```bash
-pnpm verify
 pnpm build
+pnpm verify
+pnpm test:coverage
 ```
 
 CI performs a clean install, production dependency audit, full build with a
-compiled-runtime smoke check, static/tooling checks, and ratcheted package coverage on
-every PR and push to `main`. Dependabot checks compatible workspace and GitHub Actions
-updates weekly. UI behavior changes also require focused Playwright coverage or a
-documented manual desktop/mobile verification.
+compiled-runtime smoke check, the canonical verification contract, ratcheted package
+coverage, and the complete deterministic Playwright suite on every PR and push to
+`main`. Dependabot checks compatible minor/patch workspace updates and GitHub Actions
+weekly; dependency majors require their own issue. UI behavior changes also require
+focused local Playwright coverage or documented desktop/mobile verification.
 
 ## License
 

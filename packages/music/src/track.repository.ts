@@ -217,12 +217,20 @@ export class SQLiteTrackRepository implements TrackRepository {
   }
 
   async search(query: string, limit: number = 20): Promise<Track[]> {
-    const rows = this.db.prepare(`SELECT t.* FROM tracks t JOIN tracks_fts fts ON fts.track_id = t.id WHERE tracks_fts MATCH ? LIMIT ?`).all(`${query}*`, limit) as TrackRow[];
+    const rows = this.db
+      .prepare(
+        `SELECT t.* FROM tracks t JOIN tracks_fts fts ON fts.track_id = t.id WHERE tracks_fts MATCH ? LIMIT ?`,
+      )
+      .all(`${query}*`, limit) as TrackRow[];
     return Promise.all(rows.map((r) => this.hydrate(r)));
   }
 
   async findByGenre(genre: string, limit: number = 50): Promise<Track[]> {
-    const rows = this.db.prepare(`SELECT DISTINCT t.* FROM tracks t JOIN track_artists ta ON ta.track_id = t.id JOIN artist_genres ag ON ag.artist_id = ta.artist_id WHERE ag.genre = ? LIMIT ?`).all(genre, limit) as TrackRow[];
+    const rows = this.db
+      .prepare(
+        `SELECT DISTINCT t.* FROM tracks t JOIN track_artists ta ON ta.track_id = t.id JOIN artist_genres ag ON ag.artist_id = ta.artist_id WHERE ag.genre = ? LIMIT ?`,
+      )
+      .all(genre, limit) as TrackRow[];
     return Promise.all(rows.map((r) => this.hydrate(r)));
   }
 
@@ -255,7 +263,8 @@ export class SQLiteTrackRepository implements TrackRepository {
   }
 
   async findById(id: string): Promise<Track | null> {
-    const row = this.db.prepare('SELECT * FROM tracks WHERE id = ?').get(id) as TrackRow | undefined;
+    const row = this.db.prepare('SELECT * FROM tracks WHERE id = ?').get(id) as
+      TrackRow | undefined;
     if (!row) return null;
     return this.hydrate(row);
   }

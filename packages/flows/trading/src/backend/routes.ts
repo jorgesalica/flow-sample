@@ -1,9 +1,5 @@
 import { createLLMClient, logger } from '@flows/core';
-import type {
-  AdvisorNote,
-  AdvisorState,
-  TradingState as TradingStateDto,
-} from '@flows/shared';
+import type { AdvisorNote, AdvisorState, TradingState as TradingStateDto } from '@flows/shared';
 import { Elysia } from 'elysia';
 import { fetchKlines } from '../adapters/binance';
 import {
@@ -14,10 +10,7 @@ import {
 } from '../domain/errors';
 import { createTradingConfigFromEnv, type TradingRuntimeConfig } from './config';
 import { SqliteTradingReadRepository } from './repository';
-import {
-  createTradingPersistence,
-  type TradingPersistence,
-} from './database';
+import { createTradingPersistence, type TradingPersistence } from './database';
 import {
   AnalystService,
   getMentorService,
@@ -80,10 +73,9 @@ export function createTradingRouteDependencies(
   config: TradingRuntimeConfig,
   persistence: TradingPersistence = createTradingPersistence(),
 ): TradingRoutesDependencies {
-  const market = new TradingMarketService(
-    new SqliteTradingReadRepository(persistence),
-    { fetchKlines },
-  );
+  const market = new TradingMarketService(new SqliteTradingReadRepository(persistence), {
+    fetchKlines,
+  });
   const synthesizer = getSynthesizerService();
 
   return {
@@ -91,17 +83,12 @@ export function createTradingRouteDependencies(
       symbol: config.symbol,
       interval: config.interval,
     }),
-    mentor: getMentorService(
-      persistence,
-      config.symbol,
-      config.advisorAutoStart,
-    ),
+    mentor: getMentorService(persistence, config.symbol, config.advisorAutoStart),
     market,
     wizard: new TradingWizardService(config.symbol, {
       market,
       analyzer: {
-        analyzeCandles: (candles, symbol) =>
-          AnalystService.analyzeCandles(candles, symbol),
+        analyzeCandles: (candles, symbol) => AnalystService.analyzeCandles(candles, symbol),
       },
       synthesizer,
       createLlmClient: createLLMClient,
@@ -289,9 +276,7 @@ export function createTradingRoutes(
       '/insight',
       ({ query, set }) => {
         try {
-          const stored = dependencies.market.getLatestInsight(
-            query.symbol ?? config.symbol,
-          );
+          const stored = dependencies.market.getLatestInsight(query.symbol ?? config.symbol);
           if (!stored) {
             return {
               success: true as const,
@@ -301,8 +286,7 @@ export function createTradingRoutes(
               regime: null,
               tokensUsed: null,
               latencyMs: null,
-              message:
-                'No insights available yet. Enable advisor or generate one manually.',
+              message: 'No insights available yet. Enable advisor or generate one manually.',
             };
           }
           return { success: true as const, ...stored };
@@ -402,9 +386,7 @@ export function createTradingRoutes(
       const stream = new ReadableStream<Uint8Array>({
         start(controller) {
           const state = serializeTradingState(dependencies.trading.getState());
-          controller.enqueue(
-            encoder.encode(`event: state\ndata: ${JSON.stringify(state)}\n\n`),
-          );
+          controller.enqueue(encoder.encode(`event: state\ndata: ${JSON.stringify(state)}\n\n`));
 
           const onCandle = (candle: unknown): void => {
             if (isOpen) {
@@ -416,9 +398,7 @@ export function createTradingRoutes(
           const onCandleClosed = (candle: unknown): void => {
             if (isOpen) {
               controller.enqueue(
-                encoder.encode(
-                  `event: candleClosed\ndata: ${JSON.stringify(candle)}\n\n`,
-                ),
+                encoder.encode(`event: candleClosed\ndata: ${JSON.stringify(candle)}\n\n`),
               );
             }
           };
@@ -465,10 +445,7 @@ function serializeAdvisorState(state: MentorServiceState): AdvisorState {
 }
 
 function logFailure(error: unknown, message: string): void {
-  log.error(
-    { error: error instanceof Error ? error.message : String(error) },
-    message,
-  );
+  log.error({ error: error instanceof Error ? error.message : String(error) }, message);
 }
 
 export default createTradingRoutes;

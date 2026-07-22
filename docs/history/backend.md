@@ -264,18 +264,18 @@ pnpm -r run lint                   # Lint all
 
 ### New API Fields
 
-| Entity | New Field | Source |
-| ------ | --------- | ------ |
-| `Track` | `previewUrl` | Spotify 30s audio clip |
-| `Track` | `spotifyUrl` | Deep link to Spotify app |
-| `Album` | `imageUrl` | Album cover (300px) |
-| `Artist` | `imageUrl` | Artist photo (160px) |
+| Entity   | New Field    | Source                   |
+| -------- | ------------ | ------------------------ |
+| `Track`  | `previewUrl` | Spotify 30s audio clip   |
+| `Track`  | `spotifyUrl` | Deep link to Spotify app |
+| `Album`  | `imageUrl`   | Album cover (300px)      |
+| `Artist` | `imageUrl`   | Artist photo (160px)     |
 
 ### New Filters
 
-| Filter | Param |
-| ------ | ----- |
-| Has Preview | `?hasPreview=true` |
+| Filter         | Param               |
+| -------------- | ------------------- |
+| Has Preview    | `?hasPreview=true`  |
 | Min Popularity | `?minPopularity=30` |
 
 ### Critical Bug Fix: INSERT OR REPLACE CASCADE
@@ -335,13 +335,13 @@ async fetchArtistGenres(artistIds: string[]): Promise<Map<string, string[]>>
 
 ### New API Endpoints
 
-| Endpoint | Description |
-| -------- | ----------- |
+| Endpoint                         | Description                  |
+| -------------------------------- | ---------------------------- |
 | `GET /api/spotify/tracks/search` | Paginated, filterable search |
-| `GET /api/spotify/tracks/:id` | Single track by ID |
-| `GET /api/spotify/genres` | All genres with counts |
-| `GET /api/spotify/years` | All years with counts |
-| `GET /api/spotify/stats` | Summary statistics |
+| `GET /api/spotify/tracks/:id`    | Single track by ID           |
+| `GET /api/spotify/genres`        | All genres with counts       |
+| `GET /api/spotify/years`         | All years with counts        |
+| `GET /api/spotify/stats`         | Summary statistics           |
 
 ### SQLite Improvements
 
@@ -375,9 +375,7 @@ app.get('/api/status', (c) => c.json({ success: true }));
 **Stage 3:** Elysia + Layered Architecture (current)
 
 ```typescript
-const app = new Elysia({ adapter: node() })
-  .use(createSpotifyRoutes(config))
-  .listen({ port: 4173 });
+const app = new Elysia({ adapter: node() }).use(createSpotifyRoutes(config)).listen({ port: 4173 });
 ```
 
 ### Persistence: JSON → SQLite

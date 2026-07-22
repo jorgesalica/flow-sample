@@ -1,10 +1,4 @@
-import type {
-  GenreCount,
-  PaginatedResult,
-  Track,
-  TrackRepository,
-  YearCount,
-} from '@flows/shared';
+import type { GenreCount, PaginatedResult, Track, TrackRepository, YearCount } from '@flows/shared';
 
 /**
  * Port for fetching tracks from external source

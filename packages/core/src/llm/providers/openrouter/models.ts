@@ -9,14 +9,14 @@ import type { ModelInfo } from '../../types';
  * Base URL: https://openrouter.ai/api
  */
 export const OPENROUTER_MODELS: ModelInfo[] = [
-    {
-        id: 'openrouter/free',
-        name: 'Free Models Router',
-        tier: 'high',
-        pricing: 'free',
-        contextWindow: 200_000,
-        description: 'Routes each request to a currently available free model.',
-    },
+  {
+    id: 'openrouter/free',
+    name: 'Free Models Router',
+    tier: 'high',
+    pricing: 'free',
+    contextWindow: 200_000,
+    description: 'Routes each request to a currently available free model.',
+  },
 ];
 
 export const OPENROUTER_DEFAULT_MODEL = 'openrouter/free';

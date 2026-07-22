@@ -16,7 +16,7 @@ async function findPackageManifests(directory) {
     if (IGNORED_DIRECTORIES.has(entry.name)) continue;
     const target = path.join(directory, entry.name);
     if (entry.isDirectory()) {
-      manifests.push(...await findPackageManifests(target));
+      manifests.push(...(await findPackageManifests(target)));
     } else if (entry.name === 'package.json') {
       manifests.push(target);
     }
@@ -35,7 +35,9 @@ export async function discoverCoveragePackages(packagesRoot = PACKAGES) {
     const coverageScript = manifest.scripts?.['test:coverage'];
 
     if (typeof testScript === 'string' && testScript.includes('vitest') && !coverageScript) {
-      throw new Error(`${manifest.name ?? manifestPath} runs Vitest but has no test:coverage script`);
+      throw new Error(
+        `${manifest.name ?? manifestPath} runs Vitest but has no test:coverage script`,
+      );
     }
 
     if (typeof coverageScript === 'string') {
@@ -77,7 +79,9 @@ function runPackageCoverage(packageInfo, root) {
 
   if (result.error) throw result.error;
   if (result.status !== 0) {
-    throw new Error(`${packageInfo.name} coverage failed with exit code ${result.status ?? 'unknown'}`);
+    throw new Error(
+      `${packageInfo.name} coverage failed with exit code ${result.status ?? 'unknown'}`,
+    );
   }
 }
 
@@ -128,15 +132,19 @@ export function formatCoverageSummary(rows) {
     ['Functions', 'Functions'.length],
     ['Lines', 'Lines'.length],
   ];
-  const header = columns.map(([label, width], index) => index === 0 ? label.padEnd(width) : label.padStart(width)).join('  ');
+  const header = columns
+    .map(([label, width], index) => (index === 0 ? label.padEnd(width) : label.padStart(width)))
+    .join('  ');
   const divider = columns.map(([, width]) => '-'.repeat(width)).join('  ');
-  const body = rows.map((row) => [
-    row.name.padEnd(columns[0][1]),
-    metricLabel(row.statements).padStart(columns[1][1]),
-    metricLabel(row.branches).padStart(columns[2][1]),
-    metricLabel(row.functions).padStart(columns[3][1]),
-    metricLabel(row.lines).padStart(columns[4][1]),
-  ].join('  '));
+  const body = rows.map((row) =>
+    [
+      row.name.padEnd(columns[0][1]),
+      metricLabel(row.statements).padStart(columns[1][1]),
+      metricLabel(row.branches).padStart(columns[2][1]),
+      metricLabel(row.functions).padStart(columns[3][1]),
+      metricLabel(row.lines).padStart(columns[4][1]),
+    ].join('  '),
+  );
 
   return [header, divider, ...body].join('\n');
 }

@@ -9,17 +9,17 @@ through a typed **Eden Treaty** client. It is organized as a set of vertical **f
 
 ## Tech Stack
 
-| Technology         | Version | Purpose                                     |
-| ------------------ | ------- | ------------------------------------------- |
-| **SvelteKit**      | 2.x     | App framework + file-based routing          |
-| **Svelte**         | 5.x     | UI framework (runes)                        |
-| **adapter-static** | 3.x     | Builds a client-rendered SPA (`ssr = false`) |
-| **Vite**           | 7.x     | Build tool & dev server                     |
-| **Tailwind CSS**   | 4.x     | Utility-first styling (`@tailwindcss/vite`) |
-| **Eden Treaty**    | 1.x     | End-to-end typed API client                 |
-| **TypeScript**     | 5.x     | Type safety                                 |
-| **Vitest + Testing Library** | 4.x | Component & unit tests (jsdom)         |
-| **Playwright**     | 1.x     | E2E                                         |
+| Technology                   | Version | Purpose                                      |
+| ---------------------------- | ------- | -------------------------------------------- |
+| **SvelteKit**                | 2.x     | App framework + file-based routing           |
+| **Svelte**                   | 5.x     | UI framework (runes)                         |
+| **adapter-static**           | 3.x     | Builds a client-rendered SPA (`ssr = false`) |
+| **Vite**                     | 7.x     | Build tool & dev server                      |
+| **Tailwind CSS**             | 4.x     | Utility-first styling (`@tailwindcss/vite`)  |
+| **Eden Treaty**              | 1.x     | End-to-end typed API client                  |
+| **TypeScript**               | 5.x     | Type safety                                  |
+| **Vitest + Testing Library** | 4.x     | Component & unit tests (jsdom)               |
+| **Playwright**               | 1.x     | E2E                                          |
 
 ## Rendering model
 
@@ -192,8 +192,8 @@ navigation without mutating shared browser history.
 
 | Script          | Command                                   |
 | --------------- | ----------------------------------------- |
-| `dev`           | `vite dev` (port 5173)                     |
-| `build`         | `vite build` (adapter-static → `build/`)   |
+| `dev`           | `vite dev` (port 5173)                    |
+| `build`         | `vite build` (adapter-static → `build/`)  |
 | `preview`       | `vite preview`                            |
 | `check`         | `svelte-check --tsconfig ./tsconfig.json` |
 | `test`          | `vitest run`                              |

@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  LYRICS_CANVAS_ERROR_CODES,
-  type CanvasAnalysis,
-} from '@flows/shared';
+import { LYRICS_CANVAS_ERROR_CODES, type CanvasAnalysis } from '@flows/shared';
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -42,9 +39,7 @@ function makeAnalysis(): CanvasAnalysis {
 }
 
 function request(path: string, method = 'GET'): Promise<Response> {
-  return createCanvasRoutes(service).handle(
-    new Request(`http://localhost${path}`, { method }),
-  );
+  return createCanvasRoutes(service).handle(new Request(`http://localhost${path}`, { method }));
 }
 
 describe('Lyrics canvas routes', () => {
@@ -114,9 +109,7 @@ describe('Lyrics canvas routes', () => {
   });
 
   it('maps provider failures to a sanitized 503 response', async () => {
-    mocks.analyze.mockRejectedValue(
-      new Error('[mistral] API error 400: secret provider response'),
-    );
+    mocks.analyze.mockRejectedValue(new Error('[mistral] API error 400: secret provider response'));
 
     const response = await request('/track-1/canvas/analyze', 'POST');
 

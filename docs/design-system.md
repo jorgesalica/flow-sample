@@ -10,11 +10,11 @@ Theme definitions live in `packages/ui/src/app.css`; theme state and persistence
 `packages/ui/src/lib/theme.ts`. The application root owns `data-theme` and the navbar
 `ThemeSwitcher` offers three palettes:
 
-| Theme | Intent | Primary accent |
-| --- | --- | --- |
-| `galaxy` | cool analytical default | cyan |
-| `fire` | warm high-energy alternative | rose |
-| `organic` | natural exploratory alternative | lime |
+| Theme     | Intent                          | Primary accent |
+| --------- | ------------------------------- | -------------- |
+| `galaxy`  | cool analytical default         | cyan           |
+| `fire`    | warm high-energy alternative    | rose           |
+| `organic` | natural exploratory alternative | lime           |
 
 The selected value is stored under `flow-sample:theme`. Applying a theme updates the root
 attribute and dispatches `flow-sample:theme-change`, allowing browser-rendered charts to
@@ -26,17 +26,17 @@ reapply computed CSS colors without recreating flow state. A flow must not set i
 Components consume `--ui-*` variables or their Tailwind v4 semantic aliases. Palette
 names are valid only in the theme definitions and selector metadata.
 
-| Token group | Purpose |
-| --- | --- |
-| `--ui-background`, `--ui-nav` | page and persistent navigation surfaces |
-| `--ui-surface`, `--ui-surface-raised`, `--ui-surface-subtle` | component hierarchy |
-| `--ui-border`, `--ui-border-strong` | standard and emphasized boundaries |
-| `--ui-text`, `--ui-text-muted` | primary and secondary copy |
-| `--ui-accent`, `--ui-accent-strong` | selection and primary action |
-| `--ui-focus` | keyboard focus indicator |
-| `--ui-danger`, `--ui-success`, `--ui-warning` | semantic status feedback |
-| `--ui-chart-1` through `--ui-chart-6` | ordered visualization series |
-| `--ui-overlay`, `--ui-shadow` | modal/drawer layering and elevation |
+| Token group                                                  | Purpose                                 |
+| ------------------------------------------------------------ | --------------------------------------- |
+| `--ui-background`, `--ui-nav`                                | page and persistent navigation surfaces |
+| `--ui-surface`, `--ui-surface-raised`, `--ui-surface-subtle` | component hierarchy                     |
+| `--ui-border`, `--ui-border-strong`                          | standard and emphasized boundaries      |
+| `--ui-text`, `--ui-text-muted`                               | primary and secondary copy              |
+| `--ui-accent`, `--ui-accent-strong`                          | selection and primary action            |
+| `--ui-focus`                                                 | keyboard focus indicator                |
+| `--ui-danger`, `--ui-success`, `--ui-warning`                | semantic status feedback                |
+| `--ui-chart-1` through `--ui-chart-6`                        | ordered visualization series            |
+| `--ui-overlay`, `--ui-shadow`                                | modal/drawer layering and elevation     |
 
 Tailwind aliases include `app`, `foreground`, `surface`, `surface-raised`,
 `surface-subtle`, `accent`, `border`, `muted`, `danger`, `success`, and `warning`.
@@ -108,5 +108,5 @@ must not import or branch on flow-specific modules.
 `pnpm check:architecture` scans production UI sources, including CSS, and rejects legacy
 visual utilities, retired variables, gradients, and Svelte accessibility suppressions.
 `pnpm --filter @flows/ui check` must finish with zero errors and zero warnings. The full
-delivery gate remains `pnpm verify`, `pnpm build`, and applicable Playwright or documented
+delivery gate remains `pnpm verify`, `pnpm build`, `pnpm test:coverage`, and applicable Playwright or documented
 desktop/mobile verification.

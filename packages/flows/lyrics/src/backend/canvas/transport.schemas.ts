@@ -1,10 +1,7 @@
 import { LYRICS_CANVAS_ERROR_CODES } from '@flows/shared';
 import { t } from 'elysia';
 
-const canvasSourceTypeSchema = t.Union([
-  t.Literal('track'),
-  t.Literal('user_text'),
-]);
+const canvasSourceTypeSchema = t.Union([t.Literal('track'), t.Literal('user_text')]);
 
 const tokenSchema = t.Object({
   id: t.String(),

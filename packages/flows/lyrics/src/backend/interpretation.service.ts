@@ -54,11 +54,7 @@ export class LyricsInterpretationService implements LyricsInterpretationApplicat
     }
 
     const lyrics = await this.lyricsRepository.findByTrackId(trackId);
-    if (
-      !lyrics ||
-      lyrics.status !== LYRICS_STATUSES.FOUND ||
-      !lyrics.plainLyrics
-    ) {
+    if (!lyrics || lyrics.status !== LYRICS_STATUSES.FOUND || !lyrics.plainLyrics) {
       throw new LyricsNotFoundError(trackId, 'Lyrics not found for this track');
     }
 

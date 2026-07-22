@@ -34,7 +34,9 @@ vi.mock('@flows/core', () => ({
 }));
 
 const persistence: TradingPersistence = {
-  insertAdvisorLog: (log) => { insertAdvisorLogRun(log); },
+  insertAdvisorLog: (log) => {
+    insertAdvisorLogRun(log);
+  },
   getLatestAdvisorLog: (symbol) => getLatestAdvisorLogGet(symbol) ?? null,
   upsertCandle: vi.fn(),
   getLastCandles: vi.fn(() => []),

@@ -1,14 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  LYRICS_STATUSES,
-  type Track,
-  type TrackRepository,
-} from '@flows/shared';
+import { LYRICS_STATUSES, type Track, type TrackRepository } from '@flows/shared';
 import { LyricsFetchError, LyricsNotFoundError } from '../../src/domain/errors';
-import type {
-  LyricsRepository,
-  LyricsSource,
-} from '../../src/domain/ports';
+import type { LyricsRepository, LyricsSource } from '../../src/domain/ports';
 import { LyricsService } from '../../src/backend/lyrics.service';
 
 const track: Track = {
@@ -108,9 +101,7 @@ describe('LyricsService', () => {
     vi.mocked(trackRepository.findById).mockResolvedValueOnce(null);
     await expect(service.getLyrics('missing')).rejects.toBeInstanceOf(LyricsNotFoundError);
 
-    vi.mocked(source.fetchLyrics).mockRejectedValueOnce(
-      new Error('secret provider response'),
-    );
+    vi.mocked(source.fetchLyrics).mockRejectedValueOnce(new Error('secret provider response'));
     await expect(service.getLyrics(track.id)).rejects.toBeInstanceOf(LyricsFetchError);
   });
 
@@ -120,9 +111,7 @@ describe('LyricsService', () => {
       syncedLyrics: null,
       instrumental: false,
     });
-    vi.mocked(lyricsRepository.save).mockRejectedValue(
-      new Error('database write failed'),
-    );
+    vi.mocked(lyricsRepository.save).mockRejectedValue(new Error('database write failed'));
 
     await expect(service.getLyrics(track.id)).rejects.toThrow('database write failed');
   });
@@ -161,9 +150,7 @@ describe('LyricsService', () => {
 
   it('maps a rejected batch request to LyricsFetchError', async () => {
     vi.mocked(lyricsRepository.getPendingTrackIds).mockResolvedValue([track.id]);
-    vi.mocked(source.fetchLyricsBatch).mockRejectedValue(
-      new Error('secret provider response'),
-    );
+    vi.mocked(source.fetchLyricsBatch).mockRejectedValue(new Error('secret provider response'));
 
     await expect(service.fetchAll()).rejects.toBeInstanceOf(LyricsFetchError);
   });

@@ -6,17 +6,17 @@ single backend host; neither package is a separately deployed application.
 
 ## Ownership
 
-| Concern | Owner | Notes |
-| --- | --- | --- |
-| Token and analysis DTOs | `@flows/shared` | Cross-wire types used by backend and UI |
-| Generic tokenization | `@flows/analysis` | Blank-line sections and deterministic token IDs only |
-| Prompt-safe AST formatting | `@flows/analysis` | Preserves lines/sections; exposes only token IDs |
-| Annotation ID filtering | `@flows/analysis` | Rejects references absent from the source AST |
-| Analysis persistence | `@flows/analysis` | Generic `canvas.db` repository |
-| Generic text orchestration | `@flows/canvas` | Service, analyzer, repository adapter, HTTP mapping |
-| Music section classification | `@flows/lyrics` | Verse, Chorus, Bridge, Pre-Chorus, Intro, and Outro |
-| Musical analysis | `@flows/lyrics` | Chord, vocal, meaning prompts and schemas |
-| Rendering | `@flows/ui` | Shared token renderer plus Canvas/Lyrics screens |
+| Concern                      | Owner             | Notes                                                |
+| ---------------------------- | ----------------- | ---------------------------------------------------- |
+| Token and analysis DTOs      | `@flows/shared`   | Cross-wire types used by backend and UI              |
+| Generic tokenization         | `@flows/analysis` | Blank-line sections and deterministic token IDs only |
+| Prompt-safe AST formatting   | `@flows/analysis` | Preserves lines/sections; exposes only token IDs     |
+| Annotation ID filtering      | `@flows/analysis` | Rejects references absent from the source AST        |
+| Analysis persistence         | `@flows/analysis` | Generic `canvas.db` repository                       |
+| Generic text orchestration   | `@flows/canvas`   | Service, analyzer, repository adapter, HTTP mapping  |
+| Music section classification | `@flows/lyrics`   | Verse, Chorus, Bridge, Pre-Chorus, Intro, and Outro  |
+| Musical analysis             | `@flows/lyrics`   | Chord, vocal, meaning prompts and schemas            |
+| Rendering                    | `@flows/ui`       | Shared token renderer plus Canvas/Lyrics screens     |
 
 Analysis and Core never infer music concepts. Lyrics classifies the generic AST after tokenization
 without changing section IDs, token IDs, or persisted-analysis compatibility.
@@ -65,14 +65,14 @@ logged as a dropped annotation and never reaches persistence.
 
 ## HTTP Contract
 
-| Endpoint | Success | Missing source | Provider failure |
-| --- | --- | --- | --- |
-| `GET /api/canvas` | `200` user canvases | n/a | n/a |
-| `GET /api/canvas/:sourceId` | `200` analysis | `404` | n/a |
-| `POST /api/canvas` | `200` persisted analysis | validation `422` | sanitized `503` |
-| `DELETE /api/canvas/:sourceId` | `200 { success: true }` | `404` | n/a |
-| `GET /api/lyrics/:trackId/canvas` | `200` analysis or `needsAnalysis` state | `404` track/lyrics | n/a |
-| `POST /api/lyrics/:trackId/canvas/analyze` | `200` persisted analysis | `400` unavailable source | sanitized `503` |
+| Endpoint                                   | Success                                 | Missing source           | Provider failure |
+| ------------------------------------------ | --------------------------------------- | ------------------------ | ---------------- |
+| `GET /api/canvas`                          | `200` user canvases                     | n/a                      | n/a              |
+| `GET /api/canvas/:sourceId`                | `200` analysis                          | `404`                    | n/a              |
+| `POST /api/canvas`                         | `200` persisted analysis                | validation `422`         | sanitized `503`  |
+| `DELETE /api/canvas/:sourceId`             | `200 { success: true }`                 | `404`                    | n/a              |
+| `GET /api/lyrics/:trackId/canvas`          | `200` analysis or `needsAnalysis` state | `404` track/lyrics       | n/a              |
+| `POST /api/lyrics/:trackId/canvas/analyze` | `200` persisted analysis                | `400` unavailable source | sanitized `503`  |
 
 Lyrics Canvas request/response DTOs and stable error codes live in `@flows/shared`.
 Both JSON endpoints publish TypeBox response schemas and the UI consumes their inferred

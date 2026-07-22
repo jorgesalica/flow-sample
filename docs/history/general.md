@@ -10,16 +10,16 @@ Changelog for cross-cutting concerns: documentation, DevOps, tooling.
 
 Created `.agent/workflows/` with structured documentation for consistent development:
 
-| Workflow | Purpose |
-| -------- | ------- |
-| `agents_flow.md` | Entry point, quick reference |
-| `agents-checkpoint.md` | Verify, commit, ensure stability |
-| `agents-doc-refresh.md` | Keep docs in sync with code |
-| `agents-debug.md` | Troubleshooting steps |
-| `agents-tests.md` | Test execution and best practices |
-| `agents-qa.md` | Manual testing procedures |
-| `agents-digest.md` | Context sync for new chats |
-| `agents-report-status.md` | Generate project status summary |
+| Workflow                  | Purpose                           |
+| ------------------------- | --------------------------------- |
+| `agents_flow.md`          | Entry point, quick reference      |
+| `agents-checkpoint.md`    | Verify, commit, ensure stability  |
+| `agents-doc-refresh.md`   | Keep docs in sync with code       |
+| `agents-debug.md`         | Troubleshooting steps             |
+| `agents-tests.md`         | Test execution and best practices |
+| `agents-qa.md`            | Manual testing procedures         |
+| `agents-digest.md`        | Context sync for new chats        |
+| `agents-report-status.md` | Generate project status summary   |
 
 ### Husky Git Hooks
 

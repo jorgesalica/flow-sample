@@ -30,9 +30,9 @@ export async function calculateStats(repository: TrackRepository): Promise<Spoti
     yearRange:
       years.length > 0
         ? {
-          oldest: years[years.length - 1]?.year,
-          newest: years[0]?.year,
-        }
+            oldest: years[years.length - 1]?.year,
+            newest: years[0]?.year,
+          }
         : null,
   };
 }

@@ -17,25 +17,40 @@ function metric(total, covered) {
 test('discovers every package that owns a coverage command', async () => {
   const packages = await discoverCoveragePackages(path.join(ROOT, 'packages'));
 
-  assert.deepEqual(packages.map(({ name }) => name), [
-    '@flows/analysis',
-    '@flows/backend',
-    '@flows/board',
-    '@flows/canvas',
-    '@flows/chat',
-    '@flows/core',
-    '@flows/lyrics',
-    '@flows/music',
-    '@flows/spotify',
-    '@flows/trading',
-    '@flows/ui',
-  ]);
+  assert.deepEqual(
+    packages.map(({ name }) => name),
+    [
+      '@flows/analysis',
+      '@flows/backend',
+      '@flows/board',
+      '@flows/canvas',
+      '@flows/chat',
+      '@flows/core',
+      '@flows/lyrics',
+      '@flows/music',
+      '@flows/spotify',
+      '@flows/trading',
+      '@flows/ui',
+    ],
+  );
 });
 
 test('aggregates package counts before calculating percentages', () => {
   const rows = [
-    { name: 'a', statements: metric(4, 3), branches: metric(2, 1), functions: metric(1, 1), lines: metric(4, 3) },
-    { name: 'b', statements: metric(6, 6), branches: metric(3, 3), functions: metric(2, 1), lines: metric(6, 6) },
+    {
+      name: 'a',
+      statements: metric(4, 3),
+      branches: metric(2, 1),
+      functions: metric(1, 1),
+      lines: metric(4, 3),
+    },
+    {
+      name: 'b',
+      statements: metric(6, 6),
+      branches: metric(3, 3),
+      functions: metric(2, 1),
+      lines: metric(6, 6),
+    },
   ];
 
   const total = aggregateCoverage(rows);

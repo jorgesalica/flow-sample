@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  LYRICS_STATUSES,
-  type Lyrics,
-  type LyricsInterpretationEvent,
-} from '@flows/shared';
+import { LYRICS_STATUSES, type Lyrics, type LyricsInterpretationEvent } from '@flows/shared';
 import { LyricsFetchError, LyricsNotFoundError } from '../../src/domain/errors';
 import type { LyricsRepository } from '../../src/domain/ports';
 import type { LyricsApplication } from '../../src/backend/lyrics.service';
@@ -125,10 +121,7 @@ describe('Lyrics routes', () => {
       pending: 0,
     });
     interpretation.prepareStream.mockResolvedValue(
-      streamEvents([
-        { type: 'delta', delta: 'Analysis' },
-        { type: 'done' },
-      ]),
+      streamEvents([{ type: 'delta', delta: 'Analysis' }, { type: 'done' }]),
     );
   });
 
@@ -172,9 +165,7 @@ describe('Lyrics routes', () => {
   });
 
   it('maps a rejected batch provider request to 502', async () => {
-    application.fetchAll.mockRejectedValue(
-      new LyricsFetchError('secret provider detail'),
-    );
+    application.fetchAll.mockRejectedValue(new LyricsFetchError('secret provider detail'));
 
     const response = await post('/api/lyrics/fetch-all');
 
@@ -185,9 +176,7 @@ describe('Lyrics routes', () => {
   });
 
   it('delegates typed library and stats queries', async () => {
-    const tracks = await request(
-      '/api/lyrics/tracks?limit=10&offset=20&status=found',
-    );
+    const tracks = await request('/api/lyrics/tracks?limit=10&offset=20&status=found');
     const stats = await request('/api/lyrics/stats');
 
     expect(application.getLibrary).toHaveBeenCalledWith(10, 20, 'found');
@@ -226,9 +215,7 @@ describe('Lyrics routes', () => {
   });
 
   it('sanitizes interpretation setup and established stream failures', async () => {
-    interpretation.prepareStream.mockRejectedValueOnce(
-      new Error('secret provider setup detail'),
-    );
+    interpretation.prepareStream.mockRejectedValueOnce(new Error('secret provider setup detail'));
     const setup = await post('/api/lyrics/track-1/interpret');
     expect(setup.status).toBe(503);
     await expect(setup.json()).resolves.toEqual({

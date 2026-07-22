@@ -1,11 +1,5 @@
-import {
-    filterAnnotationsForAst,
-    formatTokenAstForPrompt,
-} from '@flows/analysis';
-import {
-    LLMClient,
-    logger,
-} from '@flows/core';
+import { filterAnnotationsForAst, formatTokenAstForPrompt } from '@flows/analysis';
+import { LLMClient, logger } from '@flows/core';
 import type { TokenAST, Annotation } from '@flows/shared';
 import { textAnalysisSchema, type TextAnalysisResult } from './schemas';
 import { expandAnnotations } from '../domain/annotations';
@@ -13,18 +7,22 @@ import { CanvasAnalysisError } from '../domain/errors';
 
 const log = logger.child({ module: 'CanvasTextAnalyzer' });
 
-export async function analyzeText(ast: TokenAST, title?: string, author?: string): Promise<{
-    annotations: Annotation[];
-    meta: TextAnalysisResult['meta'];
-    modelUsed: string;
-    providerUsed: string;
+export async function analyzeText(
+  ast: TokenAST,
+  title?: string,
+  author?: string,
+): Promise<{
+  annotations: Annotation[];
+  meta: TextAnalysisResult['meta'];
+  modelUsed: string;
+  providerUsed: string;
 }> {
-    const client = LLMClient.createRotation();
-    const tokenizedText = formatTokenAstForPrompt(ast);
-    
-    const identity = author ? `"${title}" by ${author}` : 'the following text';
+  const client = LLMClient.createRotation();
+  const tokenizedText = formatTokenAstForPrompt(ast);
 
-    const prompt = `
+  const identity = author ? `"${title}" by ${author}` : 'the following text';
+
+  const prompt = `
 You are an expert literary analyst and interpreter. Your task is to analyze ${identity} and provide textual annotations.
 
 I am providing you the text where every word has a unique token ID attached to it, like this: word[t_001].
@@ -47,42 +45,45 @@ IMPORTANT DENSITY RULE: Provide a dense, rich analysis identifying key moments i
 3. Return the exact JSON structure requested. Do not invent token IDs. Only use the IDs present in the text above.
 `;
 
-    log.info({ title, author }, 'Starting LLM text analysis');
-    
-    const startTime = Date.now();
-    
-    try {
-        const { value: result, response } = await client.generateObjectWithMetadata(
-            {
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.2,
-                maxTokens: 4096,
-            },
-            textAnalysisSchema
-        );
-        
-        const expandedAnnotations = expandAnnotations(result.annotations);
-        const annotations = filterAnnotationsForAst(ast, expandedAnnotations);
+  log.info({ title, author }, 'Starting LLM text analysis');
 
-        log.info({
-            latencyMs: Date.now() - startTime,
-            annotationsCount: annotations.length,
-            invalidAnnotationsCount: expandedAnnotations.length - annotations.length,
-        }, 'LLM analysis completed successfully');
+  const startTime = Date.now();
 
-        return {
-            ...result,
-            annotations,
-            modelUsed: response.model,
-            providerUsed: response.provider,
-        };
-    } catch (error) {
-        log.error({ error, title }, 'Failed to generate text analysis');
-        if (error instanceof CanvasAnalysisError) {
-            throw error;
-        }
-        throw new CanvasAnalysisError(
-            error instanceof Error ? error.message : 'Canvas text analysis failed',
-        );
+  try {
+    const { value: result, response } = await client.generateObjectWithMetadata(
+      {
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+        maxTokens: 4096,
+      },
+      textAnalysisSchema,
+    );
+
+    const expandedAnnotations = expandAnnotations(result.annotations);
+    const annotations = filterAnnotationsForAst(ast, expandedAnnotations);
+
+    log.info(
+      {
+        latencyMs: Date.now() - startTime,
+        annotationsCount: annotations.length,
+        invalidAnnotationsCount: expandedAnnotations.length - annotations.length,
+      },
+      'LLM analysis completed successfully',
+    );
+
+    return {
+      ...result,
+      annotations,
+      modelUsed: response.model,
+      providerUsed: response.provider,
+    };
+  } catch (error) {
+    log.error({ error, title }, 'Failed to generate text analysis');
+    if (error instanceof CanvasAnalysisError) {
+      throw error;
     }
+    throw new CanvasAnalysisError(
+      error instanceof Error ? error.message : 'Canvas text analysis failed',
+    );
+  }
 }

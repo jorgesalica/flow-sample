@@ -14,8 +14,8 @@ import { CHAT_MODES } from '@flows/shared';
  * in the chat bubble.
  */
 export const CHAT_SYSTEM_PROMPT =
-    'You are a helpful AI assistant. Format your replies using standard Markdown. ' +
-    'Never start your reply with a heading (# or ## or ###). Begin with normal text.';
+  'You are a helpful AI assistant. Format your replies using standard Markdown. ' +
+  'Never start your reply with a heading (# or ## or ###). Begin with normal text.';
 
 /** Mode used when the caller does not specify one. */
 export const DEFAULT_CHAT_MODE = CHAT_MODES.SPECIFIC;

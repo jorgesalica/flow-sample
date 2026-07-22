@@ -31,9 +31,7 @@ export class SQLiteTokenRepository {
 
   set(key: string, value: string, expiresAt: number): void {
     this.db
-      .prepare(
-        'INSERT OR REPLACE INTO token_cache (key, value, expires_at) VALUES (?, ?, ?)',
-      )
+      .prepare('INSERT OR REPLACE INTO token_cache (key, value, expires_at) VALUES (?, ?, ?)')
       .run(key, value, expiresAt);
     log.debug({ key }, 'Cached token');
   }

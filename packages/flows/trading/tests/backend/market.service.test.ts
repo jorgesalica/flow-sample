@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  AdvisorNote,
-  Candle,
-  FractalNode,
-} from '@flows/shared';
+import type { AdvisorNote, Candle, FractalNode } from '@flows/shared';
 import { MarketDataUnavailableError } from '../../src/domain/errors';
 import type { TradingReadRepository } from '../../src/backend/repository';
 import {
@@ -75,16 +71,12 @@ describe('TradingMarketService', () => {
   it('fetches historical klines through the injected port', async () => {
     const service = new TradingMarketService(repository, historicalSource);
 
-    await expect(service.getHistoricalKlines('ETHUSDT', '4h', 200)).resolves.toEqual([
-      candle,
-    ]);
+    await expect(service.getHistoricalKlines('ETHUSDT', '4h', 200)).resolves.toEqual([candle]);
     expect(historicalSource.fetchKlines).toHaveBeenCalledWith('ETHUSDT', '4h', 200);
   });
 
   it('wraps external market failures without exposing provider details', async () => {
-    historicalSource.fetchKlines.mockRejectedValue(
-      new Error('Binance secret response payload'),
-    );
+    historicalSource.fetchKlines.mockRejectedValue(new Error('Binance secret response payload'));
     const service = new TradingMarketService(repository, historicalSource);
 
     const result = service.getHistoricalKlines('BTCUSDT', '1d', 100);

@@ -11,7 +11,8 @@ pnpm --filter @flows/ui test:e2e
 ```
 
 Playwright starts/reuses the backend and UI configured in
-`packages/ui/playwright.config.ts`. Add a focused spec for critical behavior changes.
+`packages/ui/playwright.config.ts`. Add a focused spec for critical behavior changes;
+the complete deterministic suite runs serially without retries in CI on every PR.
 
 ## Manual Browser Audit
 
@@ -21,7 +22,7 @@ Playwright starts/reuses the backend and UI configured in
 4. Inspect console and network failures; expected absence must not appear as noisy 4xx/5xx.
 5. Check keyboard names/focus, responsive containment, and horizontal overflow.
 6. For OAuth, SSE, provider, chart, drag/drop, or local persistence changes, test the real
-runtime behavior that jsdom cannot model.
+   runtime behavior that jsdom cannot model.
 
 Record exact commands, scenarios, viewport coverage, and any check that could not run in
 the PR description.

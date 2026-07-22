@@ -71,22 +71,19 @@ export class SQLiteBoardRepository implements BoardRepository {
 
   findById(id: string): Board | null {
     const row = this.db.prepare('SELECT * FROM boards WHERE id = ?').get(id) as
-      | BoardRow
-      | undefined;
+      BoardRow | undefined;
     return row ? this.hydrate(row) : null;
   }
 
   findByName(name: string): Board | null {
     const row = this.db.prepare('SELECT * FROM boards WHERE name = ? COLLATE NOCASE').get(name) as
-      | BoardRow
-      | undefined;
+      BoardRow | undefined;
     return row ? this.hydrate(row) : null;
   }
 
   findDefault(): Board | null {
     const row = this.db.prepare('SELECT * FROM boards WHERE is_default = 1').get() as
-      | BoardRow
-      | undefined;
+      BoardRow | undefined;
     return row ? this.hydrate(row) : null;
   }
 

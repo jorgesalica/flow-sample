@@ -1,15 +1,10 @@
 {
-    "extends": "../../../tsconfig.backend.json",
-    "compilerOptions": {
-        "declaration": true,
-        "outDir": "dist",
-        "rootDir": "src"
-    },
-    "include": [
-        "src/**/*.ts"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist"
-    ]
+  "extends": "../../../tsconfig.backend.json",
+  "compilerOptions": {
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

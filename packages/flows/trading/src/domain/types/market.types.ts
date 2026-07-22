@@ -1,6 +1,1 @@
-export type {
-  RegimeType,
-  CandlePatternInfo,
-  MarketState,
-  FractalNode,
-} from '@flows/shared';
+export type { RegimeType, CandlePatternInfo, MarketState, FractalNode } from '@flows/shared';

@@ -2,26 +2,26 @@
 
 // Backend exports
 export {
-    createTradingRoutes,
-    createTradingRouteDependencies,
-    type TradingRoutesDependencies,
-    type TradingStreamApplication,
-    type TradingMentorApplication,
+  createTradingRoutes,
+  createTradingRouteDependencies,
+  type TradingRoutesDependencies,
+  type TradingStreamApplication,
+  type TradingMentorApplication,
 } from './backend/routes';
 export {
-    getTradingService,
-    getMentorService,
-    getSynthesizerService,
-    AnalystService,
-    TradingMarketService,
-    TradingWizardService,
-    type TradingMarketApplication,
-    type TradingWizardApplication,
+  getTradingService,
+  getMentorService,
+  getSynthesizerService,
+  AnalystService,
+  TradingMarketService,
+  TradingWizardService,
+  type TradingMarketApplication,
+  type TradingWizardApplication,
 } from './backend/services';
 export {
-    SqliteTradingReadRepository,
-    type TradingReadRepository,
-    type StoredAdvisorInsight,
+  SqliteTradingReadRepository,
+  type TradingReadRepository,
+  type StoredAdvisorInsight,
 } from './backend/repository';
 export {
   createTradingDatabase,
@@ -39,43 +39,43 @@ export {
 
 // Domain math exports
 export {
-    calculateHurst,
-    classifyRegime,
-    calculateFractalDimension,
-    detectFractals,
-    getRecentFractals,
-    findNearestResistance,
-    findNearestSupport,
-    calculateTouchCounts,
-    detectCandlePatterns,
-    summarizeCandlePatterns,
-    type Candle,
-    type FractalNode,
-    type FractalWithTouches,
-    type MarketRegime,
-    type CandlePattern,
+  calculateHurst,
+  classifyRegime,
+  calculateFractalDimension,
+  detectFractals,
+  getRecentFractals,
+  findNearestResistance,
+  findNearestSupport,
+  calculateTouchCounts,
+  detectCandlePatterns,
+  summarizeCandlePatterns,
+  type Candle,
+  type FractalNode,
+  type FractalWithTouches,
+  type MarketRegime,
+  type CandlePattern,
 } from './domain/math';
 
 // Domain types (only re-export non-conflicting ones)
 export type {
-    MarketState,
-    RegimeType,
-    CandlePatternInfo,
-    SentimentBias,
-    RiskManagement,
-    AdvisorNote,
-    AdvisorState,
+  MarketState,
+  RegimeType,
+  CandlePatternInfo,
+  SentimentBias,
+  RiskManagement,
+  AdvisorNote,
+  AdvisorState,
 } from './domain/types';
 
 // Domain errors
 export {
-    TradingError,
-    InsufficientDataError,
-    LLMQuotaError,
-    AnalysisError,
-    MarketDataUnavailableError,
-    InsightProviderError,
-    InvalidInsightResponseError,
+  TradingError,
+  InsufficientDataError,
+  LLMQuotaError,
+  AnalysisError,
+  MarketDataUnavailableError,
+  InsightProviderError,
+  InvalidInsightResponseError,
 } from './domain/errors';
 
 // Adapter exports

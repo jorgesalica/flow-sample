@@ -9,9 +9,10 @@ const getLastNCandlesAll = vi.fn();
 const insertFractalRun = vi.fn();
 
 const persistence: TradingPersistence = {
-  getLastCandles: (symbol, interval, limit) =>
-    getLastNCandlesAll(symbol, interval, limit),
-  insertFractalNode: (node) => { insertFractalRun(node); },
+  getLastCandles: (symbol, interval, limit) => getLastNCandlesAll(symbol, interval, limit),
+  insertFractalNode: (node) => {
+    insertFractalRun(node);
+  },
   upsertCandle: vi.fn(),
   getLastCandle: vi.fn(() => null),
   getCandleCount: vi.fn(() => 0),

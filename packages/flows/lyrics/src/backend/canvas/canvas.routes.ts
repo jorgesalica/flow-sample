@@ -5,10 +5,7 @@ import {
   type LyricsCanvasNeedsAnalysisResponse,
 } from '@flows/shared';
 import { Elysia, t } from 'elysia';
-import type {
-  LyricsCanvasAnalyzeResult,
-  LyricsCanvasLoadResult,
-} from './service';
+import type { LyricsCanvasAnalyzeResult, LyricsCanvasLoadResult } from './service';
 import {
   lyricsCanvasAnalysisSchema,
   lyricsCanvasErrorResponseSchema,

@@ -17,14 +17,14 @@ The service guarantees one protected default board and always repairs an absent 
 selection back to it. Names are case-insensitively unique; layout version, item count,
 flow IDs, and sizes are validated before persistence.
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/boards` | list boards and resolve the active board |
-| `POST` | `/api/boards` | create and select a board |
-| `PATCH` | `/api/boards/:id` | rename a board |
-| `PUT` | `/api/boards/:id/layout` | replace ordered layout items |
-| `POST` | `/api/boards/:id/select` | select the active board |
-| `DELETE` | `/api/boards/:id` | delete a non-default board |
+| Method   | Path                     | Purpose                                  |
+| -------- | ------------------------ | ---------------------------------------- |
+| `GET`    | `/api/boards`            | list boards and resolve the active board |
+| `POST`   | `/api/boards`            | create and select a board                |
+| `PATCH`  | `/api/boards/:id`        | rename a board                           |
+| `PUT`    | `/api/boards/:id/layout` | replace ordered layout items             |
+| `POST`   | `/api/boards/:id/select` | select the active board                  |
+| `DELETE` | `/api/boards/:id`        | delete a non-default board               |
 
 ```bash
 pnpm --filter @flows/board test

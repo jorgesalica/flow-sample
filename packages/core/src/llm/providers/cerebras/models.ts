@@ -8,24 +8,24 @@ import type { ModelInfo } from '../../types';
  * Base URL: https://api.cerebras.ai
  */
 export const CEREBRAS_MODELS: ModelInfo[] = [
-    // ── Production ──
-    {
-        id: 'gpt-oss-120b',
-        name: 'GPT-OSS 120B',
-        tier: 'high',
-        pricing: 'free',
-        contextWindow: 128_000,
-        description: 'OpenAI open-weight, fastest on Cerebras.',
-    },
-    // ── Preview ──
-    {
-        id: 'zai-glm-4.7',
-        name: 'Z.ai GLM 4.7',
-        tier: 'high',
-        pricing: 'free',
-        contextWindow: 131_072,
-        description: 'Preview model for reasoning, coding, and tool use.',
-    },
+  // ── Production ──
+  {
+    id: 'gpt-oss-120b',
+    name: 'GPT-OSS 120B',
+    tier: 'high',
+    pricing: 'free',
+    contextWindow: 128_000,
+    description: 'OpenAI open-weight, fastest on Cerebras.',
+  },
+  // ── Preview ──
+  {
+    id: 'zai-glm-4.7',
+    name: 'Z.ai GLM 4.7',
+    tier: 'high',
+    pricing: 'free',
+    contextWindow: 131_072,
+    description: 'Preview model for reasoning, coding, and tool use.',
+  },
 ];
 
 export const CEREBRAS_DEFAULT_MODEL = 'gpt-oss-120b';

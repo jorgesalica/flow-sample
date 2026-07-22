@@ -1,6 +1,1 @@
-export type {
-  SentimentBias,
-  RiskManagement,
-  AdvisorNote,
-  AdvisorState,
-} from '@flows/shared';
+export type { SentimentBias, RiskManagement, AdvisorNote, AdvisorState } from '@flows/shared';

@@ -26,15 +26,18 @@ If a rule is wrong, update its owner document before or with the implementation.
 pnpm run bootstrap # frozen install + initial compiled workspace entrypoints
 pnpm dev          # all flows, backend, and UI with hot reload
 pnpm build        # clean, build every package, and smoke-test compiled backend import
-pnpm verify       # docs + architecture + lint + types + Svelte check + tests
+pnpm verify       # contracts + secrets + format + lint + types + Svelte check + tests
 pnpm test:coverage
 pnpm security:audit
 pnpm --filter @flows/ui test:e2e
+pnpm clean:artifacts
 ```
 
 Use Node.js 22 or newer; `.node-version` is the shared local/CI baseline. Before pushing
-non-trivial work, run `pnpm verify` and `pnpm build`. UI behavior changes require focused
-Playwright coverage or documented desktop/mobile verification.
+non-trivial work, run `pnpm build`, `pnpm verify`, and `pnpm test:coverage`, in that order.
+UI behavior
+changes require focused Playwright coverage or documented desktop/mobile verification;
+CI always runs the complete deterministic Playwright suite.
 
 After changing `@flows/shared`, `@flows/core`, or `@flows/analysis`, rebuild it before
 checking downstream packages (`pnpm build:shared` or `pnpm --filter <package> build`).
@@ -66,10 +69,13 @@ This repository adapts the CCEC PR discipline to one permanent branch. There is 
 2. Confirm a GitHub issue exists for non-trivial work.
 3. Create a short-lived branch, preferably `codex/<issue>-<short-description>`.
 4. Work in coherent Conventional Commits in English. Never use `--no-verify`.
-5. Run `pnpm verify`, `pnpm build`, and applicable focused/E2E checks.
+5. Run `pnpm build`, `pnpm verify`, `pnpm test:coverage`, and applicable focused/E2E checks.
 6. Open a PR to `main` describing why, impact, areas touched, tests, and issue linkage.
 7. Wait for green CI and merge through GitHub, never by pushing to `main`.
 8. Update local `main` and remove/prune the completed branch when practical.
+
+Local hooks block direct commits and pushes to `main`. Their emergency overrides exist
+only for deliberate repository recovery; they are not an alternative delivery path.
 
 Update owner documentation in the same PR when changing architecture, APIs, runtime
 configuration, user-visible flows, testing policy, or workflow. Do not leave docs as an

@@ -9,11 +9,7 @@ import {
   type TrackRepository,
 } from '@flows/shared';
 import { LyricsFetchError, LyricsNotFoundError } from '../domain/errors';
-import type {
-  LyricsRepository,
-  LyricsSource,
-  LyricsTrackParams,
-} from '../domain/ports';
+import type { LyricsRepository, LyricsSource, LyricsTrackParams } from '../domain/ports';
 
 const log = logger.child({ module: 'LyricsService' });
 
@@ -132,18 +128,11 @@ export class LyricsService implements LyricsApplication {
       }
     }
 
-    log.info(
-      { found, notFound, errors, total: pendingIds.length },
-      'Batch lyrics fetch complete',
-    );
+    log.info({ found, notFound, errors, total: pendingIds.length }, 'Batch lyrics fetch complete');
     return { processed: pendingIds.length, found, notFound, errors };
   }
 
-  getLibrary(
-    limit = 50,
-    offset = 0,
-    status?: LyricsStatus,
-  ): Promise<LyricsLibraryTrack[]> {
+  getLibrary(limit = 50, offset = 0, status?: LyricsStatus): Promise<LyricsLibraryTrack[]> {
     return this.lyricsRepository.getLibraryWithStatus(limit, offset, status);
   }
 

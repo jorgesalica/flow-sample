@@ -37,29 +37,29 @@ factory; route tests inject fakes and call the real Elysia `.handle()` boundary.
 `createTradingConfigFromEnv()` owns environment parsing at composition time. Services do
 not read `process.env` directly.
 
-| Variable | Default | Purpose |
-| :------- | :------ | :------ |
-| `TRADING_SYMBOL` | `BTCUSDT` | Pair used by stream and analysis services |
-| `TRADING_INTERVAL` | `1m` | Default stream and local-candle interval |
-| `ADVISOR_AUTO_START` | `false` | Enables the mentor during route composition |
+| Variable             | Default   | Purpose                                     |
+| :------------------- | :-------- | :------------------------------------------ |
+| `TRADING_SYMBOL`     | `BTCUSDT` | Pair used by stream and analysis services   |
+| `TRADING_INTERVAL`   | `1m`      | Default stream and local-candle interval    |
+| `ADVISOR_AUTO_START` | `false`   | Enables the mentor during route composition |
 
 ## API Routes
 
-| Method | Path | Description |
-| :----- | :--- | :---------- |
-| GET | `/api/trading/status` | Typed stream and advisor state |
-| POST | `/api/trading/start` | Start live ingestion |
-| POST | `/api/trading/stop` | Stop live ingestion |
-| GET | `/api/trading/candles` | Hydrated local candles |
-| GET | `/api/trading/candles/live` | Current in-memory candle snapshot |
-| GET | `/api/trading/klines` | Historical Binance klines for a supported interval |
-| GET | `/api/trading/fractals` | Hydrated local fractal nodes |
-| POST | `/api/trading/advisor/toggle` | Toggle the mentor |
-| GET | `/api/trading/advisor/status` | Typed mentor state |
-| GET | `/api/trading/insight` | Latest persisted insight or explicit absence |
-| POST | `/api/trading/insight/generate` | Generate an on-demand insight |
-| POST | `/api/trading/wizard/insight` | Generate one cascade timeframe insight |
-| GET | `/api/trading/stream` | Live state/candle SSE stream |
+| Method | Path                            | Description                                        |
+| :----- | :------------------------------ | :------------------------------------------------- |
+| GET    | `/api/trading/status`           | Typed stream and advisor state                     |
+| POST   | `/api/trading/start`            | Start live ingestion                               |
+| POST   | `/api/trading/stop`             | Stop live ingestion                                |
+| GET    | `/api/trading/candles`          | Hydrated local candles                             |
+| GET    | `/api/trading/candles/live`     | Current in-memory candle snapshot                  |
+| GET    | `/api/trading/klines`           | Historical Binance klines for a supported interval |
+| GET    | `/api/trading/fractals`         | Hydrated local fractal nodes                       |
+| POST   | `/api/trading/advisor/toggle`   | Toggle the mentor                                  |
+| GET    | `/api/trading/advisor/status`   | Typed mentor state                                 |
+| GET    | `/api/trading/insight`          | Latest persisted insight or explicit absence       |
+| POST   | `/api/trading/insight/generate` | Generate an on-demand insight                      |
+| POST   | `/api/trading/wizard/insight`   | Generate one cascade timeframe insight             |
+| GET    | `/api/trading/stream`           | Live state/candle SSE stream                       |
 
 Historical market failures return sanitized `502` responses. Insufficient wizard data
 returns `422`; AI provider failures return `502` or `503`; unexpected internal failures

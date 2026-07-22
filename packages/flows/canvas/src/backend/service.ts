@@ -3,9 +3,7 @@ import { tokenize } from '@flows/analysis';
 import type { Annotation, CanvasAnalysis, TokenAST } from '@flows/shared';
 import type { CanvasRepository } from '../domain/ports';
 
-const GENERIC_CANVAS_LAYERS = [
-  { id: 'meaning', name: 'Meaning', icon: '💡', color: '#22d3ee' },
-];
+const GENERIC_CANVAS_LAYERS = [{ id: 'meaning', name: 'Meaning', icon: '💡', color: '#22d3ee' }];
 
 export interface CanvasCreateInput {
   text: string;

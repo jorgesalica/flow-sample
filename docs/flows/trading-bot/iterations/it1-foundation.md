@@ -32,23 +32,23 @@ packages/
 
 ### 1.1 Database Schema (`trading.db`)
 
-| Task | Details |
-| --- | --- |
-| **File** | `packages/backend/src/infrastructure/persistence/sqlite/trading-database.ts` |
+| Task       | Details                                                                       |
+| ---------- | ----------------------------------------------------------------------------- |
+| **File**   | `packages/backend/src/infrastructure/persistence/sqlite/trading-database.ts`  |
 | **Action** | Create new file. Initialize `better-sqlite3` connection to `data/trading.db`. |
-| **Schema** | Create tables: `candles`, `fractal_nodes`, `advisor_logs`. |
+| **Schema** | Create tables: `candles`, `fractal_nodes`, `advisor_logs`.                    |
 
 ### 1.2 Binance WebSocket Adapter (N1)
 
-| Task | Details |
-| --- | --- |
-| **Action** | Implement WebSocket client using `ws` package. |
-| **Logic** | Connect to `wss://stream.binance.com:9443/ws/<symbol>@kline_<interval>`. |
+| Task       | Details                                                                  |
+| ---------- | ------------------------------------------------------------------------ |
+| **Action** | Implement WebSocket client using `ws` package.                           |
+| **Logic**  | Connect to `wss://stream.binance.com:9443/ws/<symbol>@kline_<interval>`. |
 
 ### 1.3 Trading Service (Orchestrator)
 
-| Task | Details |
-| --- | --- |
+| Task       | Details                                         |
+| ---------- | ----------------------------------------------- |
 | **Action** | Create service that orchestrates N1 -> N2 flow. |
 
 ---
@@ -59,15 +59,15 @@ packages/
 
 ### 2.1 Math Utilities
 
-| Task | Details |
-| --- | --- |
-| **Files** | `hurst.ts`, `fractals.ts` |
+| Task      | Details                                                                    |
+| --------- | -------------------------------------------------------------------------- |
+| **Files** | `hurst.ts`, `fractals.ts`                                                  |
 | **Logic** | Implement R/S algorithm (Hurst) and Bill Williams 5-bar fractal detection. |
 
 ### 2.2 Analyst Service (N3)
 
-| Task | Details |
-| --- | --- |
+| Task       | Details                                                  |
+| ---------- | -------------------------------------------------------- |
 | **Action** | Create the core "State Machine" (Regime detection, etc). |
 
 ---
@@ -78,14 +78,14 @@ packages/
 
 ### 3.1 LLM Layer
 
-| Task | Details |
-| --- | --- |
+| Task       | Details                                                     |
+| ---------- | ----------------------------------------------------------- |
 | **Action** | Create provider-agnostic abstraction using `@google/genai`. |
 
 ### 3.2 Mentor Service
 
-| Task | Details |
-| --- | --- |
+| Task       | Details                                  |
+| ---------- | ---------------------------------------- |
 | **Action** | Orchestrate N4 → LLM → Response parsing. |
 
 ---
@@ -96,17 +96,17 @@ packages/
 
 ### 4.1 UI Store & Pages
 
-| Task | Details |
-| --- | --- |
+| Task       | Details                                                                        |
+| ---------- | ------------------------------------------------------------------------------ |
 | **Action** | Create Svelte store and TradingPage with Chart, RegimeWidget, and InsightCard. |
 
 ---
 
 ## 📅 Phase Summary
 
-| Phase | Nodes | Status |
-| --- | --- | --- |
+| Phase       | Nodes  | Status       |
+| ----------- | ------ | ------------ |
 | **Phase 1** | N1, N2 | ✅ Completed |
-| **Phase 2** | N3 | ✅ Completed |
+| **Phase 2** | N3     | ✅ Completed |
 | **Phase 3** | N4, N5 | ✅ Completed |
-| **Phase 4** | N6 | ✅ Completed |
+| **Phase 4** | N6     | ✅ Completed |

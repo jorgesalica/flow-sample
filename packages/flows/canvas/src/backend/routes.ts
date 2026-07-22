@@ -1,8 +1,5 @@
 import { logger } from '@flows/core';
-import {
-  createAnalysisRepository,
-  type AnalysisRepository,
-} from '@flows/analysis';
+import { createAnalysisRepository, type AnalysisRepository } from '@flows/analysis';
 import { Elysia, t } from 'elysia';
 import { CanvasAnalysisError } from '../domain/errors';
 import { AnalysisCanvasRepository } from './repository';
@@ -17,9 +14,7 @@ export function createCanvasFlowApplication(
   return new CanvasService(new AnalysisCanvasRepository(repository), analyzeText);
 }
 
-export function createCanvasFlowRoutes(
-  service: CanvasApplication = createCanvasFlowApplication(),
-) {
+export function createCanvasFlowRoutes(service: CanvasApplication = createCanvasFlowApplication()) {
   return new Elysia({ prefix: '/api/canvas' })
     .get('/', () => service.list())
     .get('/:id', ({ params, set }) => {

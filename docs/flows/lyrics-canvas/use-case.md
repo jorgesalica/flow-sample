@@ -234,19 +234,19 @@ The LLM receives the token AST and returns annotations **mapped to token IDs**:
 
 ## 5. Edge Cases
 
-| Case | Behavior |
-| ---- | -------- |
-| Track without lyrics (status ≠ found) | "Open Canvas" button disabled or hidden |
-| Very short lyrics (< 10 words) | Tokenizes normally, analysis may be sparse |
-| Instrumental track | LLM returns `annotations: []`, UI shows "No annotations" message |
-| LLM fails / timeout | Toast error + "Retry" button replaces "Analyze" |
-| LLM returns invalid JSON | Zod validation fails → auto-retry once → error if still invalid |
-| Repeated sections (Chorus ×3) | Each instance has unique token IDs, may get slightly different annotations |
-| Words with punctuation ("No,") | Tokenized with punctuation included |
-| Very long lines (15+ words) | CSS flex-wrap, chord symbols stay anchored to their token |
-| Cached analysis exists | Loads instantly from `canvas.db`, no LLM call |
-| Lyrics changed since last analysis | `source_text_hash` mismatch → re-analyze automatically |
-| Mixed language lyrics | LLM handles multilingual, annotations in lyrics language |
+| Case                                  | Behavior                                                                   |
+| ------------------------------------- | -------------------------------------------------------------------------- |
+| Track without lyrics (status ≠ found) | "Open Canvas" button disabled or hidden                                    |
+| Very short lyrics (< 10 words)        | Tokenizes normally, analysis may be sparse                                 |
+| Instrumental track                    | LLM returns `annotations: []`, UI shows "No annotations" message           |
+| LLM fails / timeout                   | Toast error + "Retry" button replaces "Analyze"                            |
+| LLM returns invalid JSON              | Zod validation fails → auto-retry once → error if still invalid            |
+| Repeated sections (Chorus ×3)         | Each instance has unique token IDs, may get slightly different annotations |
+| Words with punctuation ("No,")        | Tokenized with punctuation included                                        |
+| Very long lines (15+ words)           | CSS flex-wrap, chord symbols stay anchored to their token                  |
+| Cached analysis exists                | Loads instantly from `canvas.db`, no LLM call                              |
+| Lyrics changed since last analysis    | `source_text_hash` mismatch → re-analyze automatically                     |
+| Mixed language lyrics                 | LLM handles multilingual, annotations in lyrics language                   |
 
 ---
 

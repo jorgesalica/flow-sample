@@ -18,8 +18,8 @@ The user navigates through steps, building context from Macro to Micro.
 
 ### 1. Multi-Timeframe Data (Backend)
 
-| Endpoint | Purpose |
-|----------|---------|
+| Endpoint                                                       | Purpose                                   |
+| -------------------------------------------------------------- | ----------------------------------------- |
 | `GET /api/trading/klines?symbol=BTCUSDT&interval=1d&limit=100` | Fetch historical klines for any timeframe |
 
 **Implementation:**
@@ -45,12 +45,12 @@ pnpm add lightweight-charts svelte-lightweight-charts
 
 **Steps:**
 
-| Step | Timeframe | Focus |
-|------|-----------|-------|
-| 1 | 1D | Macro Bias |
-| 2 | 4H | Structure Validation |
-| 3 | 1H | Setup Confirmation |
-| 4 | 15m | Entry Signal |
+| Step | Timeframe | Focus                |
+| ---- | --------- | -------------------- |
+| 1    | 1D        | Macro Bias           |
+| 2    | 4H        | Structure Validation |
+| 3    | 1H        | Setup Confirmation   |
+| 4    | 15m       | Entry Signal         |
 
 **UI Flow:**
 
@@ -81,19 +81,19 @@ pnpm add lightweight-charts svelte-lightweight-charts
 
 ### Backend
 
-| File | Change |
-|------|--------|
-| `binance-rest.ts` | **[NEW]** REST client for Binance API |
-| `trading.routes.ts` | Add `/klines` endpoint |
+| File                | Change                                |
+| ------------------- | ------------------------------------- |
+| `binance-rest.ts`   | **[NEW]** REST client for Binance API |
+| `trading.routes.ts` | Add `/klines` endpoint                |
 
 ### Frontend
 
-| File | Change |
-|------|--------|
-| `CandleChart.svelte` | **[NEW]** Candlestick chart component |
-| `StepWizard.svelte` | **[NEW]** Step wizard container |
-| `TradingFlow.svelte` | Integrate wizard into existing page |
-| `trading.ts` | Add `fetchKlines` function for multi-timeframe |
+| File                 | Change                                         |
+| -------------------- | ---------------------------------------------- |
+| `CandleChart.svelte` | **[NEW]** Candlestick chart component          |
+| `StepWizard.svelte`  | **[NEW]** Step wizard container                |
+| `TradingFlow.svelte` | Integrate wizard into existing page            |
+| `trading.ts`         | Add `fetchKlines` function for multi-timeframe |
 
 ---
 

@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import Database from 'better-sqlite3';
-import {
-  initializeTradingDatabase,
-  SQLiteTradingPersistence,
-} from '../../src/backend/database';
+import { initializeTradingDatabase, SQLiteTradingPersistence } from '../../src/backend/database';
 
 const db = new Database(':memory:');
 initializeTradingDatabase(db);

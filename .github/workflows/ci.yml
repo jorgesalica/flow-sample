@@ -1,7 +1,5 @@
 name: CI
 
-# Light gate for a personal project: build, repository contracts, static checks, and
-# ratcheted package coverage on pushes to main and PRs. No deploy / CD.
 on:
   push:
     branches: [main]
@@ -9,36 +7,79 @@ on:
     branches: [main]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  verify:
+  quality:
+    name: Quality gates
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
-          cache: pnpm
+          cache: 'pnpm'
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - run: pnpm security:audit
+      - name: Audit production dependencies
+        run: pnpm security:audit
 
-      # Build first: typecheck/check resolve workspace deps against compiled dist.
-      - run: pnpm build
+      - name: Build and smoke-test compiled packages
+        run: pnpm build
 
-      - run: pnpm check:docs
-      - run: pnpm check:architecture
-      - run: pnpm test:tooling
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm check
-      - run: pnpm test:coverage
+      - name: Verify repository contracts, formatting, static checks, and tests
+        run: pnpm verify
+
+      - name: Enforce package coverage ratchets
+        run: pnpm test:coverage
+
+  e2e:
+    name: Browser journeys
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace dependencies
+        run: pnpm build
+
+      - name: Install Chromium
+        run: pnpm --filter @flows/ui exec playwright install --with-deps chromium
+
+      - name: Run deterministic browser journeys
+        run: pnpm --filter @flows/ui test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: packages/ui/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7

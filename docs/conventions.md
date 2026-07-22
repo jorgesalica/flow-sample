@@ -1,8 +1,9 @@
 # Conventions & Best Practices
 
-The engineering rules for this monorepo. Code is in **English**; user-facing strings and
-commit messages may be in Spanish. These conventions are the source of truth — when in
-doubt, follow them; when they're wrong, change them here first, then the code.
+The engineering rules for this monorepo. Code and Conventional Commit messages are in
+**English**; user-facing strings may be in Spanish. These conventions are the source of
+truth: when in doubt, follow them; when they are wrong, change them here first, then the
+code.
 
 Stack: pnpm workspaces · **ElysiaJS** backend (Node, `tsx` dev) · **better-sqlite3** (raw
 SQL, no ORM) · **SvelteKit** frontend (Svelte 5 runes) · **Eden Treaty** for typed RPC ·
@@ -45,12 +46,12 @@ global middleware (CORS, static), and mounts each flow's routes. See
 
 Three layers, single responsibility each:
 
-| Layer | File | Does | Never |
-| --- | --- | --- | --- |
-| **Router** | `backend/routes.ts` | Elysia routes, TypeBox validation, HTTP ⇆ domain, DI via `.decorate()` | business logic, raw SQL |
-| **Service** | `backend/*.service.ts` | orchestration / use-cases | raw SQL, HTTP concerns |
-| **Repository** | `backend/repository.ts` | better-sqlite3 queries + row→DTO hydration | business rules |
-| **Domain** | `domain/` | pure logic (trading math, canvas tokenizer), entities, typed errors, ports | Elysia, SQLite, network |
+| Layer          | File                    | Does                                                                       | Never                   |
+| -------------- | ----------------------- | -------------------------------------------------------------------------- | ----------------------- |
+| **Router**     | `backend/routes.ts`     | Elysia routes, TypeBox validation, HTTP ⇆ domain, DI via `.decorate()`     | business logic, raw SQL |
+| **Service**    | `backend/*.service.ts`  | orchestration / use-cases                                                  | raw SQL, HTTP concerns  |
+| **Repository** | `backend/repository.ts` | better-sqlite3 queries + row→DTO hydration                                 | business rules          |
+| **Domain**     | `domain/`               | pure logic (trading math, canvas tokenizer), entities, typed errors, ports | Elysia, SQLite, network |
 
 - A flow exports a factory: `createSpotifyRoutes(config)` / `createLyricsRoutes()` returning
   an `Elysia({ prefix: '/api/<flow>' })`. Dependencies are injected with `.decorate()`.
@@ -96,11 +97,11 @@ HTTP. Don't leak raw provider errors to the client.
 
 ## 3. Types: three concepts, kept apart
 
-| Concept | Lives in | For |
-| --- | --- | --- |
-| Cross-boundary DTOs & domain types | `@flows/shared` | the shape the UI and API agree on |
-| Runtime enums / constants | `@flows/shared` (`as const`) | usable in browser + server, no magic strings |
-| HTTP validation | Elysia **TypeBox** (`t.Object`, `t.String`, …) in each route | request/response validation, feeds Eden inference |
+| Concept                            | Lives in                                                     | For                                               |
+| ---------------------------------- | ------------------------------------------------------------ | ------------------------------------------------- |
+| Cross-boundary DTOs & domain types | `@flows/shared`                                              | the shape the UI and API agree on                 |
+| Runtime enums / constants          | `@flows/shared` (`as const`)                                 | usable in browser + server, no magic strings      |
+| HTTP validation                    | Elysia **TypeBox** (`t.Object`, `t.String`, …) in each route | request/response validation, feeds Eden inference |
 
 The UI talks to the backend through **Eden Treaty** (`treaty<App>(...)`), importing
 `type { App }` from the backend source — calls are end-to-end typed. Don't hand-write fetch
@@ -150,10 +151,10 @@ The test-layer matrix and change-specific verification requirements live in
   red→green→refactor; never silence a red test.
 - **Tests live beside the code** (`repository.ts` → `repository.test.ts`), run with **Vitest**.
 - **Test the contract:** happy path + boundaries + error/absence. Verify negative space too
-  (assert the thing that should *not* be there).
-- **Mock the edge, run the real domain.** Mock adapters/SDKs and DB connections (see the
-  lyrics repository test mocking `@flows/music`'s `musicDb` with an in-memory DB); never
-  re-implement the logic under test inside the mock.
+  (assert the thing that should _not_ be there).
+- **Mock the edge, run the real domain.** Mock adapters/SDKs; repository tests create and
+  inject an isolated in-memory database handle. Never replace a module-global database
+  export or re-implement the logic under test inside a mock.
 - **Factories over inline objects** for fixtures; override only the meaningful fields. Use
   fake data, never real credentials/PII.
 - **Constants from `@flows/shared`, never magic strings**, in tests too.
@@ -190,14 +191,19 @@ branch: **PRs target `main`**. There is no `develop` branch here.
   `housekeeping-audit-workflow`.
 - **Conventional Commits** in English: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`,
   `test:`, `ci:`.
-- **Local gate before push:** `pnpm verify`. Add `pnpm build` for non-trivial package,
-  backend, or frontend changes. Add focused Playwright checks for changed UI journeys.
+- **Local gate before push:** run `pnpm build`, `pnpm verify`, and
+  `pnpm test:coverage`, in that order, for non-trivial work. Add focused Playwright checks for changed UI
+  journeys; CI runs the complete browser suite.
 - **PR description:** include what changed, why it matters, user-visible impact, technical
   areas touched, test commands run, and related issue/refs if any.
 - **Merge discipline:** check PR status before merging. Prefer GitHub server-side merge
   (`gh pr merge` or the GitHub UI) over local merges into `main`.
 - **Documentation ownership:** architecture, API, runtime config, flow behavior, testing,
   and workflow changes update their owner docs in the same PR.
+- **Protected local refs:** hooks reject direct commits and pushes to `main`. Explicit
+  environment overrides are reserved for repository recovery, never routine delivery.
+  The pre-push hook also requires the compiled backend sentinel from `pnpm build` before
+  running checks and tests.
 
 ### Automated architecture contracts
 
@@ -210,8 +216,9 @@ accessibility suppressions. It also validates each workspace manifest against th
 package dependency graph. The command is part of `pnpm verify`, and its own behavior is
 covered by `pnpm test:architecture`.
 
-`pnpm check:docs` validates local Markdown links. Both contract checks are part of
-`pnpm verify` and run in CI.
+`pnpm check:docs` validates local Markdown links. `pnpm test:quality-tooling` verifies
+that root scripts, CI, Dependabot, hooks, and the PR template keep the documented quality
+contract. Both are part of `pnpm verify` and run in CI.
 
 There are no sibling-flow import exceptions. Shared music persistence belongs to
 `@flows/music`; generic tokenization and analysis persistence belong to
@@ -223,8 +230,12 @@ remain in `@flows/core`.
 - Keep `pnpm-lock.yaml` committed and use frozen installs in bootstrap and CI.
 - Run `pnpm security:audit` after dependency changes; CI rejects known high or critical
   production advisories.
+- `pnpm test:sensitive` scans tracked and unignored repository text for credentials,
+  private keys, personal email addresses, and identity data. Use fictional fixtures and
+  documented placeholders.
 - Run `pnpm outdated -r --compatible` to close minor/patch drift within declared ranges.
-- Dependabot checks pnpm workspaces and GitHub Actions weekly against `main`.
+- Dependabot checks compatible pnpm minor/patch updates and GitHub Actions weekly against
+  `main`; npm major PRs are ignored by configuration.
 - Major upgrades require a scoped issue and focused migration verification. Do not mix
   them into an unrelated security patch.
 - A root override is allowed only for a transitive advisory when the direct owner still
@@ -235,14 +246,14 @@ remain in `@flows/core`.
 
 ## Do / Don't (the short version)
 
-| Do | Don't |
-| --- | --- |
-| SQL in `repository.ts` | `db.prepare()` in a route/service |
-| Adapter class + interface | call an SDK/`fetch()` from a handler |
-| Import types from `@flows/shared` | reach into a flow's internal types from the UI |
-| Eden Treaty typed client | hand-rolled fetch + hardcoded URLs |
-| Pure logic in `domain/` | business rules in a route handler |
-| `LyricsStatus.FOUND` / const objects | `'found'` magic strings |
-| Domain error → HTTP map in `api/` | leak raw provider errors |
-| env in composition root | `process.env` inside `@flows/shared` / core consumers |
-| Svelte 5 runes | new `svelte/store` writables |
+| Do                                   | Don't                                                 |
+| ------------------------------------ | ----------------------------------------------------- |
+| SQL in `repository.ts`               | `db.prepare()` in a route/service                     |
+| Adapter class + interface            | call an SDK/`fetch()` from a handler                  |
+| Import types from `@flows/shared`    | reach into a flow's internal types from the UI        |
+| Eden Treaty typed client             | hand-rolled fetch + hardcoded URLs                    |
+| Pure logic in `domain/`              | business rules in a route handler                     |
+| `LyricsStatus.FOUND` / const objects | `'found'` magic strings                               |
+| Domain error → HTTP map in `api/`    | leak raw provider errors                              |
+| env in composition root              | `process.env` inside `@flows/shared` / core consumers |
+| Svelte 5 runes                       | new `svelte/store` writables                          |

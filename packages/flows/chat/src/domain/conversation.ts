@@ -8,8 +8,7 @@ export const MAX_TITLE_LENGTH = 30;
  * characters, with an ellipsis appended when the message was longer.
  */
 export function deriveConversationTitle(firstMessage: string): string {
-    return (
-        firstMessage.slice(0, MAX_TITLE_LENGTH) +
-        (firstMessage.length > MAX_TITLE_LENGTH ? '...' : '')
-    );
+  return (
+    firstMessage.slice(0, MAX_TITLE_LENGTH) + (firstMessage.length > MAX_TITLE_LENGTH ? '...' : '')
+  );
 }

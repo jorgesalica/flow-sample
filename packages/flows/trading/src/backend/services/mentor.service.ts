@@ -2,10 +2,7 @@ import { getAnalystService } from './analyst.service';
 import { getSynthesizerService } from './synthesizer.service';
 import { createLLMClient, type LLMClient, logger } from '@flows/core';
 import { type AdvisorNote } from '../../domain/types';
-import {
-  type AdvisorLogRow,
-  type TradingPersistence,
-} from '../database';
+import { type AdvisorLogRow, type TradingPersistence } from '../database';
 import { TRADING_CONFIG } from '../config';
 import { LLMQuotaError } from '../../domain/errors';
 import { parseAdvisorNote } from '../../domain/advisor-note';
@@ -147,7 +144,11 @@ export class MentorService {
       });
 
       log.debug(
-        { contentLength: response.content.length, tokens: response.usage.totalTokens, latency: response.latencyMs },
+        {
+          contentLength: response.content.length,
+          tokens: response.usage.totalTokens,
+          latency: response.latencyMs,
+        },
         'LLM response received',
       );
 
@@ -171,7 +172,10 @@ export class MentorService {
       this.lastInsightAt = new Date();
       this.insightCount++;
 
-      log.info({ latencyMs: response.latencyMs, tokens: response.usage.totalTokens }, 'Insight generated');
+      log.info(
+        { latencyMs: response.latencyMs, tokens: response.usage.totalTokens },
+        'Insight generated',
+      );
 
       return insight;
     } catch (error: unknown) {
@@ -207,7 +211,6 @@ export class MentorService {
       return null;
     }
   }
-
 }
 
 // Singleton

@@ -11,13 +11,13 @@ El Cascade Wizard guía al trader a través de un **análisis multi-timeframe de
 Para evitar alucinaciones, el Prompt se construye fusionando dos fuentes de verdad:
 
 1. **Fuente A: Conocimiento Técnico (Hard Data)**
-    * Calculado por el Backend (`AnalystService`).
-    * Incluye: Hurst Exponent, Fractales (Precios exactos), ATR (Volatilidad matemática).
-    * *El LLM no calcula, el LLM interpreta.*
+   - Calculado por el Backend (`AnalystService`).
+   - Incluye: Hurst Exponent, Fractales (Precios exactos), ATR (Volatilidad matemática).
+   - _El LLM no calcula, el LLM interpreta._
 
 2. **Fuente B: Conocimiento Estratégico (User Rules)**
-    * Definido en la `manual-strategy.md`.
-    * Incluye: Reglas de "3 Toques", Ratios R:R, Psicología de "Top-Down".
+   - Definido en la `manual-strategy.md`.
+   - Incluye: Reglas de "3 Toques", Ratios R:R, Psicología de "Top-Down".
 
 ---
 
@@ -27,9 +27,9 @@ Para evitar alucinaciones, el Prompt se construye fusionando dos fuentes de verd
 
 ### Datos Técnicos Inyectados (Backend)
 
-* `hurst_exponent`: 0.72 (Régimen: Tendencia Fuerte).
-* `trend_direction`: UP (SMA 200 pendiente positiva).
-* `daily_fractal_level`: $95,000 (Soporte Mayor).
+- `hurst_exponent`: 0.72 (Régimen: Tendencia Fuerte).
+- `trend_direction`: UP (SMA 200 pendiente positiva).
+- `daily_fractal_level`: $95,000 (Soporte Mayor).
 
 ### Prompt V2 (Enriquecido)
 
@@ -64,9 +64,9 @@ Analyze the provided 1D candles in this context. Determine the Macro Bias using 
 
 ### Datos Técnicos Inyectados (Backend)
 
-* `nearest_resistance`: $98,500 (Fractal 4H).
-* `nearest_support`: $96,200.
-* `touch_count`: 2 (El precio ha tocado el soporte 2 veces recientemente).
+- `nearest_resistance`: $98,500 (Fractal 4H).
+- `nearest_support`: $96,200.
+- `touch_count`: 2 (El precio ha tocado el soporte 2 veces recientemente).
 
 ### Prompt V2 (Matrioshka)
 
@@ -104,9 +104,9 @@ Analyze 4H structure. Are we building accumulation for the next leg up?
 
 ### Datos Técnicos Inyectados (Backend)
 
-* `pattern_detected`: Bullish Flag (Bandera Alcista).
-* `volatility_atr`: $150.
-* `rsi_divergence`: Hidden Bullish (Precio baja, RSI sube).
+- `pattern_detected`: Bullish Flag (Bandera Alcista).
+- `volatility_atr`: $150.
+- `rsi_divergence`: Hidden Bullish (Precio baja, RSI sube).
 
 ### Prompt V2 (Matrioshka)
 
@@ -145,10 +145,10 @@ Is there a valid setup forming right now?
 
 ### Datos Técnicos Inyectados (Backend)
 
-* `current_price`: $96,350.
-* `atr_15m`: $40.
-* `suggested_stop_loss`: $96,150 (Soporte - 2*ATR).
-* `target_level`: $98,500 (Resistencia 4H).
+- `current_price`: $96,350.
+- `atr_15m`: $40.
+- `suggested_stop_loss`: $96,150 (Soporte - 2*ATR).
+- `target_level`: $98,500 (Resistencia 4H).
 
 ### Prompt V2 (Total Context)
 
@@ -192,10 +192,10 @@ sequenceDiagram
     participant B as Backend Orc
     participant M as Math Engine
     participant LLM as Modelo IA
-    
+
     U->>W: Inicia Paso 1 (1D)
     W->>B: requestInsight("1d")
-    
+
     rect rgb(20, 30, 40)
         Note over B,M: Fase de Inyección de Hechos
         B->>M: calculateHurst(candles)
@@ -203,7 +203,7 @@ sequenceDiagram
         B->>M: findFractals(candles)
         M-->>B: Support=$95k
     end
-    
+
     B->>LLM: Prompt V2 (Facts + Strategy + Candles)
     LLM-->>B: Insight JSON
     B-->>W: Resultado Masticado

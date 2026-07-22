@@ -10,20 +10,20 @@ import * as fs from 'fs';
  * @returns Configured better-sqlite3 Database instance
  */
 export function createDatabase(dbName: string, dataDir?: string): Database.Database {
-    const dir = dataDir || path.resolve(process.cwd(), 'data');
+  const dir = dataDir || path.resolve(process.cwd(), 'data');
 
-    // Ensure data directory exists
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
+  // Ensure data directory exists
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 
-    const dbPath = path.join(dir, dbName);
-    const db = new Database(dbPath);
+  const dbPath = path.join(dir, dbName);
+  const db = new Database(dbPath);
 
-    // Performance settings
-    db.pragma('journal_mode = WAL');
+  // Performance settings
+  db.pragma('journal_mode = WAL');
 
-    return db;
+  return db;
 }
 
 export { Database };

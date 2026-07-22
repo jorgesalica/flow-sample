@@ -1,105 +1,105 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { mockGenerateContent } = vi.hoisted(() => ({
-    mockGenerateContent: vi.fn(),
+  mockGenerateContent: vi.fn(),
 }));
 
 interface MockGoogleGenAI {
-    models: {
-        generateContent: typeof mockGenerateContent;
-    };
+  models: {
+    generateContent: typeof mockGenerateContent;
+  };
 }
 
 interface CapturedContent {
-    role: string;
-    parts: Array<{ text: string }>;
+  role: string;
+  parts: Array<{ text: string }>;
 }
 
 vi.mock('@google/genai', () => ({
-    GoogleGenAI: vi.fn(function (this: MockGoogleGenAI) {
-        this.models = { generateContent: mockGenerateContent };
-    }),
+  GoogleGenAI: vi.fn(function (this: MockGoogleGenAI) {
+    this.models = { generateContent: mockGenerateContent };
+  }),
 }));
 
 import { GeminiProvider } from '../../../src/llm/providers/gemini/gemini-provider';
 
 const okGenAIResponse = {
-    text: 'response text',
-    usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, totalTokenCount: 15 },
+  text: 'response text',
+  usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, totalTokenCount: 15 },
 };
 
 function capturedContents(): CapturedContent[] {
-    return mockGenerateContent.mock.calls[0][0].contents as CapturedContent[];
+  return mockGenerateContent.mock.calls[0][0].contents as CapturedContent[];
 }
 
 describe('GeminiProvider formatMessages', () => {
-    let provider: GeminiProvider;
+  let provider: GeminiProvider;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockGenerateContent.mockResolvedValue(okGenAIResponse);
-        provider = new GeminiProvider('test-api-key');
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGenerateContent.mockResolvedValue(okGenAIResponse);
+    provider = new GeminiProvider('test-api-key');
+  });
 
-    it('maps a plain user message to role=user', async () => {
-        await provider.generate({ messages: [{ role: 'user', content: 'hello' }] });
-        expect(capturedContents()).toEqual([{ role: 'user', parts: [{ text: 'hello' }] }]);
-    });
+  it('maps a plain user message to role=user', async () => {
+    await provider.generate({ messages: [{ role: 'user', content: 'hello' }] });
+    expect(capturedContents()).toEqual([{ role: 'user', parts: [{ text: 'hello' }] }]);
+  });
 
-    it('prepends system prompt to the first user message', async () => {
-        await provider.generate({
-            messages: [
-                { role: 'system', content: 'You are helpful.' },
-                { role: 'user', content: 'hi' },
-            ],
-        });
-        const contents = capturedContents();
-        expect(contents).toHaveLength(1);
-        expect(contents[0].role).toBe('user');
-        expect(contents[0].parts[0].text).toBe('You are helpful.\n\nhi');
+  it('prepends system prompt to the first user message', async () => {
+    await provider.generate({
+      messages: [
+        { role: 'system', content: 'You are helpful.' },
+        { role: 'user', content: 'hi' },
+      ],
     });
+    const contents = capturedContents();
+    expect(contents).toHaveLength(1);
+    expect(contents[0].role).toBe('user');
+    expect(contents[0].parts[0].text).toBe('You are helpful.\n\nhi');
+  });
 
-    it('concatenates multiple system messages before the first user message', async () => {
-        await provider.generate({
-            messages: [
-                { role: 'system', content: 'Part A.' },
-                { role: 'system', content: 'Part B.' },
-                { role: 'user', content: 'question' },
-            ],
-        });
-        expect(capturedContents()[0].parts[0].text).toBe('Part A.\n\nPart B.\n\nquestion');
+  it('concatenates multiple system messages before the first user message', async () => {
+    await provider.generate({
+      messages: [
+        { role: 'system', content: 'Part A.' },
+        { role: 'system', content: 'Part B.' },
+        { role: 'user', content: 'question' },
+      ],
     });
+    expect(capturedContents()[0].parts[0].text).toBe('Part A.\n\nPart B.\n\nquestion');
+  });
 
-    it('maps assistant role to model', async () => {
-        await provider.generate({
-            messages: [
-                { role: 'user', content: 'hello' },
-                { role: 'assistant', content: 'hi there' },
-            ],
-        });
-        const contents = capturedContents();
-        expect(contents[1].role).toBe('model');
-        expect(contents[1].parts[0].text).toBe('hi there');
+  it('maps assistant role to model', async () => {
+    await provider.generate({
+      messages: [
+        { role: 'user', content: 'hello' },
+        { role: 'assistant', content: 'hi there' },
+      ],
     });
+    const contents = capturedContents();
+    expect(contents[1].role).toBe('model');
+    expect(contents[1].parts[0].text).toBe('hi there');
+  });
 
-    it('only prepends system prompt once — not to subsequent user messages', async () => {
-        await provider.generate({
-            messages: [
-                { role: 'system', content: 'System.' },
-                { role: 'user', content: 'first' },
-                { role: 'user', content: 'second' },
-            ],
-        });
-        const contents = capturedContents();
-        expect(contents[0].parts[0].text).toBe('System.\n\nfirst');
-        expect(contents[1].parts[0].text).toBe('second');
+  it('only prepends system prompt once — not to subsequent user messages', async () => {
+    await provider.generate({
+      messages: [
+        { role: 'system', content: 'System.' },
+        { role: 'user', content: 'first' },
+        { role: 'user', content: 'second' },
+      ],
     });
+    const contents = capturedContents();
+    expect(contents[0].parts[0].text).toBe('System.\n\nfirst');
+    expect(contents[1].parts[0].text).toBe('second');
+  });
 
-    it('returns correct content and usage from generate()', async () => {
-        const result = await provider.generate({ messages: [{ role: 'user', content: 'q' }] });
-        expect(result.content).toBe('response text');
-        expect(result.provider).toBe('gemini');
-        expect(result.usage.inputTokens).toBe(10);
-        expect(result.usage.outputTokens).toBe(5);
-    });
+  it('returns correct content and usage from generate()', async () => {
+    const result = await provider.generate({ messages: [{ role: 'user', content: 'q' }] });
+    expect(result.content).toBe('response text');
+    expect(result.provider).toBe('gemini');
+    expect(result.usage.inputTokens).toBe(10);
+    expect(result.usage.outputTokens).toBe(5);
+  });
 });

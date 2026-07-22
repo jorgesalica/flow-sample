@@ -78,7 +78,7 @@ order, but the recommended sequence is **1 → 2 → 3** (cheapest/safest first)
       `token.repository.ts` — pick one suffix convention within the package.
 - [ ] spotify class prefix: `SQLiteTrackRepository`/`SQLiteTokenRepository` vs
       `ArtistCacheRepository` (equally SQLite-backed) — reconcile.
-- [ ] trading barrel exports `AnalystService` *class* but `get*Service` for the other
+- [ ] trading barrel exports `AnalystService` _class_ but `get*Service` for the other
       three — reconcile the asymmetry.
 - [ ] Barrel completeness — spotify omits `ArtistCacheRepository`, `TopStats`,
       `SpotifyRoutesConfig`, `SearchOptions`/`PaginationOptions`; lyrics omits
