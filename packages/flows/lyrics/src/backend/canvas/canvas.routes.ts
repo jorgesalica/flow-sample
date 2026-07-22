@@ -1,9 +1,19 @@
 import { logger } from '@flows/core';
+import {
+  LYRICS_CANVAS_ERROR_CODES,
+  type LyricsCanvasErrorResponse,
+  type LyricsCanvasNeedsAnalysisResponse,
+} from '@flows/shared';
 import { Elysia, t } from 'elysia';
 import type {
   LyricsCanvasAnalyzeResult,
   LyricsCanvasLoadResult,
 } from './service';
+import {
+  lyricsCanvasAnalysisSchema,
+  lyricsCanvasErrorResponseSchema,
+  lyricsCanvasLoadResponseSchema,
+} from './transport.schemas';
 
 const log = logger.child({ module: 'LyricsCanvasRoutes' });
 
@@ -13,7 +23,6 @@ export interface LyricsCanvasApplication {
 }
 
 export function createCanvasRoutes(service: LyricsCanvasApplication) {
-
   return new Elysia({ prefix: '/:trackId/canvas' })
     .get(
       '/',
@@ -25,21 +34,31 @@ export function createCanvasRoutes(service: LyricsCanvasApplication) {
             return result.analysis;
           case 'track_not_found':
             set.status = 404;
-            return { error: 'Track not found' };
+            return {
+              code: LYRICS_CANVAS_ERROR_CODES.TRACK_NOT_FOUND,
+              error: 'Track not found',
+            } satisfies LyricsCanvasErrorResponse;
           case 'lyrics_missing':
             set.status = 404;
-            return { error: 'Lyrics not available for this track' };
+            return {
+              code: LYRICS_CANVAS_ERROR_CODES.LYRICS_MISSING,
+              error: 'Lyrics not available for this track',
+            } satisfies LyricsCanvasErrorResponse;
           case 'analysis_missing':
             return {
               needsAnalysis: true,
               source: result.source,
-            };
+            } satisfies LyricsCanvasNeedsAnalysisResponse;
         }
       },
       {
         params: t.Object({
           trackId: t.String(),
         }),
+        response: {
+          200: lyricsCanvasLoadResponseSchema,
+          404: lyricsCanvasErrorResponseSchema,
+        },
       },
     )
     .post(
@@ -50,7 +69,10 @@ export function createCanvasRoutes(service: LyricsCanvasApplication) {
 
           if (result.kind === 'source_unavailable') {
             set.status = 400;
-            return { error: 'Track or lyrics not available' };
+            return {
+              code: LYRICS_CANVAS_ERROR_CODES.SOURCE_UNAVAILABLE,
+              error: 'Track or lyrics not available',
+            } satisfies LyricsCanvasErrorResponse;
           }
 
           return result.analysis;
@@ -63,13 +85,21 @@ export function createCanvasRoutes(service: LyricsCanvasApplication) {
             'Canvas analysis failed',
           );
           set.status = 503;
-          return { error: 'AI analysis is temporarily unavailable' };
+          return {
+            code: LYRICS_CANVAS_ERROR_CODES.ANALYSIS_UNAVAILABLE,
+            error: 'AI analysis is temporarily unavailable',
+          } satisfies LyricsCanvasErrorResponse;
         }
       },
       {
         params: t.Object({
           trackId: t.String(),
         }),
+        response: {
+          200: lyricsCanvasAnalysisSchema,
+          400: lyricsCanvasErrorResponseSchema,
+          503: lyricsCanvasErrorResponseSchema,
+        },
       },
     );
 }

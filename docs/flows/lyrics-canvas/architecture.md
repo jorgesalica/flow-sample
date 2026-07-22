@@ -74,6 +74,11 @@ logged as a dropped annotation and never reaches persistence.
 | `GET /api/lyrics/:trackId/canvas` | `200` analysis or `needsAnalysis` state | `404` track/lyrics | n/a |
 | `POST /api/lyrics/:trackId/canvas/analyze` | `200` persisted analysis | `400` unavailable source | sanitized `503` |
 
+Lyrics Canvas request/response DTOs and stable error codes live in `@flows/shared`.
+Both JSON endpoints publish TypeBox response schemas and the UI consumes their inferred
+success/error unions through Eden. The only raw Lyrics transport is the interpretation
+SSE endpoint, whose stream events are validated before reaching UI state.
+
 Provider/model metadata from successful rotation is persisted. Provider response bodies
 and internal errors remain in server logs and are never returned to clients.
 

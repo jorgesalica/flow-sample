@@ -1,6 +1,10 @@
 import crypto from 'crypto';
 import { tokenize, type AnalysisRepository } from '@flows/analysis';
-import { MUSIC_LAYERS, type CanvasAnalysis } from '@flows/shared';
+import {
+  MUSIC_LAYERS,
+  type CanvasAnalysis,
+  type LyricsCanvasSource,
+} from '@flows/shared';
 import type { LyricsRepository } from '../../domain/ports';
 import { classifyLyricsSections } from '../../domain/section-classifier';
 import { analyzeLyrics } from './music-analyzer';
@@ -12,14 +16,6 @@ const MEANING_LAYER = {
   icon: 'Insight',
   color: '#22d3ee',
 };
-
-export interface LyricsCanvasSource {
-  sourceId: string;
-  sourceType: 'track';
-  title: string;
-  author: string;
-  imageUrl: string | null;
-}
 
 export type LyricsCanvasLoadResult =
   | { kind: 'found'; analysis: CanvasAnalysis }
