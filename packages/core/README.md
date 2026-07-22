@@ -4,12 +4,12 @@ Shared infrastructure for the Flow monorepo.
 
 ## What's Inside
 
-| Module | Import | Description |
-| ------ | ------ | ----------- |
-| Logger | `@flows/core/logger` | Pre-configured [Pino](https://getpino.io/) logger |
-| Cache | `@flows/core/cache` | In-memory `SimpleCache` with TTL |
-| Database | `@flows/core/db` | SQLite via `better-sqlite3` |
-| LLM | `@flows/core/llm` | Multi-provider LLM client |
+| Module   | Import               | Description                                       |
+| -------- | -------------------- | ------------------------------------------------- |
+| Logger   | `@flows/core/logger` | Pre-configured [Pino](https://getpino.io/) logger |
+| Cache    | `@flows/core/cache`  | In-memory `SimpleCache` with TTL                  |
+| Database | `@flows/core/db`     | SQLite via `better-sqlite3`                       |
+| LLM      | `@flows/core/llm`    | Multi-provider LLM client                         |
 
 Text tokenization, prompt-safe AST preparation, annotation filtering, and analysis
 persistence belong to `@flows/analysis`. Core stays independent of product and analysis
@@ -21,13 +21,13 @@ Unified interface for 5 LLM providers with a model catalog, tier system, and fre
 
 ### Providers
 
-| Provider | Pricing | Env Var | Highlights |
-| -------- | ------- | ------- | ---------- |
-| **Gemini** | paid | `GEMINI_API_KEY` | Google AI Studio / Vertex. Frontier models. |
-| **Groq** | free | `GROQ_API_KEY` | Ultra-fast LPU inference. |
-| **OpenRouter** | free | `OPENROUTER_API_KEY` | Dynamic free-model router. |
-| **Cerebras** | free | `CEREBRAS_API_KEY` | GPT-OSS 120B default, fast inference. |
-| **Mistral** | free | `MISTRAL_API_KEY` | 4M tokens/month experiment tier. |
+| Provider       | Pricing | Env Var              | Highlights                                  |
+| -------------- | ------- | -------------------- | ------------------------------------------- |
+| **Gemini**     | paid    | `GEMINI_API_KEY`     | Google AI Studio / Vertex. Frontier models. |
+| **Groq**       | free    | `GROQ_API_KEY`       | Ultra-fast LPU inference.                   |
+| **OpenRouter** | free    | `OPENROUTER_API_KEY` | Dynamic free-model router.                  |
+| **Cerebras**   | free    | `CEREBRAS_API_KEY`   | GPT-OSS 120B default, fast inference.       |
+| **Mistral**    | free    | `MISTRAL_API_KEY`    | 4M tokens/month experiment tier.            |
 
 ### Model Tiers
 
@@ -46,11 +46,11 @@ import { createLLMClientFromEnv } from '@flows/core';
 // The named composition factory reads LLM_PROVIDER, LLM_MODEL, and provider API keys.
 const client = createLLMClientFromEnv();
 const response = await client.generate({
-    messages: [{ role: 'user', content: 'Hello!' }],
+  messages: [{ role: 'user', content: 'Hello!' }],
 });
-console.log(response.content);   // "Hi there!"
-console.log(response.provider);  // "gemini"
-console.log(response.model);     // "gemini-2.5-flash"
+console.log(response.content); // "Hi there!"
+console.log(response.provider); // "gemini"
+console.log(response.model); // "gemini-2.5-flash"
 ```
 
 **Direct mode** — target a specific provider:
@@ -65,9 +65,9 @@ const client = new LLMClient('groq', groqApiKey, 'llama-3.3-70b-versatile');
 
 ```typescript
 const client = createLLMClientFromEnv({
-    LLM_PROVIDER: 'rotation',
-    GROQ_API_KEY: groqApiKey,
-    OPENROUTER_API_KEY: openRouterApiKey,
+  LLM_PROVIDER: 'rotation',
+  GROQ_API_KEY: groqApiKey,
+  OPENROUTER_API_KEY: openRouterApiKey,
 });
 ```
 

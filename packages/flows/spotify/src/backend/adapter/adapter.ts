@@ -184,14 +184,16 @@ export class SpotifyApiAdapter implements SpotifyGateway {
         await this.client.get(nextUrl);
       const data = response.data;
 
-      const pageTracks = data.items.map((item) => {
-        try {
-          return this.mapToTrack(item);
-        } catch (e) {
-          log.error({ error: e instanceof Error ? e.message : String(e) }, 'Failed to map track');
-          return null;
-        }
-      }).filter((t): t is Track => t !== null);
+      const pageTracks = data.items
+        .map((item) => {
+          try {
+            return this.mapToTrack(item);
+          } catch (e) {
+            log.error({ error: e instanceof Error ? e.message : String(e) }, 'Failed to map track');
+            return null;
+          }
+        })
+        .filter((t): t is Track => t !== null);
 
       tracks.push(...pageTracks);
 
@@ -221,13 +223,15 @@ export class SpotifyApiAdapter implements SpotifyGateway {
       title: t.name || 'Unknown Title',
       artists: (t.artists || []).map((a) => ({
         id: a.id || `local-artist-${a.name}`.replace(/\s+/g, '-'),
-        name: a.name || 'Unknown Artist'
+        name: a.name || 'Unknown Artist',
       })),
       album: {
         id: t.album?.id || '',
         name: t.album?.name || 'Unknown Album',
         releaseDate: t.album?.release_date || '',
-        releaseYear: t.album?.release_date ? parseInt(t.album.release_date.split('-')[0]) : undefined,
+        releaseYear: t.album?.release_date
+          ? parseInt(t.album.release_date.split('-')[0])
+          : undefined,
         imageUrl: albumImage?.url,
       },
       addedAt: item.added_at,
@@ -287,8 +291,7 @@ export class SpotifyApiAdapter implements SpotifyGateway {
       for (const result of results) {
         if (result.status === 'fulfilled' && result.value) {
           const artist = result.value;
-          const image =
-            artist.images?.find((img) => img.width === 160) || artist.images?.[0];
+          const image = artist.images?.find((img) => img.width === 160) || artist.images?.[0];
           const genres = artist.genres || [];
           const imageUrl = image?.url;
 

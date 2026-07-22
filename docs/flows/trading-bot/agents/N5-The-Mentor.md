@@ -1,22 +1,22 @@
 # Agent Profile: N5 - The Mentor (El Capitán)
 
-> **Role**: Educational Trading Advisor (On-Demand)  
-> **Type**: Large Language Model (LLM)  
-> **Location**: Node 5 in the Trading Flow  
+> **Role**: Educational Trading Advisor (On-Demand)
+> **Type**: Large Language Model (LLM)
+> **Location**: Node 5 in the Trading Flow
 > **Activation**: User-controlled toggle (not always-on)
 
 ---
 
 ## 🤖 Model Specification
 
-| Parameter | Value |
-| --- | --- |
-| **Model ID** | `gemini-3-flash` |
-| **Provider** | Google DeepMind |
+| Parameter          | Value                           |
+| ------------------ | ------------------------------- |
+| **Model ID**       | `gemini-3-flash`                |
+| **Provider**       | Google DeepMind                 |
 | **Context Window** | 1M tokens (typical usage: < 2k) |
-| **Input Cost** | $0.50 per 1M tokens |
-| **Output Cost** | $3.00 per 1M tokens |
-| **Latency** | ~1.5s for 500-token response |
+| **Input Cost**     | $0.50 per 1M tokens             |
+| **Output Cost**    | $3.00 per 1M tokens             |
+| **Latency**        | ~1.5s for 500-token response    |
 
 ---
 
@@ -24,15 +24,15 @@
 
 ### Why Gemini 3 Flash?
 
-| Factor | Justification |
-| --- | --- |
-| **Activation Model** | **On-Demand** (user toggles advisor on/off). Not always-on. |
-| **Real Usage Pattern** | User decides when to activate. Typical: 1-4 hours/day during active trading windows. |
-| **Cost (1 hour/day)** | `60 req × (800 × $0.50 + 500 × $3.00) / 1M = $0.11/day = **$3.30/month**` |
-| **Cost (4 hours/day)** | `240 req × ... = **$0** (within 250/day free tier)` ✅ |
-| **Cost (8 hours/day)** | `480 req × ... = $0.70/day = **$21/month**` |
-| **Speed** | Flash: ~1.5s. Pro: ~3-4s. We need insights delivered **within the 1-minute window**. |
-| **Capability** | Flash handles structured JSON interpretation and templated reasoning excellently. Pro's extra reasoning is overkill for this task. |
+| Factor                 | Justification                                                                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Activation Model**   | **On-Demand** (user toggles advisor on/off). Not always-on.                                                                        |
+| **Real Usage Pattern** | User decides when to activate. Typical: 1-4 hours/day during active trading windows.                                               |
+| **Cost (1 hour/day)**  | `60 req × (800 × $0.50 + 500 × $3.00) / 1M = $0.11/day = **$3.30/month**`                                                          |
+| **Cost (4 hours/day)** | `240 req × ... = **$0** (within 250/day free tier)` ✅                                                                             |
+| **Cost (8 hours/day)** | `480 req × ... = $0.70/day = **$21/month**`                                                                                        |
+| **Speed**              | Flash: ~1.5s. Pro: ~3-4s. We need insights delivered **within the 1-minute window**.                                               |
+| **Capability**         | Flash handles structured JSON interpretation and templated reasoning excellently. Pro's extra reasoning is overkill for this task. |
 
 **Alternative Considered**:
 
@@ -53,7 +53,7 @@ The system sends a structured market digest to the LLM. No ambiguity, no prose.
 {
   "timestamp": "2026-01-31T21:45:00Z",
   "symbol": "BTCUSDT",
-  "current_price": 98200.50,
+  "current_price": 98200.5,
   "regime": {
     "classification": "TRENDING",
     "hurst_exponent": 0.72,
@@ -94,6 +94,7 @@ TASK:
 Analyze the provided market state JSON and generate a structured trading insight.
 
 GUIDELINES:
+
 1. CONTEXTUALIZE: Explain what the current market regime means for indicator interpretation.
 2. EDUCATE: Clarify why certain signals are valid or invalid given the regime.
 3. SCENARIO ANALYSIS: Present both bullish and bearish possibilities with clear trigger conditions.
@@ -103,20 +104,20 @@ GUIDELINES:
 OUTPUT FORMAT:
 Return a JSON object with the following structure:
 {
-  "title": "Short headline (e.g., 'Bullish Momentum at Resistance')",
-  "regime_context": "Explanation of current regime and what it means",
-  "key_observation": "Main market event happening right now",
-  "scenario_bullish": {
-    "condition": "What needs to happen for bullish continuation",
-    "target": "Expected price level if bullish",
-    "reasoning": "Why this scenario is plausible"
-  },
-  "scenario_bearish": {
-    "condition": "What would trigger bearish reversal",
-    "target": "Expected price level if bearish",
-    "reasoning": "Why this scenario is possible"
-  },
-  "mentor_tip": "Educational insight or common mistake to avoid"
+"title": "Short headline (e.g., 'Bullish Momentum at Resistance')",
+"regime_context": "Explanation of current regime and what it means",
+"key_observation": "Main market event happening right now",
+"scenario_bullish": {
+"condition": "What needs to happen for bullish continuation",
+"target": "Expected price level if bullish",
+"reasoning": "Why this scenario is plausible"
+},
+"scenario_bearish": {
+"condition": "What would trigger bearish reversal",
+"target": "Expected price level if bearish",
+"reasoning": "Why this scenario is possible"
+},
+"mentor_tip": "Educational insight or common mistake to avoid"
 }
 ```
 
@@ -161,15 +162,15 @@ Return a JSON object with the following structure:
 
 ### Realistic Usage Scenarios
 
-| Usage Pattern | Requests/Day | Gemini 3 Flash Cost | Groq Llama 8B Cost |
-| --- | --- | --- | --- |
-| **1 hour/day** | 60 | **$0** (free tier: 250/day) | $0.005/day ($0.15/mo) |
-| **2 hours/day** | 120 | **$0** (free tier) | $0.01/day ($0.30/mo) |
-| **4 hours/day** | 240 | **$0** (free tier) ✅ | $0.02/day ($0.60/mo) |
-| **6 hours/day** | 360 | $0.33/day ($10/mo) | $0.03/day ($0.90/mo) |
-| **8 hours/day** | 480 | $0.70/day ($21/mo) | $0.04/day ($1.20/mo) |
-| **12 hours/day** | 720 | $1.40/day ($42/mo) | $0.06/day ($1.80/mo) |
-| **24 hours/day** (unlikely) | 1440 | $2.74/day ($82/mo) | $0.12/day ($3.60/mo) |
+| Usage Pattern               | Requests/Day | Gemini 3 Flash Cost         | Groq Llama 8B Cost    |
+| --------------------------- | ------------ | --------------------------- | --------------------- |
+| **1 hour/day**              | 60           | **$0** (free tier: 250/day) | $0.005/day ($0.15/mo) |
+| **2 hours/day**             | 120          | **$0** (free tier)          | $0.01/day ($0.30/mo)  |
+| **4 hours/day**             | 240          | **$0** (free tier) ✅       | $0.02/day ($0.60/mo)  |
+| **6 hours/day**             | 360          | $0.33/day ($10/mo)          | $0.03/day ($0.90/mo)  |
+| **8 hours/day**             | 480          | $0.70/day ($21/mo)          | $0.04/day ($1.20/mo)  |
+| **12 hours/day**            | 720          | $1.40/day ($42/mo)          | $0.06/day ($1.80/mo)  |
+| **24 hours/day** (unlikely) | 1440         | $2.74/day ($82/mo)          | $0.12/day ($3.60/mo)  |
 
 **Calculation Base**:
 

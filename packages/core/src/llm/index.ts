@@ -19,13 +19,13 @@ import { createLLMConfigFromEnv, type LLMEnv } from './env';
  * - Defaults to gemini
  */
 export function createLLMClientFromEnv(env?: LLMEnv): LLMClient {
-    const config = createLLMConfigFromEnv(env);
+  const config = createLLMConfigFromEnv(env);
 
-    if (config.provider === 'rotation') {
-        return LLMClient.createRotation(config);
-    }
+  if (config.provider === 'rotation') {
+    return LLMClient.createRotation(config);
+  }
 
-    return new LLMClient(config.provider, config.apiKeys[config.provider], config.model);
+  return new LLMClient(config.provider, config.apiKeys[config.provider], config.model);
 }
 
 export const createLLMClient = createLLMClientFromEnv;
@@ -33,14 +33,14 @@ export { createLLMConfigFromEnv, type LLMEnv, type LLMRuntimeConfig } from './en
 
 // ── Types ────────────────────────────────────────────────────────────
 export type {
-    LLMMessage,
-    LLMRequest,
-    LLMResponse,
-    LLMUsage,
-    LLMStreamEvent,
-    ModelTier,
-    ModelPricing,
-    ModelInfo,
+  LLMMessage,
+  LLMRequest,
+  LLMResponse,
+  LLMUsage,
+  LLMStreamEvent,
+  ModelTier,
+  ModelPricing,
+  ModelInfo,
 } from './types';
 
 // ── Providers ────────────────────────────────────────────────────────

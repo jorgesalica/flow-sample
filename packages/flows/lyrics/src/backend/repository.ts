@@ -21,7 +21,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
   constructor(private readonly db: Database.Database) {
     // Ensure foreign keys are on for cascading deletes
     this.db.pragma('foreign_keys = ON');
-    
+
     // Initialize schema
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS lyrics (
@@ -67,15 +67,17 @@ export class SQLiteLyricsRepository implements LyricsRepository {
   async save(trackId: string, lyrics: LyricsData): Promise<void> {
     const now = new Date().toISOString();
 
-    this.db.prepare(
-      `INSERT INTO lyrics (track_id, plain_lyrics, synced_lyrics, status, fetched_at)
+    this.db
+      .prepare(
+        `INSERT INTO lyrics (track_id, plain_lyrics, synced_lyrics, status, fetched_at)
        VALUES (?, ?, ?, 'found', ?)
        ON CONFLICT(track_id) DO UPDATE SET
          plain_lyrics = excluded.plain_lyrics,
          synced_lyrics = excluded.synced_lyrics,
          status = 'found',
          fetched_at = excluded.fetched_at`,
-    ).run(trackId, lyrics.plainLyrics, lyrics.syncedLyrics, now);
+      )
+      .run(trackId, lyrics.plainLyrics, lyrics.syncedLyrics, now);
 
     log.debug({ trackId }, 'Saved lyrics');
   }
@@ -86,13 +88,15 @@ export class SQLiteLyricsRepository implements LyricsRepository {
   async markNotFound(trackId: string): Promise<void> {
     const now = new Date().toISOString();
 
-    this.db.prepare(
-      `INSERT INTO lyrics (track_id, status, fetched_at)
+    this.db
+      .prepare(
+        `INSERT INTO lyrics (track_id, status, fetched_at)
        VALUES (?, 'not_found', ?)
        ON CONFLICT(track_id) DO UPDATE SET
          status = 'not_found',
          fetched_at = excluded.fetched_at`,
-    ).run(trackId, now);
+      )
+      .run(trackId, now);
 
     log.debug({ trackId }, 'Marked lyrics not found');
   }
@@ -119,7 +123,8 @@ export class SQLiteLyricsRepository implements LyricsRepository {
    * Get lyrics statistics
    */
   async getStats(): Promise<{ total: number; found: number; notFound: number; pending: number }> {
-    const totalTracks = (this.db.prepare('SELECT COUNT(*) as c FROM tracks').get() as { c: number }).c;
+    const totalTracks = (this.db.prepare('SELECT COUNT(*) as c FROM tracks').get() as { c: number })
+      .c;
 
     const stats = this.db
       .prepare(

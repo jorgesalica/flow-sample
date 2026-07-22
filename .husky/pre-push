@@ -1,1 +1,19 @@
+#!/bin/sh
+
+# Merges belong to GitHub PRs. Guard the remote ref because a local branch may have
+# any name. Emergency override: ALLOW_PROTECTED_PUSH=1 git push ...
+push_info=$(cat)
+if printf '%s\n' "$push_info" | grep -qE 'refs/heads/main([[:space:]]|$)'; then
+  if [ "${ALLOW_PROTECTED_PUSH:-}" != "1" ]; then
+    echo "Direct pushes to main are blocked. Push a short-lived branch and open a PR."
+    echo "Emergency override: ALLOW_PROTECTED_PUSH=1 git push ..."
+    exit 1
+  fi
+fi
+
+if [ ! -f "packages/backend/dist/api/app.js" ]; then
+  echo "Compiled workspace output is missing. Run pnpm build before pushing."
+  exit 1
+fi
+
 pnpm check && pnpm test

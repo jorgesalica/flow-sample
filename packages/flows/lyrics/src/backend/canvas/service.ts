@@ -1,10 +1,6 @@
 import crypto from 'crypto';
 import { tokenize, type AnalysisRepository } from '@flows/analysis';
-import {
-  MUSIC_LAYERS,
-  type CanvasAnalysis,
-  type LyricsCanvasSource,
-} from '@flows/shared';
+import { MUSIC_LAYERS, type CanvasAnalysis, type LyricsCanvasSource } from '@flows/shared';
 import type { LyricsRepository } from '../../domain/ports';
 import { classifyLyricsSections } from '../../domain/section-classifier';
 import { analyzeLyrics } from './music-analyzer';
@@ -24,8 +20,7 @@ export type LyricsCanvasLoadResult =
   | { kind: 'analysis_missing'; source: LyricsCanvasSource };
 
 export type LyricsCanvasAnalyzeResult =
-  | { kind: 'created'; analysis: CanvasAnalysis }
-  | { kind: 'source_unavailable' };
+  { kind: 'created'; analysis: CanvasAnalysis } | { kind: 'source_unavailable' };
 
 export class LyricsCanvasService {
   constructor(

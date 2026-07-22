@@ -109,7 +109,7 @@ sequenceDiagram
     N1_Watcher->>N2_Scribe: Emit CANDLE_CLOSED
     N2_Scribe->>DB: INSERT Candle
     N2_Scribe->>N3_Navigator: Trigger Analysis(candle_id)
-    
+
     rect rgb(240, 248, 255)
     note right of N3_Navigator: Math Phase
     N3_Navigator->>DB: SELECT last 500 candles

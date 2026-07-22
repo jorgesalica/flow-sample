@@ -1,8 +1,4 @@
-export {
-  createMusicDatabase,
-  initializeMusicDatabase,
-  rebuildFtsIndex,
-} from './database';
+export { createMusicDatabase, initializeMusicDatabase, rebuildFtsIndex } from './database';
 export {
   SQLiteTrackRepository,
   type PaginatedResult,

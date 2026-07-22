@@ -1,23 +1,12 @@
 import { logger } from '@flows/core';
-import type {
-  Candle,
-  FractalNode,
-  TradingKlineInterval,
-} from '@flows/shared';
+import type { Candle, FractalNode, TradingKlineInterval } from '@flows/shared';
 import { MarketDataUnavailableError } from '../../domain/errors';
-import type {
-  StoredAdvisorInsight,
-  TradingReadRepository,
-} from '../repository';
+import type { StoredAdvisorInsight, TradingReadRepository } from '../repository';
 
 const log = logger.child({ module: 'TradingMarketService' });
 
 export interface HistoricalMarketDataPort {
-  fetchKlines(
-    symbol: string,
-    interval: TradingKlineInterval,
-    limit: number,
-  ): Promise<Candle[]>;
+  fetchKlines(symbol: string, interval: TradingKlineInterval, limit: number): Promise<Candle[]>;
 }
 
 export interface TradingMarketApplication {

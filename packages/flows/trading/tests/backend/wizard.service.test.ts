@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LLMResponse } from '@flows/core';
-import type {
-  AdvisorNote,
-  Candle,
-  MarketState,
-  TradingWizardAnalysis,
-} from '@flows/shared';
+import type { AdvisorNote, Candle, MarketState, TradingWizardAnalysis } from '@flows/shared';
 import {
   InsightProviderError,
   InsufficientDataError,
@@ -160,44 +155,32 @@ describe('TradingWizardService', () => {
 
   it('rejects empty and analytically insufficient market windows', async () => {
     market.getHistoricalKlines.mockResolvedValueOnce([]);
-    await expect(createService().generate({})).rejects.toBeInstanceOf(
-      InsufficientDataError,
-    );
+    await expect(createService().generate({})).rejects.toBeInstanceOf(InsufficientDataError);
 
     market.getHistoricalKlines.mockResolvedValueOnce([candle]);
     analyzer.analyzeCandles.mockReturnValueOnce(null);
-    await expect(createService().generate({})).rejects.toBeInstanceOf(
-      InsufficientDataError,
-    );
+    await expect(createService().generate({})).rejects.toBeInstanceOf(InsufficientDataError);
   });
 
   it('preserves typed market-data failures for HTTP mapping', async () => {
     market.getHistoricalKlines.mockRejectedValue(new MarketDataUnavailableError());
 
-    await expect(createService().generate({})).rejects.toBeInstanceOf(
-      MarketDataUnavailableError,
-    );
+    await expect(createService().generate({})).rejects.toBeInstanceOf(MarketDataUnavailableError);
   });
 
   it('wraps LLM creation and request failures', async () => {
     createLlmClient.mockImplementationOnce(() => {
       throw new Error('secret provider configuration');
     });
-    await expect(createService().generate({})).rejects.toBeInstanceOf(
-      InsightProviderError,
-    );
+    await expect(createService().generate({})).rejects.toBeInstanceOf(InsightProviderError);
 
     generate.mockRejectedValueOnce(new Error('secret provider response'));
-    await expect(createService().generate({})).rejects.toBeInstanceOf(
-      InsightProviderError,
-    );
+    await expect(createService().generate({})).rejects.toBeInstanceOf(InsightProviderError);
   });
 
   it('rejects malformed LLM output through a stable domain error', async () => {
     generate.mockResolvedValueOnce({ ...validResponse, content: 'not json' });
 
-    await expect(createService().generate({})).rejects.toBeInstanceOf(
-      InvalidInsightResponseError,
-    );
+    await expect(createService().generate({})).rejects.toBeInstanceOf(InvalidInsightResponseError);
   });
 });

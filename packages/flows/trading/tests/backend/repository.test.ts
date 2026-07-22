@@ -7,10 +7,8 @@ const getLastNFractalNodesAll = vi.fn();
 const getLatestAdvisorLogGet = vi.fn();
 
 const persistence: TradingPersistence = {
-  getLastCandles: (symbol, interval, limit) =>
-    getLastNCandlesAll(symbol, interval, limit),
-  getLastFractalNodes: (symbol, limit) =>
-    getLastNFractalNodesAll(symbol, limit),
+  getLastCandles: (symbol, interval, limit) => getLastNCandlesAll(symbol, interval, limit),
+  getLastFractalNodes: (symbol, limit) => getLastNFractalNodesAll(symbol, limit),
   getLatestAdvisorLog: (symbol) => getLatestAdvisorLogGet(symbol) ?? null,
   upsertCandle: vi.fn(),
   getLastCandle: vi.fn(() => null),
@@ -119,8 +117,8 @@ describe('SqliteTradingReadRepository', () => {
       insight_json: '{invalid',
       market_state_json: null,
     });
-    expect(() =>
-      new SqliteTradingReadRepository().getLatestInsight('BTCUSDT'),
-    ).toThrow(AnalysisError);
+    expect(() => new SqliteTradingReadRepository().getLatestInsight('BTCUSDT')).toThrow(
+      AnalysisError,
+    );
   });
 });

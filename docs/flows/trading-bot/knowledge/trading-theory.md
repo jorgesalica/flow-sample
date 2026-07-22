@@ -5,43 +5,43 @@
 
 ## 1. Market Structure: The Context
 
-* **Transactional Memory**: Support/Resistance are not lines; they are zones of "trapped inventory" where buyers/sellers are stuck.
-* **The "Flip"**: Polarity changes. Broken Resistance becomes Support.
-* **Breakout vs. Fakeout (Liquidity Trap)**:
-  * *Real Breakout*: Sustained close beyond level + Volume Expansion.
-  * *Fakeout*: Price pokes level to trigger Stop Losses (Liquidity Grab) and reverses.
-  * *Bot Logic*: `If (High > Level && Close < Level)` -> Flag as Potential Fakeout.
+- **Transactional Memory**: Support/Resistance are not lines; they are zones of "trapped inventory" where buyers/sellers are stuck.
+- **The "Flip"**: Polarity changes. Broken Resistance becomes Support.
+- **Breakout vs. Fakeout (Liquidity Trap)**:
+  - _Real Breakout_: Sustained close beyond level + Volume Expansion.
+  - _Fakeout_: Price pokes level to trigger Stop Losses (Liquidity Grab) and reverses.
+  - _Bot Logic_: `If (High > Level && Close < Level)` -> Flag as Potential Fakeout.
 
 ## 2. Technical Quantification: The Calculus
 
 ### RSI (Relative Strength Index)
 
-* **Formula**: Normalized momentum (0-100) using Wilder's Smoothing.
-* **Divergence (The Truth Teller)**:
-  * *Regular Bearish*: Price Higher High, RSI Lower High -> **Reversal**.
-  * *Hidden Bullish*: Price Higher Low, RSI Lower Low -> **Continuation**.
-* **Logic**: In Strong Trends ($H > 0.6$), ignore Overbought signals.
+- **Formula**: Normalized momentum (0-100) using Wilder's Smoothing.
+- **Divergence (The Truth Teller)**:
+  - _Regular Bearish_: Price Higher High, RSI Lower High -> **Reversal**.
+  - _Hidden Bullish_: Price Higher Low, RSI Lower Low -> **Continuation**.
+- **Logic**: In Strong Trends ($H > 0.6$), ignore Overbought signals.
 
 ### MACD (Moving Average Convergence Divergence)
 
-* **Mechanism**: Distance between 12-EMA and 26-EMA.
-* **Histogram**: The "Derivative". Shrinking bars signal early momentum loss before the moving averages cross.
+- **Mechanism**: Distance between 12-EMA and 26-EMA.
+- **Histogram**: The "Derivative". Shrinking bars signal early momentum loss before the moving averages cross.
 
 ## 3. Risk Management: The Shield
 
-* **The 1% Rule**: Position size is derived from determining risk, not account size.
-  * `Position Size = (Account * 0.01) / (Entry - StopLoss)`
-* **Stop Loss Logic**:
-  * **Structure**: Below Swing Low.
-  * **Volatility (ATR)**: `Entry - (2 * ATR)`. Never use arbitrary dollar amounts.
-* **Expectancy**: R:R (Reward:Risk) must be > 2.0. If the distance to the next Resistance (Target) is less than 2x the risk, **ABORT TRADE**.
+- **The 1% Rule**: Position size is derived from determining risk, not account size.
+  - `Position Size = (Account * 0.01) / (Entry - StopLoss)`
+- **Stop Loss Logic**:
+  - **Structure**: Below Swing Low.
+  - **Volatility (ATR)**: `Entry - (2 * ATR)`. Never use arbitrary dollar amounts.
+- **Expectancy**: R:R (Reward:Risk) must be > 2.0. If the distance to the next Resistance (Target) is less than 2x the risk, **ABORT TRADE**.
 
 ---
 
 ## 🤖 Advisor Implementation Logic
 
 ### How the LLM should speak
->
+
 > "Market Structure shows a **Fakeout** at the $98k resistance; price wicked above but closed below. Volume did not expand. Additionally, RSI shows **Regular Bearish Divergence**.
 >
 > **Action**: Recommending Short Setup.

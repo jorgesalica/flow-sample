@@ -46,11 +46,7 @@ const provider: LyricsInterpretationProvider = {
   generateStream: vi.fn(),
 };
 const providerFactory = vi.fn<LyricsInterpretationProviderFactory>(() => provider);
-const service = new LyricsInterpretationService(
-  lyricsRepository,
-  trackRepository,
-  providerFactory,
-);
+const service = new LyricsInterpretationService(lyricsRepository, trackRepository, providerFactory);
 
 async function collect(
   stream: AsyncIterable<LyricsInterpretationEvent>,
@@ -97,9 +93,7 @@ describe('LyricsInterpretationService', () => {
   it('rejects tracks without usable lyrics before opening a stream', async () => {
     vi.mocked(lyricsRepository.findByTrackId).mockResolvedValue(null);
 
-    await expect(service.prepareStream(track.id)).rejects.toBeInstanceOf(
-      LyricsNotFoundError,
-    );
+    await expect(service.prepareStream(track.id)).rejects.toBeInstanceOf(LyricsNotFoundError);
     expect(providerFactory).not.toHaveBeenCalled();
   });
 
@@ -111,10 +105,7 @@ describe('LyricsInterpretationService', () => {
       { type: 'delta', delta: 'second' },
       { type: 'done' },
     ]);
-    expect(lyricsRepository.saveInterpretation).toHaveBeenCalledWith(
-      track.id,
-      'First second',
-    );
+    expect(lyricsRepository.saveInterpretation).toHaveBeenCalledWith(track.id, 'First second');
     expect(provider.generateStream).toHaveBeenCalledWith({
       messages: [
         expect.objectContaining({ role: 'system' }),
@@ -131,8 +122,6 @@ describe('LyricsInterpretationService', () => {
       throw new Error('secret provider setup detail');
     });
 
-    await expect(service.prepareStream(track.id)).rejects.toThrow(
-      'secret provider setup detail',
-    );
+    await expect(service.prepareStream(track.id)).rejects.toThrow('secret provider setup detail');
   });
 });

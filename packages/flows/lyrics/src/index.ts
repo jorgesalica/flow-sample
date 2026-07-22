@@ -2,10 +2,7 @@
 
 // Backend exports
 export { createLyricsRoutes } from './backend/routes';
-export {
-  createLyricsRouteDependencies,
-  type LyricsRoutesDependencies,
-} from './backend/routes';
+export { createLyricsRouteDependencies, type LyricsRoutesDependencies } from './backend/routes';
 export { LyricsService, type LyricsApplication } from './backend/lyrics.service';
 export {
   LyricsInterpretationService,

@@ -1,8 +1,4 @@
-import {
-  logger,
-  type LLMClient,
-  type LLMMessage,
-} from '@flows/core';
+import { logger, type LLMClient, type LLMMessage } from '@flows/core';
 import type {
   Candle,
   MarketState,
@@ -52,11 +48,7 @@ export class TradingWizardService implements TradingWizardApplication {
     const limit = request.limit ?? 100;
     const stepLabel = request.stepLabel ?? interval;
 
-    const candles = await this.dependencies.market.getHistoricalKlines(
-      symbol,
-      interval,
-      limit,
-    );
+    const candles = await this.dependencies.market.getHistoricalKlines(symbol, interval, limit);
     if (candles.length === 0) {
       throw new InsufficientDataError('No market candles are available');
     }

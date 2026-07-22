@@ -1,39 +1,39 @@
 {
-    "name": "@flows/lyrics",
-    "version": "0.1.0",
-    "private": true,
-    "type": "commonjs",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "require": "./dist/index.js",
-            "default": "./dist/index.js"
-        }
-    },
-    "scripts": {
-        "build": "tsc",
-        "dev": "tsc --watch",
-        "test": "vitest run",
-        "test:coverage": "vitest run --coverage",
-        "typecheck": "tsc --noEmit"
-    },
-    "dependencies": {
-        "@flows/analysis": "workspace:*",
-        "@flows/core": "workspace:*",
-        "@flows/music": "workspace:*",
-        "@flows/shared": "workspace:*",
-        "axios": "^1.18.1",
-        "better-sqlite3": "^12.11.1",
-        "elysia": "^1.4.29",
-        "zod": "^4.4.3"
-    },
-    "devDependencies": {
-        "@types/better-sqlite3": "^7.6.13",
-        "@types/node": "^22.20.1",
-        "@vitest/coverage-v8": "^4.1.10",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+  "name": "@flows/lyrics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flows/analysis": "workspace:*",
+    "@flows/core": "workspace:*",
+    "@flows/music": "workspace:*",
+    "@flows/shared": "workspace:*",
+    "axios": "^1.18.1",
+    "better-sqlite3": "^12.11.1",
+    "elysia": "^1.4.29",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
 }

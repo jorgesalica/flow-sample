@@ -1,174 +1,69 @@
-# Trading Bot Flow
+# Trading Flow
 
-> **A Sovereign Trading Advisor**: Real-time market intelligence powered by Fractal Mathematics and AI reasoning.
+Trading is an educational market-analysis workspace. It ingests Binance candles,
+calculates deterministic fractal and regime signals, and can ask the shared LLM layer to
+explain those signals. It does not place orders, manage exchange credentials, or provide
+financial advice.
 
-## 🎯 Purpose
+## Current Capabilities
 
-This flow transforms raw market data into educational trading insights by combining:
+- Live Binance OHLCV ingestion with explicit start/stop state.
+- Local candle and fractal persistence in `trading.db`.
+- Hurst, Bill Williams fractal, candlestick-pattern, and risk-context analysis.
+- On-demand advisor notes with provider/model audit metadata.
+- A top-down wizard for `1d`, `4h`, `1h`, and `15m` analysis.
+- Typed HTTP contracts plus validated live SSE events.
+- A responsive SvelteKit workspace with charts and explicit provider/error states.
 
-- **Fractal Analysis**: Hurst Exponent for regime detection (Trending vs. Ranging).
-- **Technical Indicators**: RSI, MACD, conditioned on market regime.
-- **AI Reasoning**: LLM-powered explanations of market conditions.
+The flow is a bounded package mounted by the shared Elysia host, not a standalone service.
+Its detailed source layout and endpoint list live in the
+[`@flows/trading` package README](../../../packages/flows/trading/README.md).
 
-The goal is not to execute trades automatically, but to act as a **Real-Time Mentor** that teaches you *why* the market behaves as it does.
+## Runtime Configuration
 
-## ✨ Key Features
+Binance public market data needs no API key. AI features use the provider-neutral
+`@flows/core` LLM client and require at least one configured provider key.
 
-1. **📊 Glass Box Analysis**: Transparent view of all metrics (Hurst, RSI, Fractals) and raw LLM input/output.
-2. **🧙‍♂️ Cascade Analysis Wizard**: Guided, multi-timeframe analysis (1D → 4H → 1H → 15m) mimicing expert "top-down" analysis.
-3. **🤖 Fractal Advisor**: Real-time AI mentor that explains market structure using Hurst Exponent and regime theory.
-4. **⚡ Live Ingestion**: WebSocket integration with Binance for real-time OHLCV updates.
+| Variable             | Default          | Purpose                                     |
+| -------------------- | ---------------- | ------------------------------------------- |
+| `TRADING_SYMBOL`     | `BTCUSDT`        | Default market pair                         |
+| `TRADING_INTERVAL`   | `1m`             | Default live candle interval                |
+| `ADVISOR_AUTO_START` | `false`          | Enable the advisor when routes are composed |
+| `LLM_PROVIDER`       | `gemini`         | Direct provider or `rotation`               |
+| `LLM_MODEL`          | provider default | Optional direct-provider model override     |
 
-## 🏗️ Architecture Overview
+Provider keys and rotation behavior are documented in [LLM API keys](../llm/api-keys.md).
+Services receive configuration at composition time and do not read environment variables
+directly.
 
-```text
-N1 (Watcher) → N2 (Scribe) → N3 (Navigator) → N4 (Translator) → N5 (Captain) → N6 (Dashboard)
-   Binance       SQLite         Math Engine       Prompt Builder     LLM           Svelte UI
-```
+## Failure And Safety Contract
 
-See [flow-map.md](./flow-map.md) for detailed node descriptions.
+- Historical Binance failures return a sanitized `502`.
+- Insufficient wizard data returns `422`.
+- AI provider unavailability returns `502` or `503` without exposing provider bodies.
+- Closing an SSE request removes Trading listeners.
+- Generated notes are explanatory context only; users retain responsibility for every
+  financial decision.
 
-## 🔧 Configuration
-
-### Required Environment Variables
-
-Copy the example file and configure your keys:
+## Development
 
 ```bash
-cp .env.example .env
+pnpm dev
+pnpm --filter @flows/trading typecheck
+pnpm --filter @flows/trading test
+pnpm --filter @flows/trading test:coverage
+pnpm --filter @flows/ui test src/lib/flows/trading src/routes/trading/page.test.ts
 ```
 
-| Variable | Required | Description |
-| :--- | :--- | :--- |
-| `GEMINI_API_KEY` | **Yes (Phase 3)** | Google AI API key for Gemini Flash 1.5. Get one at [Google AI Studio](https://aistudio.google.com/). |
+## Supporting Material
 
-### `.env.example` Contents
+The following documents preserve product reasoning and completed implementation history.
+They are not active backlogs; executable work belongs in GitHub issues and the
+[repository roadmap](../../ROADMAP.md).
 
-```env
-# ===========================================
-# TRADING BOT FLOW - Environment Configuration
-# ===========================================
-
-# -------------------------------------------
-# LLM Provider (Required for Phase 3: Advisor)
-# -------------------------------------------
-# Google Gemini API Key
-# Model used: gemini-1.5-flash (fast, cost-effective)
-# Get your key at: https://aistudio.google.com/
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# -------------------------------------------
-# Trading Configuration (Optional)
-# -------------------------------------------
-# Default trading pair to observe
-TRADING_SYMBOL=BTCUSDT
-
-# Default candle interval
-TRADING_INTERVAL=1m
-```
-
-## 📂 Documentation Structure
-
-| Document | Purpose |
-| --- | --- |
-| [flow_introduction.md](./flow_introduction.md) | Philosophy and high-level concepts. |
-| [flow-map.md](./flow-map.md) | Node-by-node breakdown with decisions and stack. |
-| [implementation-plan.md](./implementation-plan.md) | Phase-by-phase development plan. |
-| [architecture/](./architecture/) | Diagrams (ERD, C4) and tech stack validation. |
-| [knowledge/](./knowledge/) | Fractal theory, trading theory, and synthesis docs. |
-| [flow-history.md](./flow-history.md) | Chronological development log. |
-| [flow-backlog.md](./flow-backlog.md) | Task tracking and phase checklists. |
-
-## 📁 Code Structure
-
-```text
-packages/flows/trading/src/
-├── adapters/
-│   └── binance/                    # Binance WebSocket client
-├── backend/
-│   ├── config.ts                   # Centralized trading configuration
-│   ├── database.ts                 # SQLite schema & prepared statements
-│   ├── routes.ts                   # Trading API endpoints (SSE, start/stop, insights)
-│   └── services/                   # Trading Flow services
-│       ├── trading.service.ts      # N1+N2: Data ingestion & persistence
-│       ├── analyst.service.ts      # N3: Hurst + Fractals (Fractal State Machine)
-│       ├── synthesizer.service.ts  # N4: LLM prompt builder
-│       └── mentor.service.ts       # N5: LLM orchestration
-└── domain/
-    ├── math/
-    │   ├── hurst.ts                # Hurst exponent calculation
-    │   └── fractals.ts             # Bill Williams fractal detection
-    ├── types/                      # Shared domain types
-    └── errors.ts                   # Custom error classes
-
-packages/ui/src/lib/
-├── components/
-│   ├── CandleChart.svelte          # Lightweight Charts wrapper
-│   └── StepWizard.svelte           # Multi-timeframe analysis wizard
-├── flows/trading/                  # Svelte stores & API functions
-└── pages/TradingFlow.svelte        # Dashboard UI
-```
-
-## 🧠 LLM Choice
-
-The advisor uses **Google Gemini 2.5 Flash** as the primary LLM:
-
-| Aspect | Choice |
-| --- | --- |
-| **Model** | `gemini-2.5-flash` (GA) |
-| **Why** | Fast inference (~1-2s), low cost, sufficient reasoning for market commentary. |
-| **SDK** | `@google/genai` (Official Google SDK for Node.js) |
-| **Token Limit** | 1500 max tokens to prevent truncation |
-| **Alternative** | Groq (Llama 3) for even faster inference if needed. |
-
-## 🔮 Refactoring Opportunities
-
-### Current Status ✅
-
-- [x] **Service Organization**: Separated by flow (`trading/`, `spotify/`) with barrel exports
-- [x] **UI Styling**: Converted to Tailwind CSS
-- [x] **Configuration**: Centralized in `config/trading.config.ts`
-- [x] **Unit Tests**: Added for math functions (`hurst.ts`, `fractals.ts`)
-- [x] **Domain Layer**: extracted types and errors
-- [x] **Documentation**: JSDoc added to services
-- [x] **Type Safety**: Domain types shared across backend/ui via paths
-
-### Identified Improvements 🚧
-
-1. **Type Safety**: Add Zod schemas for API input/output validation
-2. **Monitoring**: Add structured logging and Prometheus metrics
-3. **Integration Testing**: More comprehensive end-to-end flow tests
-
-## 🚀 Quick Start
-
-1. **Install dependencies**:
-
-   ```bash
-   pnpm install
-   ```
-
-2. **Configure environment** (required for Phase 3+):
-
-   ```bash
-   cp .env.example .env
-   # Edit .env with your GEMINI_API_KEY
-   ```
-
-3. **Start the backend**:
-
-   ```bash
-   pnpm dev
-   ```
-
-4. **Start the trading stream** (via API or UI):
-
-   ```bash
-   curl -X POST http://localhost:3000/api/trading/start
-   ```
-
-5. **View the dashboard**:
-   Navigate to `http://localhost:3000/trading` (Phase 4).
-
-## ⚠️ Disclaimer
-
-This tool is for **educational and research purposes only**. It does not execute trades and is not financial advice. All trading decisions are your own responsibility.
+- [Flow introduction](flow_introduction.md)
+- [Conceptual node map](flow-map.md)
+- [Completed implementation iterations](implementation-plan.md)
+- [Historical change log](flow-history.md)
+- [Architecture research](architecture/)
+- [Trading and fractal research](knowledge/)

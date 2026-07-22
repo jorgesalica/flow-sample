@@ -131,7 +131,10 @@ export class LrcLibAdapter implements LyricsSource {
 
               const pct = Math.floor((completed / tracks.length) * 100);
               if (pct >= lastLoggedPct + 5 || completed === tracks.length) {
-                log.info({ progress: `${pct}%`, completed, total: tracks.length }, 'Lyrics fetch progress');
+                log.info(
+                  { progress: `${pct}%`, completed, total: tracks.length },
+                  'Lyrics fetch progress',
+                );
                 lastLoggedPct = pct;
               }
 

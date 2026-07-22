@@ -17,7 +17,10 @@ test('reports explicit any with an actionable location', () => {
 });
 
 test('rejects hardcoded localhost origins in UI API modules', () => {
-  const violations = checkSource('packages/ui/src/lib/flows/chat/api.ts', "fetch('http://localhost:3000/api/chat')");
+  const violations = checkSource(
+    'packages/ui/src/lib/flows/chat/api.ts',
+    "fetch('http://localhost:3000/api/chat')",
+  );
   assert.equal(violations[0]?.rule, 'no-hardcoded-ui-origin');
 });
 
@@ -48,17 +51,26 @@ test('rejects unsafe double casts at production UI API and loader boundaries', (
 });
 
 test('rejects SQL calls outside persistence modules', () => {
-  const violations = checkSource('packages/flows/trading/src/backend/services/example.ts', "db.prepare('SELECT 1')");
+  const violations = checkSource(
+    'packages/flows/trading/src/backend/services/example.ts',
+    "db.prepare('SELECT 1')",
+  );
   assert.equal(violations[0]?.rule, 'sql-in-persistence-only');
 });
 
 test('rejects sibling flow imports', () => {
-  const violations = checkSource('packages/flows/chat/src/backend/routes.ts', "import { musicDb } from '@flows/spotify';");
+  const violations = checkSource(
+    'packages/flows/chat/src/backend/routes.ts',
+    "import { musicDb } from '@flows/spotify';",
+  );
   assert.equal(violations[0]?.rule, 'no-sibling-flow-imports');
 });
 
 test('rejects the former lyrics to spotify persistence dependency', () => {
-  const violations = checkSource('packages/flows/lyrics/src/backend/repository.ts', "import { musicDb } from '@flows/spotify';");
+  const violations = checkSource(
+    'packages/flows/lyrics/src/backend/repository.ts',
+    "import { musicDb } from '@flows/spotify';",
+  );
   assert.equal(violations[0]?.rule, 'no-sibling-flow-imports');
 });
 
@@ -91,11 +103,10 @@ test('rejects legacy UI utilities and retired palette variables', () => {
     'packages/ui/src/lib/example.svelte',
     '<div class="glass text-cosmic-400" style="color: var(--surface-100)"></div>',
   );
-  assert.deepEqual(violations.map(({ rule }) => rule), [
-    'no-legacy-ui-styles',
-    'no-legacy-ui-styles',
-    'no-legacy-ui-styles',
-  ]);
+  assert.deepEqual(
+    violations.map(({ rule }) => rule),
+    ['no-legacy-ui-styles', 'no-legacy-ui-styles', 'no-legacy-ui-styles'],
+  );
 });
 
 test('rejects gradients in production UI styles', () => {

@@ -1,114 +1,67 @@
-# Getting Started: Lyrics Flow
+# Lyrics Flow
 
-> **Purpose**: Technical guide to enable and use the Lyrics Flow feature.
+Lyrics enriches tracks from the neutral Music store with LrcLib lyrics, optional LLM
+interpretation, and a token-level musical Canvas. It is mounted in the shared backend
+host and available in the UI at `/lyrics`.
 
----
+## Boundaries And Prerequisites
 
-## Prerequisites
+`@flows/lyrics` depends on `@flows/music`, not on `@flows/spotify`. The current product
+workflow normally starts by connecting and syncing Spotify because Spotify is the only
+track ingestion adapter today, but another producer can populate the same neutral Music
+store without changing Lyrics.
 
-Lyrics Flow depends on **Spotify Flow**. You must have:
+- Track, artist, genre, and FTS persistence belongs to `@flows/music` in `music.db`.
+- Lyrics records, fetch status, and interpretations belong to `@flows/lyrics` and use the
+  injected Music database handle.
+- Generic tokenization and analysis persistence belong to `@flows/analysis` in
+  `canvas.db`.
+- Lyrics owns the LrcLib adapter, musical section classification, prompts, route mapping,
+  and flow UI.
 
-1. ✅ Spotify Flow connected and synced
-2. ✅ Tracks stored in `data/flow.db`
+LrcLib needs no API key. Interpretation and Canvas analysis require at least one LLM
+provider key configured as described in [LLM API keys](../llm/api-keys.md).
 
-No additional API keys are required. LrcLib is free and open.
+## Runtime Flow
 
----
+1. The library loader requests tracks and Lyrics statistics through a request-scoped Eden
+   client.
+2. `LyricsService` checks the injected repository before querying LrcLib.
+3. The LrcLib adapter searches with title, artist, album, and duration, then the repository
+   stores `found` or deliberate `not_found` state.
+4. Interpretation streams validated typed events and caches the completed text.
+5. Lyrics Canvas tokenizes the stored source, classifies musical sections, validates LLM
+   annotations against source token IDs, and persists the analysis.
 
-## How It Works
+Provider failures are sanitized at the HTTP boundary; raw provider responses stay in
+server logs. A missing lyric or analysis is represented explicitly and is not treated as
+an unexpected server error.
 
-### Data Source: LrcLib
+## API
 
-| Endpoint | Purpose |
-| -------- | ------- |
-| `GET /api/get` | Fetch lyrics by track signature |
+| Method | Path                                  | Purpose                                                           |
+| ------ | ------------------------------------- | ----------------------------------------------------------------- |
+| `GET`  | `/api/lyrics/tracks`                  | Paginated library with optional lyrics-status filter              |
+| `GET`  | `/api/lyrics/stats`                   | Library coverage statistics                                       |
+| `GET`  | `/api/lyrics/:trackId`                | Return cached/fetched lyrics; `force=true` retries the provider   |
+| `POST` | `/api/lyrics/fetch-all`               | Fetch pending tracks; `retryFailed` also retries prior misses     |
+| `POST` | `/api/lyrics/:trackId/interpret`      | Stream cached or generated interpretation events over SSE         |
+| `GET`  | `/api/lyrics/:trackId/canvas`         | Return analysis, analysis-required state, or a typed source error |
+| `POST` | `/api/lyrics/:trackId/canvas/analyze` | Generate and persist a musical Canvas analysis                    |
 
-**Parameters sent:**
+Normal JSON calls use Eden and TypeBox response schemas. Interpretation is the one raw
+Lyrics transport because it is SSE; the UI validates every event against the shared
+`LyricsInterpretationEvent` contract.
 
-- `track_name` — Track title
-- `artist_name` — Primary artist
-- `album_name` — Album title  
-- `duration` — Track duration in seconds (±2s tolerance)
+## Development
 
-**Response:**
-
-- `plainLyrics` — Plain text lyrics
-- `syncedLyrics` — LRC format with timestamps (optional)
-- `404` — Not found
-
----
-
-## Database Schema
-
-Lyrics are stored in a new table:
-
-```sql
-CREATE TABLE IF NOT EXISTS lyrics (
-    track_id TEXT PRIMARY KEY,
-    plain_lyrics TEXT,
-    synced_lyrics TEXT,
-    status TEXT NOT NULL DEFAULT 'pending',  -- 'found' | 'not_found' | 'pending'
-    fetched_at TEXT,
-    FOREIGN KEY (track_id) REFERENCES tracks(id)
-);
+```bash
+pnpm dev
+pnpm --filter @flows/lyrics test
+pnpm --filter @flows/lyrics test:coverage
+pnpm --filter @flows/ui test src/lib/flows/lyrics src/routes/lyrics/page.test.ts
+pnpm --filter @flows/ui test:e2e -- e2e/lyrics-canvas.spec.ts
 ```
 
-| Column | Description |
-| ------ | ----------- |
-| `track_id` | Foreign key to tracks table |
-| `plain_lyrics` | Plain text lyrics |
-| `synced_lyrics` | LRC format (timestamped) |
-| `status` | `found`, `not_found`, or `pending` |
-| `fetched_at` | Timestamp of last fetch attempt |
-
----
-
-## UI Integration
-
-### Per-Track Button
-
-Location: **TrackCard component**
-
-| State | Button | Action |
-| ----- | ------ | ------ |
-| `pending` | "View Lyrics" | Fetch from LrcLib → Show modal |
-| `found` | "View Lyrics" | Show cached lyrics |
-| `not_found` | "No Lyrics" (enables modal) | Show "Not Found" message + "Retry" button |
-
-### Batch Button
-
-Location: **Near Sync button (Controls component)**
-
-| Button | Action |
-| ------ | ------ |
-| "Fetch All Lyrics" | Process all tracks with `status = 'pending'` |
-
----
-
-## API Endpoints (Backend)
-
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| `GET` | `/api/lyrics/:trackId` | Get lyrics. Use `?force=true` to bypass cache. |
-| `POST` | `/api/lyrics/fetch-all` | Batch fetch all pending lyrics |
-
----
-
-## Tech Stack Addition
-
-| Layer | Addition |
-| ----- | -------- |
-| **Backend** | `LrcLibAdapter` — HTTP client for LrcLib API |
-| **Backend** | `LyricsRepository` — SQLite persistence |
-| **Backend** | `lyrics.routes.ts` — API endpoints |
-| **Frontend** | `LyricsModal.svelte` — Display component |
-| **Frontend** | `lyricsStore.ts` — State management |
-
----
-
-## Useful Scripts
-
-| Command | Description |
-| ------- | ----------- |
-| `pnpm dev` | Start full stack (includes lyrics endpoints) |
-| `pnpm --filter @flows/backend test` | Run backend tests (includes lyrics tests) |
+See [Canvas and Lyrics architecture](../lyrics-canvas/architecture.md) for token,
+annotation, persistence, and package ownership details.

@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  AdvisorNote,
-  Candle,
-  TradingWizardAnalysis,
-} from '@flows/shared';
+import type { AdvisorNote, Candle, TradingWizardAnalysis } from '@flows/shared';
 import {
   InsightProviderError,
   InsufficientDataError,
@@ -80,16 +76,13 @@ const dependencies = {
   mentor: {
     toggle: vi.fn<TradingRoutesDependencies['mentor']['toggle']>(),
     getState: vi.fn<TradingRoutesDependencies['mentor']['getState']>(),
-    generateInsight:
-      vi.fn<TradingRoutesDependencies['mentor']['generateInsight']>(),
+    generateInsight: vi.fn<TradingRoutesDependencies['mentor']['generateInsight']>(),
   },
   market: {
     getCandles: vi.fn<TradingRoutesDependencies['market']['getCandles']>(),
-    getHistoricalKlines:
-      vi.fn<TradingRoutesDependencies['market']['getHistoricalKlines']>(),
+    getHistoricalKlines: vi.fn<TradingRoutesDependencies['market']['getHistoricalKlines']>(),
     getFractals: vi.fn<TradingRoutesDependencies['market']['getFractals']>(),
-    getLatestInsight:
-      vi.fn<TradingRoutesDependencies['market']['getLatestInsight']>(),
+    getLatestInsight: vi.fn<TradingRoutesDependencies['market']['getLatestInsight']>(),
   },
   wizard: {
     generate: vi.fn<TradingRoutesDependencies['wizard']['generate']>(),
@@ -189,9 +182,7 @@ describe('Trading routes', () => {
   });
 
   it('maps local candles and fractals through validated numeric queries', async () => {
-    const candles = await request(
-      '/api/trading/candles?symbol=ETHUSDT&interval=5m&limit=7',
-    );
+    const candles = await request('/api/trading/candles?symbol=ETHUSDT&interval=5m&limit=7');
     const fractals = await request('/api/trading/fractals?symbol=ETHUSDT&limit=4');
 
     expect(candles.status).toBe(200);
@@ -246,11 +237,7 @@ describe('Trading routes', () => {
   it('returns historical klines and sanitizes market provider failures', async () => {
     const success = await request('/api/trading/klines?interval=4h&limit=20');
     expect(success.status).toBe(200);
-    expect(dependencies.market.getHistoricalKlines).toHaveBeenCalledWith(
-      'BTCUSDT',
-      '4h',
-      20,
-    );
+    expect(dependencies.market.getHistoricalKlines).toHaveBeenCalledWith('BTCUSDT', '4h', 20);
 
     dependencies.market.getHistoricalKlines.mockRejectedValueOnce(
       new MarketDataUnavailableError('secret Binance payload'),
@@ -335,9 +322,21 @@ describe('Trading routes', () => {
 
   it.each([
     [new InsufficientDataError(), 422, 'Insufficient market data for analysis'],
-    [new MarketDataUnavailableError('secret market detail'), 502, 'Market data is temporarily unavailable'],
-    [new InvalidInsightResponseError('secret malformed response'), 502, 'AI insight is temporarily unavailable'],
-    [new InsightProviderError('secret provider detail'), 503, 'AI insight is temporarily unavailable'],
+    [
+      new MarketDataUnavailableError('secret market detail'),
+      502,
+      'Market data is temporarily unavailable',
+    ],
+    [
+      new InvalidInsightResponseError('secret malformed response'),
+      502,
+      'AI insight is temporarily unavailable',
+    ],
+    [
+      new InsightProviderError('secret provider detail'),
+      503,
+      'AI insight is temporarily unavailable',
+    ],
   ])('maps wizard failures without leaking internals', async (error, status, message) => {
     dependencies.wizard.generate.mockRejectedValueOnce(error);
 

@@ -1,8 +1,4 @@
-import type {
-  LyricsLibraryTrack,
-  LyricsStats,
-  LyricsStatus,
-} from '@flows/shared';
+import type { LyricsLibraryTrack, LyricsStats, LyricsStatus } from '@flows/shared';
 
 /**
  * Lyrics payload to persist for a track.

@@ -1,11 +1,5 @@
-import {
-    filterAnnotationsForAst,
-    formatTokenAstForPrompt,
-} from '@flows/analysis';
-import {
-    LLMClient,
-    logger,
-} from '@flows/core';
+import { filterAnnotationsForAst, formatTokenAstForPrompt } from '@flows/analysis';
+import { LLMClient, logger } from '@flows/core';
 import type { TokenAST, Annotation } from '@flows/shared';
 import { musicalAnalysisSchema, type MusicalAnalysisResult } from './schemas';
 import { expandMeaningAnnotations } from '../../domain/annotations';
@@ -16,25 +10,25 @@ const log = logger.child({ module: 'CanvasMusicAnalyzer' });
  * Analyzes the lyrics using the LLM to generate musical annotations.
  */
 export async function analyzeLyrics(
-    ast: TokenAST, 
-    trackTitle: string, 
-    artistName: string, 
-    interpretation?: string | null
+  ast: TokenAST,
+  trackTitle: string,
+  artistName: string,
+  interpretation?: string | null,
 ): Promise<{
-    annotations: Annotation[];
-    meta: MusicalAnalysisResult['meta'];
-    modelUsed: string;
-    providerUsed: string;
+  annotations: Annotation[];
+  meta: MusicalAnalysisResult['meta'];
+  modelUsed: string;
+  providerUsed: string;
 }> {
-    const client = LLMClient.createRotation();
-    
-    const tokenizedLyrics = formatTokenAstForPrompt(ast);
-    
-    const interpretationContext = interpretation 
-        ? `\nOVERARCHING SONG MEANING:\n${interpretation}\n\n`
-        : '';
-    
-    const prompt = `
+  const client = LLMClient.createRotation();
+
+  const tokenizedLyrics = formatTokenAstForPrompt(ast);
+
+  const interpretationContext = interpretation
+    ? `\nOVERARCHING SONG MEANING:\n${interpretation}\n\n`
+    : '';
+
+  const prompt = `
 You are an expert music producer and arranger. Your task is to analyze the lyrics of "${trackTitle}" by ${artistName} and provide musical annotations.
 ${interpretationContext}
 I am providing you the lyrics where every word has a unique token ID attached to it, like this: word[t_001].
@@ -93,41 +87,44 @@ EXAMPLE JSON OUTPUT:
 \`\`\`
 `;
 
-    log.info({ trackTitle, artistName }, 'Starting LLM musical analysis');
-    
-    const startTime = Date.now();
-    
-    try {
-        const { value: result, response } = await client.generateObjectWithMetadata(
-            {
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.2, // Low temperature for deterministic/factual analysis
-                maxTokens: 4096,
-            },
-            musicalAnalysisSchema
-        );
-        
-        // Expand meaning tokenIds arrays back into individual annotations
-        const expandedAnnotations = expandMeaningAnnotations(result.annotations);
-        const annotations = filterAnnotationsForAst(ast, expandedAnnotations);
+  log.info({ trackTitle, artistName }, 'Starting LLM musical analysis');
 
-        log.info({ 
-            latencyMs: Date.now() - startTime,
-            annotationsCount: annotations.length,
-            invalidAnnotationsCount: expandedAnnotations.length - annotations.length,
-        }, 'LLM analysis completed successfully');
-        
-        return {
-            ...result,
-            annotations,
-            modelUsed: response.model,
-            providerUsed: response.provider,
-        };
-    } catch (error) {
-        log.error(
-            { error: error instanceof Error ? error.message : String(error), trackTitle },
-            'Failed to generate musical analysis',
-        );
-        throw error;
-    }
+  const startTime = Date.now();
+
+  try {
+    const { value: result, response } = await client.generateObjectWithMetadata(
+      {
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2, // Low temperature for deterministic/factual analysis
+        maxTokens: 4096,
+      },
+      musicalAnalysisSchema,
+    );
+
+    // Expand meaning tokenIds arrays back into individual annotations
+    const expandedAnnotations = expandMeaningAnnotations(result.annotations);
+    const annotations = filterAnnotationsForAst(ast, expandedAnnotations);
+
+    log.info(
+      {
+        latencyMs: Date.now() - startTime,
+        annotationsCount: annotations.length,
+        invalidAnnotationsCount: expandedAnnotations.length - annotations.length,
+      },
+      'LLM analysis completed successfully',
+    );
+
+    return {
+      ...result,
+      annotations,
+      modelUsed: response.model,
+      providerUsed: response.provider,
+    };
+  } catch (error) {
+    log.error(
+      { error: error instanceof Error ? error.message : String(error), trackTitle },
+      'Failed to generate musical analysis',
+    );
+    throw error;
+  }
 }

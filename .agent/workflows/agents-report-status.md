@@ -12,9 +12,10 @@ git log --oneline --decorate -10
 ```
 
 2. Inspect open GitHub issues and PRs. Distinguish executable work, umbrella issues,
-deferred epics, and stale tracking.
+   deferred epics, and stale tracking.
 3. Read `docs/ROADMAP.md`; use `docs/bucket.md` only for untriaged ideas.
-4. Check the latest CI result and run `pnpm verify` when a fresh local baseline matters.
+4. Check both latest CI jobs. Run `pnpm build`, `pnpm verify`, and
+   `pnpm test:coverage` when a fresh full local baseline matters.
 5. Report:
    - current branch and synchronization state
    - open PR/WIP state

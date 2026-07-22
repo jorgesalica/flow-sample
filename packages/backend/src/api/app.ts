@@ -18,10 +18,7 @@ import { createCanvasFlowApplication, createCanvasFlowRoutes } from '@flows/canv
 import { createBoardRoutes, type BoardApplication } from '@flows/board';
 import { logger } from '@flows/core';
 import { createMusicDatabase } from '@flows/music';
-import {
-  createAnalysisRepository,
-  type AnalysisRepository,
-} from '@flows/analysis';
+import { createAnalysisRepository, type AnalysisRepository } from '@flows/analysis';
 import type Database from 'better-sqlite3';
 import type { BackendConfig } from './config';
 
@@ -41,15 +38,11 @@ export function createApp(config: BackendConfig, options: BackendHostOptions = {
   const uiBuildPath = options.uiBuildPath ?? defaultUiBuildPath;
   const hasUiBuild = fs.existsSync(uiBuildPath);
   const musicDatabase = options.musicDatabase ?? createMusicDatabase();
-  const analysisRepository =
-    options.analysisRepository ?? createAnalysisRepository();
+  const analysisRepository = options.analysisRepository ?? createAnalysisRepository();
   const spotifyService = createSpotifyService(config, {
     database: musicDatabase,
   });
-  const lyricsDependencies = createLyricsRouteDependencies(
-    musicDatabase,
-    analysisRepository,
-  );
+  const lyricsDependencies = createLyricsRouteDependencies(musicDatabase, analysisRepository);
   const canvasApplication = createCanvasFlowApplication(analysisRepository);
 
   return (

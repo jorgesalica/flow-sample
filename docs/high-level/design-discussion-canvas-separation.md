@@ -21,25 +21,27 @@ If no → it's infrastructure and belongs in core or shared.
 
 ### Results
 
-| Component | Used for lyrics only? | Where it goes |
-| --------- | -------------------- | ------------- |
-| Tokenizer (text → token AST) | No — works on any text | `@flows/analysis` |
-| Canvas repository (DB CRUD) | No — stores any analysis | `@flows/analysis` |
-| Token, Section, CanvasSource types | No — generic | `@flows/shared` |
-| TokenRenderer, LayerToggle, Tooltip | No — renders any tokens | `ui/components/canvas` (shared) |
-| Musical Zod schemas (chords, vocal) | **Yes** — music-specific | `@flows/lyrics/canvas` |
-| Music analyzer prompts | **Yes** — music-specific | `@flows/lyrics/canvas` |
-| Lyrics → CanvasSource adapter | **Yes** — bridges lyrics to canvas | `@flows/lyrics/canvas` |
-| LyricsCanvas.svelte page | **Yes** — lyrics-specific page | `ui/flows/lyrics` |
+| Component                           | Used for lyrics only?              | Where it goes                   |
+| ----------------------------------- | ---------------------------------- | ------------------------------- |
+| Tokenizer (text → token AST)        | No — works on any text             | `@flows/analysis`               |
+| Canvas repository (DB CRUD)         | No — stores any analysis           | `@flows/analysis`               |
+| Token, Section, CanvasSource types  | No — generic                       | `@flows/shared`                 |
+| TokenRenderer, LayerToggle, Tooltip | No — renders any tokens            | `ui/components/canvas` (shared) |
+| Musical Zod schemas (chords, vocal) | **Yes** — music-specific           | `@flows/lyrics/canvas`          |
+| Music analyzer prompts              | **Yes** — music-specific           | `@flows/lyrics/canvas`          |
+| Lyrics → CanvasSource adapter       | **Yes** — bridges lyrics to canvas | `@flows/lyrics/canvas`          |
+| LyricsCanvas.svelte page            | **Yes** — lyrics-specific page     | `ui/flows/lyrics`               |
 
 ## The Principle
 
 **Infrastructure vs. Feature:**
+
 - Reusable analysis capabilities (tokenizer and analysis DB) go in `@flows/analysis`.
 - Runtime infrastructure stays in `@flows/core`; cross-wire contracts stay in `@flows/shared`.
 - Features (musical analysis, lyrics adapter) go in the flow package
 
 This means adding a "Writing Canvas" or "Poetry Canvas" in the future requires:
+
 - **Zero changes** to core, analysis, shared, or UI components
 - **One new analyzer** with its own prompts and schemas
 - **One new page** that consumes the shared components
@@ -48,31 +50,32 @@ This means adding a "Writing Canvas" or "Poetry Canvas" in the future requires:
 
 Canvas consumes data from Spotify and Lyrics but doesn't extend or modify them:
 
-| Data needed | Source | Access method | Coupling |
-| ----------- | ------ | ------------- | -------- |
-| `plainLyrics` | Lyrics table | Existing API `GET /api/lyrics/:trackId` | Read-only |
-| `track.title` | Spotify tracks | Already in UI from dashboard | Read-only |
-| `artist name` | Spotify track_artists | Already in UI from dashboard | Read-only |
-| `imageUrl` | Spotify albums | Already in UI from dashboard | Read-only |
-| `trackId` | Primary key | String reference | Read-only |
+| Data needed   | Source                | Access method                           | Coupling  |
+| ------------- | --------------------- | --------------------------------------- | --------- |
+| `plainLyrics` | Lyrics table          | Existing API `GET /api/lyrics/:trackId` | Read-only |
+| `track.title` | Spotify tracks        | Already in UI from dashboard            | Read-only |
+| `artist name` | Spotify track_artists | Already in UI from dashboard            | Read-only |
+| `imageUrl`    | Spotify albums        | Already in UI from dashboard            | Read-only |
+| `trackId`     | Primary key           | String reference                        | Read-only |
 
 **No new columns, no new joins, no schema modifications.** Canvas only reads.
 
 ## Database Separation
 
 The canvas analysis data lives in its own `canvas.db`, not in `music.db`:
+
 - Can be wiped independently (re-analyze everything)
 - Not coupled to Spotify's data lifecycle
 - Future-proof for non-lyrics sources (user text, imports)
 
 ## Libraries Decision
 
-| Need | Decision | Rationale |
-| ---- | -------- | --------- |
-| Structured LLM output | `zod-to-json-schema` (new dep) | Official Gemini docs recommend it. 1 small package |
-| Schema validation | `zod` (already in project) | Already used by `@flows/chat` |
-| Gemini JSON mode | `@google/genai` (already installed) | v1.39 supports `responseJsonSchema` natively |
-| Text tokenization | Hand-written (~30 lines) | Regex split by whitespace + blank line sections. NLP libs are overkill |
-| UI tooltips | Hand-written CSS | Absolute positioned div. No lib needed for PoC |
+| Need                  | Decision                            | Rationale                                                              |
+| --------------------- | ----------------------------------- | ---------------------------------------------------------------------- |
+| Structured LLM output | `zod-to-json-schema` (new dep)      | Official Gemini docs recommend it. 1 small package                     |
+| Schema validation     | `zod` (already in project)          | Already used by `@flows/chat`                                          |
+| Gemini JSON mode      | `@google/genai` (already installed) | v1.39 supports `responseJsonSchema` natively                           |
+| Text tokenization     | Hand-written (~30 lines)            | Regex split by whitespace + blank line sections. NLP libs are overkill |
+| UI tooltips           | Hand-written CSS                    | Absolute positioned div. No lib needed for PoC                         |
 
 **Net new dependencies: 1** (`zod-to-json-schema`)

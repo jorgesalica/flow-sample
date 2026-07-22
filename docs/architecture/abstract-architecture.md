@@ -12,10 +12,10 @@ A robust, distributed system implemented within a type-safe monorepo. The core p
 
 ### Technical Instance (`flow-sample`)
 
-* **Architecture:** Monorepo with Clean Architecture.
-* **Stack:** Svelte 5 (UI) + ElysiaJS (Backend) + SQLite (Data).
-* **Key Mechanism:** "End-to-End Type Safety" via Elysia's Eden client. The frontend consumes backend types directly from the source, eliminating drift.
-* **Infrastructure:** Light, portable, and local-first (SQLite), deployable anywhere with minimal friction.
+- **Architecture:** Monorepo with Clean Architecture.
+- **Stack:** Svelte 5 (UI) + ElysiaJS (Backend) + SQLite (Data).
+- **Key Mechanism:** "End-to-End Type Safety" via Elysia's Eden client. The frontend consumes backend types directly from the source, eliminating drift.
+- **Infrastructure:** Light, portable, and local-first (SQLite), deployable anywhere with minimal friction.
 
 ---
 
@@ -29,13 +29,13 @@ A robust, distributed system implemented within a type-safe monorepo. The core p
 
 ### Product Instance (`flow-sample`)
 
-* **Identity:** A focused analysis playground with galaxy, fire, and organic themes.
-* **Function:** Syncs external personal data (Spotify) to a local environment.
-* **Experience:**
-  * **Clarity:** Dark semantic surfaces, accessible contrast, and restrained motion keep dense tools readable.
-  * **Adaptability:** One global token contract supports palette choice, mobile layouts, and flow-specific data visualizations.
-  * **Discovery:** Visualization tools (charts, decade analysis) allow users to *explore* their music, not just view a list.
-  * **Performance:** Instantaneous interactions driven by smart caching and optimistic UI updates.
+- **Identity:** A focused analysis playground with galaxy, fire, and organic themes.
+- **Function:** Syncs external personal data (Spotify) to a local environment.
+- **Experience:**
+  - **Clarity:** Dark semantic surfaces, accessible contrast, and restrained motion keep dense tools readable.
+  - **Adaptability:** One global token contract supports palette choice, mobile layouts, and flow-specific data visualizations.
+  - **Discovery:** Visualization tools (charts, decade analysis) allow users to _explore_ their music, not just view a list.
+  - **Performance:** Instantaneous interactions driven by smart caching and optimistic UI updates.
 
 ---
 
@@ -49,9 +49,9 @@ A robust, distributed system implemented within a type-safe monorepo. The core p
 
 ### Vision Instance (`concienc.ia`)
 
-* **Context:** `flow-sample` is a foundational "brick" within the larger `concienc.ia` workspace.
-* **Goal:** To build the infrastructure for digital consciousness.
-* **Philosophy:**
-  * **Local-First:** Data lives with the user in `sqlite`, not in a black-box cloud.
-  * **Modular:** Designed to grow horizontally. Today it's Spotify; tomorrow it could be Email, Finance, or IoT.
-  * **Empowerment:** Providing powerful, beautiful tools that enable individuals to organize and master their own digital life.
+- **Context:** `flow-sample` is a foundational "brick" within the larger `concienc.ia` workspace.
+- **Goal:** To build the infrastructure for digital consciousness.
+- **Philosophy:**
+  - **Local-First:** Data lives with the user in `sqlite`, not in a black-box cloud.
+  - **Modular:** Designed to grow horizontally. Today it's Spotify; tomorrow it could be Email, Finance, or IoT.
+  - **Empowerment:** Providing powerful, beautiful tools that enable individuals to organize and master their own digital life.

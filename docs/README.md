@@ -5,16 +5,17 @@ change makes a current document inaccurate, update that document in the same PR.
 
 ## Sources Of Truth
 
-| Area | Owner document |
-| --- | --- |
-| Product direction and execution | [Roadmap](ROADMAP.md) and open GitHub issues |
-| Engineering and delivery rules | [Conventions](conventions.md) |
-| Agent operating context | [AGENTS.md](../AGENTS.md) |
-| Package boundaries | [System map](architecture/system-map.md) |
-| Backend layering | [Backend architecture](architecture/backend.md) |
-| Frontend structure | [UI architecture](architecture/ui.md) |
-| Testing policy | [Testing strategy](testing/README.md) |
-| UI primitives and tokens | [Design system](design-system.md) |
+| Area                            | Owner document                                            |
+| ------------------------------- | --------------------------------------------------------- |
+| Product direction and execution | [Roadmap](ROADMAP.md) and open GitHub issues              |
+| Engineering and delivery rules  | [Conventions](conventions.md)                             |
+| Agent operating context         | [AGENTS.md](../AGENTS.md)                                 |
+| Package boundaries              | [System map](architecture/system-map.md)                  |
+| Backend layering                | [Backend architecture](architecture/backend.md)           |
+| Frontend structure              | [UI architecture](architecture/ui.md)                     |
+| Testing policy                  | [Testing strategy](testing/README.md)                     |
+| UI primitives and tokens        | [Design system](design-system.md)                         |
+| Pull request QA                 | [GitHub PR template](../.github/pull_request_template.md) |
 
 ## Domain And Flow Documentation
 
@@ -43,4 +44,6 @@ point but should link to the owner document instead of duplicating it.
 2. Roadmap entries describe direction; GitHub issues hold executable acceptance criteria.
 3. Historical documents must say they are historical and must not prescribe current code.
 4. Never include credentials, personal data, or copied production payloads.
-5. Run `pnpm check:docs` after moving or renaming Markdown files.
+5. Do not create flow-local backlogs or duplicate PR templates; link to the roadmap,
+   GitHub issues, or the repository-owned template.
+6. Run `pnpm check:docs` after moving or renaming Markdown files.

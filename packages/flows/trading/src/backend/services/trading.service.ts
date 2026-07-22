@@ -1,8 +1,5 @@
 import { BinanceStream, type Candle } from '../../adapters/binance';
-import {
-  type CandleRow,
-  type TradingPersistence,
-} from '../database';
+import { type CandleRow, type TradingPersistence } from '../database';
 import { TRADING_CONFIG } from '../config';
 import { logger } from '@flows/core';
 
@@ -127,7 +124,10 @@ export class TradingService {
         closeTime: candle.closeTime,
       });
     } catch (error) {
-      log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to persist candle');
+      log.error(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Failed to persist candle',
+      );
     }
 
     // Emit events
@@ -141,11 +141,7 @@ export class TradingService {
 
   /** Get recent candles from database */
   getRecentCandles(limit: number = 100): CandleRow[] {
-    return this.persistence.getLastCandles(
-      this.config.symbol,
-      this.config.interval,
-      limit,
-    );
+    return this.persistence.getLastCandles(this.config.symbol, this.config.interval, limit);
   }
 
   /** Get the last closed candle */

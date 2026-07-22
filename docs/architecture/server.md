@@ -2,13 +2,13 @@
 
 ## Tech Stack
 
-| Technology | Purpose |
-| ---------- | ------- |
-| **Elysia** | HTTP composition, validation, plugin system |
-| **@elysiajs/node** | Node.js adapter |
-| **@elysiajs/static** | Static UI serving in production |
-| **Eden Treaty** | Type-safe client contract for the SvelteKit UI |
-| **better-sqlite3** | Local SQLite persistence inside owned repositories |
+| Technology           | Purpose                                            |
+| -------------------- | -------------------------------------------------- |
+| **Elysia**           | HTTP composition, validation, plugin system        |
+| **@elysiajs/node**   | Node.js adapter                                    |
+| **@elysiajs/static** | Static UI serving in production                    |
+| **Eden Treaty**      | Type-safe client contract for the SvelteKit UI     |
+| **better-sqlite3**   | Local SQLite persistence inside owned repositories |
 
 ## Host Shape
 
@@ -28,15 +28,15 @@ Only `server.ts` may bind a port.
 
 ## Mounted Routes
 
-| Prefix | Owner |
-| ------ | ----- |
-| `/api/health` | backend host |
+| Prefix         | Owner            |
+| -------------- | ---------------- |
+| `/api/health`  | backend host     |
 | `/api/spotify` | `@flows/spotify` |
-| `/api/lyrics` | `@flows/lyrics` |
+| `/api/lyrics`  | `@flows/lyrics`  |
 | `/api/trading` | `@flows/trading` |
-| `/api/chat` | `@flows/chat` |
-| `/api/canvas` | `@flows/canvas` |
-| `/api/boards` | `@flows/board` |
+| `/api/chat`    | `@flows/chat`    |
+| `/api/canvas`  | `@flows/canvas`  |
+| `/api/boards`  | `@flows/board`   |
 
 In production-style builds, the host also serves the SvelteKit static output from
 `packages/ui/build` when it exists, with `index.html` fallback for SPA routing.

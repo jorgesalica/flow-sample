@@ -35,8 +35,10 @@ follow-up polish.
   adapter. Loading, empty, error, and stale data share one renderer.
 - Architecture contracts reject retired UI styles, gradients, and accessibility
   suppressions.
-- CI builds the monorepo and runs lint, type checks, Svelte checks, tooling contracts,
-  and conservative per-package coverage ratchets with a deterministic aggregate.
+- CI audits production dependencies, builds and import-smokes the monorepo, checks docs,
+  architecture, sensitive data, formatting, lint, types, Svelte, tooling contracts, and
+  conservative package coverage ratchets, then runs the full deterministic Playwright
+  suite in a separate job.
 - Backend workspaces share compiler defaults through one root config; UI API/loaders
   reject unvalidated double casts at the architecture gate.
 - Short-lived branches and PRs to `main` are the delivery contract.
@@ -56,12 +58,12 @@ own acceptance criteria and ships through a separate PR:
 3. [#84 neutral analysis package](https://github.com/jorgesalica/flow-sample/issues/84) - complete
 4. [#85 import-safe persistence composition](https://github.com/jorgesalica/flow-sample/issues/85) - complete
 5. [#86 typed Lyrics Canvas transport](https://github.com/jorgesalica/flow-sample/issues/86) - complete
-6. [#87 documentation and CI reconciliation](https://github.com/jorgesalica/flow-sample/issues/87)
+6. [#87 documentation and CI reconciliation](https://github.com/jorgesalica/flow-sample/issues/87) - complete
 
-The order fixes executable artifacts and security first, then package boundaries and
-typed transport, and finally reconciles repository-wide guidance and gates. New work
-must enter through a scoped GitHub issue and be ordered here before execution. The
-deferred epics below remain ideas, not an implicit queue.
+The closure queue is complete. It fixed executable artifacts and security first, then
+package boundaries and typed transport, and finally reconciled repository-wide guidance
+and gates. New work must enter through a scoped GitHub issue and be ordered here before
+execution. The deferred epics below remain ideas, not an implicit queue.
 
 Relationships and graph edges get a separate issue only after the named-board foundation
 is proven and an interaction requirement is agreed.
@@ -85,15 +87,20 @@ A non-trivial task is done when:
 1. Its issue scope and acceptance criteria are satisfied.
 2. Code follows [conventions](conventions.md) and package boundaries.
 3. Tests cover behavior at the lowest useful layer plus relevant failure paths.
-4. `pnpm verify` passes; `pnpm build` passes for package/UI/backend work.
-5. UI behavior is checked on desktop and mobile; critical journeys use Playwright.
+4. `pnpm verify`, `pnpm build`, and `pnpm test:coverage` pass.
+5. UI behavior is checked on desktop and mobile; critical journeys use Playwright, and
+   the complete deterministic browser suite remains green in CI.
 6. Architecture, flow, API, environment, or workflow changes update their owner docs.
 7. A PR to `main` explains impact and verification, CI passes, and GitHub performs merge.
 
 ## Working Model
 
-This project adopts useful CCEC practices: issue traceability, explicit definition of
-done, layered testing guidance, documentation ownership, and complete PR delivery. It
-does not copy CCEC's `develop`/staging strategy, deployment ceremony, Prisma guidance, or
-multi-dashboard governance because this is a personal, local-first SQLite playground
-with one permanent branch.
+This project adopts useful CCEC practices: issue traceability, protected local refs,
+explicit definition of done, layered and ratcheted testing, repository-wide formatting,
+sensitive-data scanning, executable CI contracts, meaningful PR QA, documentation
+ownership, and complete PR delivery.
+
+It deliberately does not copy CCEC's `develop`/staging strategy, deployment ceremony,
+Postgres/Prisma guidance, test sharding, or multi-dashboard governance. Flow Sample is a
+personal, local-first SQLite application with one permanent branch and a smaller suite,
+so every PR can run complete coverage and Playwright gates directly.

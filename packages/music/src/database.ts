@@ -86,11 +86,11 @@ export function rebuildFtsIndex(db: Database.Database): void {
       `,
     )
     .all() as Array<{
-      id: string;
-      title: string;
-      album_name: string | null;
-      artist_names: string | null;
-    }>;
+    id: string;
+    title: string;
+    album_name: string | null;
+    artist_names: string | null;
+  }>;
 
   db.exec('DELETE FROM tracks_fts');
   const insertFts = db.prepare(`
@@ -100,12 +100,7 @@ export function rebuildFtsIndex(db: Database.Database): void {
 
   db.transaction(() => {
     for (const track of tracks) {
-      insertFts.run(
-        track.id,
-        track.title,
-        track.album_name ?? '',
-        track.artist_names ?? '',
-      );
+      insertFts.run(track.id, track.title, track.album_name ?? '', track.artist_names ?? '');
     }
   })();
 }

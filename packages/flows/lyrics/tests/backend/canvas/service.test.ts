@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CanvasAnalysis, TokenAST } from '@flows/shared';
 import type { AnalysisRepository } from '@flows/analysis';
 import type { LyricsRepository } from '../../../src/domain/ports';
-import type { LyricsCanvasRepository, LyricsCanvasTrack } from '../../../src/backend/canvas/repository';
+import type {
+  LyricsCanvasRepository,
+  LyricsCanvasTrack,
+} from '../../../src/backend/canvas/repository';
 
 const mocks = vi.hoisted(() => {
   const tokenAst: TokenAST = {

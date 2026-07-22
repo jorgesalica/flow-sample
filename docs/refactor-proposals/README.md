@@ -15,14 +15,14 @@ This document outlines technical improvements to evolve the project from a proto
 
 ### Backend Proposal
 
-* **Core Domain**: Define a generic `FlowEngine` that knows nothing about Spotify. It only knows about `Steps` (Export, Enrich, Compact).
-* **Ports (Interfaces)**:
-  * `SourcePort`: Interface for fetching data (e.g., `fetchItems(limit: number)`).
-  * `StoragePort`: Interface for saving data (e.g., `save(key: string, data: any)`).
-* **Adapters (Implementations)**:
-  * `SpotifyAdapter` implements `SourcePort`.
-  * `FileSystemAdapter` implements `StoragePort`.
-  * *Future*: `NotionAdapter`, `SQLiteAdapter`.
+- **Core Domain**: Define a generic `FlowEngine` that knows nothing about Spotify. It only knows about `Steps` (Export, Enrich, Compact).
+- **Ports (Interfaces)**:
+  - `SourcePort`: Interface for fetching data (e.g., `fetchItems(limit: number)`).
+  - `StoragePort`: Interface for saving data (e.g., `save(key: string, data: any)`).
+- **Adapters (Implementations)**:
+  - `SpotifyAdapter` implements `SourcePort`.
+  - `FileSystemAdapter` implements `StoragePort`.
+  - _Future_: `NotionAdapter`, `SQLiteAdapter`.
 
 **Benefit**: You can swap "Spotify" for "YouTube" or "FileSystem" for "S3" without touching the core logic.
 
@@ -33,14 +33,14 @@ This document outlines technical improvements to evolve the project from a proto
 
 ### Frontend Proposal
 
-* **State Management**: Extract state to a `Store` class (Observer pattern). Components subscribe to changes.
-* **Components**:
-  * `TrackGrid`: Accepts a list of tracks and renders them.
-  * `FilterBar`: Renders dropdowns and emits "filter changed" events.
-  * `MetricsPanel`: Pure component that just displays numbers.
-* **Services**:
-  * `ApiClient`: Typed wrapper for `fetch('/api/...')`.
-  * `DataTransformer`: Pure functions to convert raw JSON to UI models.
+- **State Management**: Extract state to a `Store` class (Observer pattern). Components subscribe to changes.
+- **Components**:
+  - `TrackGrid`: Accepts a list of tracks and renders them.
+  - `FilterBar`: Renders dropdowns and emits "filter changed" events.
+  - `MetricsPanel`: Pure component that just displays numbers.
+- **Services**:
+  - `ApiClient`: Typed wrapper for `fetch('/api/...')`.
+  - `DataTransformer`: Pure functions to convert raw JSON to UI models.
 
 **Benefit**: Easier testing, cleaner code, and reusability.
 
@@ -51,11 +51,11 @@ This document outlines technical improvements to evolve the project from a proto
 
 ### Data Layer Proposal
 
-* **Transition**: Move from `JSON` files to a local `SQLite` or `DuckDB` file.
-* **Workflow**:
-    1. **Export**: Fetch from Spotify -> Insert into Staging Table.
-    2. **Enrich**: Read Staging -> Fetch Metadata -> Update Rows.
-    3. **Query**: The UI sends SQL queries to the backend (e.g., `SELECT * FROM tracks WHERE year = 2023`).
+- **Transition**: Move from `JSON` files to a local `SQLite` or `DuckDB` file.
+- **Workflow**:
+  1. **Export**: Fetch from Spotify -> Insert into Staging Table.
+  2. **Enrich**: Read Staging -> Fetch Metadata -> Update Rows.
+  3. **Query**: The UI sends SQL queries to the backend (e.g., `SELECT * FROM tracks WHERE year = 2023`).
 
 **Benefit**: Instant filtering of millions of rows, complex analytics (aggregations), and standard data integrity.
 
@@ -66,15 +66,15 @@ This document outlines technical improvements to evolve the project from a proto
 
 ### Configuration Proposal
 
-* **Config Schema**: Use `zod` or similar to validate configuration at startup.
-* **Structure**:
+- **Config Schema**: Use `zod` or similar to validate configuration at startup.
+- **Structure**:
 
-    ```typescript
-    interface Config {
-      spotify: { clientId: string; ... };
-      app: { pageLimit: number; port: number };
-      paths: { output: string; ... };
-    }
-    ```
+  ```typescript
+  interface Config {
+    spotify: { clientId: string; ... };
+    app: { pageLimit: number; port: number };
+    paths: { output: string; ... };
+  }
+  ```
 
 **Benefit**: Fail fast if config is missing/wrong, and full autocomplete in the IDE.

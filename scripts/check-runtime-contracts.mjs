@@ -111,9 +111,7 @@ export async function smokeBuiltBackend(root = ROOT) {
 
 export async function assertSideEffectFreeImport(entrypoint) {
   await access(entrypoint);
-  const temporaryDirectory = await mkdtemp(
-    path.join(os.tmpdir(), 'flow-sample-import-safety-'),
-  );
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'flow-sample-import-safety-'));
   const importScript = 'require(process.argv[1]);';
 
   try {
@@ -132,9 +130,7 @@ export async function assertSideEffectFreeImport(entrypoint) {
 
     const createdEntries = await readdir(temporaryDirectory);
     if (createdEntries.length > 0) {
-      throw new Error(
-        `Package import created filesystem entries: ${createdEntries.join(', ')}`,
-      );
+      throw new Error(`Package import created filesystem entries: ${createdEntries.join(', ')}`);
     }
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });

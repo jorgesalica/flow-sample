@@ -49,10 +49,7 @@ export const spotifyStatsSchema = t.Object({
   totalGenres: t.Number(),
   topGenres: t.Array(spotifyGenreCountSchema),
   decadeDistribution: t.Record(t.String(), t.Number()),
-  yearRange: t.Union([
-    t.Object({ oldest: t.Number(), newest: t.Number() }),
-    t.Null(),
-  ]),
+  yearRange: t.Union([t.Object({ oldest: t.Number(), newest: t.Number() }), t.Null()]),
 });
 
 export const spotifyAuthStatusSchema = t.Object({ connected: t.Boolean() });

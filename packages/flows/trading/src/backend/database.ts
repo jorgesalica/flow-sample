@@ -198,10 +198,7 @@ export class SQLiteTradingPersistence implements TradingPersistence {
   }
 
   getLastCandle(symbol: string, interval: string): CandleRow | null {
-    return (
-      (this.getLastCandleStatement.get(symbol, interval) as CandleRow | undefined) ??
-      null
-    );
+    return (this.getLastCandleStatement.get(symbol, interval) as CandleRow | undefined) ?? null;
   }
 
   getCandleCount(symbol: string): number {
@@ -222,10 +219,7 @@ export class SQLiteTradingPersistence implements TradingPersistence {
   }
 
   getLatestAdvisorLog(symbol: string): AdvisorLogRow | null {
-    return (
-      (this.getLatestAdvisorLogStatement.get(symbol) as AdvisorLogRow | undefined) ??
-      null
-    );
+    return (this.getLatestAdvisorLogStatement.get(symbol) as AdvisorLogRow | undefined) ?? null;
   }
 }
 

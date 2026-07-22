@@ -1,1 +1,12 @@
+#!/bin/sh
+
+# This repository has no remote branch protection, so keep main commit-free locally.
+# Emergency override: ALLOW_PROTECTED_COMMIT=1 git commit ...
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$branch" = "main" ] && [ "${ALLOW_PROTECTED_COMMIT:-}" != "1" ]; then
+  echo "Direct commits to main are blocked. Create a short-lived issue branch."
+  echo "Emergency override: ALLOW_PROTECTED_COMMIT=1 git commit ..."
+  exit 1
+fi
+
 pnpm lint && pnpm format:check

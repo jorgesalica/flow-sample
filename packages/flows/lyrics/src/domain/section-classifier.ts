@@ -21,7 +21,11 @@ export function classifyLyricsSections(ast: TokenAST): TokenAST {
 }
 
 function inferLyricsSectionType(section: Section, index: number): string {
-  const firstLine = section.lines[0]?.map((token) => token.text).join(' ').trim() ?? '';
+  const firstLine =
+    section.lines[0]
+      ?.map((token) => token.text)
+      .join(' ')
+      .trim() ?? '';
   const match = SECTION_MARKERS.find(([pattern]) => pattern.test(firstLine));
 
   return match?.[1] ?? (index === 0 ? 'Verse' : 'Section');

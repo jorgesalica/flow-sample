@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  SpotifyTopStats,
-  Track,
-} from '@flows/shared';
+import type { SpotifyTopStats, Track } from '@flows/shared';
 import { SpotifyAuthError, SpotifyRateLimitError } from '../../src/domain/errors';
 import type { SpotifyApplication } from '../../src/backend/spotify.service';
 import { createSpotifyRoutes } from '../../src/backend/routes';
@@ -50,9 +47,7 @@ const config = {
 };
 
 function request(path: string, init?: RequestInit): Promise<Response> {
-  return createSpotifyRoutes(config, service).handle(
-    new Request(`http://localhost${path}`, init),
-  );
+  return createSpotifyRoutes(config, service).handle(new Request(`http://localhost${path}`, init));
 }
 
 function post(path: string, body?: Record<string, unknown>): Promise<Response> {

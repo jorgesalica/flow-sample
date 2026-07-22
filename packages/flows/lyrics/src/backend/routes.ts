@@ -1,9 +1,6 @@
 import { logger } from '@flows/core';
 import { createMusicDatabase, SQLiteTrackRepository } from '@flows/music';
-import {
-  createAnalysisRepository,
-  type AnalysisRepository,
-} from '@flows/analysis';
+import { createAnalysisRepository, type AnalysisRepository } from '@flows/analysis';
 import {
   LYRICS_INTERPRETATION_EVENT_TYPES,
   type LyricsErrorResponse,
@@ -13,10 +10,7 @@ import { Elysia, t } from 'elysia';
 import { LyricsFetchError, LyricsNotFoundError } from '../domain/errors';
 import type { LyricsRepository } from '../domain/ports';
 import { LrcLibAdapter } from './adapter';
-import {
-  createCanvasRoutes,
-  type LyricsCanvasApplication,
-} from './canvas/canvas.routes';
+import { createCanvasRoutes, type LyricsCanvasApplication } from './canvas/canvas.routes';
 import { SQLiteLyricsCanvasRepository } from './canvas/repository';
 import { LyricsCanvasService } from './canvas/service';
 import {
@@ -53,15 +47,8 @@ export function createLyricsRouteDependencies(
   const lyricsRepository = new SQLiteLyricsRepository(database);
   const trackRepository = new SQLiteTrackRepository(database);
   return {
-    application: new LyricsService(
-      lyricsRepository,
-      trackRepository,
-      new LrcLibAdapter(),
-    ),
-    interpretation: new LyricsInterpretationService(
-      lyricsRepository,
-      trackRepository,
-    ),
+    application: new LyricsService(lyricsRepository, trackRepository, new LrcLibAdapter()),
+    interpretation: new LyricsInterpretationService(lyricsRepository, trackRepository),
     lyricsRepository,
     canvas: new LyricsCanvasService(
       new SQLiteLyricsCanvasRepository(database),
@@ -121,9 +108,7 @@ export function createLyricsRoutes(
         }
       },
       {
-        body: t.Optional(
-          t.Object({ retryFailed: t.Optional(t.Boolean()) }),
-        ),
+        body: t.Optional(t.Object({ retryFailed: t.Optional(t.Boolean()) })),
         response: {
           200: lyricsBatchResponseSchema,
           502: lyricsErrorResponseSchema,
@@ -194,16 +179,10 @@ export function createLyricsRoutes(
     );
 }
 
-function encodeSseEvent(
-  encoder: TextEncoder,
-  event: LyricsInterpretationEvent,
-): Uint8Array {
+function encodeSseEvent(encoder: TextEncoder, event: LyricsInterpretationEvent): Uint8Array {
   return encoder.encode(`data: ${JSON.stringify(event)}\n\n`);
 }
 
 function logProviderFailure(error: unknown, trackId: string, message: string): void {
-  log.error(
-    { trackId, error: error instanceof Error ? error.message : String(error) },
-    message,
-  );
+  log.error({ trackId, error: error instanceof Error ? error.message : String(error) }, message);
 }

@@ -116,14 +116,14 @@ contract:
 
 All shared types now live in `@flows/shared` and are re-exported from `lib/types.ts`:
 
-| Type | Description |
-| ---- | ----------- |
-| `GenreCount` | `{ genre, count }` for genre stats |
-| `YearCount` | `{ year, count }` for year stats |
-| `SelectOption` | `{ value, label }` for dropdowns |
-| `YearRange` | `{ oldest, newest }` for stats |
-| `StatusMessage` | `{ message, tone }` for status |
-| `StatusTone` | `'info' \| 'success' \| 'warning' \| 'error'` |
+| Type            | Description                                   |
+| --------------- | --------------------------------------------- |
+| `GenreCount`    | `{ genre, count }` for genre stats            |
+| `YearCount`     | `{ year, count }` for year stats              |
+| `SelectOption`  | `{ value, label }` for dropdowns              |
+| `YearRange`     | `{ oldest, newest }` for stats                |
+| `StatusMessage` | `{ message, tone }` for status                |
+| `StatusTone`    | `'info' \| 'success' \| 'warning' \| 'error'` |
 
 ### Components Updated
 
@@ -144,13 +144,13 @@ All shared types now live in `@flows/shared` and are re-exported from `lib/types
 
 Organized 18 components into 5 semantic folders:
 
-| Folder | Components |
-| ------ | ---------- |
-| `track/` | TrackCard, AlbumArt, GenreBadges |
+| Folder     | Components                                                           |
+| ---------- | -------------------------------------------------------------------- |
+| `track/`   | TrackCard, AlbumArt, GenreBadges                                     |
 | `filters/` | FilterPanel, FilterSelect, GenreFilter, YearFilter, PopularitySlider |
-| `charts/` | GenreChart, DecadeChart, InsightsPanel |
-| `common/` | SearchBar, Pagination, InfiniteScroll, MetricCard |
-| `layout/` | Controls, Navbar, SpotifyHeader |
+| `charts/`  | GenreChart, DecadeChart, InsightsPanel                               |
+| `common/`  | SearchBar, Pagination, InfiniteScroll, MetricCard                    |
+| `layout/`  | Controls, Navbar, SpotifyHeader                                      |
 
 ### Split Components
 
@@ -263,11 +263,11 @@ npx playwright install chromium
 
 Created `e2e/smoke.spec.ts` with 3 tests:
 
-| Test | Description |
-| ---- | ----------- |
-| Landing page loads | Verifies h1 and "Spotify Flow" text visible |
-| Navigate to Spotify Flow | Clicks card, verifies URL change |
-| Spotify Flow shows content | Checks for tracks or Sync button |
+| Test                       | Description                                 |
+| -------------------------- | ------------------------------------------- |
+| Landing page loads         | Verifies h1 and "Spotify Flow" text visible |
+| Navigate to Spotify Flow   | Clicks card, verifies URL change            |
+| Spotify Flow shows content | Checks for tracks or Sync button            |
 
 **Commands:**
 
@@ -328,14 +328,14 @@ Added hash-based routing:
 
 Replaced client-side filtering with **server-side** approach:
 
-| Filter | API Param |
-| ------ | --------- |
-| Search | `?q=linkin` |
-| Genre | `?genre=rock` |
-| Year | `?year=2020` |
-| Has Preview | `?hasPreview=true` |
-| Min Popularity | `?minPopularity=30` |
-| Sort | `?sortBy=popularity&sortOrder=desc` |
+| Filter         | API Param                           |
+| -------------- | ----------------------------------- |
+| Search         | `?q=linkin`                         |
+| Genre          | `?genre=rock`                       |
+| Year           | `?year=2020`                        |
+| Has Preview    | `?hasPreview=true`                  |
+| Min Popularity | `?minPopularity=30`                 |
+| Sort           | `?sortBy=popularity&sortOrder=desc` |
 
 **New `FilterPanel` component** — expandable panel with all filter controls.
 

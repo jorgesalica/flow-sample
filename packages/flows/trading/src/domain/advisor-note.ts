@@ -48,12 +48,9 @@ export function parseAdvisorNote(content: string): AdvisorNote | null {
     return {
       title: parsed.title,
       sentiment_bias: sentiment,
-      regime_context:
-        typeof parsed.regime_context === 'string' ? parsed.regime_context : '',
-      scenario_bullish:
-        typeof parsed.scenario_bullish === 'string' ? parsed.scenario_bullish : '',
-      scenario_bearish:
-        typeof parsed.scenario_bearish === 'string' ? parsed.scenario_bearish : '',
+      regime_context: typeof parsed.regime_context === 'string' ? parsed.regime_context : '',
+      scenario_bullish: typeof parsed.scenario_bullish === 'string' ? parsed.scenario_bullish : '',
+      scenario_bearish: typeof parsed.scenario_bearish === 'string' ? parsed.scenario_bearish : '',
       risk_management: parseRiskManagement(parsed.risk_management),
       mentor_tip: parsed.mentor_tip,
       reasoning_key_factors: Array.isArray(parsed.reasoning_key_factors)
@@ -61,8 +58,7 @@ export function parseAdvisorNote(content: string): AdvisorNote | null {
             (factor): factor is string => typeof factor === 'string',
           )
         : [],
-      confidence_score:
-        typeof parsed.confidence_score === 'number' ? parsed.confidence_score : 50,
+      confidence_score: typeof parsed.confidence_score === 'number' ? parsed.confidence_score : 50,
     };
   } catch {
     return null;

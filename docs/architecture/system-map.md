@@ -75,16 +75,16 @@ flowchart LR
 
 ## Workspace Responsibilities
 
-| Workspace | Role | Should Own | Should Not Own |
-| --- | --- | --- | --- |
-| `packages/backend` | Application host | app config, shared resource composition, CORS/static setup, route mounting, process startup split | business rules, SQL, provider SDK calls |
-| `packages/ui` | Browser app | routes, loaders, flow surfaces, registry, UI state, design primitives | backend domain internals, raw API URLs, persistent server state |
-| `packages/core` | Shared infrastructure | logger, cache, database factory, LLM client/providers | flow-specific business rules, DTOs, route handlers |
-| `packages/analysis` | Shared analysis capability | tokenization, prompt-safe AST preparation, annotation filtering, `canvas.db` persistence | flow prompts, schemas, orchestration, UI contracts |
-| `packages/shared` | Cross-boundary contract | DTOs, constants, public unions crossing UI/server | implementation details, persistence rows, SDK types |
-| `packages/music` | Shared music persistence | `music.db`, track/artist/genre schema, FTS, neutral track repository | Spotify API/OAuth, LrcLib, flow orchestration, UI DTO ownership |
-| `packages/board` | Application composition | `boards.db`, default/active invariants, board repository/service/routes | flow registration, flow internals, deployment or user/account concerns |
-| `packages/flows/*` | Backend bounded contexts | domain, ports, adapters, repositories, services, Elysia route factory | global app startup, unrelated flow logic, UI components |
+| Workspace           | Role                       | Should Own                                                                                        | Should Not Own                                                         |
+| ------------------- | -------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `packages/backend`  | Application host           | app config, shared resource composition, CORS/static setup, route mounting, process startup split | business rules, SQL, provider SDK calls                                |
+| `packages/ui`       | Browser app                | routes, loaders, flow surfaces, registry, UI state, design primitives                             | backend domain internals, raw API URLs, persistent server state        |
+| `packages/core`     | Shared infrastructure      | logger, cache, database factory, LLM client/providers                                             | flow-specific business rules, DTOs, route handlers                     |
+| `packages/analysis` | Shared analysis capability | tokenization, prompt-safe AST preparation, annotation filtering, `canvas.db` persistence          | flow prompts, schemas, orchestration, UI contracts                     |
+| `packages/shared`   | Cross-boundary contract    | DTOs, constants, public unions crossing UI/server                                                 | implementation details, persistence rows, SDK types                    |
+| `packages/music`    | Shared music persistence   | `music.db`, track/artist/genre schema, FTS, neutral track repository                              | Spotify API/OAuth, LrcLib, flow orchestration, UI DTO ownership        |
+| `packages/board`    | Application composition    | `boards.db`, default/active invariants, board repository/service/routes                           | flow registration, flow internals, deployment or user/account concerns |
+| `packages/flows/*`  | Backend bounded contexts   | domain, ports, adapters, repositories, services, Elysia route factory                             | global app startup, unrelated flow logic, UI components                |
 
 ## Opinion on Flow Packages
 
@@ -206,14 +206,13 @@ Target shape:
 - Repositories own SQL and row hydration.
 - Domain code is pure TypeScript.
 
-## Current Refactor Queue
+## Architecture Closure Status
 
 Completed design-system, loader/invalidation, environment ownership, music persistence,
 architecture-contract, quality-gate, and named-board work lives in project history and
-merged PRs. The post-Board audit is tracked, in order, by #82 through #87 in the
-[roadmap](../ROADMAP.md): compiled runtime, dependency security, neutral analysis,
-import-safe persistence, typed Lyrics Canvas transport, and documentation/CI
-reconciliation.
+merged PRs. The post-Board audit queue #82 through #87 is complete: compiled runtime,
+dependency security, neutral analysis, import-safe persistence, typed Lyrics Canvas
+transport, and documentation/CI reconciliation. See the [roadmap](../ROADMAP.md).
 
 The queue intentionally keeps both `@flows/music` and `@flows/analysis` separate from
 `@flows/core`: the neutral packages own domain capabilities, while core remains generic

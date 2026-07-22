@@ -10,10 +10,7 @@ import {
   type Candle,
 } from '../../domain/math';
 import { type MarketState, type FractalNode } from '../../domain/types';
-import {
-  type CandleRow,
-  type TradingPersistence,
-} from '../database';
+import { type CandleRow, type TradingPersistence } from '../database';
 import { TRADING_CONFIG } from '../config';
 import { RSI, MACD } from 'technicalindicators';
 
