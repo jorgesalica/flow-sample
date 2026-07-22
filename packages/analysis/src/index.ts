@@ -1,9 +1,9 @@
 export { filterAnnotationsForAst, formatTokenAstForPrompt } from './prompt';
 export { tokenize } from './tokenizer';
 export {
-  deleteAnalysis,
-  deleteAnalysisBySourceId,
-  findAnalysisBySourceId,
-  getAllAnalysesBySourceType,
-  saveAnalysis,
+  createAnalysisDatabase,
+  createAnalysisRepository,
+  initializeAnalysisDatabase,
+  SQLiteAnalysisRepository,
+  type AnalysisRepository,
 } from './analysis.repository';

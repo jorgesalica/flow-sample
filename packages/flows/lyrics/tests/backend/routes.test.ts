@@ -8,6 +8,7 @@ import { LyricsFetchError, LyricsNotFoundError } from '../../src/domain/errors';
 import type { LyricsRepository } from '../../src/domain/ports';
 import type { LyricsApplication } from '../../src/backend/lyrics.service';
 import type { LyricsInterpretationApplication } from '../../src/backend/interpretation.service';
+import type { LyricsCanvasApplication } from '../../src/backend/canvas/canvas.routes';
 
 const logError = vi.hoisted(() => vi.fn());
 
@@ -59,11 +60,17 @@ const lyricsRepository: LyricsRepository = {
   saveInterpretation: vi.fn(),
 };
 
+const canvas: LyricsCanvasApplication = {
+  load: vi.fn(),
+  analyze: vi.fn(),
+};
+
 function request(path: string, init?: RequestInit): Promise<Response> {
   return createLyricsRoutes({
     application,
     interpretation,
     lyricsRepository,
+    canvas,
   }).handle(new Request(`http://localhost${path}`, init));
 }
 

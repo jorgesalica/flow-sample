@@ -2,12 +2,10 @@ import type { AdvisorNote, Candle, FractalNode } from '@flows/shared';
 import { parseAdvisorNote } from '../domain/advisor-note';
 import { AnalysisError } from '../domain/errors';
 import {
-  getLastNCandles,
-  getLastNFractalNodes,
-  getLatestAdvisorLog,
   type AdvisorLogRow,
   type CandleRow,
   type FractalNodeRow,
+  type TradingPersistence,
 } from './database';
 
 export interface StoredAdvisorInsight {
@@ -49,18 +47,20 @@ function mapFractal(row: FractalNodeRow): FractalNode {
 }
 
 export class SqliteTradingReadRepository implements TradingReadRepository {
+  constructor(private readonly persistence: TradingPersistence) {}
+
   getCandles(symbol: string, interval: string, limit: number): Candle[] {
-    const rows = getLastNCandles.all(symbol, interval, limit) as CandleRow[];
+    const rows = this.persistence.getLastCandles(symbol, interval, limit) as CandleRow[];
     return rows.reverse().map(mapCandle);
   }
 
   getFractals(symbol: string, limit: number): FractalNode[] {
-    const rows = getLastNFractalNodes.all(symbol, limit) as FractalNodeRow[];
+    const rows = this.persistence.getLastFractalNodes(symbol, limit) as FractalNodeRow[];
     return rows.map(mapFractal);
   }
 
   getLatestInsight(symbol: string): StoredAdvisorInsight | null {
-    const row = getLatestAdvisorLog.get(symbol) as AdvisorLogRow | null;
+    const row = this.persistence.getLatestAdvisorLog(symbol) as AdvisorLogRow | null;
     if (!row) return null;
 
     const insight = parseAdvisorNote(row.insight_json);

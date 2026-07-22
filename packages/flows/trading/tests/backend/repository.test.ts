@@ -1,19 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnalysisError } from '../../src/domain/errors';
+import type { TradingPersistence } from '../../src/backend/database';
 
 const getLastNCandlesAll = vi.fn();
 const getLastNFractalNodesAll = vi.fn();
 const getLatestAdvisorLogGet = vi.fn();
 
-vi.mock('../../src/backend/database', () => ({
-  getLastNCandles: { all: getLastNCandlesAll },
-  getLastNFractalNodes: { all: getLastNFractalNodesAll },
-  getLatestAdvisorLog: { get: getLatestAdvisorLogGet },
-}));
+const persistence: TradingPersistence = {
+  getLastCandles: (symbol, interval, limit) =>
+    getLastNCandlesAll(symbol, interval, limit),
+  getLastFractalNodes: (symbol, limit) =>
+    getLastNFractalNodesAll(symbol, limit),
+  getLatestAdvisorLog: (symbol) => getLatestAdvisorLogGet(symbol) ?? null,
+  upsertCandle: vi.fn(),
+  getLastCandle: vi.fn(() => null),
+  getCandleCount: vi.fn(() => 0),
+  insertFractalNode: vi.fn(),
+  insertAdvisorLog: vi.fn(),
+};
 
-const { SqliteTradingReadRepository } = await import(
-  '../../src/backend/repository'
-);
+const repositoryModule = await import('../../src/backend/repository');
+
+class SqliteTradingReadRepository extends repositoryModule.SqliteTradingReadRepository {
+  constructor() {
+    super(persistence);
+  }
+}
 
 const note = {
   title: 'Trend intact',

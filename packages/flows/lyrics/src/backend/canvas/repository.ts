@@ -1,4 +1,3 @@
-import { musicDb } from '@flows/music';
 import type Database from 'better-sqlite3';
 
 export interface LyricsCanvasTrack {
@@ -22,7 +21,7 @@ export interface LyricsCanvasRepository {
 }
 
 export class SQLiteLyricsCanvasRepository implements LyricsCanvasRepository {
-  constructor(private readonly db: Database.Database = musicDb) {}
+  constructor(private readonly db: Database.Database) {}
 
   findTrackDetails(trackId: string): LyricsCanvasTrack | null {
     const row = this.db

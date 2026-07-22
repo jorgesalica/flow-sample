@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CanvasAnalysis, TokenAST } from '@flows/shared';
+import type { AnalysisRepository } from '@flows/analysis';
 import type { LyricsRepository } from '../../../src/domain/ports';
 import type { LyricsCanvasRepository, LyricsCanvasTrack } from '../../../src/backend/canvas/repository';
 
@@ -25,8 +26,6 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('@flows/analysis', () => ({
-  findAnalysisBySourceId: mocks.findAnalysisBySourceId,
-  saveAnalysis: mocks.saveAnalysis,
   tokenize: mocks.tokenize,
 }));
 
@@ -66,6 +65,15 @@ function makeLyricsRepository(): LyricsRepository {
   };
 }
 
+function makeAnalysisRepository(): AnalysisRepository {
+  return {
+    findBySourceId: mocks.findAnalysisBySourceId,
+    save: mocks.saveAnalysis,
+    deleteBySourceId: vi.fn(),
+    listBySourceType: vi.fn(() => []),
+  };
+}
+
 describe('LyricsCanvasService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -95,14 +103,22 @@ describe('LyricsCanvasService', () => {
     mocks.findAnalysisBySourceId.mockReturnValue(cached);
     const canvasRepository = makeCanvasRepository(makeTrack());
 
-    const service = new LyricsCanvasService(canvasRepository, makeLyricsRepository());
+    const service = new LyricsCanvasService(
+      canvasRepository,
+      makeLyricsRepository(),
+      makeAnalysisRepository(),
+    );
 
     await expect(service.load('track-1')).resolves.toEqual({ kind: 'found', analysis: cached });
     expect(canvasRepository.findTrackDetails).not.toHaveBeenCalled();
   });
 
   it('reports a valid source when lyrics exist but analysis is missing', async () => {
-    const service = new LyricsCanvasService(makeCanvasRepository(makeTrack({ imageUrl: 'cover.jpg' })), makeLyricsRepository());
+    const service = new LyricsCanvasService(
+      makeCanvasRepository(makeTrack({ imageUrl: 'cover.jpg' })),
+      makeLyricsRepository(),
+      makeAnalysisRepository(),
+    );
 
     await expect(service.load('track-1')).resolves.toEqual({
       kind: 'analysis_missing',
@@ -118,7 +134,11 @@ describe('LyricsCanvasService', () => {
 
   it('creates and saves an analysis from track lyrics', async () => {
     const lyricsRepository = makeLyricsRepository();
-    const service = new LyricsCanvasService(makeCanvasRepository(makeTrack()), lyricsRepository);
+    const service = new LyricsCanvasService(
+      makeCanvasRepository(makeTrack()),
+      lyricsRepository,
+      makeAnalysisRepository(),
+    );
 
     const result = await service.analyze('track-1');
 
@@ -149,7 +169,11 @@ describe('LyricsCanvasService', () => {
   });
 
   it('does not analyze missing lyrics', async () => {
-    const service = new LyricsCanvasService(makeCanvasRepository(makeTrack({ plainLyrics: null })), makeLyricsRepository());
+    const service = new LyricsCanvasService(
+      makeCanvasRepository(makeTrack({ plainLyrics: null })),
+      makeLyricsRepository(),
+      makeAnalysisRepository(),
+    );
 
     await expect(service.analyze('track-1')).resolves.toEqual({ kind: 'source_unavailable' });
     expect(mocks.analyzeLyrics).not.toHaveBeenCalled();

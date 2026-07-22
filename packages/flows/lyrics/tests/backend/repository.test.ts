@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
+import { SQLiteLyricsRepository } from '../../src/backend/repository';
 
 // In-memory DB shared across the mock and tests
 const testDb = new Database(':memory:');
@@ -20,17 +21,12 @@ testDb.exec(`
   );
 `);
 
-vi.mock('@flows/music', () => ({ musicDb: testDb }));
-
-// Import after mock is in place
-const { SQLiteLyricsRepository } = await import('../../src/backend/repository');
-
 describe('SQLiteLyricsRepository', () => {
     let repo: InstanceType<typeof SQLiteLyricsRepository>;
 
     beforeEach(() => {
         testDb.exec('DELETE FROM lyrics; DELETE FROM tracks;');
-        repo = new SQLiteLyricsRepository();
+        repo = new SQLiteLyricsRepository(testDb);
     });
 
     describe('findByTrackId', () => {

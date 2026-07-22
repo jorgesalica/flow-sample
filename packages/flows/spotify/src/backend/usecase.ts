@@ -1,7 +1,6 @@
 import type { Track } from '@flows/shared';
 import type { TrackRepository } from '@flows/shared';
 import { logger } from '@flows/core';
-import { rebuildFtsIndex } from '@flows/music';
 import type { ArtistDetails, SpotifySourcePort } from '../domain/ports';
 
 export type { ArtistDetails, SpotifySourcePort } from '../domain/ports';
@@ -17,6 +16,7 @@ export class SpotifyUseCase {
   constructor(
     private source: SpotifySourcePort,
     private repository: TrackRepository,
+    private readonly rebuildSearchIndex: () => void = () => undefined,
   ) { }
 
   async fetchAndSave(options: SpotifyUseCaseOptions = {}): Promise<{ count: number }> {
@@ -37,7 +37,7 @@ export class SpotifyUseCase {
     log.info('Saved tracks to repository');
 
     // Rebuild FTS index for search
-    rebuildFtsIndex();
+    this.rebuildSearchIndex();
     log.info('Rebuilt FTS search index');
 
     return { count: tracks.length };

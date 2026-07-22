@@ -1,13 +1,18 @@
 import { logger } from '@flows/core';
 import { Elysia, t } from 'elysia';
-import type { LyricsRepository } from '../../domain/ports';
-import { SQLiteLyricsCanvasRepository } from './repository';
-import { LyricsCanvasService } from './service';
+import type {
+  LyricsCanvasAnalyzeResult,
+  LyricsCanvasLoadResult,
+} from './service';
 
 const log = logger.child({ module: 'LyricsCanvasRoutes' });
 
-export function createCanvasRoutes(lyricsRepository: LyricsRepository) {
-  const service = new LyricsCanvasService(new SQLiteLyricsCanvasRepository(), lyricsRepository);
+export interface LyricsCanvasApplication {
+  load(trackId: string): Promise<LyricsCanvasLoadResult>;
+  analyze(trackId: string): Promise<LyricsCanvasAnalyzeResult>;
+}
+
+export function createCanvasRoutes(service: LyricsCanvasApplication) {
 
   return new Elysia({ prefix: '/:trackId/canvas' })
     .get(

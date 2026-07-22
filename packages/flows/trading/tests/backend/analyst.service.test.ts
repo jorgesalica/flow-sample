@@ -1,19 +1,36 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Candle } from '../../src/domain/math';
 import { TRADING_CONFIG } from '../../src/backend/config';
+import type { TradingPersistence } from '../../src/backend/database';
+import type { AnalystServiceConfig } from '../../src/backend/services/analyst.service';
 
 // ── Mock the database edge; run the REAL domain math ──────────────────
 const getLastNCandlesAll = vi.fn();
 const insertFractalRun = vi.fn();
 
-vi.mock('../../src/backend/database', () => ({
-  getLastNCandles: { all: getLastNCandlesAll },
-  insertFractalNode: { run: insertFractalRun },
-}));
+const persistence: TradingPersistence = {
+  getLastCandles: (symbol, interval, limit) =>
+    getLastNCandlesAll(symbol, interval, limit),
+  insertFractalNode: (node) => { insertFractalRun(node); },
+  upsertCandle: vi.fn(),
+  getLastCandle: vi.fn(() => null),
+  getCandleCount: vi.fn(() => 0),
+  getLastFractalNodes: vi.fn(() => []),
+  insertAdvisorLog: vi.fn(),
+  getLatestAdvisorLog: vi.fn(() => null),
+};
 
-const { AnalystService, getAnalystService } = await import(
-  '../../src/backend/services/analyst.service'
-);
+const analystModule = await import('../../src/backend/services/analyst.service');
+
+class AnalystService extends analystModule.AnalystService {
+  constructor(config?: Partial<AnalystServiceConfig>) {
+    super(persistence, config);
+  }
+}
+
+function getAnalystService(): InstanceType<typeof analystModule.AnalystService> {
+  return analystModule.getAnalystService(persistence);
+}
 
 // ── Deterministic candle fixtures ─────────────────────────────────────
 

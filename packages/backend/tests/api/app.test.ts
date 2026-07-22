@@ -3,11 +3,18 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { BoardApplication } from '@flows/board';
+import {
+  initializeAnalysisDatabase,
+  SQLiteAnalysisRepository,
+} from '@flows/analysis';
+import { initializeMusicDatabase } from '@flows/music';
 import { BOARD_LAYOUT_VERSION, type BoardsSnapshot } from '@flows/shared';
+import Database from 'better-sqlite3';
 import { createApp } from '../../src/api/app';
 import type { BackendConfig } from '../../src/api/config';
 
 const temporaryDirectories: string[] = [];
+const temporaryDatabases: Database.Database[] = [];
 
 const boardSnapshot: BoardsSnapshot = {
   boards: [
@@ -42,7 +49,18 @@ const boardApplication: BoardApplication = {
 };
 
 function hostOptions(uiBuildPath: string) {
-  return { uiBuildPath, boardApplication };
+  const musicDatabase = new Database(':memory:');
+  initializeMusicDatabase(musicDatabase);
+  const analysisDatabase = new Database(':memory:');
+  initializeAnalysisDatabase(analysisDatabase);
+  temporaryDatabases.push(musicDatabase, analysisDatabase);
+
+  return {
+    uiBuildPath,
+    boardApplication,
+    musicDatabase,
+    analysisRepository: new SQLiteAnalysisRepository(analysisDatabase),
+  };
 }
 
 function makeConfig(overrides: Partial<BackendConfig> = {}): BackendConfig {
@@ -62,6 +80,9 @@ function makeConfig(overrides: Partial<BackendConfig> = {}): BackendConfig {
 
 describe('backend app', () => {
   afterEach(() => {
+    for (const database of temporaryDatabases.splice(0)) {
+      database.close();
+    }
     for (const directory of temporaryDirectories.splice(0)) {
       rmSync(directory, { recursive: true, force: true });
     }
@@ -123,10 +144,10 @@ describe('backend app', () => {
   });
 
   it('sanitizes unexpected route failures', async () => {
-    const app = createApp(makeConfig(), {
-      uiBuildPath: path.join(tmpdir(), 'missing-ui-build'),
-      boardApplication,
-    }).get('/api/failure', () => {
+    const app = createApp(
+      makeConfig(),
+      hostOptions(path.join(tmpdir(), 'missing-ui-build')),
+    ).get('/api/failure', () => {
       throw new Error('provider credentials leaked');
     });
 

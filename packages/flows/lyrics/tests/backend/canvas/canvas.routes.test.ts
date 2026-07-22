@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CanvasAnalysis } from '@flows/shared';
-import type { LyricsRepository } from '../../../src/domain/ports';
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -16,20 +15,12 @@ vi.mock('@flows/core', () => ({
   },
 }));
 
-vi.mock('../../../src/backend/canvas/repository', () => ({
-  SQLiteLyricsCanvasRepository: class {},
-}));
-
-vi.mock('../../../src/backend/canvas/service', () => ({
-  LyricsCanvasService: class {
-    load = mocks.load;
-    analyze = mocks.analyze;
-  },
-}));
-
 const { createCanvasRoutes } = await import('../../../src/backend/canvas/canvas.routes');
 
-const lyricsRepository = {} as LyricsRepository;
+const service = {
+  load: mocks.load,
+  analyze: mocks.analyze,
+};
 
 function makeAnalysis(): CanvasAnalysis {
   return {
@@ -48,7 +39,7 @@ function makeAnalysis(): CanvasAnalysis {
 }
 
 function request(path: string, method = 'GET'): Promise<Response> {
-  return createCanvasRoutes(lyricsRepository).handle(
+  return createCanvasRoutes(service).handle(
     new Request(`http://localhost${path}`, { method }),
   );
 }

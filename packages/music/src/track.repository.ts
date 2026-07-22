@@ -1,6 +1,6 @@
 import type { Track, Artist, GenreCount, YearCount, TrackRepository } from '@flows/shared';
-import { musicDb } from './database';
 import { logger } from '@flows/core';
+import type Database from 'better-sqlite3';
 
 const log = logger.child({ module: 'SQLiteTrackRepository' });
 
@@ -52,8 +52,10 @@ export interface PaginatedResult<T> {
 }
 
 export class SQLiteTrackRepository implements TrackRepository {
+  constructor(private readonly db: Database.Database) {}
+
   async save(tracks: Track[]): Promise<void> {
-    const insertTrack = musicDb.prepare(`
+    const insertTrack = this.db.prepare(`
       INSERT INTO tracks (id, title, added_at, duration_ms, album_id, album_name, album_release_date, album_release_year, album_image_url, preview_url, spotify_url)
       VALUES (@id, @title, @addedAt, @durationMs, @albumId, @albumName, @releaseDate, @releaseYear, @imageUrl, @previewUrl, @spotifyUrl)
       ON CONFLICT(id) DO UPDATE SET
@@ -69,7 +71,7 @@ export class SQLiteTrackRepository implements TrackRepository {
         spotify_url = excluded.spotify_url
     `);
 
-    const insertArtist = musicDb.prepare(`
+    const insertArtist = this.db.prepare(`
       INSERT INTO artists (id, name, image_url)
       VALUES (@id, @name, @imageUrl)
       ON CONFLICT(id) DO UPDATE SET 
@@ -77,18 +79,18 @@ export class SQLiteTrackRepository implements TrackRepository {
         image_url = excluded.image_url
     `);
 
-    const deleteTrackArtists = musicDb.prepare(`DELETE FROM track_artists WHERE track_id = ?`);
-    const insertTrackArtist = musicDb.prepare(`
+    const deleteTrackArtists = this.db.prepare(`DELETE FROM track_artists WHERE track_id = ?`);
+    const insertTrackArtist = this.db.prepare(`
       INSERT OR IGNORE INTO track_artists (track_id, artist_id)
       VALUES (?, ?)
     `);
 
-    const insertGenre = musicDb.prepare(`
+    const insertGenre = this.db.prepare(`
       INSERT OR IGNORE INTO artist_genres (artist_id, genre)
       VALUES (?, ?)
     `);
 
-    const transaction = musicDb.transaction((allTracks: Track[]) => {
+    const transaction = this.db.transaction((allTracks: Track[]) => {
       for (const track of allTracks) {
         // 1. Safe Track Insert
         insertTrack.run({
@@ -141,7 +143,7 @@ export class SQLiteTrackRepository implements TrackRepository {
   }
 
   async findAll(): Promise<Track[]> {
-    const rows = musicDb.prepare('SELECT * FROM tracks ORDER BY added_at DESC').all() as TrackRow[];
+    const rows = this.db.prepare('SELECT * FROM tracks ORDER BY added_at DESC').all() as TrackRow[];
     return Promise.all(rows.map((r) => this.hydrate(r)));
   }
 
@@ -194,12 +196,12 @@ export class SQLiteTrackRepository implements TrackRepository {
     }
 
     // Count total
-    const { count } = musicDb
+    const { count } = this.db
       .prepare(`SELECT COUNT(*) as count FROM tracks t ${whereClause}`)
       .get(...params) as { count: number };
 
     // Fetch page
-    const rows = musicDb
+    const rows = this.db
       .prepare(`SELECT t.* FROM tracks t ${whereClause} ${orderClause} LIMIT ? OFFSET ?`)
       .all(...params, limit, offset) as TrackRow[];
 
@@ -215,17 +217,17 @@ export class SQLiteTrackRepository implements TrackRepository {
   }
 
   async search(query: string, limit: number = 20): Promise<Track[]> {
-    const rows = musicDb.prepare(`SELECT t.* FROM tracks t JOIN tracks_fts fts ON fts.track_id = t.id WHERE tracks_fts MATCH ? LIMIT ?`).all(`${query}*`, limit) as TrackRow[];
+    const rows = this.db.prepare(`SELECT t.* FROM tracks t JOIN tracks_fts fts ON fts.track_id = t.id WHERE tracks_fts MATCH ? LIMIT ?`).all(`${query}*`, limit) as TrackRow[];
     return Promise.all(rows.map((r) => this.hydrate(r)));
   }
 
   async findByGenre(genre: string, limit: number = 50): Promise<Track[]> {
-    const rows = musicDb.prepare(`SELECT DISTINCT t.* FROM tracks t JOIN track_artists ta ON ta.track_id = t.id JOIN artist_genres ag ON ag.artist_id = ta.artist_id WHERE ag.genre = ? LIMIT ?`).all(genre, limit) as TrackRow[];
+    const rows = this.db.prepare(`SELECT DISTINCT t.* FROM tracks t JOIN track_artists ta ON ta.track_id = t.id JOIN artist_genres ag ON ag.artist_id = ta.artist_id WHERE ag.genre = ? LIMIT ?`).all(genre, limit) as TrackRow[];
     return Promise.all(rows.map((r) => this.hydrate(r)));
   }
 
   async getGenres(): Promise<GenreCount[]> {
-    return musicDb
+    return this.db
       .prepare(
         `
       SELECT ag.genre, COUNT(DISTINCT ta.track_id) as count
@@ -239,7 +241,7 @@ export class SQLiteTrackRepository implements TrackRepository {
   }
 
   async getYears(): Promise<{ year: number; count: number }[]> {
-    return musicDb
+    return this.db
       .prepare(
         `
       SELECT album_release_year as year, COUNT(*) as count
@@ -253,13 +255,13 @@ export class SQLiteTrackRepository implements TrackRepository {
   }
 
   async findById(id: string): Promise<Track | null> {
-    const row = musicDb.prepare('SELECT * FROM tracks WHERE id = ?').get(id) as TrackRow | undefined;
+    const row = this.db.prepare('SELECT * FROM tracks WHERE id = ?').get(id) as TrackRow | undefined;
     if (!row) return null;
     return this.hydrate(row);
   }
 
   async count(): Promise<number> {
-    const { count } = musicDb.prepare('SELECT COUNT(*) as count FROM tracks').get() as {
+    const { count } = this.db.prepare('SELECT COUNT(*) as count FROM tracks').get() as {
       count: number;
     };
     return count;
@@ -267,7 +269,7 @@ export class SQLiteTrackRepository implements TrackRepository {
 
   private async hydrate(row: TrackRow): Promise<Track> {
     // Get artists
-    const artistRows = musicDb
+    const artistRows = this.db
       .prepare(
         `
       SELECT a.* FROM artists a
@@ -279,7 +281,7 @@ export class SQLiteTrackRepository implements TrackRepository {
 
     const artists: Artist[] = await Promise.all(
       artistRows.map(async (a) => {
-        const genreRows = musicDb
+        const genreRows = this.db
           .prepare(`SELECT genre FROM artist_genres WHERE artist_id = ?`)
           .all(a.id) as GenreRow[];
         return {
