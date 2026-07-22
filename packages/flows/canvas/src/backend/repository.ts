@@ -1,26 +1,23 @@
-import {
-  deleteAnalysisBySourceId,
-  findAnalysisBySourceId,
-  getAllAnalysesBySourceType,
-  saveAnalysis,
-} from '@flows/analysis';
+import type { AnalysisRepository } from '@flows/analysis';
 import type { CanvasAnalysis, CanvasSourceType } from '@flows/shared';
 import type { CanvasRepository } from '../domain/ports';
 
 export class AnalysisCanvasRepository implements CanvasRepository {
+  constructor(private readonly repository: AnalysisRepository) {}
+
   findBySourceId(sourceId: string): CanvasAnalysis | null {
-    return findAnalysisBySourceId(sourceId);
+    return this.repository.findBySourceId(sourceId);
   }
 
   listBySourceType(sourceType: CanvasSourceType): CanvasAnalysis[] {
-    return getAllAnalysesBySourceType(sourceType);
+    return this.repository.listBySourceType(sourceType);
   }
 
   save(analysis: CanvasAnalysis): void {
-    saveAnalysis(analysis);
+    this.repository.save(analysis);
   }
 
   deleteBySourceId(sourceId: string): void {
-    deleteAnalysisBySourceId(sourceId);
+    this.repository.deleteBySourceId(sourceId);
   }
 }

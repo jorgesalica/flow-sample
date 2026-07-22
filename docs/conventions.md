@@ -62,9 +62,16 @@ Three layers, single responsibility each:
 ### Persistence (better-sqlite3, no ORM)
 
 - DB handles come from the `createDatabase(filename)` factory in `@flows/core`.
-- Schema is created idempotently in the repository constructor with
-  `CREATE TABLE IF NOT EXISTS`; column additions use a guarded `ALTER TABLE` in a
-  `try/catch` (already-exists is expected).
+- Public package imports are side-effect free: they must not open a database, create a
+  data directory, run schema changes, or prepare statements against a hidden handle.
+- Named database factories create the handle and initialize schema idempotently. The
+  application host shares neutral Music and Analysis resources; flow route factories
+  compose flow-owned persistence such as Trading and Chat.
+- Repositories and persistence adapters receive their database or port explicitly.
+  Tests inject isolated in-memory databases or interface fakes instead of mocking a
+  module-global connection.
+- Schemas use `CREATE TABLE IF NOT EXISTS`; column additions use a guarded `ALTER TABLE`
+  in a `try/catch` (already-exists is expected).
 - Use parameterized statements (`db.prepare(...).run/get/all(?, ?)`) — never string-interpolate
   user input into SQL.
 - Repositories return **DTOs from `@flows/shared`**, hydrated from snake_case rows in a

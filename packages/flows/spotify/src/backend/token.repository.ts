@@ -1,11 +1,11 @@
-import { musicDb } from '@flows/music';
 import { logger } from '@flows/core';
+import type Database from 'better-sqlite3';
 
 const log = logger.child({ module: 'SQLiteTokenRepository' });
 
 export class SQLiteTokenRepository {
-  constructor() {
-    musicDb.exec(`
+  constructor(private readonly db: Database.Database) {
+    this.db.exec(`
       CREATE TABLE IF NOT EXISTS token_cache (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL,
@@ -15,14 +15,14 @@ export class SQLiteTokenRepository {
   }
 
   get(key: string): string | null {
-    const row = musicDb
+    const row = this.db
       .prepare('SELECT value, expires_at FROM token_cache WHERE key = ?')
       .get(key) as { value: string; expires_at: number } | undefined;
 
     if (!row) return null;
 
     if (Date.now() > row.expires_at) {
-      musicDb.prepare('DELETE FROM token_cache WHERE key = ?').run(key);
+      this.db.prepare('DELETE FROM token_cache WHERE key = ?').run(key);
       return null;
     }
 
@@ -30,7 +30,7 @@ export class SQLiteTokenRepository {
   }
 
   set(key: string, value: string, expiresAt: number): void {
-    musicDb
+    this.db
       .prepare(
         'INSERT OR REPLACE INTO token_cache (key, value, expires_at) VALUES (?, ?, ?)',
       )

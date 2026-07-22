@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { findAnalysisBySourceId, saveAnalysis, tokenize } from '@flows/analysis';
+import { tokenize, type AnalysisRepository } from '@flows/analysis';
 import { MUSIC_LAYERS, type CanvasAnalysis } from '@flows/shared';
 import type { LyricsRepository } from '../../domain/ports';
 import { classifyLyricsSections } from '../../domain/section-classifier';
@@ -35,10 +35,11 @@ export class LyricsCanvasService {
   constructor(
     private readonly canvasRepository: LyricsCanvasRepository,
     private readonly lyricsRepository: LyricsRepository,
+    private readonly analysisRepository: AnalysisRepository,
   ) {}
 
   async load(trackId: string): Promise<LyricsCanvasLoadResult> {
-    const cached = findAnalysisBySourceId(trackId);
+    const cached = this.analysisRepository.findBySourceId(trackId);
     if (cached) {
       return { kind: 'found', analysis: cached };
     }
@@ -84,7 +85,7 @@ export class LyricsCanvasService {
       updatedAt: now,
     };
 
-    saveAnalysis(analysis);
+    this.analysisRepository.save(analysis);
 
     return { kind: 'created', analysis };
   }

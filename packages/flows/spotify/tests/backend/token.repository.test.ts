@@ -1,19 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
 
-// In-memory DB injected via the mocked @flows/music package.
 const testDb = new Database(':memory:');
-testDb.exec(`
-  CREATE TABLE IF NOT EXISTS token_cache (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    expires_at INTEGER NOT NULL
-  );
-`);
-
-vi.mock('@flows/music', () => ({ musicDb: testDb }));
-
-const { SQLiteTokenRepository } = await import('../../src/backend/token.repository');
+import { SQLiteTokenRepository } from '../../src/backend/token.repository';
 
 const FIXED_NOW = 1_700_000_000_000;
 const KEY = 'spotify:access_token';
@@ -22,8 +11,8 @@ describe('SQLiteTokenRepository', () => {
     let repo: InstanceType<typeof SQLiteTokenRepository>;
 
     beforeEach(() => {
+        repo = new SQLiteTokenRepository(testDb);
         testDb.exec('DELETE FROM token_cache');
-        repo = new SQLiteTokenRepository();
         vi.spyOn(Date, 'now').mockReturnValue(FIXED_NOW);
     });
 

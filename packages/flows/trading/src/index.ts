@@ -24,6 +24,13 @@ export {
     type StoredAdvisorInsight,
 } from './backend/repository';
 export {
+  createTradingDatabase,
+  createTradingPersistence,
+  initializeTradingDatabase,
+  SQLiteTradingPersistence,
+  type TradingPersistence,
+} from './backend/database';
+export {
   createTradingConfigFromEnv,
   TRADING_CONFIG,
   type TradingConfig,

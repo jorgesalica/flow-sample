@@ -7,6 +7,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST_INDEX = './dist/index.js';
 const DIST_TYPES = './dist/index.d.ts';
+const IMPORT_SAFE_ENTRYPOINTS = [
+  ['analysis', 'dist', 'index.js'],
+  ['music', 'dist', 'index.js'],
+  ['flows', 'spotify', 'dist', 'index.js'],
+  ['flows', 'lyrics', 'dist', 'index.js'],
+  ['flows', 'trading', 'dist', 'index.js'],
+  ['flows', 'canvas', 'dist', 'index.js'],
+  ['backend', 'dist', 'api', 'app.js'],
+];
 
 async function childPackageDirectories(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -100,6 +109,44 @@ export async function smokeBuiltBackend(root = ROOT) {
   }
 }
 
+export async function assertSideEffectFreeImport(entrypoint) {
+  await access(entrypoint);
+  const temporaryDirectory = await mkdtemp(
+    path.join(os.tmpdir(), 'flow-sample-import-safety-'),
+  );
+  const importScript = 'require(process.argv[1]);';
+
+  try {
+    const result = spawnSync(process.execPath, ['-e', importScript, entrypoint], {
+      cwd: temporaryDirectory,
+      encoding: 'utf8',
+      env: { ...process.env, NODE_ENV: 'test' },
+      timeout: 30_000,
+    });
+
+    if (result.error) throw result.error;
+    if (result.status !== 0) {
+      const details = [result.stdout, result.stderr].filter(Boolean).join('\n').trim();
+      throw new Error(`Package import failed.${details ? `\n${details}` : ''}`);
+    }
+
+    const createdEntries = await readdir(temporaryDirectory);
+    if (createdEntries.length > 0) {
+      throw new Error(
+        `Package import created filesystem entries: ${createdEntries.join(', ')}`,
+      );
+    }
+  } finally {
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  }
+}
+
+export async function checkBuiltImportSafety(root = ROOT) {
+  for (const segments of IMPORT_SAFE_ENTRYPOINTS) {
+    await assertSideEffectFreeImport(path.join(root, 'packages', ...segments));
+  }
+}
+
 async function main() {
   const violations = await checkRuntimeManifests();
   if (violations.length > 0) {
@@ -114,6 +161,8 @@ async function main() {
 
   await smokeBuiltBackend();
   console.log('Compiled backend import passed.');
+  await checkBuiltImportSafety();
+  console.log('Compiled package imports are side-effect free.');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

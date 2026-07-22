@@ -10,13 +10,19 @@ import { node } from '@elysiajs/node';
 import { cors } from '@elysiajs/cors';
 import { staticPlugin } from '@elysiajs/static';
 import * as fs from 'fs';
-import { createSpotifyRoutes } from '@flows/spotify';
-import { createLyricsRoutes } from '@flows/lyrics';
+import { createSpotifyRoutes, createSpotifyService } from '@flows/spotify';
+import { createLyricsRouteDependencies, createLyricsRoutes } from '@flows/lyrics';
 import { createTradingConfigFromEnv, createTradingRoutes } from '@flows/trading';
 import { createChatRoutes } from '@flows/chat';
-import { createCanvasFlowRoutes } from '@flows/canvas';
+import { createCanvasFlowApplication, createCanvasFlowRoutes } from '@flows/canvas';
 import { createBoardRoutes, type BoardApplication } from '@flows/board';
 import { logger } from '@flows/core';
+import { createMusicDatabase } from '@flows/music';
+import {
+  createAnalysisRepository,
+  type AnalysisRepository,
+} from '@flows/analysis';
+import type Database from 'better-sqlite3';
 import type { BackendConfig } from './config';
 
 const log = logger.child({ module: 'Server' });
@@ -27,11 +33,24 @@ const defaultUiBuildPath = path.resolve(__dirname, '../../../ui/build');
 export interface BackendHostOptions {
   uiBuildPath?: string;
   boardApplication?: BoardApplication;
+  musicDatabase?: Database.Database;
+  analysisRepository?: AnalysisRepository;
 }
 
 export function createApp(config: BackendConfig, options: BackendHostOptions = {}) {
   const uiBuildPath = options.uiBuildPath ?? defaultUiBuildPath;
   const hasUiBuild = fs.existsSync(uiBuildPath);
+  const musicDatabase = options.musicDatabase ?? createMusicDatabase();
+  const analysisRepository =
+    options.analysisRepository ?? createAnalysisRepository();
+  const spotifyService = createSpotifyService(config, {
+    database: musicDatabase,
+  });
+  const lyricsDependencies = createLyricsRouteDependencies(
+    musicDatabase,
+    analysisRepository,
+  );
+  const canvasApplication = createCanvasFlowApplication(analysisRepository);
 
   return (
     new Elysia({ adapter: node() })
@@ -70,11 +89,11 @@ export function createApp(config: BackendConfig, options: BackendHostOptions = {
       }))
 
       // Flow routes (from flow packages)
-      .use(createSpotifyRoutes(config))
-      .use(createLyricsRoutes())
+      .use(createSpotifyRoutes(config, spotifyService))
+      .use(createLyricsRoutes(lyricsDependencies))
       .use(createTradingRoutes(createTradingConfigFromEnv()))
       .use(createChatRoutes())
-      .use(createCanvasFlowRoutes())
+      .use(createCanvasFlowRoutes(canvasApplication))
       .use(createBoardRoutes(options.boardApplication))
 
       // Browser navigation falls back to the SPA, while unknown API paths stay JSON 404s.

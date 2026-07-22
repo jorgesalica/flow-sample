@@ -1,53 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
 import type { Track } from '@flows/shared';
+import { initializeMusicDatabase, rebuildFtsIndex } from '../src/database';
+import { SQLiteTrackRepository } from '../src/track.repository';
 
-// In-memory DB shared across the mock and tests. The repository imports
-// `musicDb` from './database', so we mock that module with a real
-// in-memory better-sqlite3 instance (mock the edge, run the real SQL).
 const testDb = new Database(':memory:');
-testDb.pragma('foreign_keys = ON');
-
-testDb.exec(`
-  CREATE TABLE IF NOT EXISTS tracks (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    added_at TEXT,
-    duration_ms INTEGER,
-    album_id TEXT,
-    album_name TEXT,
-    album_release_date TEXT,
-    album_release_year INTEGER,
-    album_image_url TEXT,
-    preview_url TEXT,
-    spotify_url TEXT
-  );
-  CREATE TABLE IF NOT EXISTS artists (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    image_url TEXT
-  );
-  CREATE TABLE IF NOT EXISTS track_artists (
-    track_id TEXT NOT NULL,
-    artist_id TEXT NOT NULL,
-    PRIMARY KEY (track_id, artist_id),
-    FOREIGN KEY (track_id) REFERENCES tracks(id) ON DELETE CASCADE,
-    FOREIGN KEY (artist_id) REFERENCES artists(id)
-  );
-  CREATE TABLE IF NOT EXISTS artist_genres (
-    artist_id TEXT NOT NULL,
-    genre TEXT NOT NULL,
-    PRIMARY KEY (artist_id, genre),
-    FOREIGN KEY (artist_id) REFERENCES artists(id)
-  );
-  CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
-    track_id, title, album_name, artist_names
-  );
-`);
-
-vi.mock('../src/database', () => ({ musicDb: testDb }));
-
-const { SQLiteTrackRepository } = await import('../src/track.repository');
+initializeMusicDatabase(testDb);
 
 // ── Fixture factory ───────────────────────────────────────────────────
 function makeTrack(overrides: Partial<Track> = {}): Track {
@@ -71,22 +29,7 @@ function makeTrack(overrides: Partial<Track> = {}): Track {
 }
 
 function rebuildFts() {
-    // Mirror the real database.rebuildFtsIndex enough for search tests.
-    const rows = testDb
-        .prepare(
-            `SELECT t.id, t.title, t.album_name,
-                    GROUP_CONCAT(a.name, ' ') as artist_names
-             FROM tracks t
-             LEFT JOIN track_artists ta ON ta.track_id = t.id
-             LEFT JOIN artists a ON a.id = ta.artist_id
-             GROUP BY t.id`,
-        )
-        .all() as { id: string; title: string; album_name: string; artist_names: string }[];
-    testDb.exec('DELETE FROM tracks_fts');
-    const ins = testDb.prepare(
-        'INSERT INTO tracks_fts(track_id, title, album_name, artist_names) VALUES (?, ?, ?, ?)',
-    );
-    for (const r of rows) ins.run(r.id, r.title, r.album_name || '', r.artist_names || '');
+    rebuildFtsIndex(testDb);
 }
 
 describe('SQLiteTrackRepository', () => {
@@ -96,7 +39,7 @@ describe('SQLiteTrackRepository', () => {
         testDb.exec(
             'DELETE FROM artist_genres; DELETE FROM track_artists; DELETE FROM artists; DELETE FROM tracks; DELETE FROM tracks_fts;',
         );
-        repo = new SQLiteTrackRepository();
+        repo = new SQLiteTrackRepository(testDb);
     });
 
     describe('save', () => {

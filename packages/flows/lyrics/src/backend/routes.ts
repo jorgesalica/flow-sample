@@ -1,5 +1,9 @@
 import { logger } from '@flows/core';
-import { SQLiteTrackRepository } from '@flows/music';
+import { createMusicDatabase, SQLiteTrackRepository } from '@flows/music';
+import {
+  createAnalysisRepository,
+  type AnalysisRepository,
+} from '@flows/analysis';
 import {
   LYRICS_INTERPRETATION_EVENT_TYPES,
   type LyricsErrorResponse,
@@ -9,7 +13,12 @@ import { Elysia, t } from 'elysia';
 import { LyricsFetchError, LyricsNotFoundError } from '../domain/errors';
 import type { LyricsRepository } from '../domain/ports';
 import { LrcLibAdapter } from './adapter';
-import { createCanvasRoutes } from './canvas/canvas.routes';
+import {
+  createCanvasRoutes,
+  type LyricsCanvasApplication,
+} from './canvas/canvas.routes';
+import { SQLiteLyricsCanvasRepository } from './canvas/repository';
+import { LyricsCanvasService } from './canvas/service';
 import {
   LyricsInterpretationService,
   type LyricsInterpretationApplication,
@@ -24,6 +33,7 @@ import {
   lyricsStatsSchema,
   lyricsStatusSchema,
 } from './schemas';
+import type Database from 'better-sqlite3';
 
 const log = logger.child({ module: 'LyricsRoutes' });
 const LYRICS_PROVIDER_UNAVAILABLE = 'Lyrics provider is temporarily unavailable';
@@ -33,11 +43,15 @@ export interface LyricsRoutesDependencies {
   application: LyricsApplication;
   interpretation: LyricsInterpretationApplication;
   lyricsRepository: LyricsRepository;
+  canvas: LyricsCanvasApplication;
 }
 
-export function createLyricsRouteDependencies(): LyricsRoutesDependencies {
-  const lyricsRepository = new SQLiteLyricsRepository();
-  const trackRepository = new SQLiteTrackRepository();
+export function createLyricsRouteDependencies(
+  database: Database.Database = createMusicDatabase(),
+  analysisRepository: AnalysisRepository = createAnalysisRepository(),
+): LyricsRoutesDependencies {
+  const lyricsRepository = new SQLiteLyricsRepository(database);
+  const trackRepository = new SQLiteTrackRepository(database);
   return {
     application: new LyricsService(
       lyricsRepository,
@@ -49,16 +63,21 @@ export function createLyricsRouteDependencies(): LyricsRoutesDependencies {
       trackRepository,
     ),
     lyricsRepository,
+    canvas: new LyricsCanvasService(
+      new SQLiteLyricsCanvasRepository(database),
+      lyricsRepository,
+      analysisRepository,
+    ),
   };
 }
 
 export function createLyricsRoutes(
   dependencies: LyricsRoutesDependencies = createLyricsRouteDependencies(),
 ) {
-  const { application, interpretation, lyricsRepository } = dependencies;
+  const { application, interpretation, canvas } = dependencies;
 
   return new Elysia({ prefix: '/api/lyrics' })
-    .use(createCanvasRoutes(lyricsRepository))
+    .use(createCanvasRoutes(canvas))
     .get(
       '/:trackId',
       async ({ params, query, set }) => {

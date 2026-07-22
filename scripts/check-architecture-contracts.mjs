@@ -20,11 +20,13 @@ const WORKSPACE_DEPENDENCY_RULES = new Map([
   [
     '@flows/backend',
     [
+      '@flows/analysis',
       '@flows/board',
       '@flows/canvas',
       '@flows/chat',
       '@flows/core',
       '@flows/lyrics',
+      '@flows/music',
       '@flows/shared',
       '@flows/spotify',
       '@flows/trading',

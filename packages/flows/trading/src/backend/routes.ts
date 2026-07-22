@@ -15,6 +15,10 @@ import {
 import { createTradingConfigFromEnv, type TradingRuntimeConfig } from './config';
 import { SqliteTradingReadRepository } from './repository';
 import {
+  createTradingPersistence,
+  type TradingPersistence,
+} from './database';
+import {
   AnalystService,
   getMentorService,
   getSynthesizerService,
@@ -74,16 +78,24 @@ export interface TradingRoutesDependencies {
 
 export function createTradingRouteDependencies(
   config: TradingRuntimeConfig,
+  persistence: TradingPersistence = createTradingPersistence(),
 ): TradingRoutesDependencies {
   const market = new TradingMarketService(
-    new SqliteTradingReadRepository(),
+    new SqliteTradingReadRepository(persistence),
     { fetchKlines },
   );
   const synthesizer = getSynthesizerService();
 
   return {
-    trading: getTradingService({ symbol: config.symbol, interval: config.interval }),
-    mentor: getMentorService(config.symbol, config.advisorAutoStart),
+    trading: getTradingService(persistence, {
+      symbol: config.symbol,
+      interval: config.interval,
+    }),
+    mentor: getMentorService(
+      persistence,
+      config.symbol,
+      config.advisorAutoStart,
+    ),
     market,
     wizard: new TradingWizardService(config.symbol, {
       market,

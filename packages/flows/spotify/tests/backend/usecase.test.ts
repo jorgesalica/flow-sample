@@ -3,9 +3,7 @@ import type { Track, GenreCount, YearCount, TrackRepository } from '@flows/share
 import type { SpotifySourcePort, ArtistDetails } from '../../src/backend/usecase';
 
 // Mock the database module so importing the use case never touches a real
-// music.db file. rebuildFtsIndex is a side-effect we just want to observe.
 const rebuildFtsIndex = vi.fn();
-vi.mock('@flows/music', () => ({ rebuildFtsIndex }));
 
 const { SpotifyUseCase } = await import('../../src/backend/usecase');
 
@@ -55,7 +53,7 @@ describe('SpotifyUseCase', () => {
                 fetchTracks: vi.fn().mockResolvedValue([makeTrack()]),
             });
             const repo = makeRepo();
-            const useCase = new SpotifyUseCase(source, repo);
+            const useCase = new SpotifyUseCase(source, repo, rebuildFtsIndex);
 
             const result = await useCase.fetchAndSave();
 

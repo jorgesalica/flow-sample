@@ -27,6 +27,8 @@ flowchart LR
     routes --> eden["Eden Treaty client\nlib/client.ts"]
     eden --> host["packages/backend\nElysia app host"]
     host --> mounted["Mounted flow route factories"]
+    host -. "compose shared resources" .-> music
+    host -. "compose shared resources" .-> analysis
 
     mounted --> spotify["@flows/spotify"]
     mounted --> lyrics["@flows/lyrics"]
@@ -75,7 +77,7 @@ flowchart LR
 
 | Workspace | Role | Should Own | Should Not Own |
 | --- | --- | --- | --- |
-| `packages/backend` | Application host | app config, CORS/static setup, route mounting, process startup split | business rules, SQL, provider SDK calls |
+| `packages/backend` | Application host | app config, shared resource composition, CORS/static setup, route mounting, process startup split | business rules, SQL, provider SDK calls |
 | `packages/ui` | Browser app | routes, loaders, flow surfaces, registry, UI state, design primitives | backend domain internals, raw API URLs, persistent server state |
 | `packages/core` | Shared infrastructure | logger, cache, database factory, LLM client/providers | flow-specific business rules, DTOs, route handlers |
 | `packages/analysis` | Shared analysis capability | tokenization, prompt-safe AST preparation, annotation filtering, `canvas.db` persistence | flow prompts, schemas, orchestration, UI contracts |
@@ -113,6 +115,10 @@ A flow is "extractable enough" when these are true:
 - External APIs live behind adapters implementing domain ports.
 - SQL is isolated to `repository.ts` or clearly named repository files.
 - Runtime config is passed into factories or named env factories.
+- Importing the public package entrypoint does not create files, mutate schema, or open
+  provider clients.
+- Database handles are created in named composition factories and injected into
+  repositories/services; tests use explicit in-memory handles or port fakes.
 - It has focused package tests for domain, repositories, services, and routes
   where relevant.
 - Its README documents route prefixes, env vars, external services, and test
@@ -124,6 +130,11 @@ public exports; they must not import each other's internals.
 Generic text-analysis capabilities are owned by `@flows/analysis`. Canvas and Lyrics may
 depend on its public exports; analysis depends only on `@flows/core` and `@flows/shared`.
 The manifest dependency graph is enforced by `pnpm check:architecture`.
+
+The backend host creates one Music database and one Analysis repository per assembled
+application and injects them into their consumers. Flow-owned stores such as Trading and
+Chat are created by their route dependency factories. Public entrypoints remain safe to
+import; `pnpm check:runtime` verifies compiled imports from an empty temporary directory.
 
 Named-board persistence is owned by `@flows/board`. Flow packages must not depend on it;
 the backend host mounts it and the UI consumes only its contracts from `@flows/shared`.

@@ -10,7 +10,7 @@ import type {
   SpotifyArtistFull,
 } from './types.js';
 import { logger } from '@flows/core';
-import { ArtistCacheRepository } from '../artist-cache.repository';
+import type { SpotifyArtistCache } from '../artist-cache.repository';
 
 const log = logger.child({ module: 'SpotifyApiAdapter' });
 
@@ -25,14 +25,12 @@ export class SpotifyApiAdapter implements SpotifyGateway {
   private client: AxiosInstance;
   private accessToken: string | null = null;
   private tokenRepository?: SpotifyTokenRepository;
-  private artistCache: ArtistCacheRepository;
-
   constructor(
     private config: SpotifyConfig,
     tokenRepository?: SpotifyTokenRepository,
+    private readonly artistCache: SpotifyArtistCache = createEmptyArtistCache(),
   ) {
     this.tokenRepository = tokenRepository;
-    this.artistCache = new ArtistCacheRepository();
     this.client = axios.create({
       baseURL: 'https://api.spotify.com/v1',
     });
@@ -327,4 +325,11 @@ export class SpotifyApiAdapter implements SpotifyGateway {
     }
     return genreMap;
   }
+}
+
+function createEmptyArtistCache(): SpotifyArtistCache {
+  return {
+    getMany: (ids) => ({ cached: new Map(), misses: ids }),
+    set: () => undefined,
+  };
 }

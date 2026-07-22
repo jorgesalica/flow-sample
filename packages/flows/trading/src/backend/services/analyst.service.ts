@@ -11,9 +11,8 @@ import {
 } from '../../domain/math';
 import { type MarketState, type FractalNode } from '../../domain/types';
 import {
-  getLastNCandles,
-  insertFractalNode,
   type CandleRow,
+  type TradingPersistence,
 } from '../database';
 import { TRADING_CONFIG } from '../config';
 import { RSI, MACD } from 'technicalindicators';
@@ -43,7 +42,10 @@ export interface AnalystServiceConfig {
 export class AnalystService {
   private config: AnalystServiceConfig;
 
-  constructor(config?: Partial<AnalystServiceConfig>) {
+  constructor(
+    private readonly persistence: TradingPersistence,
+    config?: Partial<AnalystServiceConfig>,
+  ) {
     this.config = {
       symbol: config?.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL,
       interval: config?.interval || TRADING_CONFIG.DEFAULTS.INTERVAL,
@@ -61,7 +63,7 @@ export class AnalystService {
    */
   analyze(): MarketState | null {
     // Fetch recent candles
-    const candleRows = getLastNCandles.all(
+    const candleRows = this.persistence.getLastCandles(
       this.config.symbol,
       this.config.interval,
       this.config.candleLookback,
@@ -89,7 +91,7 @@ export class AnalystService {
       // Persist fractals to database (only for stream pipeline, not wizard)
       for (const fractal of fractals) {
         try {
-          insertFractalNode.run({
+          this.persistence.insertFractalNode({
             symbol: this.config.symbol,
             type: fractal.type,
             price: fractal.price,
@@ -227,9 +229,12 @@ export class AnalystService {
 // Singleton instance
 let analystServiceInstance: AnalystService | null = null;
 
-export function getAnalystService(config?: Partial<AnalystServiceConfig>): AnalystService {
+export function getAnalystService(
+  persistence: TradingPersistence,
+  config?: Partial<AnalystServiceConfig>,
+): AnalystService {
   if (!analystServiceInstance) {
-    analystServiceInstance = new AnalystService(config);
+    analystServiceInstance = new AnalystService(persistence, config);
   }
   return analystServiceInstance;
 }

@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { checkRuntimeManifest } from './check-runtime-contracts.mjs';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import {
+  assertSideEffectFreeImport,
+  checkRuntimeManifest,
+} from './check-runtime-contracts.mjs';
 
 const validPackage = {
   name: '@flows/example',
@@ -56,4 +62,34 @@ test('allows the backend host to omit a reusable package export contract', () =>
 
 test('ignores the browser application package', () => {
   assert.deepEqual(checkRuntimeManifest({ name: '@flows/ui' }, 'packages/ui/package.json'), []);
+});
+
+test('accepts an import that leaves its working directory untouched', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'runtime-contract-test-'));
+  const entrypoint = path.join(directory, 'safe.cjs');
+  await writeFile(entrypoint, 'module.exports = { ok: true };');
+
+  try {
+    await assertSideEffectFreeImport(entrypoint);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('rejects an import that writes to its working directory', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'runtime-contract-test-'));
+  const entrypoint = path.join(directory, 'unsafe.cjs');
+  await writeFile(
+    entrypoint,
+    "require('node:fs').writeFileSync('created.db', 'side effect');",
+  );
+
+  try {
+    await assert.rejects(
+      assertSideEffectFreeImport(entrypoint),
+      /created filesystem entries: created.db/,
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

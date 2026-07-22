@@ -1,5 +1,9 @@
 import { SimpleCache, logger } from '@flows/core';
-import { SQLiteTrackRepository } from '@flows/music';
+import {
+  createMusicDatabase,
+  rebuildFtsIndex,
+  SQLiteTrackRepository,
+} from '@flows/music';
 import type {
   GenreCount,
   PaginatedResult,
@@ -21,6 +25,11 @@ import type { SpotifyRuntimeConfig, SpotifyRoutesConfig } from './config';
 import { calculateStats } from './stats.service';
 import { SQLiteTokenRepository } from './token.repository';
 import { SpotifyUseCase } from './usecase';
+import {
+  ArtistCacheRepository,
+  type SpotifyArtistCache,
+} from './artist-cache.repository';
+import type Database from 'better-sqlite3';
 
 const log = logger.child({ module: 'SpotifyService' });
 const CACHE_KEYS = {
@@ -51,8 +60,10 @@ export interface SpotifyApplication {
 }
 
 export interface SpotifyServiceDependencies {
+  database?: Database.Database;
   repository?: SpotifyTrackRepository;
   tokenRepository?: SpotifyTokenRepository;
+  artistCache?: SpotifyArtistCache;
   gateway?: SpotifyGateway;
   syncApplication?: SpotifySyncApplication;
   cache?: SpotifyCache;
@@ -154,8 +165,20 @@ export function createSpotifyService(
   config: SpotifyRoutesConfig,
   dependencies: SpotifyServiceDependencies = {},
 ): SpotifyService {
-  const repository = dependencies.repository ?? new SQLiteTrackRepository();
-  const tokenRepository = dependencies.tokenRepository ?? new SQLiteTokenRepository();
+  let database = dependencies.database;
+  const getDatabase = (): Database.Database => {
+    if (!database) {
+      database = createMusicDatabase();
+    }
+    return database;
+  };
+
+  const repository =
+    dependencies.repository ?? new SQLiteTrackRepository(getDatabase());
+  const tokenRepository =
+    dependencies.tokenRepository ?? new SQLiteTokenRepository(getDatabase());
+  const artistCache =
+    dependencies.artistCache ?? new ArtistCacheRepository(getDatabase());
   const gateway =
     dependencies.gateway ??
     new SpotifyApiAdapter(
@@ -166,9 +189,11 @@ export function createSpotifyService(
         refreshToken: config.spotify.refreshToken,
       },
       tokenRepository,
+      artistCache,
     );
   const syncApplication =
-    dependencies.syncApplication ?? new SpotifyUseCase(gateway, repository);
+    dependencies.syncApplication ??
+    new SpotifyUseCase(gateway, repository, () => rebuildFtsIndex(getDatabase()));
 
   return new SpotifyService(
     config.spotify,

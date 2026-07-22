@@ -1,10 +1,7 @@
 import { BinanceStream, type Candle } from '../../adapters/binance';
 import {
-  getCandleCount,
-  upsertCandle,
-  getLastNCandles,
-  getLastCandle,
   type CandleRow,
+  type TradingPersistence,
 } from '../database';
 import { TRADING_CONFIG } from '../config';
 import { logger } from '@flows/core';
@@ -40,7 +37,10 @@ export class TradingService {
   private state: TradingState;
   private listeners: Map<string, Set<(data: unknown) => void>> = new Map();
 
-  constructor(config?: Partial<TradingServiceConfig>) {
+  constructor(
+    private readonly persistence: TradingPersistence,
+    config?: Partial<TradingServiceConfig>,
+  ) {
     this.config = {
       symbol: config?.symbol || TRADING_CONFIG.DEFAULTS.SYMBOL,
       interval: config?.interval || TRADING_CONFIG.DEFAULTS.INTERVAL,
@@ -115,7 +115,7 @@ export class TradingService {
 
     // Persist to database
     try {
-      upsertCandle.run({
+      this.persistence.upsertCandle({
         symbol: candle.symbol,
         interval: candle.interval,
         openTime: candle.openTime,
@@ -141,18 +141,21 @@ export class TradingService {
 
   /** Get recent candles from database */
   getRecentCandles(limit: number = 100): CandleRow[] {
-    return getLastNCandles.all(this.config.symbol, this.config.interval, limit) as CandleRow[];
+    return this.persistence.getLastCandles(
+      this.config.symbol,
+      this.config.interval,
+      limit,
+    );
   }
 
   /** Get the last closed candle */
   getLastClosedCandle(): CandleRow | null {
-    return getLastCandle.get(this.config.symbol, this.config.interval) as CandleRow | null;
+    return this.persistence.getLastCandle(this.config.symbol, this.config.interval);
   }
 
   /** Get total candle count in database */
   private getCandleCount(): number {
-    const result = getCandleCount.get(this.config.symbol) as { count: number } | undefined;
-    return result?.count || 0;
+    return this.persistence.getCandleCount(this.config.symbol);
   }
 
   /** Event subscription */
@@ -177,9 +180,12 @@ export class TradingService {
 // Singleton instance
 let tradingServiceInstance: TradingService | null = null;
 
-export function getTradingService(config?: Partial<TradingServiceConfig>): TradingService {
+export function getTradingService(
+  persistence: TradingPersistence,
+  config?: Partial<TradingServiceConfig>,
+): TradingService {
   if (!tradingServiceInstance) {
-    tradingServiceInstance = new TradingService(config);
+    tradingServiceInstance = new TradingService(persistence, config);
   }
   return tradingServiceInstance;
 }

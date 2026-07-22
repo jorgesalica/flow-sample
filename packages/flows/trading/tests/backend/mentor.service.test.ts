@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { MarketState } from '@flows/shared';
 import type { LLMResponse } from '@flows/core';
+import type { TradingPersistence } from '../../src/backend/database';
 
 // ── Mocks for every dependency edge ───────────────────────────────────
 
@@ -32,14 +33,28 @@ vi.mock('@flows/core', () => ({
   },
 }));
 
-vi.mock('../../src/backend/database', () => ({
-  insertAdvisorLog: { run: insertAdvisorLogRun },
-  getLatestAdvisorLog: { get: getLatestAdvisorLogGet },
-}));
+const persistence: TradingPersistence = {
+  insertAdvisorLog: (log) => { insertAdvisorLogRun(log); },
+  getLatestAdvisorLog: (symbol) => getLatestAdvisorLogGet(symbol) ?? null,
+  upsertCandle: vi.fn(),
+  getLastCandles: vi.fn(() => []),
+  getLastCandle: vi.fn(() => null),
+  getCandleCount: vi.fn(() => 0),
+  insertFractalNode: vi.fn(),
+  getLastFractalNodes: vi.fn(() => []),
+};
 
-const { MentorService, getMentorService } = await import(
-  '../../src/backend/services/mentor.service'
-);
+const mentorModule = await import('../../src/backend/services/mentor.service');
+
+class MentorService extends mentorModule.MentorService {
+  constructor(symbol?: string, autoStart = false) {
+    super(persistence, symbol, autoStart);
+  }
+}
+
+function getMentorService(): InstanceType<typeof mentorModule.MentorService> {
+  return mentorModule.getMentorService(persistence);
+}
 
 // ── Fixtures ──────────────────────────────────────────────────────────
 

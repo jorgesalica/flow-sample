@@ -72,9 +72,11 @@ export function createDatabase(filename: string) {
 }
 ```
 
-The shared `music.db` connection is created by `@flows/music`. Spotify owns its token and
-provider artist-cache repositories; Lyrics owns lyrics and interpretation repositories.
-All use the same compatible SQLite file without importing sibling flow internals.
+`@flows/music` exports named create/initialize functions and repositories that require an
+explicit handle. The backend host creates one `music.db` connection and injects it into
+Spotify and Lyrics. Spotify owns its token and provider artist-cache repositories;
+Lyrics owns lyrics and interpretation repositories. They share the neutral schema
+without importing sibling flow internals.
 
 The separate `boards.db` connection is created by `@flows/board`. Its service guarantees
 one protected default board, repairs missing/deleted active selection to that default,
@@ -82,9 +84,15 @@ and validates names, layout versions, item sizes, and duplicate flow IDs before 
 repository writes. SQL and row hydration remain in `backend/repository.ts`; Elysia routes
 only validate and map HTTP errors.
 
-The separate `canvas.db` connection is consumed by `@flows/analysis`. Canvas and Lyrics
-use that package's public tokenization, prompt preparation, integrity filtering, and
-persistence APIs while retaining their own prompts, schemas, and application services.
+`@flows/analysis` exposes an injectable repository over `canvas.db`. The host creates one
+repository and shares it between Canvas and Lyrics; both retain their own prompts,
+schemas, and application services.
+
+Trading exposes a `TradingPersistence` port and a SQLite implementation. Its route
+dependency factory creates the handle and injects the same adapter into stream, analyst,
+mentor, and market services. No package opens SQLite or mutates schema during import.
+The compiled-runtime check imports every affected public entrypoint from an empty
+temporary directory and fails if any filesystem entry appears.
 
 ## LLM Provider Architecture
 

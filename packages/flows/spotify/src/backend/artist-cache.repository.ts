@@ -1,5 +1,5 @@
-import { musicDb } from '@flows/music';
 import { logger } from '@flows/core';
+import type Database from 'better-sqlite3';
 
 const log = logger.child({ module: 'ArtistCacheRepository' });
 
@@ -10,9 +10,14 @@ export interface CachedArtist {
     cachedAt: number;
 }
 
-export class ArtistCacheRepository {
-    constructor() {
-        musicDb.exec(`
+export interface SpotifyArtistCache {
+    getMany(ids: string[]): { cached: Map<string, CachedArtist>; misses: string[] };
+    set(id: string, genres: string[], imageUrl?: string): void;
+}
+
+export class ArtistCacheRepository implements SpotifyArtistCache {
+    constructor(private readonly db: Database.Database) {
+        this.db.exec(`
           CREATE TABLE IF NOT EXISTS artist_cache (
             id TEXT PRIMARY KEY,
             genres TEXT,
@@ -30,7 +35,7 @@ export class ArtistCacheRepository {
         const cached = new Map<string, CachedArtist>();
         const misses: string[] = [];
 
-        const stmt = musicDb.prepare(
+        const stmt = this.db.prepare(
             'SELECT id, genres, image_url, cached_at FROM artist_cache WHERE id = ?',
         );
 
@@ -59,7 +64,7 @@ export class ArtistCacheRepository {
      * Upsert a single artist into the cache.
      */
     set(id: string, genres: string[], imageUrl?: string): void {
-        musicDb
+        this.db
             .prepare(
                 `INSERT OR REPLACE INTO artist_cache (id, genres, image_url, cached_at)
          VALUES (?, ?, ?, ?)`,

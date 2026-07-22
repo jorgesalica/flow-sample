@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import Database from 'better-sqlite3';
+import { initializeMusicDatabase } from '@flows/music';
 import type { SearchOptions, Track } from '@flows/shared';
 import type {
   SpotifyCache,
@@ -205,5 +207,35 @@ describe('SpotifyService', () => {
     );
 
     await expect(composed.getTracks()).resolves.toEqual([track]);
+  });
+
+  it('composes default persistence collaborators from an injected database', async () => {
+    const database = new Database(':memory:');
+    initializeMusicDatabase(database);
+    vi.mocked(gateway.fetchTracks).mockResolvedValue([]);
+    vi.mocked(gateway.fetchArtistDetails).mockResolvedValue(new Map());
+
+    const composed = createSpotifyService(
+      {
+        spotify: {
+          clientId: 'client-id',
+          clientSecret: 'client-secret',
+          redirectUri: 'http://localhost/callback',
+          successUrl: 'http://localhost/spotify',
+          pageLimit: 25,
+        },
+      },
+      { database, gateway, cache: new TestCache() },
+    );
+
+    await expect(composed.sync(1)).resolves.toMatchObject({ count: 0 });
+    expect(
+      database
+        .prepare(
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name IN ('token_cache', 'artist_cache')",
+        )
+        .get(),
+    ).toEqual({ count: 2 });
+    database.close();
   });
 });

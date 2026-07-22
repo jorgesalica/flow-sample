@@ -3,9 +3,8 @@ import { getSynthesizerService } from './synthesizer.service';
 import { createLLMClient, type LLMClient, logger } from '@flows/core';
 import { type AdvisorNote } from '../../domain/types';
 import {
-  insertAdvisorLog,
-  getLatestAdvisorLog,
   type AdvisorLogRow,
+  type TradingPersistence,
 } from '../database';
 import { TRADING_CONFIG } from '../config';
 import { LLMQuotaError } from '../../domain/errors';
@@ -35,7 +34,11 @@ export class MentorService {
   private insightCount: number = 0;
   private symbol: string;
 
-  constructor(symbol?: string, autoStart: boolean = false) {
+  constructor(
+    private readonly persistence: TradingPersistence,
+    symbol?: string,
+    autoStart: boolean = false,
+  ) {
     this.symbol = symbol || TRADING_CONFIG.DEFAULTS.SYMBOL;
 
     if (autoStart) {
@@ -109,7 +112,7 @@ export class MentorService {
   async generateInsight(): Promise<AdvisorNote | null> {
     log.debug('generateInsight() called');
 
-    const analyst = getAnalystService();
+    const analyst = getAnalystService(this.persistence);
     const marketState = analyst.analyze();
 
     if (!marketState) {
@@ -155,7 +158,7 @@ export class MentorService {
         return null;
       }
 
-      insertAdvisorLog.run({
+      this.persistence.insertAdvisorLog({
         timestamp: Date.now(),
         symbol: this.symbol,
         regime: marketState.regime,
@@ -186,7 +189,7 @@ export class MentorService {
    * Get the latest insight from the database.
    */
   getLatestInsight(): { insight: AdvisorNote; timestamp: number; regime: string } | null {
-    const row = getLatestAdvisorLog.get(this.symbol) as AdvisorLogRow | null;
+    const row = this.persistence.getLatestAdvisorLog(this.symbol) as AdvisorLogRow | null;
 
     if (!row) {
       return null;
@@ -210,9 +213,13 @@ export class MentorService {
 // Singleton
 let mentorInstance: MentorService | null = null;
 
-export function getMentorService(symbol?: string, autoStart: boolean = false): MentorService {
+export function getMentorService(
+  persistence: TradingPersistence,
+  symbol?: string,
+  autoStart: boolean = false,
+): MentorService {
   if (!mentorInstance) {
-    mentorInstance = new MentorService(symbol, autoStart);
+    mentorInstance = new MentorService(persistence, symbol, autoStart);
   }
   return mentorInstance;
 }

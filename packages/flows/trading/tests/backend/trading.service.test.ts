@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EventEmitter } from 'events';
 import type { Candle } from '../../src/adapters/binance';
+import type { TradingPersistence } from '../../src/backend/database';
+import type { TradingServiceConfig } from '../../src/backend/services/trading.service';
 
 // ── Mock the Binance adapter (the external edge) ──────────────────────
 // A controllable fake stream we can drive from the tests.
@@ -37,16 +39,29 @@ const getLastNCandlesAll = vi.fn();
 const getLastCandleGet = vi.fn();
 const countGet = vi.fn(() => ({ count: 0 }));
 
-vi.mock('../../src/backend/database', () => ({
-  getCandleCount: { get: countGet },
-  upsertCandle: { run: upsertRun },
-  getLastNCandles: { all: getLastNCandlesAll },
-  getLastCandle: { get: getLastCandleGet },
-}));
+const persistence: TradingPersistence = {
+  getCandleCount: (symbol) => countGet(symbol)?.count ?? 0,
+  upsertCandle: (candle) => { upsertRun(candle); },
+  getLastCandles: (symbol, interval, limit) =>
+    getLastNCandlesAll(symbol, interval, limit),
+  getLastCandle: (symbol, interval) => getLastCandleGet(symbol, interval) ?? null,
+  insertFractalNode: vi.fn(),
+  getLastFractalNodes: vi.fn(() => []),
+  insertAdvisorLog: vi.fn(),
+  getLatestAdvisorLog: vi.fn(() => null),
+};
 
-const { TradingService, getTradingService } = await import(
-  '../../src/backend/services/trading.service'
-);
+const tradingModule = await import('../../src/backend/services/trading.service');
+
+class TradingService extends tradingModule.TradingService {
+  constructor(config?: Partial<TradingServiceConfig>) {
+    super(persistence, config);
+  }
+}
+
+function getTradingService(): InstanceType<typeof tradingModule.TradingService> {
+  return tradingModule.getTradingService(persistence);
+}
 
 // ── Fixtures ──────────────────────────────────────────────────────────
 

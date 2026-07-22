@@ -18,7 +18,7 @@ journeys. Do not pursue coverage by duplicating implementation details in tests.
 | Svelte component | Testing Library | accessible behavior and user-observable state |
 | Critical journey | Playwright | real navigation and desktop/mobile interaction |
 | Architecture/docs | Node check scripts | repository contracts and valid local links |
-| Compiled runtime | Node child-process smoke check | workspace exports resolve to built JavaScript and the backend artifact imports |
+| Compiled runtime | Node child-process smoke check | workspace exports resolve to built JavaScript and public imports create no files |
 
 ## Rules
 
@@ -27,6 +27,8 @@ journeys. Do not pursue coverage by duplicating implementation details in tests.
 - Mock external providers, clocks, randomness, and network edges; run real domain logic.
 - Use factories for fixtures and fictional data only. Never use credentials or PII.
 - Repository tests use isolated temporary or in-memory databases.
+- Persistence services receive explicit database handles or port fakes; tests do not
+  replace module-global database exports.
 - Route tests import the app factory; they never start a listening process.
 - Universal loader tests prove the SvelteKit `fetch` is passed into `createApiClient`.
 - Component tests query by role/name when possible and assert behavior, not CSS internals.
@@ -75,12 +77,12 @@ pnpm security:audit                      # high/critical production advisories
 pnpm --filter @flows/ui test:e2e         # Playwright journeys
 pnpm check:docs                          # local Markdown links
 pnpm check:architecture                  # package/layer contracts
-pnpm check:runtime                       # manifests + compiled backend import (requires build)
+pnpm check:runtime                       # manifests + side-effect-free compiled imports (requires build)
 pnpm check:runtime:manifests             # source-independent workspace export contract
 ```
 
 CI runs a clean frozen install, audits production dependencies, builds and imports the
-compiled backend, then runs documentation/architecture/runtime-manifest and tooling
+compiled packages without filesystem side effects, then runs documentation/architecture/runtime-manifest and tooling
 tests, lint, TypeScript, Svelte checks, and every package coverage ratchet.
 Playwright remains targeted until its runtime fixtures are fully deterministic; PRs with
 interaction changes must state which Playwright or manual desktop/mobile checks were run.

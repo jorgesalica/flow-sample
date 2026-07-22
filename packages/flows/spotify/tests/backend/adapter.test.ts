@@ -45,15 +45,12 @@ vi.mock('axios', async (importOriginal) => {
     };
 });
 
-// Avoid touching the real music.db via ArtistCacheRepository's DB import.
 const artistCacheGetMany = vi.fn(() => ({ cached: new Map(), misses: [] as string[] }));
 const artistCacheSet = vi.fn();
-vi.mock('../../src/backend/artist-cache.repository', () => ({
-    ArtistCacheRepository: class {
-        getMany = artistCacheGetMany;
-        set = artistCacheSet;
-    },
-}));
+const artistCache = {
+    getMany: artistCacheGetMany,
+    set: artistCacheSet,
+};
 
 const { SpotifyApiAdapter } = await import('../../src/backend/adapter/adapter');
 const { AxiosError } = await import('axios');
@@ -362,7 +359,7 @@ describe('SpotifyApiAdapter', () => {
                 misses: [],
             });
 
-            const adapter = new SpotifyApiAdapter(CONFIG);
+            const adapter = new SpotifyApiAdapter(CONFIG, undefined, artistCache);
             const details = await adapter.fetchArtistDetails(['artist-1']);
 
             expect(details.get('artist-1')).toEqual({ genres: ['rock'], imageUrl: 'https://img.mock.test/a.jpg' });
@@ -380,7 +377,7 @@ describe('SpotifyApiAdapter', () => {
                 },
             });
 
-            const adapter = new SpotifyApiAdapter(CONFIG);
+            const adapter = new SpotifyApiAdapter(CONFIG, undefined, artistCache);
             const details = await adapter.fetchArtistDetails(['artist-2']);
 
             expect(fakeInstance.get).toHaveBeenCalledWith('/artists/artist-2');
@@ -393,7 +390,7 @@ describe('SpotifyApiAdapter', () => {
 
         it('deduplicates input ids before the cache lookup', async () => {
             artistCacheGetMany.mockReturnValue({ cached: new Map(), misses: [] });
-            const adapter = new SpotifyApiAdapter(CONFIG);
+            const adapter = new SpotifyApiAdapter(CONFIG, undefined, artistCache);
 
             await adapter.fetchArtistDetails(['dup', 'dup', 'dup']);
 
@@ -412,7 +409,7 @@ describe('SpotifyApiAdapter', () => {
                 misses: [],
             });
 
-            const adapter = new SpotifyApiAdapter(CONFIG);
+            const adapter = new SpotifyApiAdapter(CONFIG, undefined, artistCache);
             const genres = await adapter.fetchArtistGenres(['artist-1']);
 
             expect(genres.get('artist-1')).toEqual(['rock', 'indie']);

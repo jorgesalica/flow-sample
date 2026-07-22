@@ -1,7 +1,7 @@
 import type { LyricsStatus } from '@flows/shared';
-import { musicDb } from '@flows/music';
 import { logger } from '@flows/core';
 import type { LyricsRepository, LyricsData, LyricsRecord } from '../domain/ports';
+import type Database from 'better-sqlite3';
 
 // Re-exported for backward compatibility with existing importers.
 export type { LyricsData, LyricsRecord } from '../domain/ports';
@@ -18,12 +18,12 @@ interface LyricsRow {
 }
 
 export class SQLiteLyricsRepository implements LyricsRepository {
-  constructor() {
+  constructor(private readonly db: Database.Database) {
     // Ensure foreign keys are on for cascading deletes
-    musicDb.pragma('foreign_keys = ON');
+    this.db.pragma('foreign_keys = ON');
     
     // Initialize schema
-    musicDb.exec(`
+    this.db.exec(`
       CREATE TABLE IF NOT EXISTS lyrics (
         track_id TEXT PRIMARY KEY,
         plain_lyrics TEXT,
@@ -36,7 +36,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
 
     // Migration: add interpretation column if missing
     try {
-      musicDb.exec(`ALTER TABLE lyrics ADD COLUMN interpretation TEXT DEFAULT NULL`);
+      this.db.exec(`ALTER TABLE lyrics ADD COLUMN interpretation TEXT DEFAULT NULL`);
       log.info('Added interpretation column to lyrics table');
     } catch {
       // Column already exists — expected after first run
@@ -47,7 +47,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
    * Find lyrics by track ID
    */
   async findByTrackId(trackId: string): Promise<LyricsRecord | null> {
-    const row = musicDb
+    const row = this.db
       .prepare(
         `SELECT track_id, plain_lyrics, synced_lyrics, status, fetched_at, interpretation 
          FROM lyrics WHERE track_id = ?`,
@@ -67,7 +67,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
   async save(trackId: string, lyrics: LyricsData): Promise<void> {
     const now = new Date().toISOString();
 
-    musicDb.prepare(
+    this.db.prepare(
       `INSERT INTO lyrics (track_id, plain_lyrics, synced_lyrics, status, fetched_at)
        VALUES (?, ?, ?, 'found', ?)
        ON CONFLICT(track_id) DO UPDATE SET
@@ -86,7 +86,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
   async markNotFound(trackId: string): Promise<void> {
     const now = new Date().toISOString();
 
-    musicDb.prepare(
+    this.db.prepare(
       `INSERT INTO lyrics (track_id, status, fetched_at)
        VALUES (?, 'not_found', ?)
        ON CONFLICT(track_id) DO UPDATE SET
@@ -110,7 +110,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
       query += ` OR l.status = 'not_found'`;
     }
 
-    const rows = musicDb.prepare(query).all() as { id: string }[];
+    const rows = this.db.prepare(query).all() as { id: string }[];
 
     return rows.map((r) => r.id);
   }
@@ -119,9 +119,9 @@ export class SQLiteLyricsRepository implements LyricsRepository {
    * Get lyrics statistics
    */
   async getStats(): Promise<{ total: number; found: number; notFound: number; pending: number }> {
-    const totalTracks = (musicDb.prepare('SELECT COUNT(*) as c FROM tracks').get() as { c: number }).c;
+    const totalTracks = (this.db.prepare('SELECT COUNT(*) as c FROM tracks').get() as { c: number }).c;
 
-    const stats = musicDb
+    const stats = this.db
       .prepare(
         `SELECT 
            SUM(CASE WHEN status = 'found' THEN 1 ELSE 0 END) as found,
@@ -184,7 +184,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
     `;
     params.push(limit, offset);
 
-    const rows = musicDb.prepare(query).all(...params) as Array<{
+    const rows = this.db.prepare(query).all(...params) as Array<{
       id: string;
       title: string;
       imageUrl: string | null;
@@ -205,7 +205,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
    * Get cached interpretation for a track
    */
   async getInterpretation(trackId: string): Promise<string | null> {
-    const row = musicDb
+    const row = this.db
       .prepare(`SELECT interpretation FROM lyrics WHERE track_id = ?`)
       .get(trackId) as { interpretation: string | null } | undefined;
     return row?.interpretation ?? null;
@@ -215,7 +215,7 @@ export class SQLiteLyricsRepository implements LyricsRepository {
    * Save AI-generated interpretation for a track
    */
   async saveInterpretation(trackId: string, interpretation: string): Promise<void> {
-    musicDb
+    this.db
       .prepare(`UPDATE lyrics SET interpretation = ? WHERE track_id = ?`)
       .run(interpretation, trackId);
     log.debug({ trackId }, 'Saved interpretation');
