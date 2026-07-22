@@ -1,14 +1,29 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { CanvasAnalysis } from '@flows/shared';
-import { getCanvasAnalysis, analyzeCanvas, type CanvasStatusResponse } from './canvas-api';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CanvasAnalysis, LyricsCanvasNeedsAnalysisResponse } from '@flows/shared';
 
-function jsonResponse(body: unknown, init: { ok?: boolean; status?: number } = {}) {
-  return {
-    ok: init.ok ?? true,
-    status: init.status ?? 200,
-    json: () => Promise.resolve(body),
-  } as Response;
-}
+const mocks = vi.hoisted(() => ({
+  route: vi.fn(),
+  canvasGet: vi.fn(),
+  analyzePost: vi.fn(),
+}));
+
+vi.mock('@lib/client', () => ({
+  api: {
+    api: {
+      lyrics: (params: { trackId: string }) => {
+        mocks.route(params);
+        return {
+          canvas: {
+            get: mocks.canvasGet,
+            analyze: { post: mocks.analyzePost },
+          },
+        };
+      },
+    },
+  },
+}));
+
+const { analyzeCanvas, getCanvasAnalysis } = await import('./canvas-api');
 
 function makeAnalysis(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
   return {
@@ -27,7 +42,7 @@ function makeAnalysis(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
   };
 }
 
-function makeNeedsAnalysis(): CanvasStatusResponse {
+function makeNeedsAnalysis(): LyricsCanvasNeedsAnalysisResponse {
   return {
     needsAnalysis: true,
     source: {
@@ -40,75 +55,75 @@ function makeNeedsAnalysis(): CanvasStatusResponse {
   };
 }
 
-describe('canvas-api', () => {
+describe('lyrics canvas Eden API', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn());
-  });
-  afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
-  describe('getCanvasAnalysis', () => {
-    it('GETs the canvas endpoint and returns an existing analysis', async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(makeAnalysis()));
+  it('loads an existing analysis through the typed dynamic route', async () => {
+    mocks.canvasGet.mockResolvedValue({ data: makeAnalysis(), error: null });
 
-      const result = await getCanvasAnalysis('track-1');
+    const result = await getCanvasAnalysis('track-1');
 
-      expect(fetch).toHaveBeenCalledWith('/api/lyrics/track-1/canvas');
-      expect('id' in result && result.id).toBe('canvas-1');
-    });
-
-    it('returns the needsAnalysis status body as a successful domain state', async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(makeNeedsAnalysis()));
-
-      const result = await getCanvasAnalysis('track-1');
-
-      expect('needsAnalysis' in result && result.needsAnalysis).toBe(true);
-    });
-
-    it('throws the server-provided message on a 404', async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        jsonResponse({ error: 'Track not found' }, { ok: false, status: 404 })
-      );
-
-      await expect(getCanvasAnalysis('track-1')).rejects.toThrow('Track not found');
-    });
-
-    it('throws on non-404 error responses', async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        jsonResponse({}, { ok: false, status: 500 })
-      );
-
-      await expect(getCanvasAnalysis('track-1')).rejects.toThrow('Failed to fetch canvas analysis');
-    });
+    expect(mocks.route).toHaveBeenCalledWith({ trackId: 'track-1' });
+    expect(mocks.canvasGet).toHaveBeenCalledWith();
+    expect('id' in result && result.id).toBe('canvas-1');
   });
 
-  describe('analyzeCanvas', () => {
-    it('POSTs to the analyze endpoint and returns the analysis', async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(makeAnalysis()));
+  it('keeps needs-analysis as a successful typed domain state', async () => {
+    mocks.canvasGet.mockResolvedValue({ data: makeNeedsAnalysis(), error: null });
 
-      const result = await analyzeCanvas('track-1');
+    const result = await getCanvasAnalysis('track-1');
 
-      expect(fetch).toHaveBeenCalledWith('/api/lyrics/track-1/canvas/analyze', { method: 'POST' });
-      expect(result.id).toBe('canvas-1');
+    expect('needsAnalysis' in result && result.needsAnalysis).toBe(true);
+  });
+
+  it('surfaces a typed backend error', async () => {
+    mocks.canvasGet.mockResolvedValue({
+      data: null,
+      error: {
+        value: { code: 'track_not_found', error: 'Track not found' },
+      },
     });
 
-    it('throws the server-provided error message on failure', async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        jsonResponse({ error: 'Model timed out' }, { ok: false, status: 500 })
-      );
+    await expect(getCanvasAnalysis('track-1')).rejects.toThrow('Track not found');
+  });
 
-      await expect(analyzeCanvas('track-1')).rejects.toThrow('Model timed out');
+  it('falls back when the load error has no public message', async () => {
+    mocks.canvasGet.mockResolvedValue({ data: null, error: { value: {} } });
+
+    await expect(getCanvasAnalysis('track-1')).rejects.toThrow('Failed to fetch canvas analysis');
+  });
+
+  it('generates an analysis through the typed analyze endpoint', async () => {
+    mocks.analyzePost.mockResolvedValue({ data: makeAnalysis(), error: null });
+
+    const result = await analyzeCanvas('track-1');
+
+    expect(mocks.route).toHaveBeenCalledWith({ trackId: 'track-1' });
+    expect(mocks.analyzePost).toHaveBeenCalledWith();
+    expect(result.id).toBe('canvas-1');
+  });
+
+  it('surfaces the typed analyze error', async () => {
+    mocks.analyzePost.mockResolvedValue({
+      data: null,
+      error: {
+        value: {
+          code: 'analysis_unavailable',
+          error: 'AI analysis is temporarily unavailable',
+        },
+      },
     });
 
-    it('falls back to a generic message when the error body is unparseable', async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: () => Promise.reject(new Error('not json')),
-      } as unknown as Response);
+    await expect(analyzeCanvas('track-1')).rejects.toThrow(
+      'AI analysis is temporarily unavailable'
+    );
+  });
 
-      await expect(analyzeCanvas('track-1')).rejects.toThrow('Failed to generate canvas analysis');
-    });
+  it('rejects an empty analyze success', async () => {
+    mocks.analyzePost.mockResolvedValue({ data: null, error: null });
+
+    await expect(analyzeCanvas('track-1')).rejects.toThrow('Failed to generate canvas analysis');
   });
 });

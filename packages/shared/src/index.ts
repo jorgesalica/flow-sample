@@ -21,6 +21,7 @@ export type {
 export {
     LYRICS_STATUSES,
     LYRICS_INTERPRETATION_EVENT_TYPES,
+    LYRICS_CANVAS_ERROR_CODES,
 } from './lyrics.types';
 export type {
     LyricsStatus,
@@ -30,6 +31,11 @@ export type {
     LyricsBatchResponse,
     LyricsErrorResponse,
     LyricsInterpretationEvent,
+    LyricsCanvasErrorCode,
+    LyricsCanvasSource,
+    LyricsCanvasNeedsAnalysisResponse,
+    LyricsCanvasLoadResponse,
+    LyricsCanvasErrorResponse,
 } from './lyrics.types';
 
 // Trading types

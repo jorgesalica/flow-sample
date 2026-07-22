@@ -2,6 +2,8 @@
  * Lyrics Flow Types
  */
 
+import type { CanvasAnalysis } from './canvas.types';
+
 export const LYRICS_STATUSES = {
     PENDING: 'pending',
     FOUND: 'found',
@@ -42,6 +44,38 @@ export interface LyricsBatchResponse {
 }
 
 export interface LyricsErrorResponse {
+    error: string;
+}
+
+export const LYRICS_CANVAS_ERROR_CODES = {
+    TRACK_NOT_FOUND: 'track_not_found',
+    LYRICS_MISSING: 'lyrics_missing',
+    SOURCE_UNAVAILABLE: 'source_unavailable',
+    ANALYSIS_UNAVAILABLE: 'analysis_unavailable',
+} as const;
+
+export type LyricsCanvasErrorCode =
+    (typeof LYRICS_CANVAS_ERROR_CODES)[keyof typeof LYRICS_CANVAS_ERROR_CODES];
+
+export interface LyricsCanvasSource {
+    sourceId: string;
+    sourceType: 'track';
+    title: string;
+    author: string;
+    imageUrl: string | null;
+}
+
+export interface LyricsCanvasNeedsAnalysisResponse {
+    needsAnalysis: true;
+    source: LyricsCanvasSource;
+}
+
+export type LyricsCanvasLoadResponse =
+    | CanvasAnalysis
+    | LyricsCanvasNeedsAnalysisResponse;
+
+export interface LyricsCanvasErrorResponse {
+    code: LyricsCanvasErrorCode;
     error: string;
 }
 

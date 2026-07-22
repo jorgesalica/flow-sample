@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CanvasAnalysis } from '@flows/shared';
+import {
+  LYRICS_CANVAS_ERROR_CODES,
+  type CanvasAnalysis,
+} from '@flows/shared';
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -76,13 +79,38 @@ describe('Lyrics canvas routes', () => {
     });
   });
 
+  it('returns an existing analysis as the successful response variant', async () => {
+    const analysis = makeAnalysis();
+    mocks.load.mockResolvedValue({ kind: 'found', analysis });
+
+    const response = await request('/track-1/canvas');
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(analysis);
+  });
+
   it('keeps a genuinely missing track as 404', async () => {
     mocks.load.mockResolvedValue({ kind: 'track_not_found' });
 
     const response = await request('/missing/canvas');
 
     expect(response.status).toBe(404);
-    await expect(response.json()).resolves.toEqual({ error: 'Track not found' });
+    await expect(response.json()).resolves.toEqual({
+      code: LYRICS_CANVAS_ERROR_CODES.TRACK_NOT_FOUND,
+      error: 'Track not found',
+    });
+  });
+
+  it('distinguishes missing lyrics from a missing track', async () => {
+    mocks.load.mockResolvedValue({ kind: 'lyrics_missing' });
+
+    const response = await request('/track-1/canvas');
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      code: LYRICS_CANVAS_ERROR_CODES.LYRICS_MISSING,
+      error: 'Lyrics not available for this track',
+    });
   });
 
   it('maps provider failures to a sanitized 503 response', async () => {
@@ -94,12 +122,25 @@ describe('Lyrics canvas routes', () => {
 
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({
+      code: LYRICS_CANVAS_ERROR_CODES.ANALYSIS_UNAVAILABLE,
       error: 'AI analysis is temporarily unavailable',
     });
     expect(mocks.logError).toHaveBeenCalledWith(
       expect.objectContaining({ trackId: 'track-1' }),
       'Canvas analysis failed',
     );
+  });
+
+  it('maps an unavailable source to the explicit 400 variant', async () => {
+    mocks.analyze.mockResolvedValue({ kind: 'source_unavailable' });
+
+    const response = await request('/track-1/canvas/analyze', 'POST');
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      code: LYRICS_CANVAS_ERROR_CODES.SOURCE_UNAVAILABLE,
+      error: 'Track or lyrics not available',
+    });
   });
 
   it('returns a created analysis from the provider service', async () => {

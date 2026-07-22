@@ -55,7 +55,7 @@ own acceptance criteria and ships through a separate PR:
 2. [#83 dependency security and manifest hygiene](https://github.com/jorgesalica/flow-sample/issues/83) - complete
 3. [#84 neutral analysis package](https://github.com/jorgesalica/flow-sample/issues/84) - complete
 4. [#85 import-safe persistence composition](https://github.com/jorgesalica/flow-sample/issues/85) - complete
-5. [#86 typed Lyrics Canvas transport](https://github.com/jorgesalica/flow-sample/issues/86)
+5. [#86 typed Lyrics Canvas transport](https://github.com/jorgesalica/flow-sample/issues/86) - complete
 6. [#87 documentation and CI reconciliation](https://github.com/jorgesalica/flow-sample/issues/87)
 
 The order fixes executable artifacts and security first, then package boundaries and

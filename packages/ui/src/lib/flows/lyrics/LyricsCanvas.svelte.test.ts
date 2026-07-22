@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import type { CanvasAnalysis } from '@flows/shared';
-import type { CanvasStatusResponse } from './canvas-api';
+import type { CanvasAnalysis, LyricsCanvasNeedsAnalysisResponse } from '@flows/shared';
 import type { InterpretEvent } from './api';
 import LyricsCanvas from './LyricsCanvas.svelte';
 
@@ -52,7 +51,7 @@ function makeAnalysis(overrides: Partial<CanvasAnalysis> = {}): CanvasAnalysis {
   };
 }
 
-function makeNeedsAnalysis(): CanvasStatusResponse {
+function makeNeedsAnalysis(): LyricsCanvasNeedsAnalysisResponse {
   return {
     needsAnalysis: true,
     source: {

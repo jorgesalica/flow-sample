@@ -154,8 +154,10 @@ facade validates parsed JSON before passing an event to the store.
 
 Spotify, Lyrics, and Trading request/response endpoints use direct Eden inference from
 TypeBox response schemas; their production loaders and API facades do not cast wire
-payloads. Lyrics keeps same-origin `fetch` only for interpretation SSE and validates
-each parsed `LyricsInterpretationEvent` before exposing it to components. Trading uses
+payloads. Lyrics Canvas shares its load, analysis-required, and error DTOs through
+`@flows/shared`; its normal JSON calls use Eden and narrow the inferred response union.
+Lyrics keeps same-origin `fetch` only for interpretation SSE and validates each parsed
+`LyricsInterpretationEvent` before exposing it to components. Trading uses
 `EventSource` for live state/candles and validates every parsed payload before mutating
 its runes store. Architecture checks reject unsafe double casts in all three flow
 surfaces.

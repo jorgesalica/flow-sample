@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getCanvasAnalysis, analyzeCanvas, type CanvasStatusResponse } from './canvas-api';
+  import { getCanvasAnalysis, analyzeCanvas } from './canvas-api';
   import { getLyrics, interpretLyrics } from './api';
-  import type { CanvasAnalysis, Annotation } from '@flows/shared';
+  import type { CanvasAnalysis, Annotation, LyricsCanvasSource } from '@flows/shared';
   import TokenRenderer from '@components/canvas/TokenRenderer.svelte';
   import LayerToggle from '@components/canvas/LayerToggle.svelte';
   import TokenTooltip from '@components/canvas/TokenTooltip.svelte';
@@ -17,7 +17,7 @@
   let error = $state<string | null>(null);
 
   let analysis = $state<CanvasAnalysis | null>(null);
-  let statusInfo = $state<CanvasStatusResponse['source'] | null>(null);
+  let statusInfo = $state<LyricsCanvasSource | null>(null);
 
   // UI State
   let activeLayers = $state<string[]>(['chords', 'vocal', 'meaning']);
@@ -57,9 +57,9 @@
       }
 
       if ('needsAnalysis' in result) {
-        statusInfo = result.source || null;
+        statusInfo = result.source;
       } else {
-        analysis = result as CanvasAnalysis;
+        analysis = result;
       }
     } catch (err: unknown) {
       error = err instanceof Error ? err.message : String(err);

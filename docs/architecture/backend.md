@@ -172,6 +172,11 @@ opening SSE, yields shared discriminated events, and persists a completed
 interpretation. The route serializes those events and replaces provider details with a
 stable `503` event while retaining raw details in server logs.
 
+`LyricsCanvasService` owns the analysis-required state and music-specific Canvas
+orchestration. Its JSON routes publish complete TypeBox success/error schemas, including
+stable shared error codes for missing tracks, missing lyrics, unavailable sources, and
+provider failures; this contract feeds the UI's Eden client directly.
+
 Both flows publish TypeBox response schemas backed by DTOs in `@flows/shared`. Their
 route and service suites exercise success, absence, provider failure, cache, batch, and
 SSE behavior through real Elysia `.handle()` requests.
