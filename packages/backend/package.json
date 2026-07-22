@@ -40,7 +40,7 @@
         "@vitest/coverage-v8": "^4.1.10",
         "better-sqlite3": "^12.11.1",
         "eslint": "^9.39.5",
-        "globals": "^15.15.0",
+        "globals": "^17.7.0",
         "tsc-alias": "^1.9.1",
         "tsx": "^4.23.1",
         "typescript": "^5.9.3",
