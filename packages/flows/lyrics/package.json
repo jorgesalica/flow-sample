@@ -24,7 +24,7 @@
     "@flows/core": "workspace:*",
     "@flows/music": "workspace:*",
     "@flows/shared": "workspace:*",
-    "axios": "^1.18.1",
+    "axios": "^1.19.0",
     "better-sqlite3": "^12.11.1",
     "elysia": "^1.4.29",
     "zod": "^4.4.3"
