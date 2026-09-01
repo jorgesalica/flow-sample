@@ -23,13 +23,13 @@
     "@flows/core": "workspace:*",
     "@flows/shared": "workspace:*",
     "better-sqlite3": "^12.11.1",
-    "elysia": "^1.4.29"
+    "elysia": "^1.4.30"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.20.1",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }
